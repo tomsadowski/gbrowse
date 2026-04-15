@@ -81,12 +81,23 @@ pub enum Response {
   Ack(Dynamo),
   Ask(Dynamo),
   Text(EditBox),
+  Select(Dynamo),
 }
 pub struct Dialog {
   pub prompt:   Dynamo,
   pub response: Response,
 } 
 impl Dialog {
+  pub fn select(prompt: &str, instruction: Vec<String>, style: Style, rect: &Rect) -> Self {
+    let prompt_text   = StyledText::from(prompt).with_style(&style);
+    let prompt_box    = Dynamo::new(vec![prompt_text], &rect.clone().crop_south(2));
+    let response_text = instruction.iter().map(|s| StyledText::from(s.as_str()).with_style(&style));
+    let response_box  = Dynamo::new(response_text.collect(), &prompt_box.used.bottom_row());
+    Dialog {
+      prompt:   prompt_box,
+      response: Response::Select(response_box),
+    }
+  }
   pub fn text(prompt: &str, style: Style, rect: &Rect) -> Self {
     let prompt_text  = StyledText::from(prompt).with_style(&style);
     let prompt_box   = Dynamo::new(vec![prompt_text], &rect.clone().crop_south(2));

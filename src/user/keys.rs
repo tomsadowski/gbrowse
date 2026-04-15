@@ -7,32 +7,38 @@ use std::str::FromStr;
 
 #[derive(Debug)]
 pub enum KeysField {
-  LoadUser,
-  TabView, 
+  LoadUrl,
+  SaveUrl,
+  DelTab, 
+  NewTab, 
+  HelpView, 
+  LogView,
+
   MoveUp, 
   MoveDown, 
   MoveLeft, 
   MoveRight,
+  PageUp,
+  PageDown,
+  Top,
+  Bottom,
   CycleLeft, 
   CycleRight, 
-  DelTab, 
-  NewTab, 
+
   Inspect, 
   Ack, 
   Yes, 
   No, 
   Cancel,
-  PageUp,
-  PageDown,
-  Top,
-  Bottom,
 }
 impl FromStr for KeysField {
   type Err = String;
   fn from_str(s: &str) -> Result<Self, Self::Err> {
     match s {
-      "tab_view"    => Ok(Self::TabView),
-      "load_user"   => Ok(Self::LoadUser),
+      "help_view"   => Ok(Self::HelpView),
+      "log_view"    => Ok(Self::LogView),
+      "load_url"    => Ok(Self::LoadUrl),
+      "save_url"    => Ok(Self::SaveUrl),
       "move_up"     => Ok(Self::MoveUp),
       "move_down"   => Ok(Self::MoveDown),
       "move_left"   => Ok(Self::MoveLeft),
@@ -52,48 +58,54 @@ impl FromStr for KeysField {
 }
 #[derive(Clone)]
 pub struct KeysTable {
-  pub cancel:      KeyCode,
-  pub load_user:   KeyCode,
-  pub tab_view:    KeyCode,
   pub up:          KeyCode,
   pub down:        KeyCode,
   pub left:        KeyCode,
   pub right:       KeyCode,
-  pub cycle_left:  KeyCode,
-  pub cycle_right: KeyCode,
-  pub inspect:     KeyCode,
-  pub delete_tab:  KeyCode,
-  pub new_tab:     KeyCode,
-  pub ack:         KeyCode, 
-  pub yes:         KeyCode, 
-  pub no:          KeyCode,
   pub top:         KeyCode,
   pub bottom:      KeyCode,
   pub pgup:        KeyCode,
   pub pgdown:      KeyCode,
+  pub cycle_left:  KeyCode,
+  pub cycle_right: KeyCode,
+
+  pub load_url:    KeyCode,
+  pub save_url:    KeyCode,
+  pub help_view:   KeyCode,
+  pub log_view:    KeyCode,
+  pub inspect:     KeyCode,
+  pub delete_tab:  KeyCode,
+  pub new_tab:     KeyCode,
+
+  pub ack:         KeyCode, 
+  pub yes:         KeyCode, 
+  pub no:          KeyCode,
+  pub cancel:      KeyCode,
 } 
 impl Default for KeysTable {
   fn default() -> Self {
     Self {
-      cancel:      KeyCode::Esc,
-      load_user:   KeyCode::Char('c'),
-      tab_view:    KeyCode::Char('t'),
+      load_url:    KeyCode::Char('u'),
+      save_url:    KeyCode::Char('U'),
+      delete_tab:  KeyCode::Char('d'),
+      new_tab:     KeyCode::Char('n'),
+      help_view:   KeyCode::Char('h'),
+      log_view:    KeyCode::Char('l'),
       up:          KeyCode::Up,
       down:        KeyCode::Down,
       left:        KeyCode::Left,
       right:       KeyCode::Right,
-      cycle_left:  KeyCode::Char('E'),
-      cycle_right: KeyCode::Char('N'),
-      inspect:     KeyCode::Enter,
-      delete_tab:  KeyCode::Char('d'),
-      new_tab:     KeyCode::Char('n'),
-      ack:         KeyCode::Enter, 
-      yes:         KeyCode::Char('y'), 
-      no:          KeyCode::Char('n'),
       top:         KeyCode::Home,
       bottom:      KeyCode::End,
       pgup:        KeyCode::PageUp,
       pgdown:      KeyCode::PageDown,
+      cycle_left:  KeyCode::Char(','),
+      cycle_right: KeyCode::Char('.'),
+      inspect:     KeyCode::Enter,
+      ack:         KeyCode::Enter, 
+      yes:         KeyCode::Char('y'), 
+      no:          KeyCode::Char('n'),
+      cancel:      KeyCode::Esc,
     }
   }
 }
@@ -125,8 +137,10 @@ impl UserTable<KeysField> for KeysTable {
     };
     let value = get_keycode()?;
     match field {
-      KeysField::LoadUser   => self.load_user   = value,
-      KeysField::TabView    => self.tab_view    = value,
+      KeysField::LoadUrl    => self.load_url    = value,
+      KeysField::SaveUrl    => self.save_url    = value,
+      KeysField::HelpView   => self.help_view   = value,
+      KeysField::LogView    => self.log_view    = value,
       KeysField::MoveUp     => self.up          = value,
       KeysField::MoveDown   => self.down        = value,
       KeysField::MoveLeft   => self.left        = value,

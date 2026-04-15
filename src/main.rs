@@ -162,6 +162,7 @@ pub enum Message {
 pub struct App {
   pub frame:    Frame,
   pub user:     User,
+  pub urls:     Vec<String>,
   pub rect:     Rect,
   pub head:     usize,
   pub tabs:     Vec<Tab>,
@@ -192,6 +193,7 @@ impl App {
       frame,
       user,
       rect,
+      urls:    vec![],
       head:    0,
       tabs:    vec![tab],
       dialog:  None,
@@ -280,9 +282,10 @@ impl App {
         if let Some((_, dialog)) = &mut self.dialog {
           dialog.prompt.resize(&self.rect);
           match &mut dialog.response {
-            Response::Ack(r)  => r.resize(&self.rect),
-            Response::Ask(r)  => r.resize(&self.rect),
-            Response::Text(r) => r.resize(&self.rect),
+            Response::Select(r) => r.resize(&self.rect),
+            Response::Ack(r)    => r.resize(&self.rect),
+            Response::Ask(r)    => r.resize(&self.rect),
+            Response::Text(r)   => r.resize(&self.rect),
           }
         }
         for tab in self.tabs.iter_mut() {
@@ -367,6 +370,26 @@ impl App {
           Some(Message::Default)
         }
         _ => match &mut dialog.response {
+          Response::Select(content) => {
+            if kc == &self.user.keys.down {
+              content.down(1).then_some(Message::Default)
+            } else if kc == &self.user.keys.up {
+              content.up(1).then_some(Message::Default)
+            } else if kc == &self.user.keys.left {
+              content.left(1).then_some(Message::Default)
+            } else if kc == &self.user.keys.right {
+              content.right(1).then_some(Message::Default)
+            } else if kc == &self.user.keys.inspect {
+              if let Message::NewTab = &msg {
+                let msg = Some(Message::Go(self.urls[content.get_source_idx()].clone()));
+                self.dialog = None;
+                msg
+              } else {
+                self.dialog = None;
+                Some(Message::Default)
+              }
+            } else {None}
+          }
           Response::Ack(_) => {
             if self.user.keys.ack ==  *kc {
               let msg = Some(msg.clone());
@@ -489,6 +512,10 @@ impl App {
         Response::Ack(r)  => r.write(stdout)?,
         Response::Ask(r)  => r.write(stdout)?,
         Response::Text(r) => {
+          r.write(stdout)?;
+          r.write_cursor(stdout)?;
+        }
+        Response::Select(r) => {
           r.write(stdout)?;
           r.write_cursor(stdout)?;
         }

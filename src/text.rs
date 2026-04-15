@@ -22,10 +22,7 @@ pub fn wrap(text: Vec<char>, width: usize) -> Vec<Vec<char>> {
       } else {
         // search for first whitespace from right
         let s: Vec<&char> = text[..width]
-          .iter()
-          .rev()
-          .skip_while(|c| !c.is_whitespace())
-          .collect();
+          .iter().rev().skip_while(|c| !c.is_whitespace()).collect();
         // no space found, return whole slice
         if s.len() == 0 {
           text[..width].iter().copied().collect()

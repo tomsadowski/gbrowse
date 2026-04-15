@@ -45,6 +45,9 @@ impl Dynamo {
       content, 
     }
   }
+  pub fn get_source_idx(&self) -> usize {
+    self.content.get_source_idx()
+  }
   pub fn resize(&mut self, limit: &Rect) {
     self.limit = limit.clone();
     self.content.resize(self.limit.w);
