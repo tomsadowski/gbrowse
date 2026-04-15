@@ -1,0 +1,17 @@
+# .style/dark
+
+screen_margin = {n = 1, s = 0, e = 5, w = 5}
+text_margin   = {n = 1, s = 1, e = 4, w = 4}
+
+border    = {fg = "008080",  corner = "round", bracket = "tort"}
+info      = {fg = "b0b0b0"}
+covered   = {fg = "202020"}
+banner    = {fg = "a0a000"}
+general   = {fg = "b0b0b0"}
+list      = {fg = "e068b0"}
+quote     = {fg = "e068b0"}
+preformat = {fg = "88a030", wrap = false}
+link      = {fg = "00a0a0", underline = true}
+header1   = {fg = "a040a0", bold = true, underline = true}
+header2   = {fg = "a040a0", bold = true}
+header3   = {fg = "a040a0"}

@@ -1,0 +1,17 @@
+# .styles/sunshower
+
+screen_margin = {n = 1, s = 0, e = 5, w = 5}
+text_margin   = {n = 1, s = 1, e = 4, w = 4}
+
+border    = {fg = "242424", bg = "242424", corner = "round", bracket = "tort"}
+info      = {}
+covered   = {}
+banner    = {fg = "74706c", bg = "1c1c1c",}
+general   = {fg = "d8d0c8", bg = "1c1c1c"}
+link      = {fg = "70a8e0", underline = true}
+list      = {fg = "e068b0"}
+quote     = {fg = "e068b0"}
+preformat = {fg = "88a030", wrap = false}
+header1   = {fg = "c07040", bold = true, underline = true}
+header2   = {fg = "c07040", bold = true}
+header3   = {fg = "c07040"}

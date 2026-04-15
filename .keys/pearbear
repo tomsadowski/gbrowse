@@ -1,0 +1,22 @@
+# .keys/pearbear
+
+load_user   = "l"
+
+move_up     = "o"
+move_down   = "i"
+move_left   = "e"
+move_right  = "n"
+
+cycle_left  = "E"
+cycle_right = "N"
+
+inspect     = "w"
+delete_tab  = "v"
+new_tab     = "p"
+
+yes         = "y"
+no          = "n"
+
+ack         = "y"
+
+cancel      = "esc"

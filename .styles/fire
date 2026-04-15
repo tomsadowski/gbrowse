@@ -1,0 +1,17 @@
+# .style/fire
+
+screen_margin = {n = 1, s = 0, e = 5, w = 5}
+text_margin   = {n = 1, s = 1, e = 4, w = 4}
+
+border    = {fg = "666768", bg = "161718", corner = "round", bracket = "tort"}
+general   = {fg = "d0ccc8", bg = "161718"}
+info      = {fg = "d0ccc8"}
+covered   = {fg = "282828"}
+banner    = {fg = "c09840"}
+list      = {fg = "d0ccc8"}
+quote     = {fg = "d0ccc8"}
+preformat = {fg = "b878d8", wrap = false}
+link      = {fg = "80b0d8", underline = true}
+header1   = {fg = "e05860", bold = true, underline = true}
+header2   = {fg = "e05860", bold = true}
+header3   = {fg = "e05860"}
