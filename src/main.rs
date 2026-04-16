@@ -222,6 +222,12 @@ impl App {
     self.dialog  = Some((msg, dialog));
     self.new_dlg = true;
   }
+  fn select_url(&mut self, msg: Message, prompt: &str) {
+    let style    = self.user.style.info.style.clone();
+    let dialog   = Dialog::select(prompt, self.urls.clone(), style, &self.rect);
+    self.dialog  = Some((msg, dialog));
+    self.new_dlg = true;
+  }
   fn get_init_url(&mut self) -> Option<Url> {
     match Url::parse(&self.user.init_url) {
       Ok(url) => Some(url),
@@ -465,6 +471,13 @@ impl App {
     } else if kc == &self.user.keys.new_tab {
       self.text(Message::NewTab, "enter path: ");
       Some(Message::Default)
+    } else if kc == &self.user.keys.load_url {
+      self.select_url(Message::NewTab, "choose the url: ");
+      Some(Message::Default)
+    } else if kc == &self.user.keys.save_url {
+      self.urls.push(self.tabs[self.head].url_str.clone());
+      // do nothing for now
+      None
     } else if kc == &self.user.keys.inspect {
       if let Some(gemdoc) = &tab.gemdoc {
         match gemdoc.doc[tab.content.get_source_idx()].tag.clone() {
