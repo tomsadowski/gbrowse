@@ -485,20 +485,24 @@ impl App {
       self.select_url(Message::NewTab, "choose the url: ");
       Some(Message::Default)
     } else if kc == &self.user.keys.save_url {
-      self.urls.push(self.tabs[self.head].url_str.clone());
-      // write to save file
-      match fs::OpenOptions::new().write(true).truncate(true).open(&self.user.save_file) {
-        Err(e) => {
-          self.ack(Message::Default, &format!("could not create save file: {}", &e));
-          Some(Message::Default)
-        }
-        Ok(mut f) => {
-          for url in self.urls.iter() {
-            f.write(&format!("{}\n", url).as_bytes());
+      let url_str = self.tabs[self.head].url_str.clone();
+      // only add url_str if new
+      if !self.urls.iter().any(|url| **url == url_str) {
+        self.urls.push(url_str);
+        // write to save file
+        match fs::OpenOptions::new().write(true).truncate(true).open(&self.user.save_file) {
+          Err(e) => {
+            self.ack(Message::Default, &format!("could not create save file: {}", &e));
+            Some(Message::Default)
           }
-          None
+          Ok(mut f) => {
+            for url in self.urls.iter() {
+              f.write(&format!("{}\n", url).as_bytes());
+            }
+            None
+          }
         }
-      }
+      } else {None}
     } else if kc == &self.user.keys.inspect {
       if let Some(gemdoc) = &tab.gemdoc {
         match gemdoc.doc[tab.content.get_source_idx()].tag.clone() {
