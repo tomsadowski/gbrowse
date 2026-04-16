@@ -37,7 +37,7 @@ use std::{
 
 fn main() -> io::Result<()> {
   let args         = env::args().collect::<Vec<String>>();
-  let default_path = String::from(".gemset");
+  let default_path = String::from(".gstart");
   let init_path    = args.get(1).unwrap_or(&default_path); 
   let mut stdout   = stdout();
   // register keystrokes 
