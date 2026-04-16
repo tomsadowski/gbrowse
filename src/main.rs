@@ -387,9 +387,14 @@ impl App {
               content.right(1).then_some(Message::Default)
             } else if kc == &self.user.keys.inspect {
               if let Message::NewTab = &msg {
-                let msg = Some(Message::Go(self.urls[content.get_source_idx()].clone()));
-                self.dialog = None;
-                msg
+                if self.urls.len() > 0 {
+                  let msg = Some(Message::Go(self.urls[content.get_source_idx()].clone()));
+                  self.dialog = None;
+                  msg
+                } else {
+                  self.dialog = None;
+                  Some(Message::Default)
+                }
               } else {
                 self.dialog = None;
                 Some(Message::Default)
@@ -476,8 +481,19 @@ impl App {
       Some(Message::Default)
     } else if kc == &self.user.keys.save_url {
       self.urls.push(self.tabs[self.head].url_str.clone());
-      // do nothing for now
-      None
+      // write to save file
+      match fs::OpenOptions::new().append(true).create(true).open(&self.user.save_file) {
+        Err(e) => {
+          self.ack(Message::Default, &format!("could not create save file: {}", &e));
+          Some(Message::Default)
+        }
+        Ok(mut f) => {
+          for url in self.urls.iter() {
+            f.write(url.as_bytes());
+          }
+          None
+        }
+      }
     } else if kc == &self.user.keys.inspect {
       if let Some(gemdoc) = &tab.gemdoc {
         match gemdoc.doc[tab.content.get_source_idx()].tag.clone() {
@@ -486,12 +502,10 @@ impl App {
             self.ask(Message::Go(url.into()), prompt);
           }
           GemTag::Link(_, url) => {
-            let prompt = &format!("Protocol {} not yet supported", url);
-            self.ack(Message::Default, prompt);
+            self.ack(Message::Default, &format!("Protocol {} not yet supported", url));
           }
           gemtext => {
-            let prompt = &format!("you've selected {:?}", gemtext);
-            self.ack(Message::Default, prompt);
+            self.ack(Message::Default, &format!("you've selected {:?}", gemtext));
           }
         }
         Some(Message::Default)

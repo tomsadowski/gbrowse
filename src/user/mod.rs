@@ -31,7 +31,11 @@ where F: FromStr<Err = String>
 }
 #[derive(Debug)]
 enum UserField {
-  InitUrl, Timeout, Style, Keys
+  InitUrl, 
+  SaveFile,
+  Timeout, 
+  Style, 
+  Keys,
 }
 impl FromStr for UserField {
   type Err = String;
@@ -41,6 +45,7 @@ impl FromStr for UserField {
       "timeout"  => Ok(Self::Timeout),
       "style"    => Ok(Self::Style),
       "keys"     => Ok(Self::Keys),
+      "gsave" | "save_file" => Ok(Self::SaveFile),
       s          => Err(format!("No field {} in User table", s)),
     }
   }
@@ -50,6 +55,7 @@ pub struct User {
   pub override_style: Option<String>,
   pub override_keys:  Option<String>,
   pub timeout:        u64,
+  pub save_file:      String,
   pub init_url:       String,
   pub style:          StyleModTable,
   pub keys:           KeysTable,
@@ -68,6 +74,7 @@ impl Default for User {
       override_keys:  None,
       timeout:        10,
       init_url:       "gemini://geminiprotocol.net/".into(),
+      save_file:      ".gsave".into(),
       style:          StyleModTable::default(),
       keys:           KeysTable::default(),
     }
@@ -80,6 +87,9 @@ impl UserTable<UserField> for User {
     match (field, value) {
       (UserField::InitUrl, Value::String(v)) => {
         self.init_url = v.into();
+      }
+      (UserField::SaveFile, Value::String(v)) => {
+        self.save_file = v.into();
       }
       // read style from another file
       (UserField::Style, Value::String(path)) => {

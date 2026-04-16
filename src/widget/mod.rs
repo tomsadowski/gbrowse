@@ -170,8 +170,8 @@ impl Default for BorderSpec {
       b:     c::B_SQR,
       c:     c::C_SQR,
       d:     c::D_SQR,
-      open:  c::OPEN_TORT,
-      close: c::CLOSE_TORT,
+      open:  c::OPEN_SQR,
+      close: c::CLOSE_SQR,
     }
   }
 }

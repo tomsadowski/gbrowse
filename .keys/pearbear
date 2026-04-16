@@ -1,6 +1,7 @@
 # .keys/pearbear
 
-load_user   = "l"
+save_url    = "u"
+load_url    = "U"
 
 move_up     = "o"
 move_down   = "i"
