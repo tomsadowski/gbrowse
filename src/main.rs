@@ -32,7 +32,7 @@ use std::{
   sync::mpsc,
   time::Duration,
   str::FromStr,
-  io::{self, Write, stdout, Stdout},
+  io::{self, Write, Read, stdout, Stdout},
 };
 
 fn main() -> io::Result<()> {
@@ -189,11 +189,16 @@ impl App {
     let frame     = user.get_frame(&Rect::new(w, h));
     let rect      = frame.inner_rect.clone();
     let tab       = Tab::init(&rect, &user.init_url);
+    let urls: Vec<String> = 
+      match fs::read_to_string(&user.save_file) {
+        Ok(s)  => s.lines().map(|s| String::from(s)).collect(),
+        Err(e) => vec![],
+      };
     Self {
       frame,
       user,
       rect,
-      urls:    vec![],
+      urls,
       head:    0,
       tabs:    vec![tab],
       dialog:  None,
@@ -482,14 +487,14 @@ impl App {
     } else if kc == &self.user.keys.save_url {
       self.urls.push(self.tabs[self.head].url_str.clone());
       // write to save file
-      match fs::OpenOptions::new().append(true).create(true).open(&self.user.save_file) {
+      match fs::OpenOptions::new().write(true).truncate(true).open(&self.user.save_file) {
         Err(e) => {
           self.ack(Message::Default, &format!("could not create save file: {}", &e));
           Some(Message::Default)
         }
         Ok(mut f) => {
           for url in self.urls.iter() {
-            f.write(url.as_bytes());
+            f.write(&format!("{}\n", url).as_bytes());
           }
           None
         }

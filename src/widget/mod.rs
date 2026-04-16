@@ -92,7 +92,8 @@ impl Dialog {
     let prompt_text   = StyledText::from(prompt).with_style(&style);
     let prompt_box    = Dynamo::new(vec![prompt_text], &rect.clone().crop_south(2));
     let response_text = instruction.iter().map(|s| StyledText::from(s.as_str()).with_style(&style));
-    let response_box  = Dynamo::new(response_text.collect(), &prompt_box.used.bottom_row());
+    let response_box  = 
+      Dynamo::new(response_text.collect(), &rect.clone().crop_north(prompt_box.used.h));
     Dialog {
       prompt:   prompt_box,
       response: Response::Select(response_box),
