@@ -56,7 +56,7 @@ impl FromStr for KeysField {
     }
   }
 }
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct KeysTable {
   pub up:          KeyCode,
   pub down:        KeyCode,

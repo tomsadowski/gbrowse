@@ -100,7 +100,7 @@ impl FromStr for StyleModField {
     }
   }
 }
-#[derive(Clone, Default)]
+#[derive(Clone, Default, Debug)]
 pub struct StyleModTable {
   pub text_margin:     MarginSpec,
   pub screen_margin:   MarginSpec,
@@ -301,18 +301,17 @@ impl FromStr for CornerValue {
 }
 #[derive(Debug, Clone)]
 pub enum BracketValue {
-  Tortoise, E, Integral,
+  Tortoise, E, Integral, Square,
 }
 impl FromStr for BracketValue {
   type Err = String;
   fn from_str(s: &str) -> Result<Self, Self::Err> {
     match s {
-      "tortoise" | "t" | "tort" => 
-        Ok(BracketValue::Tortoise),
-      "J" | "j" | "int" | "i" | "integral" => 
-        Ok(BracketValue::Integral),
-      "E" | "e" => 
-        Ok(BracketValue::E),
+      "tortoise" | "t" | "tort" => Ok(BracketValue::Tortoise),
+      "J" | "j" | "int" | 
+      "i" | "integral"          => Ok(BracketValue::Integral),
+      "square" | "sqr"          => Ok(BracketValue::Square),
+      "E" | "e"                 => Ok(BracketValue::E),
       s => Err(format!("Bracket field does not contain {}", s)),
     }
   }
@@ -364,6 +363,10 @@ impl UserTable<BorderField> for BorderSpec {
           BracketValue::E => {
             self.open  = c::OPEN_E;
             self.close = c::CLOSE_E;
+          }
+          BracketValue::Square => {
+            self.open  = c::OPEN_SQR;
+            self.close = c::CLOSE_SQR;
           }
           BracketValue::Integral => {
             self.open  = c::OPEN_INT;

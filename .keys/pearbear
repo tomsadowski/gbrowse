@@ -1,23 +1,21 @@
 # .keys/pearbear
 
-save_url    = "u"
-load_url    = "U"
-
 move_up     = "o"
 move_down   = "i"
 move_left   = "e"
 move_right  = "n"
 
-cycle_left  = "E"
-cycle_right = "N"
-
 inspect     = "w"
 delete_tab  = "v"
 new_tab     = "p"
 
+save_url    = "u"
+load_url    = "U"
+
+cycle_left  = "E"
+cycle_right = "N"
+
 yes         = "y"
 no          = "n"
-
 ack         = "y"
-
 cancel      = "esc"

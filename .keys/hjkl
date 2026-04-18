@@ -1,0 +1,21 @@
+# .keys/arrows
+
+move_up     = "k"
+move_down   = "j"
+move_left   = "h"
+move_right  = "l"
+
+inspect     = "i"
+delete_tab  = "p"
+new_tab     = "o"
+
+save_url    = "u"
+load_url    = "U"
+
+cycle_left  = ","
+cycle_right = "."
+
+yes         = "y"
+no          = "n"
+ack         = "enter"
+cancel      = "esc"

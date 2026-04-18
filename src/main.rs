@@ -12,12 +12,15 @@ mod widget;
 mod user;
 mod common;
 mod protocol;
+mod composite;
 
 use crate::{
+  common as c,
   user::User,
   screen::Rect,
+  composite::{Tab, Response, Dialog},
   text::{StyledText, Linear, Style}, 
-  widget::{Frame, TextBox, Dynamo, EditBox, Response, Dialog, cursor_hide, PlaneWidget},
+  widget::{Frame, TextBox, Dynamo, EditBox, cursor_hide, PlaneWidget},
   protocol::{GemDoc, GemTag, Status, Scheme, get_data},
 };
 use crossterm::{
@@ -37,7 +40,7 @@ use std::{
 
 fn main() -> io::Result<()> {
   let args         = env::args().collect::<Vec<String>>();
-  let default_path = String::from(".gstart");
+  let default_path = String::from(c::START);
   let init_path    = args.get(1).unwrap_or(&default_path); 
   let mut stdout   = stdout();
   // register keystrokes 
@@ -88,7 +91,7 @@ fn main() -> io::Result<()> {
         // create new request
         if let None = &mut request_maybe {
           app.pending = true;
-          request_maybe = Some(Request::new(&url, &app.user));
+          request_maybe = Some(Request::new(&url, app.user.timeout));
         }
       // exit loop
       } else if let Message::Quit = message {
@@ -114,9 +117,8 @@ pub struct Request {
   pub handle: thread::JoinHandle<()>,
 }
 impl Request {
-  pub fn new(url: &Url, user: &User) -> Self {
+  pub fn new(url: &Url, timeout: u64) -> Self {
     let (tx, rx)  = mpsc::channel::<Result<(String, String), String>>();
-    let timeout   = user.timeout;
     let url_clone = url.clone();
     let handle    = thread::spawn(
       move || {
@@ -124,23 +126,6 @@ impl Request {
         tx.send(result).unwrap();
       });
     Self {url: url.clone(), rx, handle}
-  }
-}
-
-pub struct Tab {
-  pub url_str: String,
-  pub gemdoc:  Option<GemDoc>,
-  pub content: TextBox,
-} 
-impl Tab {
-  pub fn init(rect: &Rect, url_str: &str) -> Self {
-    let mut content = TextBox::default();
-    content.rect = rect.clone();
-    Self {
-      content, 
-      gemdoc:  None,
-      url_str: url_str.into(),
-    }
   }
 }
 
@@ -160,16 +145,17 @@ pub enum Message {
 }
 
 pub struct App {
-  pub frame:    Frame,
-  pub user:     User,
-  pub urls:     Vec<String>,
-  pub rect:     Rect,
-  pub head:     usize,
-  pub tabs:     Vec<Tab>,
-  pub dialog:   Option<(Message, Dialog)>,
-  pub new_dlg:  bool,
-  pub pending:  bool,
-  pub clear:    bool,
+  pub init_path: String,
+  pub frame:     Frame,
+  pub user:      User,
+  pub urls:      Vec<String>,
+  pub rect:      Rect,
+  pub head:      usize,
+  pub tabs:      Vec<Tab>,
+  pub dialog:    Option<(Message, Dialog)>,
+  pub new_dlg:   bool,
+  pub pending:   bool,
+  pub clear:     bool,
 } 
 impl Linear for App {
   fn len(&self) -> usize {
@@ -199,12 +185,13 @@ impl App {
       user,
       rect,
       urls,
-      head:    0,
-      tabs:    vec![tab],
-      dialog:  None,
-      new_dlg: false,
-      pending: false,
-      clear:   true
+      init_path: path.into(),
+      head:      0,
+      tabs:      vec![tab],
+      dialog:    None,
+      new_dlg:   false,
+      pending:   false,
+      clear:     true
     }
   }
   fn ack(&mut self, msg: Message, prompt: &str) {
@@ -242,8 +229,10 @@ impl App {
       }
     }
   }
-  fn get_url_str(&self) -> String {
-    self.tabs[self.head].url_str.clone()
+  fn reload_config(&mut self, path: Option<&str>) {
+    let path      = path.unwrap_or(&self.init_path);
+    let user_text = fs::read_to_string(path).unwrap_or("".into());
+    self.user     = User::from_str(&user_text).unwrap_or_default();
   }
   fn set_gemdoc(&mut self, url: &Url, gemdoc: GemDoc) {
     let url_str = url.to_string();

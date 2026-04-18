@@ -50,7 +50,7 @@ impl FromStr for UserField {
     }
   }
 }
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct User {
   pub override_style: Option<String>,
   pub override_keys:  Option<String>,
@@ -81,15 +81,16 @@ impl Default for User {
   }
 }
 impl UserTable<UserField> for User {
-  fn try_assign(&mut self, field: UserField, value: Value) 
-    -> Result<(), String> 
-  {
+  fn try_assign(&mut self, field: UserField, value: Value) -> Result<(), String> {
     match (field, value) {
       (UserField::InitUrl, Value::String(v)) => {
         self.init_url = v.into();
       }
       (UserField::SaveFile, Value::String(v)) => {
         self.save_file = v.into();
+      }
+      (UserField::Timeout, Value::Integer(v)) => {
+        self.timeout = u64::try_from(v).map_err(|e| e.to_string())?;
       }
       // read style from another file
       (UserField::Style, Value::String(path)) => {
@@ -111,10 +112,6 @@ impl UserTable<UserField> for User {
       (UserField::Keys, Value::Table(v)) => {
         self.keys = KeysTable::default().read_table(v)?;
       }
-      // read keys from this file
-      (UserField::Timeout, Value::Integer(v)) => {
-        self.timeout = u64::try_from(v).map_err(|e| e.to_string())?;
-      }
       (f, v) => 
         return Err(format!("field {:?} value {:?} not valid here", f, v))
     }
@@ -122,6 +119,11 @@ impl UserTable<UserField> for User {
   }
 }
 impl User {
+  pub fn get_help(&self) -> Vec<String> {  
+    format!(
+      "Gemini help:\n{:?}", 
+      self).lines().map(|s| s.to_string()).collect()
+  }
   pub fn get_frame(&self, screen: &Rect) -> Frame {
     Frame::new(
         &screen, 

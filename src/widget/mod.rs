@@ -77,59 +77,6 @@ impl PlaneWidget for EditBox {
   }
 }
 
-pub enum Response {
-  Ack(Dynamo),
-  Ask(Dynamo),
-  Text(EditBox),
-  Select(Dynamo),
-}
-pub struct Dialog {
-  pub prompt:   Dynamo,
-  pub response: Response,
-} 
-impl Dialog {
-  pub fn select(prompt: &str, instruction: Vec<String>, style: Style, rect: &Rect) -> Self {
-    let prompt_text   = StyledText::from(prompt).with_style(&style);
-    let prompt_box    = Dynamo::new(vec![prompt_text], &rect.clone().crop_south(2));
-    let response_text = instruction.iter().map(|s| StyledText::from(s.as_str()).with_style(&style));
-    let response_box  = 
-      Dynamo::new(response_text.collect(), &rect.clone().crop_north(prompt_box.used.h));
-    Dialog {
-      prompt:   prompt_box,
-      response: Response::Select(response_box),
-    }
-  }
-  pub fn text(prompt: &str, style: Style, rect: &Rect) -> Self {
-    let prompt_text  = StyledText::from(prompt).with_style(&style);
-    let prompt_box   = Dynamo::new(vec![prompt_text], &rect.clone().crop_south(2));
-    let response_box = EditBox::new(&prompt_box.used.bottom_row()).with_style(&style);
-    Dialog {
-      prompt:   prompt_box,
-      response: Response::Text(response_box),
-    }
-  }
-  pub fn ask(prompt: &str, instruction: &str, style: Style, rect: &Rect) -> Self {
-    let prompt_text   = StyledText::from(prompt).with_style(&style);
-    let prompt_box    = Dynamo::new(vec![prompt_text], &rect.clone().crop_south(2));
-    let response_text = StyledText::from(instruction).with_style(&style);
-    let response_box  = Dynamo::new(vec![response_text], &prompt_box.used.bottom_row());
-    Dialog {
-      prompt:   prompt_box,
-      response: Response::Ask(response_box),
-    }
-  }
-  pub fn ack(prompt: &str, instruction: &str, style: Style, rect: &Rect) -> Self {
-    let prompt_text   = StyledText::from(prompt).with_style(&style);
-    let prompt_box    = Dynamo::new(vec![prompt_text], &rect.clone().crop_south(2));
-    let response_text = StyledText::from(instruction).with_style(&style);
-    let response_box  = Dynamo::new(vec![response_text], &prompt_box.used.bottom_row());
-    Dialog {
-      prompt:   prompt_box,
-      response: Response::Ack(response_box),
-    }
-  }
-}
-
 #[derive(Clone, Debug)]
 pub enum ChangeType {
   Cursor, Scroll,

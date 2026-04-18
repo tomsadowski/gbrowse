@@ -1,0 +1,21 @@
+# .keys/wasd
+
+move_up     = "w"
+move_down   = "s"
+move_left   = "a"
+move_right  = "d"
+
+inspect     = "enter"
+delete_tab  = "r"
+new_tab     = "t"
+
+save_url    = "u"
+load_url    = "U"
+
+cycle_left  = "q"
+cycle_right = "e"
+
+yes         = "y"
+no          = "n"
+ack         = "enter"
+cancel      = "esc"
