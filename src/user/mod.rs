@@ -7,9 +7,8 @@ pub use self::style::StyleModTable;
 pub use self::keys::KeysTable;
 
 use crate::{
-  screen::Rect,
   text::StyledText,
-  widget::{Frame, TextBox},
+  widget::{Rect, Frame, TextBox},
   protocol::{GemText, GemTag, GemDoc},
 };
 use toml::{Table, Value};

@@ -3,10 +3,31 @@
 use url::{Url, ParseError};
 use native_tls::TlsConnector;
 use std::{
-  time::{Duration}, 
+  thread,
+  sync::mpsc,
+  time::Duration, 
   io::{Write, Read},
   net::{TcpStream, ToSocketAddrs},
 };
+
+
+pub struct Request {
+  pub url:    Url,
+  pub rx:     mpsc::Receiver<Result<(String, String), String>>,
+  pub handle: thread::JoinHandle<()>,
+}
+impl Request {
+  pub fn new(url: &Url, timeout: u64) -> Self {
+    let (tx, rx)  = mpsc::channel::<Result<(String, String), String>>();
+    let url_clone = url.clone();
+    let handle    = thread::spawn(
+      move || {
+        let result = get_data(&url_clone, timeout);
+        tx.send(result).unwrap();
+      });
+    Self {url: url.clone(), rx, handle}
+  }
+}
 
 pub fn split_whitespace_once(line: &str) -> Option<(&str, &str)> {
   line.find('\u{0009}').or(line.find(' '))

@@ -1,11 +1,11 @@
-// src/composite.rs
+// src/dialog.rs
 
 use crate::{
   common as c,
+  Message,
   user::User,
-  screen::Rect,
   text::{StyledText, Style}, 
-  widget::{Frame, TextBox, EditBox},
+  widget::{Rect, Frame, TextBox, EditBox},
   protocol::{GemDoc, GemTag, Status, Scheme, get_data},
 };
 use crossterm::{
@@ -25,34 +25,6 @@ use std::{
 };
 
 
-pub struct Tab {
-  pub url_str: String,
-  pub gemdoc:  Option<GemDoc>,
-  pub content: TextBox,
-} 
-impl Deref for Tab {
-  type Target = TextBox;
-  fn deref(&self) -> &Self::Target {
-    &self.content
-  }
-}
-impl DerefMut for Tab {
-  fn deref_mut(&mut self) -> &mut Self::Target {
-    &mut self.content
-  }
-}
-impl Tab {
-  pub fn init(rect: &Rect, url_str: &str) -> Self {
-    let mut content = TextBox::default();
-    content.rect = rect.clone();
-    Self {
-      content, 
-      gemdoc:  None,
-      url_str: url_str.into(),
-    }
-  }
-}
-
 pub enum Response {
   Ack(TextBox),
   Ask(TextBox),
@@ -64,6 +36,14 @@ pub struct Dialog {
   pub response: Response,
 } 
 impl Dialog {
+  pub fn resize(&mut self, rect: &Rect) {
+    self.prompt.resize(rect);
+    match &mut self.response {
+      Response::Ack(r) | Response::Ask(r) | Response::Select(r) => 
+        r.resize(rect),
+      Response::Text(r) => r.resize(rect),
+    }
+  }
   pub fn select(prompt: &str, input: Vec<String>, style: Style, rect: &Rect) -> Self {
     let ptext = StyledText::from(prompt).with_style(&style);
     let pbox  = TextBox::new(vec![ptext], &rect.cropped_south(2)).write_unused(false);

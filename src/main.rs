@@ -6,22 +6,22 @@
 #![allow(unused_mut)]
 #![allow(unused_variables)]
 
-mod screen;
 mod text;
 mod widget;
 mod user;
 mod common;
 mod protocol;
-mod composite;
+mod dialog;
+mod tab;
 
 use crate::{
   common as c,
   user::User,
-  screen::Rect,
-  composite::{Tab, Response, Dialog},
+  tab::{Tab, TabList},
+  dialog::{Response, Dialog},
   text::{StyledText, Linear, Style}, 
-  widget::{Frame, TextBox, EditBox, cursor_hide, PlaneWidget},
-  protocol::{GemDoc, GemTag, Status, Scheme, get_data},
+  widget::{Rect, Frame, TextBox, EditBox, cursor_hide, PlaneWidget},
+  protocol::{Request, GemDoc, GemTag, Status, Scheme},
 };
 use crossterm::{
   QueueableCommand,
@@ -111,24 +111,6 @@ fn main() -> io::Result<()> {
   terminal::disable_raw_mode()
 }
 
-pub struct Request {
-  pub url:    Url,
-  pub rx:     mpsc::Receiver<Result<(String, String), String>>,
-  pub handle: thread::JoinHandle<()>,
-}
-impl Request {
-  pub fn new(url: &Url, timeout: u64) -> Self {
-    let (tx, rx)  = mpsc::channel::<Result<(String, String), String>>();
-    let url_clone = url.clone();
-    let handle    = thread::spawn(
-      move || {
-        let result = get_data(&url_clone, timeout);
-        tx.send(result).unwrap();
-      });
-    Self {url: url.clone(), rx, handle}
-  }
-}
-
 #[derive(Clone, Debug)]
 pub enum Message {
   Quit,
@@ -151,7 +133,7 @@ pub struct App {
   pub urls:      Vec<String>,
   pub rect:      Rect,
   pub head:      usize,
-  pub tabs:      Vec<Tab>,
+  pub tabs:      TabList,
   pub dialog:    Option<(Message, Dialog)>,
   pub new_dlg:   bool,
   pub pending:   bool,
@@ -187,7 +169,7 @@ impl App {
       urls,
       init_path: path.into(),
       head:      0,
-      tabs:      vec![tab],
+      tabs:      TabList::new(tab),
       dialog:    None,
       new_dlg:   false,
       pending:   false,
@@ -235,31 +217,13 @@ impl App {
     self.user     = User::from_str(&user_text).unwrap_or_default();
   }
   fn set_gemdoc(&mut self, url: &Url, gemdoc: GemDoc) {
-    let url_str = url.to_string();
-    // search for tab with same url_str
-    let search = self.tabs.iter_mut().enumerate().find(|(_, tab)| tab.url_str == url_str);
-    // move head to location of tab with url_str
-    if let Some((idx, _)) = search {
-      self.head = idx;
-    // or make a new tab
-    } else {
-      let new_tab = Tab::init(&self.rect, &url_str);
-      if self.head + 1 == self.tabs.len() {
-        self.tabs.push(new_tab);
-        self.head += 1;
-      }
-      else {
-        self.head += 1;
-        self.tabs.insert(self.head, new_tab);
-      }
-    }
-    self.tabs[self.head].content.reset_state();
+    self.tabs.add(url.as_str());
     match gemdoc.status.tag {
       Status::InputExpected | Status::InputExpectedSensitive => {
         self.text(Message::Reply, &gemdoc.status.txt);
       }
       Status::RedirectTemporary | Status::RedirectPermanent => {
-        self.tabs[self.head].url_str.push_str(&gemdoc.status.txt);
+        self.tabs.url_str.push_str(&gemdoc.status.txt);
         self.ask(Message::Redirect(gemdoc.status.txt.clone()), &gemdoc.status.txt);
       }
       Status::CertRequiredClient |
@@ -269,8 +233,8 @@ impl App {
       }
       _ => {}
     };
-    self.tabs[self.head].content = self.user.get_gem_textbox(&self.rect, &gemdoc);
-    self.tabs[self.head].gemdoc  = Some(gemdoc);
+    self.tabs.content = self.user.get_gem_textbox(&self.rect, &gemdoc);
+    self.tabs.gemdoc  = Some(gemdoc);
   }
   fn update(&mut self, event: Event) -> Option<Message> {
     self.clear = false;
@@ -280,17 +244,9 @@ impl App {
         self.frame.resize(&Rect::new(w, h));
         self.rect = self.frame.inner_rect.clone();
         if let Some((_, dialog)) = &mut self.dialog {
-          dialog.prompt.resize(&self.rect);
-          match &mut dialog.response {
-            Response::Select(r) => r.resize(&self.rect),
-            Response::Ack(r)    => r.resize(&self.rect),
-            Response::Ask(r)    => r.resize(&self.rect),
-            Response::Text(r)   => r.resize(&self.rect),
-          }
+          dialog.resize(&self.rect);
         }
-        for tab in self.tabs.iter_mut() {
-          tab.content.resize(&self.rect);
-        }
+        self.tabs.resize(&self.rect);
         self.clear = true;
         Some(Message::Default)
       }
@@ -323,7 +279,7 @@ impl App {
               }
             }
             Message::Redirect(url_str) => {
-              self.tabs[self.head].url_str = url_str.clone();
+              self.tabs.url_str = url_str.clone();
               match Url::parse(&url_str) {
                 // failed, create error dialog
                 Err(e)  => {
@@ -334,10 +290,7 @@ impl App {
               }
             }
             Message::Delete => {
-              if self.tabs.len() > 1 {
-                self.tabs.remove(self.head);
-                self.wrapping_backward(1);
-              }
+              self.tabs.delete();
               Some(Message::Default)
             }
             Message::CycleLeft => {
@@ -360,8 +313,8 @@ impl App {
     }
   }
   fn process_keycode(&mut self, kc: &KeyCode) -> Option<Message> {
-    let tab  = &mut self.tabs[self.head];
-    tab.content.reset_state();
+//    let tab  = &mut self.tabs[self.head];
+    self.tabs.reset_state();
     // process keycode for dialog
     if let Some((msg, dialog)) = &mut self.dialog {
       match kc {
@@ -415,7 +368,7 @@ impl App {
                     Some(Message::Go(text))
                   } else if let Message::Reply = msg {
                     let text = text.trim().replace(" ", "%20");
-                    let reply = format!("{}?{}", self.tabs[self.head].url_str, text);
+                    let reply = format!("{}?{}", self.tabs.url_str, text);
                     Some(Message::Input(reply))
                   } else {
                     Some(msg.clone())
@@ -437,7 +390,7 @@ impl App {
         }
       }
     // no dialog
-    } else if self.user.keys.move_content(&kc, tab) {
+    } else if self.user.keys.move_content(&kc, &mut self.tabs) {
       Some(Message::Default)
     } else if kc == &self.user.keys.cycle_left {
       Some(Message::CycleLeft)
@@ -454,7 +407,7 @@ impl App {
       self.select_url(Message::NewTab, "choose the url: ");
       Some(Message::Default)
     } else if kc == &self.user.keys.save_url {
-      let url_str = self.tabs[self.head].url_str.clone();
+      let url_str = self.tabs.url_str.clone();
       // only add url_str if new
       if !self.urls.iter().any(|url| **url == url_str) {
         self.urls.push(url_str);
@@ -473,8 +426,8 @@ impl App {
         }
       } else {None}
     } else if kc == &self.user.keys.inspect {
-      if let Some(gemdoc) = &tab.gemdoc {
-        match gemdoc.doc[tab.content.get_source_idx()].tag.clone() {
+      if let Some(gemdoc) = &self.tabs.gemdoc {
+        match gemdoc.doc[self.tabs.get_source_idx()].tag.clone() {
           GemTag::Link(Scheme::Gemini, url) => {
             let prompt = &format!("go to {}?", url);
             self.ask(Message::Go(url.into()), prompt);
@@ -491,31 +444,24 @@ impl App {
     } else {None}
   }
   fn write(&self, stdout: &mut Stdout) -> io::Result<()> {
-    let tab = &self.tabs[self.head];
     cursor_hide(stdout)?;
     if self.clear {
       stdout.queue(Clear(ClearType::All))?;
       self.frame.write(stdout)?;
     }
-    let banner_text = 
-      if self.pending {
-        format!(" (pending response) {}/{} - {} ", self.head + 1, self.tabs.len(), tab.url_str)
-      } else {
-        format!(" {}/{} - {} ", self.head + 1, self.tabs.len(), tab.url_str)
-      };
-    self.frame.write_banner(&banner_text, stdout)?;
+    self.frame.write_banner(&self.tabs.banner_text(), stdout)?;
     if let Some((_, dialog)) = &self.dialog {
       if self.new_dlg {
         if let Some(fg) = self.user.style.covered.fg {
-          tab.content.write_style(&self.user.style.covered, stdout)?;
+          self.tabs.write_style(&self.user.style.covered, stdout)?;
         } else {
-          tab.content.clear(stdout)?;
+          self.tabs.clear(stdout)?;
         }
       }
       dialog.prompt.write(stdout)?;
       match &dialog.response {
-        Response::Ack(r)  => r.write(stdout)?,
-        Response::Ask(r)  => r.write(stdout)?,
+        Response::Ack(r) | Response::Ask(r) => 
+          r.write(stdout)?,
         Response::Text(r) => {
           r.write(stdout)?;
           r.write_cursor(stdout)?;
@@ -526,8 +472,8 @@ impl App {
         }
       }
     } else {
-      tab.content.write(stdout)?;
-      tab.content.write_cursor(stdout)?;
+      self.tabs.write(stdout)?;
+      self.tabs.write_cursor(stdout)?;
     }
     stdout.flush()
   }

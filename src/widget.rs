@@ -3,14 +3,17 @@
 mod frame;
 mod textbox;
 mod editbox;
+mod rect;
+mod planeview;
 
 pub use self::frame::Frame;
 pub use self::textbox::TextBox;
 pub use self::editbox::EditBox;
+pub use self::rect::Rect;
+pub use self::planeview::{LineView, PlaneView};
 
 use crate::{
   common as c,
-  screen::{Rect, PlaneView},
   text::{Style, StyledText, StyledTextPlane}, 
 };
 use crossterm::{

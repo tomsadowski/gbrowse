@@ -1,8 +1,7 @@
 // src/editbox.rs
 
 use crate::{
-  widget::{write_reset},
-  screen::{Rect, LineView},
+  widget::{Rect, LineView, write_reset},
   text::{Style, EditLine, Linear},
 };
 use crossterm::{
