@@ -1,10 +1,5 @@
 // src/common.rs
 
-use crate::{
-  user::User
-};
-
-
 // env
 pub const START: &str = ".gstart";
 pub const SAVE:  &str = ".gsave";

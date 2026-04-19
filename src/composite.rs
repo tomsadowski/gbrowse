@@ -5,7 +5,7 @@ use crate::{
   user::User,
   screen::Rect,
   text::{StyledText, Style}, 
-  widget::{Frame, TextBox, Dynamo, EditBox},
+  widget::{Frame, TextBox, EditBox},
   protocol::{GemDoc, GemTag, Status, Scheme, get_data},
 };
 use crossterm::{
@@ -17,6 +17,7 @@ use crossterm::{
 use url::Url;
 use std::{
   fs, thread, env,
+  ops::{Deref, DerefMut},
   sync::mpsc,
   time::Duration,
   str::FromStr,
@@ -29,6 +30,17 @@ pub struct Tab {
   pub gemdoc:  Option<GemDoc>,
   pub content: TextBox,
 } 
+impl Deref for Tab {
+  type Target = TextBox;
+  fn deref(&self) -> &Self::Target {
+    &self.content
+  }
+}
+impl DerefMut for Tab {
+  fn deref_mut(&mut self) -> &mut Self::Target {
+    &mut self.content
+  }
+}
 impl Tab {
   pub fn init(rect: &Rect, url_str: &str) -> Self {
     let mut content = TextBox::default();
@@ -42,21 +54,23 @@ impl Tab {
 }
 
 pub enum Response {
-  Ack(Dynamo),
-  Ask(Dynamo),
+  Ack(TextBox),
+  Ask(TextBox),
   Text(EditBox),
-  Select(Dynamo),
+  Select(TextBox),
 }
 pub struct Dialog {
-  pub prompt:   Dynamo,
+  pub prompt:   TextBox,
   pub response: Response,
 } 
 impl Dialog {
   pub fn select(prompt: &str, input: Vec<String>, style: Style, rect: &Rect) -> Self {
     let ptext = StyledText::from(prompt).with_style(&style);
-    let pbox  = Dynamo::new(vec![ptext], &rect.clone().crop_south(2));
+    let pbox  = TextBox::new(vec![ptext], &rect.cropped_south(2)).write_unused(false);
     let rtext = input.iter().map(|s| StyledText::from(s.as_str()).with_style(&style));
-    let rbox  = Dynamo::new(rtext.collect(), &rect.clone().crop_north(pbox.used.h));
+    let rbox  = 
+      TextBox::new(rtext.collect(), &rect.cropped_north(pbox.used_rect().h))
+        .write_unused(false);
     Dialog {
       prompt:   pbox,
       response: Response::Select(rbox),
@@ -64,8 +78,8 @@ impl Dialog {
   }
   pub fn text(prompt: &str, style: Style, rect: &Rect) -> Self {
     let ptext = StyledText::from(prompt).with_style(&style);
-    let pbox  = Dynamo::new(vec![ptext], &rect.clone().crop_south(2));
-    let rbox  = EditBox::new(&pbox.used.bottom_row()).with_style(&style);
+    let pbox  = TextBox::new(vec![ptext], &rect.cropped_south(2)).write_unused(false);
+    let rbox  = EditBox::new(&pbox.used_rect().bottom_row()).with_style(&style);
     Dialog {
       prompt:   pbox,
       response: Response::Text(rbox),
@@ -73,9 +87,9 @@ impl Dialog {
   }
   pub fn ask(prompt: &str, input: &str, style: Style, rect: &Rect) -> Self {
     let ptext = StyledText::from(prompt).with_style(&style);
-    let pbox  = Dynamo::new(vec![ptext], &rect.clone().crop_south(2));
+    let pbox  = TextBox::new(vec![ptext], &rect.cropped_south(2)).write_unused(false);
     let rtext = StyledText::from(input).with_style(&style);
-    let rbox  = Dynamo::new(vec![rtext], &pbox.used.bottom_row());
+    let rbox  = TextBox::new(vec![rtext], &pbox.used_rect().bottom_row()).write_unused(false);
     Dialog {
       prompt:   pbox,
       response: Response::Ask(rbox),
@@ -83,9 +97,9 @@ impl Dialog {
   }
   pub fn ack(prompt: &str, input: &str, style: Style, rect: &Rect) -> Self {
     let ptext = StyledText::from(prompt).with_style(&style);
-    let pbox  = Dynamo::new(vec![ptext], &rect.clone().crop_south(2));
+    let pbox  = TextBox::new(vec![ptext], &rect.cropped_south(2)).write_unused(false);
     let rtext = StyledText::from(input).with_style(&style);
-    let rbox  = Dynamo::new(vec![rtext], &pbox.used.bottom_row());
+    let rbox  = TextBox::new(vec![rtext], &pbox.used_rect().bottom_row()).write_unused(false);
     Dialog {
       prompt:   pbox,
       response: Response::Ack(rbox),

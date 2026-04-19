@@ -3,27 +3,26 @@
 mod frame;
 mod textbox;
 mod editbox;
-mod dynamo;
 
 pub use self::frame::Frame;
 pub use self::textbox::TextBox;
 pub use self::editbox::EditBox;
-pub use self::dynamo::Dynamo;
 
 use crate::{
   common as c,
   screen::{Rect, PlaneView},
-  text::{Style, StyledText}, 
+  text::{Style, StyledText, StyledTextPlane}, 
 };
 use crossterm::{
   QueueableCommand, 
-  style::{SetAttribute, Attribute, Color},
+  style::{SetAttribute, Attribute, Color, Print},
   cursor::{self, MoveTo},
 };
 use std::{
   ops::Range,
   io::{self, Write}
 };
+
 
 pub fn write_reset<W: Write>(writer: &mut W) -> io::Result<()> {
   writer.queue(SetAttribute(Attribute::Reset))?;
@@ -48,18 +47,7 @@ impl PlaneWidget for TextBox {
     (self.pos.x_cursor(), self.pos.y_cursor())
   }
   fn write<W: Write>(&self, writer: &mut W) -> io::Result<()> {
-    if let Some(ChangeType::Scroll) = self.change {
-      self.write_all(writer)?;
-    }
-    Ok(())
-  }
-}
-impl PlaneWidget for Dynamo {
-  fn pos(&self) -> (u16, u16) {
-    (self.pos.x_cursor(), self.pos.y_cursor())
-  }
-  fn write<W: Write>(&self, writer: &mut W) -> io::Result<()> {
-    if let Some(ChangeType::Scroll) = self.change {
+    if self.write {
       self.write_all(writer)?;
     }
     Ok(())
@@ -70,17 +58,13 @@ impl PlaneWidget for EditBox {
     (self.pos.cursor(), self.rect.y)
   }
   fn write<W: Write>(&self, writer: &mut W) -> io::Result<()> {
-    if let Some(ChangeType::Scroll) = self.change {
+    if self.write {
       self.write_all(writer)?;
     }
     Ok(())
   }
 }
 
-#[derive(Clone, Debug)]
-pub enum ChangeType {
-  Cursor, Scroll,
-}
 #[derive(Debug, Clone)]
 pub struct MarginSpec {
   pub north: u16,

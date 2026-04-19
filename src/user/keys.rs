@@ -1,9 +1,16 @@
 // src/user/keys.rs
 
-use crate::user::UserTable;
+use crate::{
+  user::UserTable,
+  widget::{TextBox},
+};
 use crossterm::event::KeyCode;
 use toml::Value;
 use std::str::FromStr;
+
+
+pub trait ProcessKeycode {
+}
 
 #[derive(Debug)]
 pub enum KeysField {
@@ -82,6 +89,27 @@ pub struct KeysTable {
   pub no:          KeyCode,
   pub cancel:      KeyCode,
 } 
+impl KeysTable {
+  pub fn move_content(&self, kc: &KeyCode, content: &mut TextBox) -> bool {
+    if kc == &self.pgdown {
+      content.down(usize::from(content.rect.h))
+    } else if kc == &self.pgup {
+      content.up(usize::from(content.rect.h))
+    } else if kc == &self.bottom {
+      content.down(content.y_len())
+    } else if kc == &self.top {
+      content.up(content.y_len())
+    } else if kc == &self.down {
+      content.down(1)
+    } else if kc == &self.up {
+      content.up(1)
+    } else if kc == &self.left {
+      content.left(1)
+    } else if kc == &self.right {
+      content.right(1)
+    } else {false}
+  }
+}
 impl Default for KeysTable {
   fn default() -> Self {
     Self {
@@ -110,9 +138,7 @@ impl Default for KeysTable {
   }
 }
 impl UserTable<KeysField> for KeysTable {
-  fn try_assign(&mut self, field: KeysField, value: Value) 
-    -> Result<(), String> 
-  {
+  fn try_assign(&mut self, field: KeysField, value: Value) -> Result<(), String> {
     let get_keycode = || -> Result<KeyCode, String> {
       if let Value::String(s) = value {
         match s.as_str() {

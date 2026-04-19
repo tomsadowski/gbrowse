@@ -261,20 +261,19 @@ impl StyledText {
   }
   // get indexed owned chars
   pub fn print_vec(vec: &Vec<Self>, width: usize) -> Vec<(usize, Vec<char>)> {
-    vec.iter().enumerate().flat_map(
-      |(idx, styled)| 
-        styled.print(width)
-          .into_iter()
+    vec.iter().enumerate()
+      .flat_map(|(idx, styled)| 
+        styled.print(width).into_iter()
           .map(move |text| (idx, text))
       ).collect()
   }
 }
 pub struct StyledTextPlane {
-  pub head: usize,
-  pub pref_x: usize,
   // usize: location of StyledText in source
-  pub text: Vec<(usize, TextLine)>,
+  pub text:   Vec<(usize, TextLine)>, 
   pub source: Vec<StyledText>,
+  pub head:   usize,
+  pub pref_x: usize,
 }
 impl Default for StyledTextPlane {
   fn default() -> Self {
@@ -307,15 +306,13 @@ impl Planar for StyledTextPlane {
 }
 impl StyledTextPlane {
   pub fn new(source: Vec<StyledText>, width: u16) -> Self {
-    let text = 
-      StyledText::print_vec(&source, usize::from(width))
-        .into_iter()
-        .map(|(idx, text)| (idx, TextLine::from(text)));
+    let text = StyledText::print_vec(&source, usize::from(width)).into_iter()
+      .map(|(idx, text)| (idx, TextLine::from(text)));
     Self {
-      head: 0, 
+      source,
+      head:   0, 
       pref_x: 0, 
-      text: text.collect(), 
-      source
+      text:   text.collect(), 
     }
   }
   pub fn get_source_idx(&self) -> usize {
@@ -334,12 +331,9 @@ impl StyledTextPlane {
     self.right(idx);
   }
   pub fn resize(&mut self, width: u16) {
-    let idx = self.get_idx();
-    self.text = 
-      StyledText::print_vec(&self.source, usize::from(width))
-        .into_iter()
-        .map(|(idx, text)| (idx, TextLine::from(text)))
-        .collect();
+    let idx   = self.get_idx();
+    self.text = StyledText::print_vec(&self.source, usize::from(width)).into_iter()
+      .map(|(idx, text)| (idx, TextLine::from(text))).collect();
     self.set_idx(idx);
   }
   pub fn up(&mut self, step: usize) -> bool {

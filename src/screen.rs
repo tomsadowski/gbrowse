@@ -58,14 +58,14 @@ impl Rect {
     rect.h = h.min(self.h);
     rect
   }
-  pub fn cut_x_range(&self, step: u16) -> Range<u16> {
+  pub fn cropped_west_range(&self, step: u16) -> Range<u16> {
     if self.w >= step {
       Range {start: self.x + step, end: self.x_end()}
     } else {
       Range {start: self.x_end(), end: self.x_end()}
     }
   }
-  pub fn cut_y_range(&self, step: u16) -> Range<u16> {
+  pub fn cropped_north_range(&self, step: u16) -> Range<u16> {
     if self.h >= step {
       Range {start: self.y + step, end: self.y_end()}
     } else {
@@ -84,6 +84,18 @@ impl Rect {
   pub fn resize(&mut self, w: u16, h: u16) {
     self.w = w; 
     self.h = h;
+  }
+  pub fn cropped_south(mut self, step: u16) -> Self {
+    self.clone().crop_south(step)
+  }
+  pub fn cropped_east(mut self, step: u16) -> Self {
+    self.clone().crop_east(step)
+  }
+  pub fn cropped_north(mut self, step: u16) -> Self {
+    self.clone().crop_north(step)
+  }
+  pub fn cropped_west(mut self, step: u16) -> Self {
+    self.clone().crop_west(step)
   }
   pub fn crop_south(mut self, step: u16) -> Self {
     if step < self.h {

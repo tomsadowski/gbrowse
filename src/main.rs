@@ -20,7 +20,7 @@ use crate::{
   screen::Rect,
   composite::{Tab, Response, Dialog},
   text::{StyledText, Linear, Style}, 
-  widget::{Frame, TextBox, Dynamo, EditBox, cursor_hide, PlaneWidget},
+  widget::{Frame, TextBox, EditBox, cursor_hide, PlaneWidget},
   protocol::{GemDoc, GemTag, Status, Scheme, get_data},
 };
 use crossterm::{
@@ -371,14 +371,8 @@ impl App {
         }
         _ => match &mut dialog.response {
           Response::Select(content) => {
-            if kc == &self.user.keys.down {
-              content.down(1).then_some(Message::Default)
-            } else if kc == &self.user.keys.up {
-              content.up(1).then_some(Message::Default)
-            } else if kc == &self.user.keys.left {
-              content.left(1).then_some(Message::Default)
-            } else if kc == &self.user.keys.right {
-              content.right(1).then_some(Message::Default)
+            if self.user.keys.move_content(&kc, content) {
+              Some(Message::Default)
             } else if kc == &self.user.keys.inspect {
               if let Message::NewTab = &msg {
                 if self.urls.len() > 0 {
@@ -443,22 +437,8 @@ impl App {
         }
       }
     // no dialog
-    } else if kc == &self.user.keys.pgdown {
-      tab.content.down(usize::from(self.rect.h)).then_some(Message::Default)
-    } else if kc == &self.user.keys.pgup {
-      tab.content.up(usize::from(self.rect.h)).then_some(Message::Default)
-    } else if kc == &self.user.keys.bottom {
-      tab.content.down(tab.content.y_len()).then_some(Message::Default)
-    } else if kc == &self.user.keys.top {
-      tab.content.up(tab.content.y_len()).then_some(Message::Default)
-    } else if kc == &self.user.keys.down {
-      tab.content.down(1).then_some(Message::Default)
-    } else if kc == &self.user.keys.up {
-      tab.content.up(1).then_some(Message::Default)
-    } else if kc == &self.user.keys.left {
-      tab.content.left(1).then_some(Message::Default)
-    } else if kc == &self.user.keys.right {
-      tab.content.right(1).then_some(Message::Default)
+    } else if self.user.keys.move_content(&kc, tab) {
+      Some(Message::Default)
     } else if kc == &self.user.keys.cycle_left {
       Some(Message::CycleLeft)
     } else if kc == &self.user.keys.cycle_right {

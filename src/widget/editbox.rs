@@ -1,7 +1,7 @@
 // src/editbox.rs
 
 use crate::{
-  widget::{write_reset, ChangeType},
+  widget::{write_reset},
   screen::{Rect, LineView},
   text::{Style, EditLine, Linear},
 };
@@ -17,11 +17,11 @@ use std::{
 // coordinate Page and PlaneView
 #[derive(Default)]
 pub struct EditBox {
-  pub style:   Style,
-  pub change:  Option<ChangeType>,
-  pub rect:    Rect,
-  pub content: EditLine,
-  pub pos:     LineView,
+  pub style:          Style,
+  pub write:          bool,
+  pub rect:           Rect,
+  pub content:        EditLine,
+  pub pos:            LineView,
   pub write_unused_x: bool,
 }
 impl EditBox {
@@ -32,7 +32,7 @@ impl EditBox {
       rect:             rect.clone(),
       style:            Style::default(),
       write_unused_x:   false,
-      change:           Some(ChangeType::Scroll),
+      write:            true,
       pos, 
       content, 
     }
@@ -41,27 +41,27 @@ impl EditBox {
     self.style = style.clone();
     self
   }
+  pub fn write_unused_x(mut self, write: bool) -> Self {
+    self.write_unused_x = write;
+    self
+  }
   pub fn resize(&mut self, rect: &Rect) {
     self.rect = rect.clone();
     self.pos.resize(self.content.head, self.rect.x, self.rect.w);
     self.reset_state();
   }
   pub fn reset_state(&mut self) {
-    self.change = Some(ChangeType::Scroll);
+    self.write = true;
   }
   pub fn left(&mut self, step: usize) -> bool {
     if self.content.backward(step) == 0 {
-      self.change = self.pos.update(self.content.head)
-        .then_some(ChangeType::Scroll)
-        .or(Some(ChangeType::Cursor));
+      self.write = self.pos.update(self.content.head);
       true
     } else {false}
   }
   pub fn right(&mut self, step: usize) -> bool {
     if self.content.forward(step) == 0 {
-      self.change = self.pos.update(self.content.head)
-        .then_some(ChangeType::Scroll)
-        .or(Some(ChangeType::Cursor));
+      self.write = self.pos.update(self.content.head);
       true
     } else {false}
   }
@@ -69,7 +69,7 @@ impl EditBox {
     if self.content.delete() {
       self.write_unused_x = true;
       self.pos.update(self.content.head);
-      self.change = Some(ChangeType::Scroll);
+      self.write = true;
       true
     } else {false}
   }
@@ -77,14 +77,14 @@ impl EditBox {
     if self.content.backspace() {
       self.write_unused_x = true;
       self.pos.update(self.content.head);
-      self.change = Some(ChangeType::Scroll);
+      self.write = true;
       true
     } else {false}
   }
   pub fn insert(&mut self, c: char) -> bool {
     if self.content.insert(c) {
       self.pos.update(self.content.head);
-      self.change = Some(ChangeType::Scroll);
+      self.write = true;
       true
     } else {false}
   }
@@ -102,7 +102,7 @@ impl EditBox {
       write_reset(writer)?;
       self.style.write(writer)?;
       if let Ok(len) = u16::try_from(text.len()) {
-        for x in self.rect.cut_x_range(len) {
+        for x in self.rect.cropped_west_range(len) {
           writer.queue(MoveTo(x, self.rect.y))?.queue(Print(' '))?;
         }
       }
