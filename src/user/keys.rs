@@ -1,16 +1,16 @@
 // src/user/keys.rs
 
 use crate::{
-  Focus,
+  Focus, Message,
   user::UserTable,
-  dialog::{Dialog, ResponseType},
+  dialog::{Dialog, Response, ResponseType},
   widget::{TextBox},
 };
 use crossterm::event::KeyCode;
 use toml::Value;
 use std::str::FromStr;
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub enum Action {
   Insert(char),
   Backspace,
@@ -140,18 +140,26 @@ impl Default for KeysTable {
   }
 }
 impl KeysTable {
-  pub fn get(&self, focus: Focus, kc: &KeyCode) -> Option<Action> {
-    match focus {
-      Focus::Tab            => self.get_tab_key(kc),
-      Focus::Dialog(response) => match response {
-        ResponseType::Ack    => self.get_ack(kc),
-        ResponseType::Ask    => self.get_ask(kc),
-        ResponseType::Text   => self.get_text(kc),
-        ResponseType::Select => None,
-      }
+  pub fn get_dialog_action(&self, dialog: &Dialog, kc: &KeyCode) -> Option<Action> {
+    match dialog.response {
+      Response::Ack(_)    => self.get_ack_dialog_action(kc),
+      Response::Ask(_)    => self.get_ask_dialog_action(kc),
+      Response::Text(_)   => self.get_text_dialog_action(kc),
+      Response::Select(_) => self.get_select_dialog_action(kc),
     }
   }
-  pub fn get_text_box_key(&self, kc: &KeyCode) -> Option<Action> {
+  pub fn get_tab_action(&self, kc: &KeyCode) -> Option<Action> {
+    if        &self.load_url    == kc {Some(Action::LoadUrl)
+    } else if &self.help_view   == kc {Some(Action::SaveUrl)
+    } else if &self.help_view   == kc {Some(Action::HelpView)
+    } else if &self.log_view    == kc {Some(Action::LogView)
+    } else if &self.cycle_left  == kc {Some(Action::CycleLeft)
+    } else if &self.cycle_right == kc {Some(Action::CycleRight)
+    } else if &self.delete_tab  == kc {Some(Action::DelTab)
+    } else if &self.new_tab     == kc {Some(Action::NewTab)
+    } else                            {self.get_text_box_action(kc)}
+  }
+  pub fn get_text_box_action(&self, kc: &KeyCode) -> Option<Action> {
     if        &self.up          == kc {Some(Action::MoveUp)
     } else if &self.down        == kc {Some(Action::MoveDown)
     } else if &self.left        == kc {Some(Action::MoveLeft)
@@ -163,42 +171,32 @@ impl KeysTable {
     } else if &self.pgdown      == kc {Some(Action::PageDown)
     } else {None}
   }
-  pub fn get_tab_key(&self, kc: &KeyCode) -> Option<Action> {
-    if        &self.load_url    == kc {Some(Action::LoadUrl)
-    } else if &self.help_view   == kc {Some(Action::SaveUrl)
-    } else if &self.help_view   == kc {Some(Action::HelpView)
-    } else if &self.log_view    == kc {Some(Action::LogView)
-    } else if &self.cycle_left  == kc {Some(Action::CycleLeft)
-    } else if &self.cycle_right == kc {Some(Action::CycleRight)
-    } else if &self.delete_tab  == kc {Some(Action::DelTab)
-    } else if &self.new_tab     == kc {Some(Action::NewTab)
-    } else                            {self.get_text_box_key(kc)}
-  }
-  pub fn get_ack(&self, kc: &KeyCode) -> Option<Action> {
+  pub fn get_ack_dialog_action(&self, kc: &KeyCode) -> Option<Action> {
     if        &self.cancel == kc {Some(Action::Cancel)
     } else if &self.ack    == kc {Some(Action::Ack)
     } else                       {None}
   }
-  pub fn get_ask(&self, kc: &KeyCode) -> Option<Action> {
+  pub fn get_ask_dialog_action(&self, kc: &KeyCode) -> Option<Action> {
     if        &self.cancel == kc {Some(Action::Cancel)
     } else if &self.yes    == kc {Some(Action::Yes)
     } else if &self.no     == kc {Some(Action::No)
     } else                       {None}
   }
-  pub fn get_select(&self, kc: &KeyCode) -> Option<Action> {
+  pub fn get_select_dialog_action(&self, kc: &KeyCode) -> Option<Action> {
     if &self.cancel == kc {Some(Action::Cancel)
-    } else                {self.get_text_box_key(kc)}
+    } else                {self.get_text_box_action(kc)}
   }
-  pub fn get_text(&self, kc: &KeyCode) -> Option<Action> {
+  pub fn get_text_dialog_action(&self, kc: &KeyCode) -> Option<Action> {
     if &self.cancel == kc {Some(Action::Cancel)
-    } else                {self.get_edit_box(kc)}
+    } else                {self.get_edit_box_action(kc)}
   }
-  pub fn get_edit_box(&self, kc: &KeyCode) -> Option<Action> {
+  pub fn get_edit_box_action(&self, kc: &KeyCode) -> Option<Action> {
     match kc {
       KeyCode::Left      => Some(Action::MoveLeft),
       KeyCode::Right     => Some(Action::MoveRight),
       KeyCode::Backspace => Some(Action::Backspace),
       KeyCode::Delete    => Some(Action::Delete),
+      KeyCode::Enter     => Some(Action::Enter),
       KeyCode::Char(c)   => Some(Action::Insert(*c)),
       _                  => None,
     }

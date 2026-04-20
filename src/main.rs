@@ -115,10 +115,8 @@ fn main() -> io::Result<()> {
 pub enum Message {
   Quit,
   Default, 
-  CycleLeft, 
-  CycleRight, 
-  Delete, 
-  NewTab, 
+  Resize(u16, u16),
+  Action(Action),
   Reply,
   Request(Url),
   Input(String),
@@ -126,12 +124,7 @@ pub enum Message {
   Go(String), 
 }
 pub enum Focus {
-  Tab, Dialog(ResponseType),
-}
-
-pub struct DialogTask {
-  pub msg: Message,
-  pub dlg: Dialog,
+  Tab, Dialog(Message, Dialog),
 }
 
 pub struct App {
@@ -142,7 +135,7 @@ pub struct App {
   pub rect:      Rect,
   pub head:      usize,
   pub tabs:      TabList,
-  pub dialog:    Option<(Message, Dialog)>,
+  pub focus:     Focus,
   pub new_dlg:   bool,
   pub pending:   bool,
   pub clear:     bool,
@@ -178,7 +171,7 @@ impl App {
       init_path: path.into(),
       head:      0,
       tabs:      TabList::new(tab),
-      dialog:    None,
+      focus:     Focus::Tab,
       new_dlg:   false,
       pending:   false,
       clear:     true
@@ -188,26 +181,26 @@ impl App {
     let style    = self.user.style.info.style.clone();
     let help     = &format!("Press {} to acknowledge", self.user.keys.ack);
     let dialog   = Dialog::ack(prompt, help, style, &self.rect);
-    self.dialog  = Some((msg, dialog));
+    self.focus   = Focus::Dialog(msg, dialog);
     self.new_dlg = true;
   }
   fn ask(&mut self, msg: Message, prompt: &str) {
     let style    = self.user.style.info.style.clone();
     let help     = &format!("{} yes {} no", self.user.keys.yes, self.user.keys.no);
     let dialog   = Dialog::ask(prompt, help, style, &self.rect);
-    self.dialog  = Some((msg, dialog));
+    self.focus   = Focus::Dialog(msg, dialog);
     self.new_dlg = true;
   }
   fn text(&mut self, msg: Message, prompt: &str) {
     let style    = self.user.style.info.style.clone();
     let dialog   = Dialog::text(prompt, style, &self.rect);
-    self.dialog  = Some((msg, dialog));
+    self.focus   = Focus::Dialog(msg, dialog);
     self.new_dlg = true;
   }
   fn select_url(&mut self, msg: Message, prompt: &str) {
     let style    = self.user.style.info.style.clone();
     let dialog   = Dialog::select(prompt, self.urls.clone(), style, &self.rect);
-    self.dialog  = Some((msg, dialog));
+    self.focus   = Focus::Dialog(msg, dialog);
     self.new_dlg = true;
   }
   fn get_init_url(&mut self) -> Option<Url> {
@@ -244,19 +237,10 @@ impl App {
     self.tabs.content = self.user.get_gem_textbox(&self.rect, &gemdoc);
     self.tabs.gemdoc  = Some(gemdoc);
   }
-  fn update(&mut self, event: Event) -> Option<Message> {
-    self.clear = false;
-    self.new_dlg = false;
+  fn get_update(&self, event: Event) -> Option<Message> {
     match event {
       Event::Resize(w, h) => {
-        self.frame.resize(&Rect::new(w, h));
-        self.rect = self.frame.inner_rect.clone();
-        if let Some((_, dialog)) = &mut self.dialog {
-          dialog.resize(&self.rect);
-        }
-        self.tabs.resize(&self.rect);
-        self.clear = true;
-        Some(Message::Default)
+        Some(Message::Resize(w, h))
       }
       Event::Key(
         KeyEvent {
@@ -265,7 +249,6 @@ impl App {
           kind: KeyEventKind::Press, ..
         }
       ) => {
-        self.clear = true;
         Some(Message::Quit)
       }
       Event::Key(
@@ -274,58 +257,108 @@ impl App {
           kind: KeyEventKind::Press, ..
         }
       ) => {
-        if let Some(response) = self.process_keycode(&kc) {
-          match response {
-            Message::Input(url_str) | Message::Go(url_str) => {
-              match Url::parse(&url_str) {
-                // failed, create error dialog
-                Err(e)  => {
-                  self.ack(Message::Default, &e.to_string());
-                  Some(Message::Default)
+        if let Focus::Dialog(message, dialog) = &self.focus {
+          match &dialog.response {
+            Response::Ack(_) => {
+              if let Some(action) = self.user.keys.get_ack_dialog_action(&kc) {
+                match (message, action) {
+                  _ => {None}
                 }
-                Ok(url) => Some(Message::Request(url)),
-              }
-            }
-            Message::Redirect(url_str) => {
-              self.tabs.url_str = url_str.clone();
-              match Url::parse(&url_str) {
-                // failed, create error dialog
-                Err(e)  => {
-                  self.ack(Message::Delete, &e.to_string());
-                  Some(Message::Default)
-                }
-                Ok(url) => Some(Message::Request(url)),
-              }
-            }
-            Message::Delete => {
-              self.tabs.delete();
-              Some(Message::Default)
-            }
-            Message::CycleLeft => {
-              if self.tabs.len() > 1 {
-                self.wrapping_backward(1);
-                Some(Message::Default)
               } else {None}
             }
-            Message::CycleRight => {
-              if self.tabs.len() > 1 {
-                self.wrapping_forward(1);
-                Some(Message::Default)
+            Response::Ask(_) => {
+              if let Some(action) = self.user.keys.get_ask_dialog_action(&kc) {
+                match (message, action) {
+                  _ => {None}
+                }
               } else {None}
             }
-            _ => Some(Message::Default)
-          } 
-        } else {None}
+            Response::Text(editbox) => {
+              if let Some(action) = self.user.keys.get_text_dialog_action(&kc) {
+                match (message, action) {
+                  _ => {None}
+                }
+              } else {None}
+            }
+            Response::Select(textbox) => {
+              if let Some(action) = self.user.keys.get_select_dialog_action(&kc) {
+                match (message, action) {
+                  _ => {None}
+                }
+              } else {None}
+            }
+          }
+        } else {
+          if let Some(action) = self.user.keys.get_tab_action(&kc) {
+            match action {
+              action => Some(Message::Action(action)),
+            }
+          } else {None}
+        }
       }
-      _ => None
+      _ => None,
     }
   }
-  fn get_key(&self, kc: &KeyCode) -> Option<Action> {
-    let focus = match &self.dialog {
-      Some((_, dialog)) => Focus::Dialog(dialog.response.get_type()),
-      None => Focus::Tab,
-    };
-    self.user.keys.get(focus, kc)
+  fn update(&mut self, message: Message) -> bool {
+    self.clear = false;
+    self.new_dlg = false;
+    match message {
+      Message::Resize(w, h) => {
+        self.frame.resize(&Rect::new(w, h));
+        self.rect = self.frame.inner_rect.clone();
+        if let Focus::Dialog(_, dialog) = &mut self.focus {
+          dialog.resize(&self.rect);
+        }
+        self.tabs.resize(&self.rect);
+        self.clear = true;
+        true
+      }
+      Message::Input(url_str) | Message::Go(url_str) => {
+        match Url::parse(&url_str) {
+          // failed, create error dialog
+          Err(e)  => {
+            self.ack(Message::Default, &e.to_string());
+            true
+          }
+          Ok(url) => 
+            //Some(Message::Request(url)),
+            true,
+        }
+      }
+      Message::Redirect(url_str) => {
+        self.tabs.url_str = url_str.clone();
+        match Url::parse(&url_str) {
+          // failed, create error dialog
+          Err(e)  => {
+            self.ack(Message::Delete, &e.to_string());
+            true
+          }
+          Ok(url) => 
+            //Some(Message::Request(url)),
+            true,
+        }
+      }
+      Message::Action(action) => match action {
+        Action::DelTab => {
+          self.tabs.delete();
+          true
+        }
+        Action::CycleLeft => {
+          if self.tabs.len() > 1 {
+            self.wrapping_backward(1);
+            true
+          } else {false}
+        }
+        Action::CycleRight => {
+          if self.tabs.len() > 1 {
+            self.wrapping_forward(1);
+            true
+          } else {false}
+        }
+        _ => false,
+      }
+      _ => false
+    } 
   }
   fn process_keycode(&mut self, kc: &KeyCode) -> Option<Message> {
     self.tabs.reset_state();
@@ -464,7 +497,7 @@ impl App {
       self.frame.write(stdout)?;
     }
     self.frame.write_banner(&self.tabs.banner_text(), stdout)?;
-    if let Some((_, dialog)) = &self.dialog {
+    if let Focus::Dialog(_, dialog) = &self.focus {
       if self.new_dlg {
         if let Some(fg) = self.user.style.covered.fg {
           self.tabs.write_style(&self.user.style.covered, stdout)?;
