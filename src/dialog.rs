@@ -25,27 +25,11 @@ use std::{
 };
 
 
-pub enum ResponseType {
-  Ack,
-  Ask,
-  Text,
-  Select,
-}
 pub enum Response {
   Ack(TextBox),
   Ask(TextBox),
   Text(EditBox),
   Select(TextBox),
-}
-impl Response {
-  pub fn get_type(&self) -> ResponseType {
-    match self {
-      Response::Ack(_) => ResponseType::Ack,
-      Response::Ask(_) => ResponseType::Ask,
-      Response::Text(_) => ResponseType::Text,
-      Response::Select(_) => ResponseType::Select,
-    }
-  }
 }
 pub struct Dialog {
   pub prompt:   TextBox,
