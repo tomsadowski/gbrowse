@@ -16,9 +16,9 @@ mod tab;
 
 use crate::{
   common as c,
-  user::User,
+  user::{User, Action},
   tab::{Tab, TabList},
-  dialog::{Response, Dialog},
+  dialog::{Response, ResponseType, Dialog},
   text::{StyledText, Linear, Style}, 
   widget::{Rect, Frame, TextBox, EditBox, cursor_hide, PlaneWidget},
   protocol::{Request, GemDoc, GemTag, Status, Scheme},
@@ -124,6 +124,14 @@ pub enum Message {
   Input(String),
   Redirect(String),
   Go(String), 
+}
+pub enum Focus {
+  Tab, Dialog(ResponseType),
+}
+
+pub struct DialogTask {
+  pub msg: Message,
+  pub dlg: Dialog,
 }
 
 pub struct App {
@@ -312,8 +320,14 @@ impl App {
       _ => None
     }
   }
+  fn get_key(&self, kc: &KeyCode) -> Option<Action> {
+    let focus = match &self.dialog {
+      Some((_, dialog)) => Focus::Dialog(dialog.response.get_type()),
+      None => Focus::Tab,
+    };
+    self.user.keys.get(focus, kc)
+  }
   fn process_keycode(&mut self, kc: &KeyCode) -> Option<Message> {
-//    let tab  = &mut self.tabs[self.head];
     self.tabs.reset_state();
     // process keycode for dialog
     if let Some((msg, dialog)) = &mut self.dialog {
@@ -343,14 +357,14 @@ impl App {
             } else {None}
           }
           Response::Ack(_) => {
-            if self.user.keys.ack ==  *kc {
+            if self.user.keys.ack == *kc {
               let msg = Some(msg.clone());
               self.dialog = None;
               msg
             } else {None}
           }
           Response::Ask(_) => {
-            if self.user.keys.yes ==  *kc {
+            if self.user.keys.yes == *kc {
               let msg = Some(msg.clone());
               self.dialog = None;
               msg

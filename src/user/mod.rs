@@ -4,7 +4,7 @@ mod style;
 mod keys;
 
 pub use self::style::StyleModTable;
-pub use self::keys::KeysTable;
+pub use self::keys::{KeysTable, Action};
 
 use crate::{
   text::StyledText,
