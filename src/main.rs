@@ -17,7 +17,7 @@ mod message;
 
 use crate::{
   common as c,
-  message::{Message, Task, Action, Focus, ResponseType},
+  message::{Message, Task, Action, Focus},
   user::{User},
   tab::{Tab, TabList},
   dialog::{Response, Dialog},
@@ -60,7 +60,6 @@ fn main() -> io::Result<()> {
   let mut request_maybe: Option<Request> = None;
   // first message is Request, which will request the initial url
   let mut message_maybe: Option<Message> = app.get_init_url().map(|url| Message::RequestHere(url));
-  let mut write = true;
   let mut quit = false;
   // initial display
   app.write(&mut stdout)?;
@@ -81,21 +80,17 @@ fn main() -> io::Result<()> {
     } 
     if event::poll(Duration::from_millis(16))? {
       if let Some(message) = app.get_update(event::read()?) {
-        if let Message::RequestHere(url) | Message::RequestNew(url) = &message {
+        if let Some(request) = app.update(&message) {
           if let None = &mut request_maybe {
+            request_maybe = Some(request);
             app.pending = true;
-            request_maybe = Some(Request::new(&url, app.user.timeout));
           }
         } else if let Message::Quit = message {
           quit = true;
         }
-        write = app.update(&message);
       }
     } 
-    if write {
-      app.write(&mut stdout)?;
-      write = false;
-    }
+    app.write(&mut stdout)?;
     message_maybe = None;
   }
   // return terminal to normal state
@@ -245,11 +240,13 @@ impl App {
     }
   }
   fn try_request(&mut self, url_str: &str) -> Option<Request> {
-    match Url::parse(&self.urls[textbox.content.get_source_idx()].clone()) {
-      Err(e)  => 
-        self.ack(Task::Default, &format!("URL parse error: {}", &e));
+    match Url::parse(url_str) {
+      Err(e)  => {
+        self.ack(Task::Default, &format!("URL parse error: {}", &e)); 
+        None
+      }
       Ok(url) => 
-        Some(Request::new(url, self.user.timeout)),
+        Some(Request::new(&url, self.user.timeout)),
     }
   }
   fn update(&mut self, message: &Message) -> Option<Request> {
@@ -279,7 +276,7 @@ impl App {
                 self.try_request(&format!("{}?{}", self.tabs.url_str, text))
               }
               Task::DelTab => {
-                self.tabs.remove();
+                self.tabs.delete();
                 self.focus = Focus::Tab; None
               }
               _ => {
@@ -300,11 +297,15 @@ impl App {
               }
               _ => None,
             }
-            Action::MoveLeft    => {textbox.left(1); None}
-            Action::MoveRight   => {textbox.right(1); None}
-            Action::MoveUp      => {textbox.up(1); None}
-            Action::MoveDown    => {textbox.down(1); None}
-            Action::Cancel      => {self.focus = Focus::Tab; None}
+            Action::MoveLeft  => {textbox.left(1); None}
+            Action::MoveRight => {textbox.right(1); None}
+            Action::MoveUp    => {textbox.up(1); None}
+            Action::MoveDown  => {textbox.down(1); None}
+            Action::Top       => {textbox.up(textbox.y_len()); None}
+            Action::Bottom    => {textbox.down(textbox.y_len()); None}
+            Action::PageUp    => {textbox.up(usize::from(textbox.rect.h)); None}
+            Action::PageDown  => {textbox.down(usize::from(textbox.rect.h)); None}
+            Action::Cancel    => {self.focus = Focus::Tab; None}
             _ => None,
           }
           Response::Text(editbox) => match action {
@@ -320,16 +321,24 @@ impl App {
               }
               _ => None,
             }
-            Action::MoveLeft    => {editbox.left(1); None}
-            Action::MoveRight   => {editbox.right(1); None}
-            Action::Delete      => {editbox.delete(); None}
-            Action::Backspace   => {editbox.backspace(); None}
-            Action::Insert(c)   => {editbox.insert(*c); None}
-            Action::Cancel      => {self.focus = Focus::Tab; None}
+            Action::MoveLeft  => {editbox.left(1); None}
+            Action::MoveRight => {editbox.right(1); None}
+            Action::Delete    => {editbox.delete(); None}
+            Action::Backspace => {editbox.backspace(); None}
+            Action::Insert(c) => {editbox.insert(*c); None}
+            Action::Cancel    => {self.focus = Focus::Tab; None}
             _ => None,
           }
         }
         Focus::Tab => match action {
+          Action::MoveLeft  => {self.tabs.left(1); None}
+          Action::MoveRight => {self.tabs.right(1); None}
+          Action::MoveUp    => {self.tabs.up(1); None}
+          Action::MoveDown  => {self.tabs.down(1); None}
+          Action::Top       => {self.tabs.up(self.tabs.y_len()); None}
+          Action::Bottom    => {self.tabs.down(self.tabs.y_len()); None}
+          Action::PageUp    => {self.tabs.up(usize::from(self.tabs.rect.h)); None}
+          Action::PageDown  => {self.tabs.down(usize::from(self.tabs.rect.h)); None}
           Action::LoadUrl => {
             self.select_url(Task::NewTab, "choose the url: "); None
           }
@@ -392,14 +401,8 @@ impl App {
           _ => None,
         }
       }
-      }
-      _ => false,
+      _ => None,
     }
-  }
-  fn process_keycode(&mut self, kc: &KeyCode) -> Option<Message> {
-    self.tabs.reset_state();
-    } else if self.user.keys.move_content(&kc, &mut self.tabs) {
-      Some(Message::Default)
   }
   fn write(&self, stdout: &mut Stdout) -> io::Result<()> {
     cursor_hide(stdout)?;

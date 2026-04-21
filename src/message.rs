@@ -6,7 +6,7 @@ use crate::{
 use url::Url;
 
 #[derive(Clone, Debug)]
-pub enum UserAction {
+pub enum Action {
   // editor
   Insert(char),
   Backspace,
@@ -43,7 +43,7 @@ pub enum UserAction {
   Cancel,
 }
 #[derive(Clone, Debug)]
-pub enum DialogTask {
+pub enum Task {
   Default, 
   Reply,
   NewTab,
@@ -54,25 +54,16 @@ pub enum DialogTask {
   Go(String), 
 }
 #[derive(Clone, Debug)]
-pub enum ResponseType {
-  Ack, Ask, Text, Select,
-}
-#[derive(Clone, Debug)]
 pub enum Message {
   Quit,
   Default, 
-  MakeAck(DialogTask, String),
-  MakeAsk(DialogTask, String),
-  MakeText(DialogTask, String),
-  MakeSelect(DialogTask, String),
-  Action(UserAction),
-  DialogTask(DialogTask),
+  Action(Action),
   Resize(u16, u16),
   RequestHere(Url),
   RequestNew(Url),
 }
 pub enum Focus {
   Tab, 
-  Dialog(DialogTask, Dialog),
+  Dialog(Task, Dialog),
 }
 
