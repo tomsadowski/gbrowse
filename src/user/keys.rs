@@ -2,16 +2,16 @@
 
 use crate::{
   Focus, 
-  message::{Message, UserAction},
+  message::{Message, Action},
   user::UserTable,
-  dialog::{Dialog, Response, ResponseType},
+  dialog::{Dialog, Response},
   widget::{TextBox},
 };
 use crossterm::event::KeyCode;
 use toml::Value;
 use std::str::FromStr;
 
-impl FromStr for UserAction {
+impl FromStr for Action {
   type Err = String;
   fn from_str(s: &str) -> Result<Self, Self::Err> {
     match s {
@@ -111,7 +111,7 @@ impl Default for KeysTable {
   }
 }
 impl KeysTable {
-  pub fn get_dialog_action(&self, dialog: &Dialog, kc: &KeyCode) -> Option<UserAction> {
+  pub fn get_dialog_action(&self, dialog: &Dialog, kc: &KeyCode) -> Option<Action> {
     match dialog.response {
       Response::Ack(_)    => self.get_ack_dialog_action(kc),
       Response::Ask(_)    => self.get_ask_dialog_action(kc),
@@ -119,62 +119,62 @@ impl KeysTable {
       Response::Select(_) => self.get_select_dialog_action(kc),
     }
   }
-  pub fn get_tab_action(&self, kc: &KeyCode) -> Option<UserAction> {
-    if        &self.load_url    == kc {Some(UserAction::LoadUrl)
-    } else if &self.help_view   == kc {Some(UserAction::SaveUrl)
-    } else if &self.help_view   == kc {Some(UserAction::HelpView)
-    } else if &self.log_view    == kc {Some(UserAction::LogView)
-    } else if &self.cycle_left  == kc {Some(UserAction::CycleLeft)
-    } else if &self.cycle_right == kc {Some(UserAction::CycleRight)
-    } else if &self.delete_tab  == kc {Some(UserAction::DelTab)
-    } else if &self.new_tab     == kc {Some(UserAction::NewTab)
+  pub fn get_tab_action(&self, kc: &KeyCode) -> Option<Action> {
+    if        &self.load_url    == kc {Some(Action::LoadUrl)
+    } else if &self.help_view   == kc {Some(Action::SaveUrl)
+    } else if &self.help_view   == kc {Some(Action::HelpView)
+    } else if &self.log_view    == kc {Some(Action::LogView)
+    } else if &self.cycle_left  == kc {Some(Action::CycleLeft)
+    } else if &self.cycle_right == kc {Some(Action::CycleRight)
+    } else if &self.delete_tab  == kc {Some(Action::DelTab)
+    } else if &self.new_tab     == kc {Some(Action::NewTab)
     } else                            {self.get_text_box_action(kc)}
   }
-  pub fn get_text_box_action(&self, kc: &KeyCode) -> Option<UserAction> {
-    if        &self.up          == kc {Some(UserAction::MoveUp)
-    } else if &self.down        == kc {Some(UserAction::MoveDown)
-    } else if &self.left        == kc {Some(UserAction::MoveLeft)
-    } else if &self.right       == kc {Some(UserAction::MoveRight)
-    } else if &self.inspect     == kc {Some(UserAction::Inspect)
-    } else if &self.top         == kc {Some(UserAction::Top)
-    } else if &self.bottom      == kc {Some(UserAction::Bottom)
-    } else if &self.pgup        == kc {Some(UserAction::PageUp)  
-    } else if &self.pgdown      == kc {Some(UserAction::PageDown)
+  pub fn get_text_box_action(&self, kc: &KeyCode) -> Option<Action> {
+    if        &self.up          == kc {Some(Action::MoveUp)
+    } else if &self.down        == kc {Some(Action::MoveDown)
+    } else if &self.left        == kc {Some(Action::MoveLeft)
+    } else if &self.right       == kc {Some(Action::MoveRight)
+    } else if &self.inspect     == kc {Some(Action::Inspect)
+    } else if &self.top         == kc {Some(Action::Top)
+    } else if &self.bottom      == kc {Some(Action::Bottom)
+    } else if &self.pgup        == kc {Some(Action::PageUp)  
+    } else if &self.pgdown      == kc {Some(Action::PageDown)
     } else {None}
   }
-  pub fn get_ack_dialog_action(&self, kc: &KeyCode) -> Option<UserAction> {
-    if        &self.cancel == kc {Some(UserAction::Cancel)
-    } else if &self.ack    == kc {Some(UserAction::Ack)
+  pub fn get_ack_dialog_action(&self, kc: &KeyCode) -> Option<Action> {
+    if        &self.cancel == kc {Some(Action::Cancel)
+    } else if &self.ack    == kc {Some(Action::Ack)
     } else                       {None}
   }
-  pub fn get_ask_dialog_action(&self, kc: &KeyCode) -> Option<UserAction> {
-    if        &self.cancel == kc {Some(UserAction::Cancel)
-    } else if &self.yes    == kc {Some(UserAction::Yes)
-    } else if &self.no     == kc {Some(UserAction::No)
+  pub fn get_ask_dialog_action(&self, kc: &KeyCode) -> Option<Action> {
+    if        &self.cancel == kc {Some(Action::Cancel)
+    } else if &self.yes    == kc {Some(Action::Yes)
+    } else if &self.no     == kc {Some(Action::No)
     } else                       {None}
   }
-  pub fn get_select_dialog_action(&self, kc: &KeyCode) -> Option<UserAction> {
-    if &self.cancel == kc {Some(UserAction::Cancel)
+  pub fn get_select_dialog_action(&self, kc: &KeyCode) -> Option<Action> {
+    if &self.cancel == kc {Some(Action::Cancel)
     } else                {self.get_text_box_action(kc)}
   }
-  pub fn get_text_dialog_action(&self, kc: &KeyCode) -> Option<UserAction> {
-    if &self.cancel == kc {Some(UserAction::Cancel)
+  pub fn get_text_dialog_action(&self, kc: &KeyCode) -> Option<Action> {
+    if &self.cancel == kc {Some(Action::Cancel)
     } else                {self.get_edit_box_action(kc)}
   }
-  pub fn get_edit_box_action(&self, kc: &KeyCode) -> Option<UserAction> {
+  pub fn get_edit_box_action(&self, kc: &KeyCode) -> Option<Action> {
     match kc {
-      KeyCode::Left      => Some(UserAction::MoveLeft),
-      KeyCode::Right     => Some(UserAction::MoveRight),
-      KeyCode::Backspace => Some(UserAction::Backspace),
-      KeyCode::Delete    => Some(UserAction::Delete),
-      KeyCode::Enter     => Some(UserAction::Enter),
-      KeyCode::Char(c)   => Some(UserAction::Insert(*c)),
+      KeyCode::Left      => Some(Action::MoveLeft),
+      KeyCode::Right     => Some(Action::MoveRight),
+      KeyCode::Backspace => Some(Action::Backspace),
+      KeyCode::Delete    => Some(Action::Delete),
+      KeyCode::Enter     => Some(Action::Enter),
+      KeyCode::Char(c)   => Some(Action::Insert(*c)),
       _                  => None,
     }
   }
 }
-impl UserTable<UserAction> for KeysTable {
-  fn try_assign(&mut self, field: UserAction, value: Value) -> Result<(), String> {
+impl UserTable<Action> for KeysTable {
+  fn try_assign(&mut self, field: Action, value: Value) -> Result<(), String> {
     let get_keycode = || -> Result<KeyCode, String> {
       if let Value::String(s) = value {
         match s.as_str() {
@@ -199,27 +199,27 @@ impl UserTable<UserAction> for KeysTable {
     };
     let value = get_keycode()?;
     match field {
-      UserAction::LoadUrl    => self.load_url    = value,
-      UserAction::SaveUrl    => self.save_url    = value,
-      UserAction::HelpView   => self.help_view   = value,
-      UserAction::LogView    => self.log_view    = value,
-      UserAction::MoveUp     => self.up          = value,
-      UserAction::MoveDown   => self.down        = value,
-      UserAction::MoveLeft   => self.left        = value,
-      UserAction::MoveRight  => self.right       = value,
-      UserAction::CycleLeft  => self.cycle_left  = value,
-      UserAction::CycleRight => self.cycle_right = value,
-      UserAction::DelTab     => self.delete_tab  = value,
-      UserAction::NewTab     => self.new_tab     = value,
-      UserAction::Inspect    => self.inspect     = value,
-      UserAction::Ack        => self.ack         = value,
-      UserAction::Yes        => self.yes         = value,
-      UserAction::No         => self.no          = value,
-      UserAction::Cancel     => self.cancel      = value,
-      UserAction::Top        => self.top         = value,
-      UserAction::Bottom     => self.bottom      = value,
-      UserAction::PageUp     => self.pgup        = value,
-      UserAction::PageDown   => self.pgdown      = value,
+      Action::LoadUrl    => self.load_url    = value,
+      Action::SaveUrl    => self.save_url    = value,
+      Action::HelpView   => self.help_view   = value,
+      Action::LogView    => self.log_view    = value,
+      Action::MoveUp     => self.up          = value,
+      Action::MoveDown   => self.down        = value,
+      Action::MoveLeft   => self.left        = value,
+      Action::MoveRight  => self.right       = value,
+      Action::CycleLeft  => self.cycle_left  = value,
+      Action::CycleRight => self.cycle_right = value,
+      Action::DelTab     => self.delete_tab  = value,
+      Action::NewTab     => self.new_tab     = value,
+      Action::Inspect    => self.inspect     = value,
+      Action::Ack        => self.ack         = value,
+      Action::Yes        => self.yes         = value,
+      Action::No         => self.no          = value,
+      Action::Cancel     => self.cancel      = value,
+      Action::Top        => self.top         = value,
+      Action::Bottom     => self.bottom      = value,
+      Action::PageUp     => self.pgup        = value,
+      Action::PageDown   => self.pgdown      = value,
       _ => {},
     }
     Ok(())

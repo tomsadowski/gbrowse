@@ -292,7 +292,8 @@ impl App {
             Action::Inspect => match task {
               Task::NewTab => {
                 if self.urls.len() > 0 {
-                  self.try_request(&self.urls[textbox.content.get_source_idx()].clone())
+                  let val = &self.urls[textbox.content.get_source_idx()].clone();
+                  self.try_request(val)
                 } else {None}
               }
               _ => None,
@@ -335,10 +336,10 @@ impl App {
           Action::MoveRight => {self.tabs.right(1); None}
           Action::MoveUp    => {self.tabs.up(1); None}
           Action::MoveDown  => {self.tabs.down(1); None}
-          Action::Top       => {self.tabs.up(self.tabs.y_len()); None}
-          Action::Bottom    => {self.tabs.down(self.tabs.y_len()); None}
-          Action::PageUp    => {self.tabs.up(usize::from(self.tabs.rect.h)); None}
-          Action::PageDown  => {self.tabs.down(usize::from(self.tabs.rect.h)); None}
+          Action::Top       => {let len = self.tabs.y_len(); self.tabs.up(len); None}
+          Action::Bottom    => {let len = self.tabs.y_len(); self.tabs.down(len); None}
+          Action::PageUp    => {let len = self.tabs.rect.h; self.tabs.up(usize::from(len)); None}
+          Action::PageDown  => {let len = self.tabs.rect.h; self.tabs.down(usize::from(len)); None}
           Action::LoadUrl => {
             self.select_url(Task::NewTab, "choose the url: "); None
           }
