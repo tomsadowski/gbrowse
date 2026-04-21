@@ -17,7 +17,7 @@ mod message;
 
 use crate::{
   common as c,
-  message::{Message, DialogTask, UserAction, Focus, ResponseType},
+  message::{Message, Task, Action, Focus, ResponseType},
   user::{User},
   tab::{Tab, TabList},
   dialog::{Response, Dialog},
@@ -71,7 +71,7 @@ fn main() -> io::Result<()> {
         let result = request.rx.recv().unwrap()
           .map(|(r, c)| GemDoc::new(&request.url, r, c)).flatten();
         match result {
-          Err(e)     => app.ack(DialogTask::Default, &e),
+          Err(e)     => app.ack(Task::Default, &e),
           Ok(gemdoc) => app.set_gemdoc(&request.url, gemdoc),
         }
         app.pending = false;
@@ -157,27 +157,27 @@ impl App {
       clear:     true
     }
   }
-  fn ack(&mut self, task: DialogTask, prompt: &str) {
+  fn ack(&mut self, task: Task, prompt: &str) {
     let style    = self.user.style.info.style.clone();
     let help     = &format!("Press {} to acknowledge", self.user.keys.ack);
     let dialog   = Dialog::ack(prompt, help, style, &self.rect);
     self.focus   = Focus::Dialog(task, dialog);
     self.new_dlg = true;
   }
-  fn ask(&mut self, task: DialogTask, prompt: &str) {
+  fn ask(&mut self, task: Task, prompt: &str) {
     let style    = self.user.style.info.style.clone();
     let help     = &format!("{} yes {} no", self.user.keys.yes, self.user.keys.no);
     let dialog   = Dialog::ask(prompt, help, style, &self.rect);
     self.focus   = Focus::Dialog(task, dialog);
     self.new_dlg = true;
   }
-  fn text(&mut self, task: DialogTask, prompt: &str) {
+  fn text(&mut self, task: Task, prompt: &str) {
     let style    = self.user.style.info.style.clone();
     let dialog   = Dialog::text(prompt, style, &self.rect);
     self.focus   = Focus::Dialog(task, dialog);
     self.new_dlg = true;
   }
-  fn select_url(&mut self, task: DialogTask, prompt: &str) {
+  fn select_url(&mut self, task: Task, prompt: &str) {
     let style    = self.user.style.info.style.clone();
     let dialog   = Dialog::select(prompt, self.urls.clone(), style, &self.rect);
     self.focus   = Focus::Dialog(task, dialog);
@@ -187,7 +187,7 @@ impl App {
     match Url::parse(&self.user.init_url) {
       Ok(url) => Some(url),
       Err(e) => {
-        self.ack(DialogTask::Default, &e.to_string());
+        self.ack(Task::Default, &e.to_string());
         None
       }
     }
@@ -201,16 +201,16 @@ impl App {
     self.tabs.add(url.as_str());
     match gemdoc.status.tag {
       Status::InputExpected | Status::InputExpectedSensitive => {
-        self.text(DialogTask::Reply, &gemdoc.status.txt);
+        self.text(Task::Reply, &gemdoc.status.txt);
       }
       Status::RedirectTemporary | Status::RedirectPermanent => {
         self.tabs.url_str.push_str(&gemdoc.status.txt);
-        self.ask(DialogTask::Redirect(gemdoc.status.txt.clone()), &gemdoc.status.txt);
+        self.ask(Task::Redirect(gemdoc.status.txt.clone()), &gemdoc.status.txt);
       }
       Status::CertRequiredClient |
       Status::CertRequiredTransient |
       Status::CertRequiredAuthorized => {
-        self.ack(DialogTask::Default, &gemdoc.status.txt);
+        self.ack(Task::Default, &gemdoc.status.txt);
       }
       _ => {}
     };
@@ -219,91 +219,40 @@ impl App {
   }
   fn get_update(&self, event: Event) -> Option<Message> {
     match event {
-      Event::Key(KeyEvent {modifiers: KeyModifiers::CONTROL, code: KeyCode::Char('c'), ..}) =>
+      Event::Key(KeyEvent {
+        modifiers: KeyModifiers::CONTROL, code: KeyCode::Char('c'), ..
+      }) =>
         Some(Message::Quit),
       Event::Resize(w, h) => 
         Some(Message::Resize(w, h)),
-      Event::Key(KeyEvent {code: kc, kind: KeyEventKind::Press, ..}) => {
-        if let Focus::Dialog(task, dialog) = &self.focus {
-          match &dialog.response {
-            Response::Ack(_) => {
-              self.user.keys.get_ack_dialog_action(&kc)
-                .map(|action| Message::Action(action))
-            }
-            Response::Ask(_) => {
-              if let Some(action) = self.user.keys.get_ask_dialog_action(&kc) {
-                match action {
-                  UserAction::Yes => match task {
-                    DialogTask::Redirect(url_str) => {
-                      let text = url_str.trim().replace(" ", "%20");
-                      match Url::parse(&format!("{}?{}", self.tabs.url_str, text)) {
-                        Err(e)  => Some(Message::MakeAck(DialogTask::Default, e.to_string())),
-                        Ok(url) => Some(Message::RequestHere(url)),
-                      }
-                    }
-                    task => Some(Message::DialogTask(task.clone())),
-                  }
-                  _ => Some(Message::Action(action)),
-                } 
-              } else {None}
-            }
-            Response::Text(editbox) => {
-              if let Some(action) = self.user.keys.get_text_dialog_action(&kc) {
-                match action {
-                  UserAction::Enter => {
-                    let text = editbox.content.text.to_string();
-                    match task {
-                      DialogTask::Reply => {
-                        let text = text.trim().replace(" ", "%20");
-                        match Url::parse(&format!("{}?{}", self.tabs.url_str, text)) {
-                          Err(e)  => Some(Message::MakeAck(DialogTask::Default, e.to_string())),
-                          Ok(url) => Some(Message::RequestHere(url)),
-                        }
-                      }
-                      DialogTask::NewTab => 
-                        match Url::parse(&text) {
-                          Err(e)  => Some(Message::MakeAck(DialogTask::Default, e.to_string())),
-                          Ok(url) => Some(Message::RequestNew(url)),
-                        }
-                      task => Some(Message::DialogTask(task.clone())),
-                    }
-                  }
-                  action => Some(Message::Action(action.clone())),
-                }
-              // no action, no update
-              } else {None}
-            }
-            Response::Select(textbox) => {
-              if let Some(action) = self.user.keys.get_select_dialog_action(&kc) {
-                match action {
-                  UserAction::Inspect => {
-                    if let DialogTask::NewTab = &task && self.urls.len() > 0 {
-                      match Url::parse(&self.urls[textbox.content.get_source_idx()].clone()) {
-                        Err(e)  => Some(Message::MakeAck(DialogTask::Default, e.to_string())),
-                        Ok(url) => Some(Message::RequestNew(url)),
-                      }
-                    } else {
-                      Some(Message::Default)
-                    }
-                  }
-                  action => Some(Message::Action(action.clone())),
-                }
-              // no action, no update
-              } else {None}
-            }
-          }
-        } else {
-          if let Some(action) = self.user.keys.get_tab_action(&kc) {
-            match action {
-              action => Some(Message::Action(action)),
-            }
-          } else {None}
+      Event::Key(KeyEvent {
+        code: kc, kind: KeyEventKind::Press, ..
+      }) => match &self.focus {
+        Focus::Dialog(task, dialog) => match &dialog.response {
+          Response::Ack(_) => 
+            self.user.keys.get_ack_dialog_action(&kc).map(|a| Message::Action(a)),
+          Response::Ask(_) => 
+            self.user.keys.get_ask_dialog_action(&kc).map(|a| Message::Action(a)),
+          Response::Text(_) => 
+            self.user.keys.get_text_dialog_action(&kc).map(|a| Message::Action(a)),
+          Response::Select(_) => 
+            self.user.keys.get_select_dialog_action(&kc).map(|a| Message::Action(a)),
         }
+        Focus::Tab => 
+          self.user.keys.get_tab_action(&kc).map(|a| Message::Action(a)),
       }
       _ => None,
     }
   }
-  fn update(&mut self, message: &Message) -> bool {
+  fn try_request(&mut self, url_str: &str) -> Option<Request> {
+    match Url::parse(&self.urls[textbox.content.get_source_idx()].clone()) {
+      Err(e)  => 
+        self.ack(Task::Default, &format!("URL parse error: {}", &e));
+      Ok(url) => 
+        Some(Request::new(url, self.user.timeout)),
+    }
+  }
+  fn update(&mut self, message: &Message) -> Option<Request> {
     self.clear = false;
     self.new_dlg = false;
     match message {
@@ -315,119 +264,142 @@ impl App {
         }
         self.tabs.resize(&self.rect);
         self.clear = true;
-        true
+        None
       }
-      Message::RequestHere(url_str) => {
-        self.focus = Focus::Tab;
-        true
-      }
-      Message::RequestNew(url_str) => {
-        self.focus = Focus::Tab;
-        true
-      }
-      Message::MakeAck(task, msg) => {
-        self.ack(task.clone(), msg);
-        true
-      }
-      Message::Action(action) => {
-        if let Focus::Dialog(task, dialog) = &mut self.focus {
-          if let UserAction::Cancel = action {
-            self.focus = Focus::Tab;
-            true
-          } else if let Response::Text(editbox) = &mut dialog.response {
-            match action {
-              UserAction::MoveLeft  => editbox.left(1),
-              UserAction::MoveRight => editbox.right(1),
-              UserAction::Delete    => editbox.delete(),
-              UserAction::Backspace => editbox.backspace(),
-              UserAction::Insert(c) => {
-                editbox.insert(*c);
-                true
+      Message::Action(action) => match &mut self.focus {
+        Focus::Dialog(task, dialog) => match &mut dialog.response {
+          Response::Ack(_) => {
+            self.focus = Focus::Tab; None
+          } 
+          Response::Ask(_) => match action {
+            Action::Yes => match task {
+              Task::Redirect(url_str) => {
+                let text = url_str.trim().replace(" ", "%20");
+                self.focus = Focus::Tab;
+                self.try_request(&format!("{}?{}", self.tabs.url_str, text))
               }
-              _ => false
+              Task::DelTab => {
+                self.tabs.remove();
+                self.focus = Focus::Tab; None
+              }
+              _ => {
+                self.focus = Focus::Tab; None
+              }
             }
-          } else {
-            false
+            Action::No | Action::Cancel => {
+              self.focus = Focus::Tab; None
+            }
+            _ => None,
+          } 
+          Response::Select(textbox) => match action {
+            Action::Inspect => match task {
+              Task::NewTab => {
+                if self.urls.len() > 0 {
+                  self.try_request(&self.urls[textbox.content.get_source_idx()].clone())
+                } else {None}
+              }
+              _ => None,
+            }
+            Action::MoveLeft    => {textbox.left(1); None}
+            Action::MoveRight   => {textbox.right(1); None}
+            Action::MoveUp      => {textbox.up(1); None}
+            Action::MoveDown    => {textbox.down(1); None}
+            Action::Cancel      => {self.focus = Focus::Tab; None}
+            _ => None,
           }
-        } else {
-          match action {
-            UserAction::SaveUrl => {
-              let url_str = self.tabs.url_str.clone();
-              // only add url_str if new
-              if !self.urls.iter().any(|url| **url == url_str) {
-                self.urls.push(url_str);
-                // write to save file
-                match fs::OpenOptions::new().write(true).truncate(true).open(&self.user.save_file) {
-                  Err(e) => {
-                    self.ack(DialogTask::Default, &format!("could not create save file: {}", &e));
-                    true
-                  }
-                  Ok(mut f) => {
-                    for url in self.urls.iter() {
-                      f.write(&format!("{}\n", url).as_bytes());
-                    }
-                    false
-                  }
-                }
-              } else {false}
+          Response::Text(editbox) => match action {
+            Action::Enter => match task {
+              Task::Reply => {
+                let text = editbox.content.text.to_string();
+                let text = text.trim().replace(" ", "%20");
+                self.try_request(&format!("{}?{}", self.tabs.url_str, text))
+              }
+              Task::NewTab => {
+                let text = editbox.content.text.to_string();
+                self.try_request(&format!("{}?{}", self.tabs.url_str, text))
+              }
+              _ => None,
             }
-            UserAction::DelTab => {
-              self.ask(DialogTask::DelTab, "Delete current tab?");
-              self.tabs.delete();
-              true
-            }
-            UserAction::CycleLeft => {
-              if self.tabs.len() > 1 {
-                self.wrapping_backward(1);
-                true
-              } else {false}
-            }
-            UserAction::CycleRight => {
-              if self.tabs.len() > 1 {
-                self.wrapping_forward(1);
-                true
-              } else {false}
-            }
-            UserAction::Inspect => {
-              if let Some(gemdoc) = &self.tabs.gemdoc {
-                match gemdoc.doc[self.tabs.get_source_idx()].tag.clone() {
-                  GemTag::Link(Scheme::Gemini, url) => {
-                    let prompt = &format!("go to {}?", url);
-                    self.ask(DialogTask::Go(url.into()), prompt);
-                  }
-                  GemTag::Link(_, url) => {
-                    self.ack(DialogTask::Default, &format!("Protocol {} not yet supported", url));
-                  }
-                  gemtext => {
-                    self.ack(DialogTask::Default, &format!("you've selected {:?}", gemtext));
-                  }
-                }
-                true
-              } else {false}
-            }
-            _ => false,
+            Action::MoveLeft    => {editbox.left(1); None}
+            Action::MoveRight   => {editbox.right(1); None}
+            Action::Delete      => {editbox.delete(); None}
+            Action::Backspace   => {editbox.backspace(); None}
+            Action::Insert(c)   => {editbox.insert(*c); None}
+            Action::Cancel      => {self.focus = Focus::Tab; None}
+            _ => None,
           }
         }
+        Focus::Tab => match action {
+          Action::LoadUrl => {
+            self.select_url(Task::NewTab, "choose the url: "); None
+          }
+          Action::SaveUrl => {
+            let url_str = self.tabs.url_str.clone();
+            // only add url_str if new
+            if !self.urls.iter().any(|url| **url == url_str) {
+              self.urls.push(url_str);
+              // write to save file
+              match fs::OpenOptions::new().write(true).truncate(true).open(&self.user.save_file) {
+                Err(e) => {
+                  self.ack(Task::Default, &format!("could not create save file: {}", &e)); 
+                  None
+                }
+                Ok(mut f) => {
+                  for url in self.urls.iter() {
+                    f.write(&format!("{}\n", url).as_bytes());
+                  }
+                  None
+                }
+              }
+            } else {None}
+          }
+          Action::NewTab => {
+            self.text(Task::NewTab, "enter path: "); None
+          }
+          Action::DelTab => {
+            self.ask(Task::DelTab, "Delete current tab?");
+            self.tabs.delete(); None
+          }
+          Action::CycleLeft => {
+            if self.tabs.len() > 1 {
+              self.wrapping_backward(1);
+            }
+            None
+          }
+          Action::CycleRight => {
+            if self.tabs.len() > 1 {
+              self.wrapping_forward(1);
+            }
+            None
+          }
+          Action::Inspect => {
+            if let Some(gemdoc) = &self.tabs.gemdoc {
+              match gemdoc.doc[self.tabs.get_source_idx()].tag.clone() {
+                GemTag::Link(Scheme::Gemini, url) => {
+                  let prompt = &format!("go to {}?", url);
+                  self.ask(Task::Go(url.into()), prompt);
+                }
+                GemTag::Link(_, url) => {
+                  self.ack(Task::Default, &format!("Protocol {} not yet supported", url));
+                }
+                gemtext => {
+                  self.ack(Task::Default, &format!("you've selected {:?}", gemtext));
+                }
+              }
+              None
+            } else {None}
+          }
+          _ => None,
+        }
+      }
       }
       _ => false,
     }
   }
   fn process_keycode(&mut self, kc: &KeyCode) -> Option<Message> {
     self.tabs.reset_state();
-    // process keycode for dialog
-    if let Focus::Dialog(task, dialog) = &mut self.focus {
-      None
-    // no dialog
     } else if self.user.keys.move_content(&kc, &mut self.tabs) {
       Some(Message::Default)
-    // make a dialog
-    } else if kc == &self.user.keys.new_tab {
-      self.text(DialogTask::NewTab, "enter path: ");
-      Some(Message::Default)
-    } else if kc == &self.user.keys.load_url {
-      self.select_url(DialogTask::NewTab, "choose the url: ");
-      Some(Message::Default)
-    } else {None}
   }
   fn write(&self, stdout: &mut Stdout) -> io::Result<()> {
     cursor_hide(stdout)?;
