@@ -56,15 +56,15 @@ fn main() -> io::Result<()> {
     let (w, h) = terminal::size()?;
     App::init(init_path, w, h)
   };
-  // will be Some after message_maybe is checked in the first loop
-  let mut request_maybe: Option<Request> = None;
+  let mut request_maybe = app.try_request(&app.user.init_url.clone());
   // first message is Request, which will request the initial url
-  let mut message_maybe: Option<Message> = app.get_init_url().map(|url| Message::RequestHere(url));
   let mut quit = false;
+  let mut write = true;
   // initial display
   app.write(&mut stdout)?;
   // break on control-c
   while !quit {
+    write = false;
     if let Some(request) = &mut request_maybe {
       if request.handle.is_finished() {
         let result = request.rx.recv().unwrap()
@@ -73,9 +73,9 @@ fn main() -> io::Result<()> {
           Err(e)     => app.ack(Task::Default, &e),
           Ok(gemdoc) => app.set_gemdoc(&request.url, gemdoc),
         }
+        request_maybe = None;
         app.pending = false;
         app.write(&mut stdout)?;
-        request_maybe = None;
       }
     } 
     if event::poll(Duration::from_millis(16))? {
@@ -88,10 +88,12 @@ fn main() -> io::Result<()> {
         } else if let Message::Quit = message {
           quit = true;
         }
-      }
+        write = true;
+      } 
     } 
-    app.write(&mut stdout)?;
-    message_maybe = None;
+    if write {
+      app.write(&mut stdout)?;
+    }
   }
   // return terminal to normal state
   stdout
@@ -212,33 +214,6 @@ impl App {
     self.tabs.content = self.user.get_gem_textbox(&self.rect, &gemdoc);
     self.tabs.gemdoc  = Some(gemdoc);
   }
-  fn get_update(&self, event: Event) -> Option<Message> {
-    match event {
-      Event::Key(KeyEvent {
-        modifiers: KeyModifiers::CONTROL, code: KeyCode::Char('c'), ..
-      }) =>
-        Some(Message::Quit),
-      Event::Resize(w, h) => 
-        Some(Message::Resize(w, h)),
-      Event::Key(KeyEvent {
-        code: kc, kind: KeyEventKind::Press, ..
-      }) => match &self.focus {
-        Focus::Dialog(task, dialog) => match &dialog.response {
-          Response::Ack(_) => 
-            self.user.keys.get_ack_dialog_action(&kc).map(|a| Message::Action(a)),
-          Response::Ask(_) => 
-            self.user.keys.get_ask_dialog_action(&kc).map(|a| Message::Action(a)),
-          Response::Text(_) => 
-            self.user.keys.get_text_dialog_action(&kc).map(|a| Message::Action(a)),
-          Response::Select(_) => 
-            self.user.keys.get_select_dialog_action(&kc).map(|a| Message::Action(a)),
-        }
-        Focus::Tab => 
-          self.user.keys.get_tab_action(&kc).map(|a| Message::Action(a)),
-      }
-      _ => None,
-    }
-  }
   fn try_request(&mut self, url_str: &str) -> Option<Request> {
     match Url::parse(url_str) {
       Err(e)  => {
@@ -270,6 +245,11 @@ impl App {
           } 
           Response::Ask(_) => match action {
             Action::Yes => match task {
+              Task::Go(url) => {
+                let url = url.clone();
+                self.focus = Focus::Tab;
+                self.try_request(&url)
+              }
               Task::Redirect(url_str) => {
                 let text = url_str.trim().replace(" ", "%20");
                 self.focus = Focus::Tab;
@@ -292,21 +272,43 @@ impl App {
             Action::Inspect => match task {
               Task::NewTab => {
                 if self.urls.len() > 0 {
-                  let val = &self.urls[textbox.content.get_source_idx()].clone();
-                  self.try_request(val)
-                } else {None}
+                  let url_str = &self.urls[textbox.content.get_source_idx()].clone();
+                  self.focus = Focus::Tab;
+                  self.try_request(url_str)
+                } else {
+                  self.focus = Focus::Tab;
+                  None
+                }
               }
               _ => None,
             }
-            Action::MoveLeft  => {textbox.left(1); None}
-            Action::MoveRight => {textbox.right(1); None}
-            Action::MoveUp    => {textbox.up(1); None}
-            Action::MoveDown  => {textbox.down(1); None}
-            Action::Top       => {textbox.up(textbox.y_len()); None}
-            Action::Bottom    => {textbox.down(textbox.y_len()); None}
-            Action::PageUp    => {textbox.up(usize::from(textbox.rect.h)); None}
-            Action::PageDown  => {textbox.down(usize::from(textbox.rect.h)); None}
-            Action::Cancel    => {self.focus = Focus::Tab; None}
+            Action::MoveLeft => {
+              textbox.left(1); None
+            }
+            Action::MoveRight => {
+              textbox.right(1); None
+            }
+            Action::MoveUp => {
+              textbox.up(1); None
+            }
+            Action::MoveDown => {
+              textbox.down(1); None
+            }
+            Action::Top => {
+              textbox.up(textbox.y_len()); None
+            }
+            Action::Bottom => {
+              textbox.down(textbox.y_len()); None
+            }
+            Action::PageUp => {
+              textbox.up(usize::from(textbox.rect.h)); None
+            } 
+            Action::PageDown => {
+              textbox.down(usize::from(textbox.rect.h)); None
+            }
+            Action::Cancel => {
+              self.focus = Focus::Tab; None
+            }
             _ => None,
           }
           Response::Text(editbox) => match action {
@@ -322,24 +324,56 @@ impl App {
               }
               _ => None,
             }
-            Action::MoveLeft  => {editbox.left(1); None}
-            Action::MoveRight => {editbox.right(1); None}
-            Action::Delete    => {editbox.delete(); None}
-            Action::Backspace => {editbox.backspace(); None}
-            Action::Insert(c) => {editbox.insert(*c); None}
-            Action::Cancel    => {self.focus = Focus::Tab; None}
+            Action::MoveLeft => {
+              editbox.left(1); None
+            }
+            Action::MoveRight => {
+              editbox.right(1); None
+            }
+            Action::Delete => {
+              editbox.delete(); None
+            }
+            Action::Backspace => {
+              editbox.backspace(); None
+            }
+            Action::Insert(c) => {
+              editbox.insert(*c); None
+            }
+            Action::Cancel => {
+              self.focus = Focus::Tab; None
+            }
             _ => None,
           }
         }
         Focus::Tab => match action {
-          Action::MoveLeft  => {self.tabs.left(1); None}
-          Action::MoveRight => {self.tabs.right(1); None}
-          Action::MoveUp    => {self.tabs.up(1); None}
-          Action::MoveDown  => {self.tabs.down(1); None}
-          Action::Top       => {let len = self.tabs.y_len(); self.tabs.up(len); None}
-          Action::Bottom    => {let len = self.tabs.y_len(); self.tabs.down(len); None}
-          Action::PageUp    => {let len = self.tabs.rect.h; self.tabs.up(usize::from(len)); None}
-          Action::PageDown  => {let len = self.tabs.rect.h; self.tabs.down(usize::from(len)); None}
+          Action::MoveLeft => {
+            self.tabs.left(1); None
+          }
+          Action::MoveRight => {
+            self.tabs.right(1); None
+          }
+          Action::MoveUp => {
+            self.tabs.up(1); None
+          }
+          Action::MoveDown => {
+            self.tabs.down(1); None
+          }
+          Action::Top => {
+            let len = self.tabs.y_len(); 
+            self.tabs.up(len); None
+          }
+          Action::Bottom => {
+            let len = self.tabs.y_len(); 
+            self.tabs.down(len); None
+          }
+          Action::PageUp => {
+            let len = self.tabs.rect.h; 
+            self.tabs.up(usize::from(len)); None
+          }
+          Action::PageDown => {
+            let len = self.tabs.rect.h; 
+            self.tabs.down(usize::from(len)); None
+          }
           Action::LoadUrl => {
             self.select_url(Task::NewTab, "choose the url: "); None
           }
@@ -401,6 +435,38 @@ impl App {
           }
           _ => None,
         }
+      }
+      _ => None,
+    }
+  }
+  fn get_update(&self, event: Event) -> Option<Message> {
+    match event {
+      Event::Key(KeyEvent {
+        modifiers: KeyModifiers::CONTROL, code: KeyCode::Char('c'), ..
+      }) =>
+        Some(Message::Quit),
+      Event::Resize(w, h) => 
+        Some(Message::Resize(w, h)),
+      Event::Key(KeyEvent {
+        code: kc, kind: KeyEventKind::Press, ..
+      }) => match &self.focus {
+        Focus::Dialog(task, dialog) => match &dialog.response {
+          Response::Ack(_) => 
+            self.user.keys.get_ack_dialog_action(&kc)
+              .map(|a| Message::Action(a)),
+          Response::Ask(_) => 
+            self.user.keys.get_ask_dialog_action(&kc)
+              .map(|a| Message::Action(a)),
+          Response::Text(_) => 
+            self.user.keys.get_text_dialog_action(&kc)
+              .map(|a| Message::Action(a)),
+          Response::Select(_) => 
+            self.user.keys.get_select_dialog_action(&kc)
+              .map(|a| Message::Action(a)),
+        }
+        Focus::Tab => 
+          self.user.keys.get_tab_action(&kc)
+            .map(|a| Message::Action(a)),
       }
       _ => None,
     }
