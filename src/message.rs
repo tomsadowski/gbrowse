@@ -1,7 +1,7 @@
 // src/message.rs
 
 use crate::{
-  dialog::{Response, Dialog},
+  dialog::{Dialog},
 };
 use url::Url;
 

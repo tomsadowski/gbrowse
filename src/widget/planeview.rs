@@ -4,7 +4,6 @@ use crate::{
   text::Planar,
   widget::Rect,
 };
-use std::ops::Range;
 
 #[derive(Clone, Debug, Default)]
 pub struct PlaneView {

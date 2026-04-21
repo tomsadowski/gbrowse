@@ -1,8 +1,7 @@
 // src/user/keys.rs
 
 use crate::{
-  Focus, 
-  message::{Message, Action},
+  message::{Action},
   user::UserTable,
   dialog::{Dialog, Response},
   widget::{TextBox},

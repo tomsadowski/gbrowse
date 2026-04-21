@@ -7,7 +7,7 @@ use crate::{
 use crossterm::{
   QueueableCommand,
   style::Print,
-  cursor::{self, MoveTo},
+  cursor::{MoveTo},
 };
 use std::{
   io::{self, Write}

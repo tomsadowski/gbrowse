@@ -6,12 +6,11 @@ use crate::{
 };
 use crossterm::{
   QueueableCommand, 
-  cursor::{self, MoveTo},
+  cursor::{MoveTo},
   style::{Print},
 };
 use std::{
   io::{self, Write},
-  ops::{Deref, DerefMut},
 };
 
 #[derive(Default)]

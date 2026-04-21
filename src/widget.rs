@@ -14,15 +14,14 @@ pub use self::planeview::{LineView, PlaneView};
 
 use crate::{
   common as c,
-  text::{Style, StyledText, StyledTextPlane}, 
+  text::{Style}, 
 };
 use crossterm::{
   QueueableCommand, 
-  style::{SetAttribute, Attribute, Color, Print},
+  style::{SetAttribute, Attribute},
   cursor::{self, MoveTo},
 };
 use std::{
-  ops::Range,
   io::{self, Write}
 };
 

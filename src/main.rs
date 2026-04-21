@@ -1,7 +1,7 @@
 // src/main.rs
 
 #![allow(dead_code)]
-#![allow(unused_imports)]
+//#![allow(unused_imports)]
 #![allow(unused)]
 #![allow(unused_mut)]
 #![allow(unused_variables)]
@@ -21,23 +21,22 @@ use crate::{
   user::{User},
   tab::{Tab, TabList},
   dialog::{Response, Dialog},
-  text::{StyledText, Linear, Style}, 
-  widget::{Rect, Frame, TextBox, EditBox, cursor_hide, PlaneWidget},
+  text::{Linear}, 
+  widget::{Rect, Frame, cursor_hide, PlaneWidget},
   protocol::{Request, GemDoc, GemTag, Status, Scheme},
 };
 use crossterm::{
   QueueableCommand,
-  cursor::{self, SetCursorStyle},
+  cursor::{SetCursorStyle},
   terminal::{self, Clear, ClearType},
   event::{self, Event, KeyEvent, KeyEventKind, KeyCode, KeyModifiers},
 };
 use url::Url;
 use std::{
-  fs, thread, env,
-  sync::mpsc,
+  fs, env,
   time::Duration,
   str::FromStr,
-  io::{self, Write, Read, stdout, Stdout},
+  io::{self, Write, stdout, Stdout},
 };
 
 fn main() -> io::Result<()> {

@@ -1,27 +1,12 @@
 // src/tab.rs
 
 use crate::{
-  common as c,
-  Message,
-  user::User,
-  text::{StyledText, Style, Linear}, 
-  widget::{Rect, Frame, TextBox, EditBox},
-  protocol::{GemDoc, GemTag, Status, Scheme, get_data},
+  text::{Linear}, 
+  widget::{Rect, TextBox},
+  protocol::{GemDoc},
 };
-use crossterm::{
-  QueueableCommand,
-  cursor::{self, SetCursorStyle},
-  terminal::{self, Clear, ClearType},
-  event::{self, Event, KeyEvent, KeyEventKind, KeyCode, KeyModifiers},
-};
-use url::Url;
 use std::{
-  fs, thread, env,
   ops::{Deref, DerefMut},
-  sync::mpsc,
-  time::Duration,
-  str::FromStr,
-  io::{self, Write, Read, stdout, Stdout},
 };
 
 
