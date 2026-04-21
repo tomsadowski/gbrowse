@@ -52,6 +52,9 @@ impl DerefMut for TabList {
   }
 }
 impl TabList {
+  pub fn banner_text(&self) -> String {
+    format!(" {}/{} - {} ", self.head + 1, self.tabs.len(), self.url_str)
+  }
   // maybe return bool
   pub fn add(&mut self, url_str: &str) {
     // search for tab with same url_str

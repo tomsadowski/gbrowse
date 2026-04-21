@@ -110,24 +110,12 @@ pub struct App {
   pub user:      User,
   pub urls:      Vec<String>,
   pub rect:      Rect,
-  pub head:      usize,
   pub tabs:      TabList,
   pub focus:     Focus,
   pub new_dlg:   bool,
   pub pending:   bool,
   pub clear:     bool,
 } 
-impl Linear for App {
-  fn len(&self) -> usize {
-    self.tabs.len()
-  }
-  fn head_mut(&mut self) -> &mut usize {
-    &mut self.head
-  }
-  fn head(&self) -> usize {
-    self.head
-  }
-}
 impl App {
   pub fn init(path: &str, w: u16, h: u16) -> Self {
     let user_text = fs::read_to_string(path).unwrap_or("".into());
@@ -146,7 +134,6 @@ impl App {
       rect,
       urls,
       init_path: path.into(),
-      head:      0,
       tabs:      TabList::new(tab),
       focus:     Focus::Tab,
       new_dlg:   false,
@@ -407,13 +394,13 @@ impl App {
           }
           Action::CycleLeft => {
             if self.tabs.len() > 1 {
-              self.wrapping_backward(1);
+              self.tabs.wrapping_backward(1);
             }
             None
           }
           Action::CycleRight => {
             if self.tabs.len() > 1 {
-              self.wrapping_forward(1);
+              self.tabs.wrapping_forward(1);
             }
             None
           }
@@ -473,7 +460,7 @@ impl App {
     }
   }
   fn banner_text(&self) -> String {
-    let text = format!(" {}/{} - {} ", self.head + 1, self.tabs.len(), self.tabs.url_str);
+    let text = self.tabs.banner_text();
     if self.pending {
       format!(" (pending response) {} ", text)
     } else {text}
