@@ -28,7 +28,6 @@ use std::{
 pub struct TabList {
   pub head:      usize,
   pub tabs:      Vec<Tab>,
-  pub pending:   bool,
 } 
 impl Linear for TabList {
   fn len(&self) -> usize {
@@ -81,18 +80,12 @@ impl TabList {
     }
   }
   pub fn new(tab: Tab) -> Self {
-    Self {tabs: vec![tab], head: 0, pending: false}
+    Self {tabs: vec![tab], head: 0}
   }
   pub fn resize(&mut self, rect: &Rect) {
     for tab in self.tabs.iter_mut() {
       tab.resize(rect);
     }
-  }
-  pub fn banner_text(&self) -> String {
-    let text = format!(" {}/{} - {} ", self.head + 1, self.tabs.len(), self.url_str);
-    if self.pending {
-      format!(" (pending response) {} ", text)
-    } else {text}
   }
 }
 

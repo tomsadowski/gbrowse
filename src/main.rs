@@ -227,6 +227,7 @@ impl App {
   fn update(&mut self, message: &Message) -> Option<Request> {
     self.clear = false;
     self.new_dlg = false;
+    self.tabs.reset_state();
     match message {
       Message::Resize(w, h) => {
         self.frame.resize(&Rect::new(*w, *h));
@@ -471,13 +472,19 @@ impl App {
       _ => None,
     }
   }
+  fn banner_text(&self) -> String {
+    let text = format!(" {}/{} - {} ", self.head + 1, self.tabs.len(), self.tabs.url_str);
+    if self.pending {
+      format!(" (pending response) {} ", text)
+    } else {text}
+  }
   fn write(&self, stdout: &mut Stdout) -> io::Result<()> {
     cursor_hide(stdout)?;
     if self.clear {
       stdout.queue(Clear(ClearType::All))?;
       self.frame.write(stdout)?;
     }
-    self.frame.write_banner(&self.tabs.banner_text(), stdout)?;
+    self.frame.write_banner(&self.banner_text(), stdout)?;
     if let Focus::Dialog(_, dialog) = &self.focus {
       if self.new_dlg {
         if let Some(fg) = self.user.style.covered.fg {
