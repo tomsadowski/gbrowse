@@ -41,60 +41,37 @@ use std::{
 };
 
 fn main() -> io::Result<()> {
-  let args         = env::args().collect::<Vec<String>>();
-  let default_path = String::from(c::START);
-  let init_path    = args.get(1).unwrap_or(&default_path); 
-  let mut stdout   = stdout();
+  // initialize app
+  let mut app = {
+    let args         = env::args().collect::<Vec<String>>();
+    let (w, h)       = terminal::size()?;
+    let default_path = String::from(c::START);
+    let init_path    = args.get(1).unwrap_or(&default_path); 
+    App::init(init_path, w, h)
+  };
+  let mut stdout = stdout();
   // register keystrokes 
   terminal::enable_raw_mode()?;
   // handle line wrapping manually
   stdout
     .queue(terminal::EnterAlternateScreen)?
     .queue(terminal::DisableLineWrap)?;
-  // initialize app
-  let mut app = {
-    let (w, h) = terminal::size()?;
-    App::init(init_path, w, h)
-  };
-  let mut request_maybe = app.try_request(&app.user.init_url.clone());
-  // first message is Request, which will request the initial url
-  let mut quit = false;
-  let mut write = true;
   // initial display
   app.write(&mut stdout)?;
+
   // break on control-c
-  while !quit {
-    write = false;
-    if let Some(request) = &mut request_maybe {
-      if request.handle.is_finished() {
-        let result = request.rx.recv().unwrap()
-          .map(|(r, c)| GemDoc::new(&request.url, r, c)).flatten();
-        match result {
-          Err(e)     => app.ack(Task::Default, &e),
-          Ok(gemdoc) => app.set_gemdoc(&request.url, gemdoc),
-        }
-        request_maybe = None;
-        app.pending = false;
-        app.write(&mut stdout)?;
-      }
+  while !app.quit {
+    if app.try_join_request() {
+      app.write(&mut stdout)?;
     } 
     if event::poll(Duration::from_millis(16))? {
       if let Some(message) = app.get_update(event::read()?) {
-        if let Some(request) = app.update(&message) {
-          if let None = &mut request_maybe {
-            request_maybe = Some(request);
-            app.pending = true;
-          }
-        } else if let Message::Quit = message {
-          quit = true;
-        }
-        write = true;
+        app.update(&message);
+        app.write(&mut stdout)?;
       } 
     } 
-    if write {
-      app.write(&mut stdout)?;
-    }
   }
+
   // return terminal to normal state
   stdout
     .queue(terminal::LeaveAlternateScreen)?
@@ -113,8 +90,9 @@ pub struct App {
   pub tabs:      TabList,
   pub focus:     Focus,
   pub new_dlg:   bool,
-  pub pending:   bool,
+  pub request:   Option<Request>,
   pub clear:     bool,
+  pub quit:      bool,
 } 
 impl App {
   pub fn init(path: &str, w: u16, h: u16) -> Self {
@@ -128,7 +106,7 @@ impl App {
         Ok(s)  => s.lines().map(|s| String::from(s)).collect(),
         Err(e) => vec![],
       };
-    Self {
+    let mut app = Self {
       frame,
       user,
       rect,
@@ -136,10 +114,13 @@ impl App {
       init_path: path.into(),
       tabs:      TabList::new(tab),
       focus:     Focus::Tab,
+      request:   None,
       new_dlg:   false,
-      pending:   false,
-      clear:     true
-    }
+      clear:     true,
+      quit:      false,
+    };
+    app.try_spawn_request(&app.user.init_url.clone());
+    app
   }
   fn ack(&mut self, task: Task, prompt: &str) {
     let style    = self.user.style.info.style.clone();
@@ -167,15 +148,6 @@ impl App {
     self.focus   = Focus::Dialog(task, dialog);
     self.new_dlg = true;
   }
-  fn get_init_url(&mut self) -> Option<Url> {
-    match Url::parse(&self.user.init_url) {
-      Ok(url) => Some(url),
-      Err(e) => {
-        self.ack(Task::Default, &e.to_string());
-        None
-      }
-    }
-  }
   fn reload_config(&mut self, path: Option<&str>) {
     let path      = path.unwrap_or(&self.init_path);
     let user_text = fs::read_to_string(path).unwrap_or("".into());
@@ -201,21 +173,47 @@ impl App {
     self.tabs.content = self.user.get_gem_textbox(&self.rect, &gemdoc);
     self.tabs.gemdoc  = Some(gemdoc);
   }
-  fn try_request(&mut self, url_str: &str) -> Option<Request> {
+  fn try_join_request(&mut self) -> bool {
+    if let Some(request) = &mut self.request {
+      if request.handle.is_finished() {
+        let result = request.rx.recv().unwrap()
+          .map(|(r, c)| GemDoc::new(&request.url, r, c)).flatten();
+        match result {
+          Err(e)     => self.ack(Task::Default, &e),
+          Ok(gemdoc) => {
+            let url = request.url.clone();
+            self.set_gemdoc(&url, gemdoc);
+          }
+        }
+        self.request = None;
+        true
+      } else {false}
+    } else {false}
+  }
+  fn try_spawn_request(&mut self, url_str: &str) {
     match Url::parse(url_str) {
       Err(e)  => {
         self.ack(Task::Default, &format!("URL parse error: {}", &e)); 
-        None
+        self.request = None;
       }
-      Ok(url) => 
-        Some(Request::new(&url, self.user.timeout)),
+      Ok(url) => {
+        match &mut self.request {
+          Some(_) =>
+            self.ack(Task::Default, "still processing previous request"),
+          None => 
+            self.request = Some(Request::new(&url, self.user.timeout)),
+        }
+      }
     }
   }
-  fn update(&mut self, message: &Message) -> Option<Request> {
+  fn update(&mut self, message: &Message) {
     self.clear = false;
     self.new_dlg = false;
     self.tabs.reset_state();
     match message {
+      Message::Quit => {
+        self.quit = true;
+      }
       Message::Resize(w, h) => {
         self.frame.resize(&Rect::new(*w, *h));
         self.rect = self.frame.inner_rect.clone();
@@ -224,37 +222,30 @@ impl App {
         }
         self.tabs.resize(&self.rect);
         self.clear = true;
-        None
       }
       Message::Action(action) => match &mut self.focus {
         Focus::Dialog(task, dialog) => match &mut dialog.response {
-          Response::Ack(_) => {
-            self.focus = Focus::Tab; None
-          } 
+          Response::Ack(_) => {self.focus = Focus::Tab;} 
           Response::Ask(_) => match action {
             Action::Yes => match task {
               Task::Go(url) => {
                 let url = url.clone();
                 self.focus = Focus::Tab;
-                self.try_request(&url)
+                self.try_spawn_request(&url);
               }
               Task::Redirect(url_str) => {
                 let text = url_str.trim().replace(" ", "%20");
                 self.focus = Focus::Tab;
-                self.try_request(&format!("{}?{}", self.tabs.url_str, text))
+                self.try_spawn_request(&format!("{}?{}", self.tabs.url_str, text));
               }
               Task::DelTab => {
                 self.tabs.delete();
-                self.focus = Focus::Tab; None
+                self.focus = Focus::Tab;
               }
-              _ => {
-                self.focus = Focus::Tab; None
-              }
+              _ => {self.focus = Focus::Tab;}
             }
-            Action::No | Action::Cancel => {
-              self.focus = Focus::Tab; None
-            }
-            _ => None,
+            Action::No | Action::Cancel => {self.focus = Focus::Tab;}
+            _ => {}
           } 
           Response::Select(textbox) => match action {
             Action::Inspect => match task {
@@ -262,108 +253,71 @@ impl App {
                 if self.urls.len() > 0 {
                   let url_str = &self.urls[textbox.content.get_source_idx()].clone();
                   self.focus = Focus::Tab;
-                  self.try_request(url_str)
+                  self.try_spawn_request(url_str);
                 } else {
                   self.focus = Focus::Tab;
-                  None
                 }
               }
-              _ => None,
+              _ => {},
             }
-            Action::MoveLeft => {
-              textbox.left(1); None
-            }
-            Action::MoveRight => {
-              textbox.right(1); None
-            }
-            Action::MoveUp => {
-              textbox.up(1); None
-            }
-            Action::MoveDown => {
-              textbox.down(1); None
-            }
-            Action::Top => {
-              textbox.up(textbox.y_len()); None
-            }
-            Action::Bottom => {
-              textbox.down(textbox.y_len()); None
-            }
-            Action::PageUp => {
-              textbox.up(usize::from(textbox.rect.h)); None
-            } 
-            Action::PageDown => {
-              textbox.down(usize::from(textbox.rect.h)); None
-            }
-            Action::Cancel => {
-              self.focus = Focus::Tab; None
-            }
-            _ => None,
+            Action::MoveLeft    => {textbox.left(1);}
+            Action::MoveRight   => {textbox.right(1);}
+            Action::MoveUp      => {textbox.up(1);}
+            Action::MoveDown    => {textbox.down(1);}
+            Action::Top         => {textbox.up(textbox.y_len());}
+            Action::Bottom      => {textbox.down(textbox.y_len());}
+            Action::PageUp      => {textbox.up(usize::from(textbox.rect.h));} 
+            Action::PageDown    => {textbox.down(usize::from(textbox.rect.h));}
+            Action::Cancel      => {self.focus = Focus::Tab;}
+            _ => {},
           }
           Response::Text(editbox) => match action {
             Action::Enter => match task {
               Task::Reply => {
                 let text = editbox.content.text.to_string();
                 let text = text.trim().replace(" ", "%20");
-                self.try_request(&format!("{}?{}", self.tabs.url_str, text))
+                self.focus = Focus::Tab;
+                self.try_spawn_request(&format!("{}?{}", self.tabs.url_str, text));
               }
               Task::NewTab => {
                 let text = editbox.content.text.to_string();
-                self.try_request(&format!("{}?{}", self.tabs.url_str, text))
+                self.focus = Focus::Tab;
+                self.try_spawn_request(&text);
               }
-              _ => None,
+              _ => {},
             }
-            Action::MoveLeft => {
-              editbox.left(1); None
-            }
-            Action::MoveRight => {
-              editbox.right(1); None
-            }
-            Action::Delete => {
-              editbox.delete(); None
-            }
-            Action::Backspace => {
-              editbox.backspace(); None
-            }
-            Action::Insert(c) => {
-              editbox.insert(*c); None
-            }
-            Action::Cancel => {
-              self.focus = Focus::Tab; None
-            }
-            _ => None,
+            Action::MoveLeft    => {editbox.left(1);}
+            Action::MoveRight   => {editbox.right(1);}
+            Action::Delete      => {editbox.delete();}
+            Action::Backspace   => {editbox.backspace();}
+            Action::Insert(c)   => {editbox.insert(*c);}
+            Action::Cancel      => {self.focus = Focus::Tab;}
+            _ => {},
           }
         }
         Focus::Tab => match action {
-          Action::MoveLeft => {
-            self.tabs.left(1); None
-          }
-          Action::MoveRight => {
-            self.tabs.right(1); None
-          }
-          Action::MoveUp => {
-            self.tabs.up(1); None
-          }
-          Action::MoveDown => {
-            self.tabs.down(1); None
-          }
+          Action::MoveLeft  => {self.tabs.left(1);}
+          Action::MoveRight => {self.tabs.right(1);}
+          Action::MoveUp    => {self.tabs.up(1);}
+          Action::MoveDown  => {self.tabs.down(1);}
           Action::Top => {
             let len = self.tabs.y_len(); 
-            self.tabs.up(len); None
+            self.tabs.up(len);
           }
           Action::Bottom => {
             let len = self.tabs.y_len(); 
-            self.tabs.down(len); None
+            self.tabs.down(len);
           }
           Action::PageUp => {
             let len = self.tabs.rect.h; 
-            self.tabs.up(usize::from(len)); None
+            self.tabs.up(usize::from(len));
           }
           Action::PageDown => {
             let len = self.tabs.rect.h; 
-            self.tabs.down(usize::from(len)); None
+            self.tabs.down(usize::from(len));
           }
           Action::LoadUrl => {
-            self.select_url(Task::NewTab, "choose the url: "); None
+            self.select_url(Task::NewTab, "choose the url: ");
           }
           Action::SaveUrl => {
             let url_str = self.tabs.url_str.clone();
@@ -374,35 +328,31 @@ impl App {
               match fs::OpenOptions::new().write(true).truncate(true).open(&self.user.save_file) {
                 Err(e) => {
                   self.ack(Task::Default, &format!("could not create save file: {}", &e)); 
-                  None
                 }
                 Ok(mut f) => {
                   for url in self.urls.iter() {
                     f.write(&format!("{}\n", url).as_bytes());
                   }
-                  None
                 }
               }
-            } else {None}
+            }
           }
           Action::NewTab => {
-            self.text(Task::NewTab, "enter path: "); None
+            self.text(Task::NewTab, "enter path: ");
           }
           Action::DelTab => {
             self.ask(Task::DelTab, "Delete current tab?");
-            self.tabs.delete(); None
+            self.tabs.delete();
           }
           Action::CycleLeft => {
             if self.tabs.len() > 1 {
               self.tabs.wrapping_backward(1);
             }
-            None
           }
           Action::CycleRight => {
             if self.tabs.len() > 1 {
               self.tabs.wrapping_forward(1);
             }
-            None
           }
           Action::Inspect => {
             if let Some(gemdoc) = &self.tabs.gemdoc {
@@ -418,13 +368,12 @@ impl App {
                   self.ack(Task::Default, &format!("you've selected {:?}", gemtext));
                 }
               }
-              None
-            } else {None}
+            }
           }
-          _ => None,
+          _ => {}
         }
       }
-      _ => None,
+      _ => {}
     }
   }
   fn get_update(&self, event: Event) -> Option<Message> {
@@ -459,19 +408,19 @@ impl App {
       _ => None,
     }
   }
-  fn banner_text(&self) -> String {
-    let text = self.tabs.banner_text();
-    if self.pending {
-      format!(" (pending response) {} ", text)
-    } else {text}
-  }
   fn write(&self, stdout: &mut Stdout) -> io::Result<()> {
     cursor_hide(stdout)?;
     if self.clear {
       stdout.queue(Clear(ClearType::All))?;
       self.frame.write(stdout)?;
     }
-    self.frame.write_banner(&self.banner_text(), stdout)?;
+    let banner_text = {
+      let text = self.tabs.banner_text();
+      if let Some(request) = &self.request {
+        format!(" (pending response) {} ", text)
+      } else {text}
+    };
+    self.frame.write_banner(&banner_text, stdout)?;
     if let Focus::Dialog(_, dialog) = &self.focus {
       if self.new_dlg {
         if let Some(fg) = self.user.style.covered.fg {
