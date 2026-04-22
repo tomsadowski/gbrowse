@@ -120,9 +120,7 @@ pub struct StyleModTable {
   pub list:            TextTable,
 } 
 impl UserTable<StyleModField> for StyleModTable {
-  fn try_assign(&mut self, field: StyleModField, value: Value) 
-    -> Result<(), String> 
-  {
+  fn try_assign(&mut self, field: StyleModField, value: Value) -> Result<(), String> {
     match (field, value) {
       (StyleModField::Border, Value::Table(v)) => {
         self.border = BorderSpec::default().read_table(v)?;
@@ -178,9 +176,7 @@ impl FromStr for MarginField {
   }
 }
 impl UserTable<MarginField> for MarginSpec {
-  fn try_assign(&mut self, field: MarginField, value: Value) 
-    -> Result<(), String> 
-  {
+  fn try_assign(&mut self, field: MarginField, value: Value) -> Result<(), String> {
     match (field, value) {
       (f, Value::Integer(v)) => {
         let v = u16::try_from(v).map_err(|e| format!("{:?} : {}", v, e))?;
@@ -222,13 +218,10 @@ impl FromStr for StyleField {
   }
 }
 impl UserTable<StyleField> for Style {
-  fn try_assign(&mut self, field: StyleField, value: Value) 
-    -> Result<(), String> 
-  {
+  fn try_assign(&mut self, field: StyleField, value: Value) -> Result<(), String> {
     match (field, value) {
       (StyleField::Color(f), v) => {
-        let v = parse_color(&v)
-          .map_err(|e| format!("{:?} : {}", v, e))?;
+        let v = parse_color(&v).map_err(|e| format!("{:?} : {}", v, e))?;
         match f {
           ColorField::Fg => self.fg = Some(v),
           ColorField::Bg => self.bg = Some(v),
@@ -273,9 +266,7 @@ impl Default for TextTable {
   }
 }
 impl UserTable<TextField> for TextTable {
-  fn try_assign(&mut self, field: TextField, value: Value) 
-    -> Result<(), String> 
-  {
+  fn try_assign(&mut self, field: TextField, value: Value) -> Result<(), String> {
     match (field, value) {
       (TextField::Wrap, Value::Boolean(v)) => self.wrap = v,
       (TextField::Style(f), v)             => self.style.try_assign(f, v)?,
@@ -333,9 +324,7 @@ impl FromStr for BorderField {
   }
 }
 impl UserTable<BorderField> for BorderSpec {
-  fn try_assign(&mut self, field: BorderField, value: Value) 
-    -> Result<(), String> 
-  {
+  fn try_assign(&mut self, field: BorderField, value: Value) -> Result<(), String> {
     match (field, value) {
       (BorderField::Style(f), v) => self.style.try_assign(f, v)?,
       (BorderField::Corner, Value::String(v)) => {

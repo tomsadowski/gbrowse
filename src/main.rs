@@ -259,16 +259,8 @@ impl App {
               }
               _ => {},
             }
-            Action::MoveLeft    => {textbox.left(1);}
-            Action::MoveRight   => {textbox.right(1);}
-            Action::MoveUp      => {textbox.up(1);}
-            Action::MoveDown    => {textbox.down(1);}
-            Action::Top         => {textbox.up(textbox.y_len());}
-            Action::Bottom      => {textbox.down(textbox.y_len());}
-            Action::PageUp      => {textbox.up(usize::from(textbox.rect.h));} 
-            Action::PageDown    => {textbox.down(usize::from(textbox.rect.h));}
-            Action::Cancel      => {self.focus = Focus::Tab;}
-            _ => {},
+            Action::Cancel => {self.focus = Focus::Tab;}
+            action => {action.use_textbox(textbox)},
           }
           Response::Text(editbox) => match action {
             Action::Enter => match task {
@@ -285,36 +277,11 @@ impl App {
               }
               _ => {},
             }
-            Action::MoveLeft    => {editbox.left(1);}
-            Action::MoveRight   => {editbox.right(1);}
-            Action::Delete      => {editbox.delete();}
-            Action::Backspace   => {editbox.backspace();}
-            Action::Insert(c)   => {editbox.insert(*c);}
-            Action::Cancel      => {self.focus = Focus::Tab;}
-            _ => {},
+            Action::Cancel => {self.focus = Focus::Tab;}
+            action => {action.use_editbox(editbox)},
           }
         }
         Focus::Tab => match action {
-          Action::MoveLeft  => {self.tabs.left(1);}
-          Action::MoveRight => {self.tabs.right(1);}
-          Action::MoveUp    => {self.tabs.up(1);}
-          Action::MoveDown  => {self.tabs.down(1);}
-          Action::Top => {
-            let len = self.tabs.y_len(); 
-            self.tabs.up(len);
-          }
-          Action::Bottom => {
-            let len = self.tabs.y_len(); 
-            self.tabs.down(len);
-          }
-          Action::PageUp => {
-            let len = self.tabs.rect.h; 
-            self.tabs.up(usize::from(len));
-          }
-          Action::PageDown => {
-            let len = self.tabs.rect.h; 
-            self.tabs.down(usize::from(len));
-          }
           Action::LoadUrl => {
             self.select_url(Task::NewTab, "choose the url: ");
           }
@@ -369,7 +336,7 @@ impl App {
               }
             }
           }
-          _ => {}
+          action => {action.use_textbox(&mut self.tabs)}
         }
       }
       _ => {}
