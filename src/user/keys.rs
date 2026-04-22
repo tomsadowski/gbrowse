@@ -99,7 +99,7 @@ impl KeysTable {
   }
   pub fn get_tab_action(&self, kc: &KeyCode) -> Option<Action> {
     if        &self.load_url    == kc {Some(Action::LoadUrl)
-    } else if &self.help_view   == kc {Some(Action::SaveUrl)
+    } else if &self.save_url    == kc {Some(Action::SaveUrl)
     } else if &self.help_view   == kc {Some(Action::HelpView)
     } else if &self.log_view    == kc {Some(Action::LogView)
     } else if &self.cycle_left  == kc {Some(Action::CycleLeft)

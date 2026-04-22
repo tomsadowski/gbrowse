@@ -327,7 +327,10 @@ impl StyledTextPlane {
   }
   fn set_idx(&mut self, idx: usize) {
     self.start();
-    self.text[self.head].1.start();
+    // this guard responds to an error only encountered on windows
+    if self.text.len() > 0 {
+      self.text[self.head].1.start();
+    }
     self.right(idx);
   }
   pub fn resize(&mut self, width: u16) {
