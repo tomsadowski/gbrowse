@@ -1,4 +1,4 @@
-# .keys/arrows
+# hjkl
 
 move_up     = "k"
 move_down   = "j"

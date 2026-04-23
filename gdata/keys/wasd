@@ -1,4 +1,4 @@
-# .keys/wasd
+# wasd
 
 move_up     = "w"
 move_down   = "s"

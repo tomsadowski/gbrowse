@@ -1,0 +1,17 @@
+# spring
+
+screen_margin = {n = 1, s = 0, e = 8, w = 8}
+text_margin   = {n = 1, s = 1, e = 4, w = 4}
+
+border    = {fg = "585c60", bg = "202326", corner = "round", bracket = "tort"}
+covered   = {fg = "303438"}
+banner    = {fg = "e070e0"}
+general   = {fg = "e8e8e8", bg = "202326"}
+list      = {fg = "e8e8e8"}
+info      = {fg = "e8e8e8"}
+quote     = {fg = "e070e0"}
+preformat = {fg = "e070e0", wrap = false}
+link      = {fg = "88c0ff", underline = true}
+header1   = {fg = "a8c020", bold = true, underline = true}
+header2   = {fg = "e06820", bold = true}
+header3   = {fg = "e06820"}
