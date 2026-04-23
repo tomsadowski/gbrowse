@@ -1,15 +1,76 @@
 // src/user/keys.rs
 
 use crate::{
-  message::{Action},
   user::UserTable,
   dialog::{Dialog, Response},
-  widget::{TextBox},
+  widget::{TextBox, EditBox},
 };
 use crossterm::event::KeyCode;
 use toml::Value;
 use std::str::FromStr;
 
+#[derive(Clone, Debug)]
+pub enum Action {
+  // editor
+  Insert(char),
+  Backspace,
+  Enter,
+  Delete,
+  // MoveLeft,
+  // MoveRight,
+
+  // tab
+  LoadUrl,
+  SaveUrl,
+  DelTab, 
+  NewTab, 
+  HelpView, 
+  LogView,
+  CycleLeft, 
+  CycleRight, 
+
+  // selector
+  MoveUp, 
+  MoveDown, 
+  MoveLeft, 
+  MoveRight,
+  Top,
+  Bottom,
+  PageUp,
+  PageDown,
+  Inspect, 
+
+  // dialog
+  Ack, 
+  Yes, 
+  No, 
+  Cancel,
+}
+impl Action {
+  pub fn use_editbox(&self, editbox: &mut EditBox) {
+    match self {
+      Action::Backspace => {editbox.backspace();}
+      Action::Delete    => {editbox.delete();}
+      Action::Insert(c) => {editbox.insert(*c);}
+      Action::MoveLeft  => {editbox.left(1);}
+      Action::MoveRight => {editbox.right(1);}
+      _ => {}
+    }
+  }
+  pub fn use_textbox(&self, textbox: &mut TextBox) {
+    match self {
+      Action::PageDown  => {textbox.down(usize::from(textbox.rect.h));}
+      Action::PageUp    => {textbox.up(usize::from(textbox.rect.h));}
+      Action::Bottom    => {textbox.down(textbox.y_len());}
+      Action::Top       => {textbox.up(textbox.y_len());}
+      Action::MoveDown  => {textbox.down(1);}
+      Action::MoveUp    => {textbox.up(1);}
+      Action::MoveLeft  => {textbox.left(1);}
+      Action::MoveRight => {textbox.right(1);}
+      _ => {}
+    }
+  }
+}
 impl FromStr for Action {
   type Err = String;
   fn from_str(s: &str) -> Result<Self, Self::Err> {
