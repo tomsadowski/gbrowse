@@ -1,8 +1,11 @@
 // src/common.rs
 
 // env
-pub const START: &str = ".gstart";
-pub const SAVE:  &str = ".gsave";
+pub const USER_DATA:   &str = "gdata";
+pub const USER_INIT:   &str = "init";
+pub const USER_URLS:   &str = "urls";
+pub const USER_STYLES: &str = "styles";
+pub const USER_KEYS:   &str = "keys";
 
 // corners 
 pub const A_SQR: char = '\u{250C}';

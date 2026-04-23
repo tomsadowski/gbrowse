@@ -1,0 +1,5 @@
+# init
+
+init_url = "gemini://geminiprotocol.net/"
+style    = "fire"
+keys     = "pearbear"

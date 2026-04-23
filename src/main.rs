@@ -40,11 +40,13 @@ use std::{
 fn main() -> io::Result<()> {
   // initialize app
   let mut app = {
-    let args         = env::args().collect::<Vec<String>>();
-    let (w, h)       = terminal::size()?;
-    let default_path = String::from(c::START);
-    let init_path    = args.get(1).unwrap_or(&default_path); 
-    App::init(init_path, w, h)
+    let args   = env::args().collect::<Vec<String>>();
+    let (w, h) = terminal::size()?;
+    let init = match args.get(1) {
+      Some(init) => format!("{}/{}", c::USER_DATA, init),
+      None       => format!("{}/{}", c::USER_DATA, c::USER_INIT),
+    };
+    App::init(&init, w, h)
   };
   let mut stdout = stdout();
   // register keystrokes 

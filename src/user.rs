@@ -7,6 +7,7 @@ pub use self::style::StyleModTable;
 pub use self::keys::{KeysTable, Action};
 
 use crate::{
+  common as c,
   widget::{Rect, Frame, TextBox, StyledText},
   protocol::{GemText, GemTag, GemDoc},
 };
@@ -14,9 +15,7 @@ use toml::{Table, Value};
 use std::{fs, str::{FromStr}};
 
 
-pub trait UserTable<F>: Sized 
-where F: FromStr<Err = String> 
-{
+pub trait UserTable<F>: Sized where F: FromStr<Err = String> {
   fn try_assign(&mut self, field: F, value: Value) -> Result<(), String>;
 
   fn read_table(mut self, table: Table) -> Result<Self, String> {
@@ -94,7 +93,7 @@ impl Default for User {
       override_keys:  None,
       timeout:        10,
       init_url:       "gemini://geminiprotocol.net/".into(),
-      save_file:      ".gsave".into(),
+      save_file:      format!("{}/{}", c::USER_DATA, c::USER_URLS),
       style:          StyleModTable::default(),
       keys:           KeysTable::default(),
     }
@@ -107,20 +106,22 @@ impl UserTable<UserField> for User {
         self.init_url = v.into();
       }
       (UserField::SaveFile, Value::String(v)) => {
-        self.save_file = v.into();
+        self.save_file = format!("{}/{}", c::USER_DATA, v);
       }
       (UserField::Timeout, Value::Integer(v)) => {
         self.timeout = u64::try_from(v).map_err(|e| e.to_string())?;
       }
       // read style from another file
-      (UserField::Style, Value::String(path)) => {
-        let text = fs::read_to_string(path).map_err(|e| e.to_string())?;
-        let table = text.parse::<Table>().map_err(|e| e.to_string())?;
+      (UserField::Style, Value::String(modname)) => {
+        let path   = format!("{}/{}/{}", c::USER_DATA, c::USER_STYLES, modname);
+        let text   = fs::read_to_string(path).map_err(|e| e.to_string())?;
+        let table  = text.parse::<Table>().map_err(|e| e.to_string())?;
         self.style = StyleModTable::default().read_table(table)?;
       }
       // read keys from another file
-      (UserField::Keys, Value::String(path)) => {
-        let text = fs::read_to_string(path).map_err(|e| e.to_string())?;
+      (UserField::Keys, Value::String(modname)) => {
+        let path  = format!("{}/{}/{}", c::USER_DATA, c::USER_KEYS, modname);
+        let text  = fs::read_to_string(path).map_err(|e| e.to_string())?;
         let table = text.parse::<Table>().map_err(|e| e.to_string())?;
         self.keys = KeysTable::default().read_table(table)?;
       }
