@@ -16,8 +16,6 @@ pub enum Action {
   Backspace,
   Enter,
   Delete,
-  // MoveLeft,
-  // MoveRight,
 
   // tab
   LoadUrl,
