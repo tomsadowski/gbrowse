@@ -211,7 +211,7 @@ impl App {
             _ => {}
           } 
           Response::Select(textbox) => match action {
-            Action::Inspect => match task {
+            Action::Select => match task {
               Task::NewTab => {
                 if self.urls.len() > 0 {
                   let url_str = &self.urls[textbox.content.get_source_idx()].clone();
@@ -287,7 +287,7 @@ impl App {
               self.tabs.wrapping_forward(1);
             }
           }
-          Action::Inspect => {
+          Action::Select => {
             if let Some(gemdoc) = &self.tabs.gemdoc {
               match gemdoc.doc[self.tabs.get_source_idx()].tag.clone() {
                 GemTag::Link(Scheme::Gemini, url) => {

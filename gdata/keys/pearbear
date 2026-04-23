@@ -5,7 +5,7 @@ move_down   = "i"
 move_left   = "e"
 move_right  = "n"
 
-inspect     = "w"
+select      = "w"
 delete_tab  = "v"
 new_tab     = "p"
 

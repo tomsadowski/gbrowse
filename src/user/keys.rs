@@ -38,7 +38,7 @@ pub enum Action {
   Bottom,
   PageUp,
   PageDown,
-  Inspect, 
+  Select, 
 
   // dialog
   Ack, 
@@ -87,7 +87,7 @@ impl FromStr for Action {
       "cycle_right" => Ok(Self::CycleRight),
       "delete_tab"  => Ok(Self::DelTab),
       "new_tab"     => Ok(Self::NewTab),
-      "inspect"     => Ok(Self::Inspect),
+      "select"      => Ok(Self::Select),
       "ack"         => Ok(Self::Ack),
       "yes"         => Ok(Self::Yes),
       "no"          => Ok(Self::No),
@@ -113,7 +113,7 @@ pub struct KeysTable {
   pub save_url:    KeyCode,
   pub help_view:   KeyCode,
   pub log_view:    KeyCode,
-  pub inspect:     KeyCode,
+  pub select:      KeyCode,
   pub delete_tab:  KeyCode,
   pub new_tab:     KeyCode,
 
@@ -141,7 +141,7 @@ impl Default for KeysTable {
       pgdown:      KeyCode::PageDown,
       cycle_left:  KeyCode::Char(','),
       cycle_right: KeyCode::Char('.'),
-      inspect:     KeyCode::Enter,
+      select:      KeyCode::Enter,
       ack:         KeyCode::Enter, 
       yes:         KeyCode::Char('y'), 
       no:          KeyCode::Char('n'),
@@ -174,7 +174,7 @@ impl KeysTable {
     } else if &self.down        == kc {Some(Action::MoveDown)
     } else if &self.left        == kc {Some(Action::MoveLeft)
     } else if &self.right       == kc {Some(Action::MoveRight)
-    } else if &self.inspect     == kc {Some(Action::Inspect)
+    } else if &self.select      == kc {Some(Action::Select)
     } else if &self.top         == kc {Some(Action::Top)
     } else if &self.bottom      == kc {Some(Action::Bottom)
     } else if &self.pgup        == kc {Some(Action::PageUp)  
@@ -250,7 +250,7 @@ impl UserTable<Action> for KeysTable {
       Action::CycleRight => self.cycle_right = value,
       Action::DelTab     => self.delete_tab  = value,
       Action::NewTab     => self.new_tab     = value,
-      Action::Inspect    => self.inspect     = value,
+      Action::Select     => self.select      = value,
       Action::Ack        => self.ack         = value,
       Action::Yes        => self.yes         = value,
       Action::No         => self.no          = value,

@@ -5,9 +5,9 @@ move_down   = "j"
 move_left   = "h"
 move_right  = "l"
 
-inspect     = "i"
-delete_tab  = "p"
-new_tab     = "o"
+select      = "s"
+delete_tab  = "r"
+new_tab     = "t"
 
 save_url    = "u"
 load_url    = "U"
