@@ -1,0 +1,17 @@
+# plain
+
+screen_margin = {n = 1, s = 0, e = 8, w = 8}
+text_margin   = {n = 1, s = 1, e = 4, w = 4}
+
+border    = {corner = "round", bracket = "tort"}
+covered   = {}
+banner    = {}
+general   = {}
+list      = {}
+info      = {}
+quote     = {}
+preformat = {wrap = false}
+link      = {underline = true}
+header1   = {bold = true, underline = true}
+header2   = {bold = true}
+header3   = {}

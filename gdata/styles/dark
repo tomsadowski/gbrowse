@@ -1,0 +1,17 @@
+# dark
+
+screen_margin = {n = 1, s = 0, e = 8, w = 8}
+text_margin   = {n = 1, s = 1, e = 4, w = 4}
+
+border    = {fg = "404000", bg = "000000", corner = "round", bracket = "tort"}
+covered   = {fg = "404000", bg = "000000"}
+banner    = {fg = "00ffff"}
+general   = {fg = "ffff00", bg = "000000"}
+list      = {fg = "ffff00"}
+info      = {fg = "ffff00"}
+quote     = {fg = "ffff00"}
+preformat = {fg = "ffff00", wrap = false}
+link      = {fg = "00ffff", underline = true}
+header1   = {fg = "ff00ff", bold = true, underline = true}
+header2   = {fg = "ff00ff", bold = true}
+header3   = {fg = "ff00ff"}
