@@ -2,8 +2,7 @@
 
 use crate::{
   common as c,
-  widget::{Rect, write_reset, MarginSpec, BorderSpec},
-  text::{Style},
+  widget::{Rect, Style, write_reset, MarginSpec, BorderSpec},
 };
 use crossterm::{
   QueueableCommand, 

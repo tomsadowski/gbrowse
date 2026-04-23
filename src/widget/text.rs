@@ -1,5 +1,8 @@
 // src/text.rs
 
+use crate::{
+  widget::{Linear, Planar},
+};
 use crossterm::{
   QueueableCommand, 
   style::{
@@ -36,87 +39,6 @@ pub fn wrap(text: Vec<char>, width: usize) -> Vec<Vec<char>> {
     vec.push(line);
   }
   vec
-}
-pub trait Linear {
-  fn len(&self) -> usize;
-  fn head(&self) -> usize;
-  fn head_mut(&mut self) -> &mut usize;
-
-  fn max_head(&self) -> usize {
-    self.len().saturating_sub(1)
-  }
-  fn fit(&mut self, new_cursor: usize) {
-    *self.head_mut() = self.max_head().min(new_cursor);
-  }
-  fn start(&mut self) {
-    *self.head_mut() = 0;
-  }
-  fn end(&mut self) {
-    *self.head_mut() = self.max_head();
-  }
-  fn peek_backward(&self, step: usize) -> usize {
-    if step > self.head() {
-      step - self.head()
-    } else {0}
-  }
-  fn peek_forward(&self, step: usize) -> usize {
-    let max_head = self.max_head();
-    if self.head() + step > max_head {
-      self.head() + step - max_head
-    } else {0}
-  }
-  fn backward(&mut self, mut step: usize) -> usize {
-    if step > self.head() {
-      step -= self.head();
-      *self.head_mut() = 0;
-      step
-    } else {
-      *self.head_mut() -= step;
-      0
-    }
-  }
-  fn forward(&mut self, mut step: usize) -> usize {
-    if self.head() + step > self.max_head() {
-      step = self.head() + step - self.max_head();
-      *self.head_mut() = self.max_head();
-      step
-    } else {
-      *self.head_mut() += step;
-      0
-    }
-  }
-  fn wrapping_backward(&mut self, step: usize) {
-    if step > self.head() {
-      self.end();
-    } else {
-      *self.head_mut() -= step;
-    }
-  }
-  fn wrapping_forward(&mut self, step: usize) {
-    if self.head() + step > self.max_head() {
-      self.start();
-    } else {
-      *self.head_mut() += step;
-    }
-  }
-}
-pub trait Planar {
-  fn x_len(&self) -> usize;
-  fn x_head(&self) -> usize;
-  fn y_len(&self) -> usize;
-  fn y_head(&self) -> usize;
-  fn y_head_mut(&mut self) -> &mut usize;
-}
-impl<P: Planar> Linear for P {
-  fn len(&self) -> usize {
-    self.y_len()
-  }
-  fn head(&self) -> usize {
-    self.y_head()
-  }
-  fn head_mut(&mut self) -> &mut usize {
-    self.y_head_mut()
-  }
 }
 #[derive(Clone, Debug, Default)]
 pub struct EditLine {
@@ -192,9 +114,9 @@ impl Linear for TextLine {
 #[derive(Clone, Debug, Default)]
 pub struct Style {
   pub underline: bool,
-  pub bold: bool,
-  pub fg:   Option<Color>,
-  pub bg:   Option<Color>,
+  pub bold:      bool,
+  pub fg:        Option<Color>,
+  pub bg:        Option<Color>,
 }
 impl Style {
   pub fn write<W>(&self, writer: &mut W) -> io::Result<()> 

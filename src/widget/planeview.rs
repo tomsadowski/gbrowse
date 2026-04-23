@@ -1,8 +1,7 @@
 // src/planeview.rs
 
 use crate::{
-  text::Planar,
-  widget::Rect,
+  widget::{Rect, Planar},
 };
 
 #[derive(Clone, Debug, Default)]

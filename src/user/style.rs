@@ -3,8 +3,7 @@
 use crate::{
   common as c,
   user::UserTable,
-  text::{Style},
-  widget::{BorderSpec, MarginSpec},
+  widget::{BorderSpec, MarginSpec, Style},
 };
 use crossterm::{
   style::{Color},

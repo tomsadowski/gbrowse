@@ -7,7 +7,6 @@
 #![allow(unused_variables)]
 
 mod app;
-mod text;
 mod widget;
 mod user;
 mod common;
@@ -21,7 +20,6 @@ use crate::{
   user::{User, Action},
   tab::{Tab, TabList},
   dialog::{Response, Dialog},
-  text::{Linear}, 
   widget::{Rect, Frame, cursor_hide, PlaneWidget},
   protocol::{Request, GemDoc, GemTag, Status, Scheme},
 };

@@ -1,8 +1,7 @@
 // src/editbox.rs
 
 use crate::{
-  widget::{Rect, LineView, write_reset},
-  text::{Style, EditLine, Linear},
+  widget::{Rect, LineView, write_reset, Style, EditLine, Linear},
 };
 use crossterm::{
   QueueableCommand,

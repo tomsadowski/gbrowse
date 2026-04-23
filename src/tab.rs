@@ -1,8 +1,7 @@
 // src/tab.rs
 
 use crate::{
-  text::{Linear}, 
-  widget::{Rect, TextBox},
+  widget::{Rect, Linear, TextBox},
   protocol::{GemDoc},
 };
 use std::{
@@ -11,8 +10,8 @@ use std::{
 
 
 pub struct TabList {
-  pub head:      usize,
-  pub tabs:      Vec<Tab>,
+  pub head: usize,
+  pub tabs: Vec<Tab>,
 } 
 impl Linear for TabList {
   fn len(&self) -> usize {

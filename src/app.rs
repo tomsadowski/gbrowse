@@ -5,8 +5,7 @@ use crate::{
   user::{User, Action},
   tab::{Tab, TabList},
   dialog::{Response, Dialog},
-  text::{Linear}, 
-  widget::{Rect, Frame, cursor_hide, PlaneWidget, TextBox, EditBox},
+  widget::{Rect, Linear, Frame, cursor_hide, PlaneWidget, TextBox, EditBox},
   protocol::{Request, GemDoc, GemTag, Status, Scheme},
 };
 use crossterm::{
