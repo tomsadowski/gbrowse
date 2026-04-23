@@ -85,11 +85,11 @@ impl App {
     app.try_spawn_request(&app.user.init_url.clone());
     app
   }
-  fn ack(&mut self, task: Task, prompt: &str) {
+  fn ack(&mut self, prompt: &str) {
     let style    = self.user.style.info.style.clone();
     let help     = &format!("Press {} to acknowledge", self.user.keys.ack);
     let dialog   = Dialog::ack(prompt, help, style, &self.rect);
-    self.focus   = Focus::Dialog(task, dialog);
+    self.focus   = Focus::Dialog(Task::Default, dialog);
     self.new_dlg = true;
   }
   fn ask(&mut self, task: Task, prompt: &str) {
@@ -129,7 +129,7 @@ impl App {
       Status::CertRequiredClient |
       Status::CertRequiredTransient |
       Status::CertRequiredAuthorized => {
-        self.ack(Task::Default, &gemdoc.status.txt);
+        self.ack(&gemdoc.status.txt);
       }
       _ => {}
     };
@@ -142,7 +142,7 @@ impl App {
         let result = request.rx.recv().unwrap()
           .map(|(r, c)| GemDoc::new(&request.url, r, c)).flatten();
         match result {
-          Err(e)     => self.ack(Task::Default, &e),
+          Err(e)     => self.ack(&e),
           Ok(gemdoc) => {
             let url = request.url.clone();
             self.set_gemdoc(&url, gemdoc);
@@ -156,13 +156,13 @@ impl App {
   pub fn try_spawn_request(&mut self, url_str: &str) {
     match Url::parse(url_str) {
       Err(e)  => {
-        self.ack(Task::Default, &format!("URL parse error: {}", &e)); 
+        self.ack(&format!("URL parse error: {}", &e)); 
         self.request = None;
       }
       Ok(url) => {
         match &mut self.request {
           Some(_) =>
-            self.ack(Task::Default, "still processing previous request"),
+            self.ack("still processing previous request"),
           None => 
             self.request = Some(Request::new(&url, self.user.timeout)),
         }
@@ -253,18 +253,21 @@ impl App {
             let url_str = self.tabs.url_str.clone();
             // only add url_str if new
             if !self.urls.iter().any(|url| **url == url_str) {
-              self.urls.push(url_str);
+              self.urls.push(url_str.clone());
               // write to save file
               match fs::OpenOptions::new().write(true).truncate(true).open(&self.user.save_file) {
                 Err(e) => {
-                  self.ack(Task::Default, &format!("could not create save file: {}", &e)); 
+                  self.ack(&format!("could not create save file: {}", &e)); 
                 }
                 Ok(mut f) => {
                   for url in self.urls.iter() {
                     f.write(&format!("{}\n", url).as_bytes());
                   }
+                  self.ack(&format!("Saved URL: {}", url_str)); 
                 }
               }
+            } else {
+              self.ack(&format!("URL {} already saved", url_str)); 
             }
           }
           Action::NewTab => {
@@ -292,10 +295,10 @@ impl App {
                   self.ask(Task::Go(url.into()), prompt);
                 }
                 GemTag::Link(_, url) => {
-                  self.ack(Task::Default, &format!("Protocol {} not yet supported", url));
+                  self.ack(&format!("Protocol {} not yet supported", url));
                 }
                 gemtext => {
-                  self.ack(Task::Default, &format!("you've selected {:?}", gemtext));
+                  self.ack(&format!("you've selected {:?}", gemtext));
                 }
               }
             }
