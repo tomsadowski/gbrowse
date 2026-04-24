@@ -18,6 +18,7 @@ pub enum Action {
   Delete,
 
   // tab
+  Menu,
   LoadUrl,
   SaveUrl,
   DelTab, 
@@ -78,6 +79,7 @@ impl FromStr for Action {
       "load_url"    => Ok(Self::LoadUrl),
       "save_url"    => Ok(Self::SaveUrl),
       "move_up"     => Ok(Self::MoveUp),
+      "menu"        => Ok(Self::Menu),
       "move_down"   => Ok(Self::MoveDown),
       "move_left"   => Ok(Self::MoveLeft),
       "move_right"  => Ok(Self::MoveRight),
@@ -107,6 +109,7 @@ pub struct KeysTable {
   pub cycle_left:  KeyCode,
   pub cycle_right: KeyCode,
 
+  pub menu:        KeyCode,
   pub load_url:    KeyCode,
   pub save_url:    KeyCode,
   pub help_view:   KeyCode,
@@ -124,6 +127,7 @@ impl Default for KeysTable {
   fn default() -> Self {
     Self {
       load_url:    KeyCode::Char('u'),
+      menu:        KeyCode::Char('m'),
       save_url:    KeyCode::Char('U'),
       delete_tab:  KeyCode::Char('d'),
       new_tab:     KeyCode::Char('n'),
@@ -165,6 +169,7 @@ impl KeysTable {
     } else if &self.cycle_right == kc {Some(Action::CycleRight)
     } else if &self.delete_tab  == kc {Some(Action::DelTab)
     } else if &self.new_tab     == kc {Some(Action::NewTab)
+    } else if &self.menu        == kc {Some(Action::Menu)
     } else                            {self.get_text_box_action(kc)}
   }
   pub fn get_text_box_action(&self, kc: &KeyCode) -> Option<Action> {
@@ -239,6 +244,7 @@ impl UserTable<Action> for KeysTable {
       Action::LoadUrl    => self.load_url    = value,
       Action::SaveUrl    => self.save_url    = value,
       Action::HelpView   => self.help_view   = value,
+      Action::Menu       => self.menu        = value,
       Action::LogView    => self.log_view    = value,
       Action::MoveUp     => self.up          = value,
       Action::MoveDown   => self.down        = value,

@@ -7,6 +7,12 @@ pub const USER_URLS:   &str = "urls";
 pub const USER_STYLES: &str = "styles";
 pub const USER_KEYS:   &str = "keys";
 
+// menu
+pub const MANUAL:       &str = "User manual";
+pub const CHANGE_KEYS:  &str = "Change keys";
+pub const CHANGE_STYLE: &str = "Change style";
+pub const MENU: [&str; 3]    = [MANUAL, CHANGE_KEYS, CHANGE_STYLE];
+
 // corners 
 pub const A_SQR: char = '\u{250C}';
 pub const B_SQR: char = '\u{2510}';

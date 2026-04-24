@@ -29,6 +29,7 @@ pub enum Task {
   NewTab,
   DelTab,
   LoadUrl,
+  Menu,
   Input(String),
   Redirect(String),
   Go(String), 
@@ -105,9 +106,9 @@ impl App {
     self.focus   = Focus::Dialog(task, dialog);
     self.new_dlg = true;
   }
-  fn select(&mut self, task: Task, prompt: &str) {
+  fn select(&mut self, task: Task, prompt: &str, options: Vec<String>) {
     let style    = self.user.style.info.style.clone();
-    let dialog   = Dialog::select(prompt, self.urls.clone(), style, &self.rect);
+    let dialog   = Dialog::select(prompt, options, style, &self.rect);
     self.focus   = Focus::Dialog(task, dialog);
     self.new_dlg = true;
   }
@@ -188,8 +189,9 @@ impl App {
       }
       Message::Action(action) => match &mut self.focus {
         Focus::Dialog(task, dialog) => match &mut dialog.response {
-          Response::Ack(_) => {self.focus = Focus::Tab;} 
+          Response::Ack(_) => self.focus = Focus::Tab, 
           Response::Ask(_) => match action {
+            Action::Cancel | Action::No => self.focus = Focus::Tab,
             Action::Yes => match task {
               Task::Go(url) => {
                 let url = url.clone();
@@ -207,26 +209,38 @@ impl App {
               }
               _ => {self.focus = Focus::Tab;}
             }
-            Action::No | Action::Cancel => {self.focus = Focus::Tab;}
             _ => {}
           } 
           Response::Select(textbox) => match action {
+            Action::Cancel => self.focus = Focus::Tab,
             Action::Select => match task {
               Task::NewTab => {
                 if self.urls.len() > 0 {
-                  let url_str = &self.urls[textbox.content.get_source_idx()].clone();
+                  let url_str = &self.urls[textbox.get_source_idx()].clone();
                   self.focus = Focus::Tab;
                   self.try_spawn_request(url_str);
                 } else {
                   self.focus = Focus::Tab;
                 }
               }
+              Task::Menu => match c::MENU[textbox.get_source_idx()] {
+                c::MANUAL => {
+                  self.ack("View manual");
+                }
+                c::CHANGE_KEYS => {
+                  self.ack("Change keys");
+                }
+                c::CHANGE_STYLE => {
+                  self.ack("Change style");
+                }
+                _ => self.focus = Focus::Tab,
+              }
               _ => {},
             }
-            Action::Cancel => {self.focus = Focus::Tab;}
-            action => {action.use_textbox(textbox)},
+            action => action.use_textbox(textbox),
           }
           Response::Text(editbox) => match action {
+            Action::Cancel => self.focus = Focus::Tab,
             Action::Enter => match task {
               Task::Reply => {
                 let text = editbox.content.text.to_string();
@@ -241,13 +255,16 @@ impl App {
               }
               _ => {},
             }
-            Action::Cancel => {self.focus = Focus::Tab;}
             action => {action.use_editbox(editbox)},
           }
         }
         Focus::Tab => match action {
           Action::LoadUrl => {
-            self.select(Task::NewTab, "choose the url: ");
+            self.select(Task::NewTab, "Choose URL: ", self.urls.clone());
+          }
+          Action::Menu => {
+            self.select(Task::Menu, "Choose: ", 
+              c::MENU.iter().map(|s| s.to_string()).collect());
           }
           Action::SaveUrl => {
             let url_str = self.tabs.url_str.clone();
