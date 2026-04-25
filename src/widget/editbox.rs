@@ -87,20 +87,18 @@ impl EditBox {
     } else {false}
   }
   pub fn write_all<W: Write>(&self, writer: &mut W) -> io::Result<()> {
-    writer.queue(reset())?.queue(&self.style)?;
+    let mut x = self.rect.x;
+    writer.queue(MoveTo(x, self.rect.y))?.queue(reset())?.queue(&self.style)?;
     // render chars
-    let scroll = self.pos.scroll();
-    let text   = &self.content.text[scroll..];
-    for (x, c) in self.rect.x_range().zip(text.chars()) {
-      writer.queue(MoveTo(x, self.rect.y))?.queue(Print(c))?;
+    for c in self.content.text[self.pos.scroll()..].chars().take(self.rect.w.into()) {
+      writer.queue(Print(c))?;
+      x += 1;
     }
+    writer.queue(MoveTo(x, self.rect.y))?;
     // render page space
     if self.write_unused_x {
-      writer.queue(reset())?.queue(&self.style)?;
-      if let Ok(len) = u16::try_from(text.len()) {
-        for x in self.rect.cropped_west_range(len) {
-          writer.queue(MoveTo(x, self.rect.y))?.queue(Print(' '))?;
-        }
+      for _ in x..self.rect.x_end() {
+        writer.queue(Print(' '))?;
       }
     }
     writer.queue(reset())?;

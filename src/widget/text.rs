@@ -143,7 +143,6 @@ impl StyledText {
     self.wrap = wrap;
     self
   }
-
   pub fn wrap_text(text: Vec<char>, width: usize) -> Vec<Vec<char>> {
     let mut idx = usize::MIN;
     let mut vec: Vec<Vec<char>> = vec![];
