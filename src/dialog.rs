@@ -16,11 +16,12 @@ pub struct Dialog {
 } 
 impl Dialog {
   pub fn resize(&mut self, rect: &Rect) {
-    self.prompt.resize(rect);
+    self.prompt.resize(&rect.cropped_south(2));
     match &mut self.response {
-      Response::Ack(r) | Response::Ask(r) | Response::Select(r) => 
-        r.resize(rect),
-      Response::Text(r) => r.resize(rect),
+      Response::Ack(r)    => r.resize(&self.prompt.used_rect().bottom_row()),
+      Response::Ask(r)    => r.resize(&self.prompt.used_rect().bottom_row()),
+      Response::Text(r)   => r.resize(&self.prompt.used_rect().bottom_row()),
+      Response::Select(r) => r.resize(&rect.cropped_north(self.prompt.used_rect().h)),
     }
   }
   pub fn select(prompt: &str, input: Vec<String>, style: Style, rect: &Rect) -> Self {
@@ -29,7 +30,7 @@ impl Dialog {
     let rtext = input.iter().map(|s| StyledText::from(s.as_str()).with_style(&style));
     let rbox  = 
       TextBox::new(rtext.collect(), &rect.cropped_north(pbox.used_rect().h))
-        .write_unused(false);
+        .write_unused_x(true);
     Dialog {
       prompt:   pbox,
       response: Response::Select(rbox),

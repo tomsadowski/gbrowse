@@ -1,6 +1,6 @@
 # fire
 
-screen_margin = {n = 1, s = 0, e = 8, w = 8}
+screen_margin = {n = 1, s = 1, e = 8, w = 8}
 text_margin   = {n = 1, s = 1, e = 4, w = 4}
 
 border    = {fg = "585c60", bg = "202326", corner = "round", bracket = "tort"}
