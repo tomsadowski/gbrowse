@@ -23,8 +23,6 @@ pub enum Action {
   SaveUrl,
   DelTab, 
   NewTab, 
-  HelpView, 
-  LogView,
   CycleLeft, 
   CycleRight, 
 
@@ -74,8 +72,6 @@ impl FromStr for Action {
   type Err = String;
   fn from_str(s: &str) -> Result<Self, Self::Err> {
     match s {
-      "help_view"   => Ok(Self::HelpView),
-      "log_view"    => Ok(Self::LogView),
       "load_url"    => Ok(Self::LoadUrl),
       "save_url"    => Ok(Self::SaveUrl),
       "move_up"     => Ok(Self::MoveUp),
@@ -112,8 +108,6 @@ pub struct KeysTable {
   pub menu:        KeyCode,
   pub load_url:    KeyCode,
   pub save_url:    KeyCode,
-  pub help_view:   KeyCode,
-  pub log_view:    KeyCode,
   pub select:      KeyCode,
   pub delete_tab:  KeyCode,
   pub new_tab:     KeyCode,
@@ -131,8 +125,6 @@ impl Default for KeysTable {
       save_url:    KeyCode::Char('U'),
       delete_tab:  KeyCode::Char('d'),
       new_tab:     KeyCode::Char('n'),
-      help_view:   KeyCode::Char('h'),
-      log_view:    KeyCode::Char('l'),
       up:          KeyCode::Up,
       down:        KeyCode::Down,
       left:        KeyCode::Left,
@@ -156,15 +148,13 @@ impl KeysTable {
     match dialog.response {
       Response::Ack(_)    => self.get_ack_dialog_action(kc),
       Response::Ask(_)    => self.get_ask_dialog_action(kc),
-      Response::Text(_)   => self.get_text_dialog_action(kc),
+      Response::Edit(_)   => self.get_edit_dialog_action(kc),
       Response::Select(_) => self.get_select_dialog_action(kc),
     }
   }
   pub fn get_tab_action(&self, kc: &KeyCode) -> Option<Action> {
     if        &self.load_url    == kc {Some(Action::LoadUrl)
     } else if &self.save_url    == kc {Some(Action::SaveUrl)
-    } else if &self.help_view   == kc {Some(Action::HelpView)
-    } else if &self.log_view    == kc {Some(Action::LogView)
     } else if &self.cycle_left  == kc {Some(Action::CycleLeft)
     } else if &self.cycle_right == kc {Some(Action::CycleRight)
     } else if &self.delete_tab  == kc {Some(Action::DelTab)
@@ -185,9 +175,7 @@ impl KeysTable {
     } else {None}
   }
   pub fn get_ack_dialog_action(&self, kc: &KeyCode) -> Option<Action> {
-    if        &self.cancel == kc {Some(Action::Cancel)
-    } else if &self.ack    == kc {Some(Action::Ack)
-    } else                       {None}
+    Some(Action::Ack)
   }
   pub fn get_ask_dialog_action(&self, kc: &KeyCode) -> Option<Action> {
     if        &self.cancel == kc {Some(Action::Cancel)
@@ -199,7 +187,7 @@ impl KeysTable {
     if &self.cancel == kc {Some(Action::Cancel)
     } else                {self.get_text_box_action(kc)}
   }
-  pub fn get_text_dialog_action(&self, kc: &KeyCode) -> Option<Action> {
+  pub fn get_edit_dialog_action(&self, kc: &KeyCode) -> Option<Action> {
     if &self.cancel == kc {Some(Action::Cancel)
     } else                {self.get_edit_box_action(kc)}
   }
@@ -243,9 +231,7 @@ impl UserTable<Action> for KeysTable {
     match field {
       Action::LoadUrl    => self.load_url    = value,
       Action::SaveUrl    => self.save_url    = value,
-      Action::HelpView   => self.help_view   = value,
       Action::Menu       => self.menu        = value,
-      Action::LogView    => self.log_view    = value,
       Action::MoveUp     => self.up          = value,
       Action::MoveDown   => self.down        = value,
       Action::MoveLeft   => self.left        = value,

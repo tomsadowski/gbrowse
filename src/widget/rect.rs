@@ -84,6 +84,12 @@ impl Rect {
     self.w = w; 
     self.h = h;
   }
+  pub fn cropped_x(mut self, step: u16) -> Self {
+    self.clone().crop_south(step).crop_north(step)
+  }
+  pub fn cropped_y(mut self, step: u16) -> Self {
+    self.clone().crop_west(step).crop_east(step)
+  }
   pub fn cropped_south(mut self, step: u16) -> Self {
     self.clone().crop_south(step)
   }

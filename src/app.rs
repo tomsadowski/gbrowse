@@ -59,6 +59,7 @@ pub struct App {
   pub new_dlg:   bool,
   pub request:   Option<Request>,
   pub clear:     bool,
+  pub tab_changed: bool,
   pub quit:      bool,
 } 
 impl App {
@@ -80,20 +81,21 @@ impl App {
       user,
       rect,
       urls,
-      init_path: path.into(),
-      tabs:      TabList::new(tab),
-      focus:     Focus::Tab,
-      request:   None,
-      new_dlg:   false,
-      clear:     true,
-      quit:      false,
+      init_path:   path.into(),
+      tabs:        TabList::new(tab),
+      request:     None,
+      focus:       Focus::Tab,
+      new_dlg:     false,
+      tab_changed: true,
+      clear:       true,
+      quit:        false,
     };
     app.try_spawn_request(&app.user.init_url.clone());
     app
   }
   fn ack(&mut self, prompt: &str) {
     let style    = self.user.style.info.style.clone();
-    let help     = &format!("Press {} to acknowledge", self.user.keys.ack);
+    let help     = &format!("Press any key to acknowledge");
     let dialog   = Dialog::ack(prompt, help, style, &self.rect);
     self.focus   = Focus::Dialog(Task::Default, dialog);
     self.new_dlg = true;
@@ -105,9 +107,9 @@ impl App {
     self.focus   = Focus::Dialog(task, dialog);
     self.new_dlg = true;
   }
-  fn text(&mut self, task: Task, prompt: &str) {
+  fn edit(&mut self, task: Task, prompt: &str) {
     let style    = self.user.style.info.style.clone();
-    let dialog   = Dialog::text(prompt, style, &self.rect);
+    let dialog   = Dialog::edit(prompt, style, &self.rect);
     self.focus   = Focus::Dialog(task, dialog);
     self.new_dlg = true;
   }
@@ -117,16 +119,12 @@ impl App {
     self.focus   = Focus::Dialog(task, dialog);
     self.new_dlg = true;
   }
-  fn reload_config(&mut self, path: Option<&str>) {
-    let path      = path.unwrap_or(&self.init_path);
-    let user_text = fs::read_to_string(path).unwrap_or("".into());
-    self.user     = User::from_str(&user_text).unwrap_or_default();
-  }
   fn set_gemdoc(&mut self, url: &Url, gemdoc: GemDoc) {
     self.tabs.add(url.as_str());
+    self.tab_changed = true;
     match gemdoc.status.tag {
       Status::InputExpected | Status::InputExpectedSensitive => {
-        self.text(Task::Reply, &gemdoc.status.txt);
+        self.edit(Task::Reply, &gemdoc.status.txt);
       }
       Status::RedirectTemporary | Status::RedirectPermanent => {
         self.tabs.url_str.push_str(&gemdoc.status.txt);
@@ -196,6 +194,7 @@ impl App {
   }
   pub fn update(&mut self, message: &Message) {
     self.clear = false;
+    self.tab_changed = false;
     self.new_dlg = false;
     self.tabs.reset_state();
     match message {
@@ -297,18 +296,20 @@ impl App {
             }
             action => action.use_textbox(textbox),
           }
-          Response::Text(editbox) => match action {
+          Response::Edit(editbox) => match action {
             Action::Cancel => self.focus = Focus::Tab,
             Action::Enter => match task {
               Task::Reply => {
                 let text = editbox.content.text.to_string();
                 let text = text.trim().replace(" ", "%20");
                 self.focus = Focus::Tab;
+                self.tab_changed = true;
                 self.try_spawn_request(&format!("{}?{}", self.tabs.url_str, text));
               }
               Task::NewTab => {
                 let text = editbox.content.text.to_string();
                 self.focus = Focus::Tab;
+                self.tab_changed = true;
                 self.try_spawn_request(&text);
               }
               _ => {},
@@ -362,20 +363,23 @@ impl App {
             }
           }
           Action::NewTab => {
-            self.text(Task::NewTab, "enter path: ");
+            self.edit(Task::NewTab, "enter path: ");
           }
           Action::DelTab => {
             self.ask(Task::DelTab, "Delete current tab?");
             self.tabs.delete();
+            self.tab_changed = true;
           }
           Action::CycleLeft => {
             if self.tabs.len() > 1 {
               self.tabs.wrapping_backward(1);
+              self.tab_changed = true;
             }
           }
           Action::CycleRight => {
             if self.tabs.len() > 1 {
               self.tabs.wrapping_forward(1);
+              self.tab_changed = true;
             }
           }
           action => action.use_textbox(&mut self.tabs),
@@ -402,8 +406,8 @@ impl App {
             self.user.keys.get_ack_dialog_action(&kc).map(|a| Message::Action(a)),
           Response::Ask(_) => 
             self.user.keys.get_ask_dialog_action(&kc).map(|a| Message::Action(a)),
-          Response::Text(_) => 
-            self.user.keys.get_text_dialog_action(&kc).map(|a| Message::Action(a)),
+          Response::Edit(_) => 
+            self.user.keys.get_edit_dialog_action(&kc).map(|a| Message::Action(a)),
           Response::Select(_) => 
             self.user.keys.get_select_dialog_action(&kc).map(|a| Message::Action(a)),
         }
@@ -413,21 +417,26 @@ impl App {
   }
   pub fn write(&self, stdout: &mut Stdout) -> io::Result<()> {
     cursor_hide(stdout)?;
-    if self.clear {
-      stdout.queue(Clear(ClearType::All))?;
-      self.frame.write(stdout)?;
-    }
     let banner_text = {
       let text = self.tabs.banner_text();
       if let Some(request) = &self.request {
-        format!(" (pending response) {} ", text)
+        format!("(pending response) {}", text)
       } else {text}
     };
-    self.frame.write_banner(&banner_text, stdout)?;
+    if self.clear {
+      stdout.queue(Clear(ClearType::All))?;
+      self.frame.write(stdout)?;
+      self.frame.write_banner(&banner_text, stdout)?;
+      self.frame.write_footer(&banner_text, stdout)?;
+    }
+    if self.tab_changed {
+      self.frame.write_banner(&banner_text, stdout)?;
+    }
     if let Focus::Dialog(_, dialog) = &self.focus {
       if self.new_dlg {
         if let Some(fg) = self.user.style.covered.fg {
           self.tabs.write_style(&self.user.style.covered, stdout)?;
+          self.frame.write_footer(&dialog.prompt.content.source[0].text, stdout)?;
         } else {
           self.tabs.clear(stdout)?;
         }
@@ -436,7 +445,7 @@ impl App {
       match &dialog.response {
         Response::Ack(r) | Response::Ask(r) => 
           r.write(stdout)?,
-        Response::Text(r) => {
+        Response::Edit(r) => {
           r.write(stdout)?;
           r.write_cursor(stdout)?;
         }

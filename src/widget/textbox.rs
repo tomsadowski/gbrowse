@@ -5,7 +5,7 @@ use crate::{
 };
 use crossterm::{
   QueueableCommand, 
-  cursor::{MoveTo},
+  cursor::{position, MoveTo, MoveDown, MoveRight, MoveLeft, MoveUp, MoveToColumn},
   style::{Print},
 };
 use std::{
@@ -159,10 +159,9 @@ impl TextBox {
     style.write(writer)?;
     // render lines
     let lines = &self.content.text[self.pos.y_scroll()..];
-    for (y, (idx, line)) in self.rect.y_range().zip(lines.iter()) {
+    for (y, (_, line)) in self.rect.y_range().zip(lines.iter()) {
       // render chars
-      let x_scroll = 
-        line.text.len().saturating_sub(1).min(self.pos.x_scroll());
+      let x_scroll = self.pos.x_scroll().min(line.text.len().saturating_sub(1));
       let chars = &line.text[x_scroll..];
       for (x, c) in self.rect.x_range().zip(chars.iter()) {
         writer.queue(MoveTo(x, y))?.queue(Print(c))?;
@@ -190,38 +189,45 @@ impl TextBox {
     Ok(())
   }
   pub fn write_all<W: Write>(&self, writer: &mut W) -> io::Result<()> {
+    let mut x = self.rect.x;
+    let mut y = self.rect.y;
+    writer.queue(MoveTo(x, y))?;
     write_reset(writer)?;
     self.style.write(writer)?;
-    // render lines
     let y_scroll = self.pos.y_scroll();
-    let lines    = &self.content.text[y_scroll..];
-    for (y, (idx, line)) in self.rect.y_range().zip(lines.iter()) {
+    // render lines
+    for (_, (idx, line)) in self.rect.y_range().zip(self.content.text[y_scroll..].iter()) 
+    {
       // render chars
       self.content.source[*idx].style.write(writer)?;
-      let x_scroll = line.text.len().saturating_sub(1).min(self.pos.x_scroll());
-      let chars    = &line.text[x_scroll..];
-      for (x, c) in self.rect.x_range().zip(chars.iter()) {
-        writer.queue(MoveTo(x, y))?.queue(Print(c))?;
+      let x_scroll = self.pos.x_scroll().min(line.text.len().saturating_sub(1));
+      for (_, c) in self.rect.x_range().zip(line.text[x_scroll..].iter()) {
+        writer.queue(Print(c))?;
+        x += 1;
       }
       // render line space
       if self.write_unused_x {
         write_reset(writer)?;
         self.style.write(writer)?;
-        if let Ok(len) = u16::try_from(chars.len()) {
-          for x in self.rect.cropped_west_range(len) {
-            writer.queue(MoveTo(x, y))?.queue(Print(' '))?;
-          }
+        for _ in x..self.rect.x_end() {
+          writer.queue(Print(' '))?;
         }
       }
+      x = self.rect.x;
+      y += 1;
+      writer.queue(MoveTo(x, y))?;
     }
     // render empty lines
     if self.write_unused_y {
-      if let Ok(len) = u16::try_from(lines.len()) {
-        for y in self.rect.cropped_north_range(len) {
-          for x in self.rect.x_range() {
-            writer.queue(MoveTo(x, y))?.queue(Print(' '))?;
-          }
+      write_reset(writer)?;
+      self.style.write(writer)?;
+      for _ in y..self.rect.y_end() {
+        for _ in self.rect.x_range() {
+          writer.queue(Print(' '))?;
         }
+        x = self.rect.x;
+        y += 1;
+        writer.queue(MoveTo(x, y))?;
       }
     }
     write_reset(writer)?;

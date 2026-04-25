@@ -3,7 +3,7 @@
 use crate::{
   common as c,
   user::UserTable,
-  widget::{BorderSpec, MarginSpec, Style},
+  widget::{Rect, Style},
 };
 use crossterm::{
   style::{Color},
@@ -96,6 +96,49 @@ impl FromStr for StyleModField {
       "quote"         => Ok(Self::Text(StyleTextField::Quote)),
       "list"          => Ok(Self::Text(StyleTextField::List)),
       s => Err(format!("Style table does not contain field {}", s)),
+    }
+  }
+}
+
+#[derive(Debug, Clone)]
+pub struct MarginSpec {
+  pub north: u16,
+  pub south: u16,
+  pub east:  u16,
+  pub west:  u16,
+}
+impl Default for MarginSpec {
+  fn default() -> Self {
+    Self {north: 0, south: 0, east: 0, west: 0}
+  }
+}
+impl MarginSpec {
+  pub fn get_rect(&self, screen: &Rect) -> Rect {
+    screen.clone()
+      .crop_north(self.north).crop_south(self.south)
+      .crop_east(self.east).crop_west(self.west)
+  }
+}
+#[derive(Debug, Clone)]
+pub struct BorderSpec {
+  pub style: Style,
+  pub a:     char,
+  pub b:     char,
+  pub c:     char,
+  pub d:     char,
+  pub open:  char,
+  pub close: char,
+}
+impl Default for BorderSpec {
+  fn default() -> Self {
+    Self {
+      style: Style::default(),
+      a:     c::A_SQR,
+      b:     c::B_SQR,
+      c:     c::C_SQR,
+      d:     c::D_SQR,
+      open:  c::OPEN_SQR,
+      close: c::CLOSE_SQR,
     }
   }
 }

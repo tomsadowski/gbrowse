@@ -7,7 +7,7 @@ use crate::{
 pub enum Response {
   Ack(TextBox),
   Ask(TextBox),
-  Text(EditBox),
+  Edit(EditBox),
   Select(TextBox),
 }
 pub struct Dialog {
@@ -20,7 +20,7 @@ impl Dialog {
     match &mut self.response {
       Response::Ack(r)    => r.resize(&self.prompt.used_rect().bottom_row()),
       Response::Ask(r)    => r.resize(&self.prompt.used_rect().bottom_row()),
-      Response::Text(r)   => r.resize(&self.prompt.used_rect().bottom_row()),
+      Response::Edit(r)   => r.resize(&self.prompt.used_rect().bottom_row()),
       Response::Select(r) => r.resize(&rect.cropped_north(self.prompt.used_rect().h)),
     }
   }
@@ -36,13 +36,13 @@ impl Dialog {
       response: Response::Select(rbox),
     }
   }
-  pub fn text(prompt: &str, style: Style, rect: &Rect) -> Self {
+  pub fn edit(prompt: &str, style: Style, rect: &Rect) -> Self {
     let ptext = StyledText::from(prompt).with_style(&style);
     let pbox  = TextBox::new(vec![ptext], &rect.cropped_south(2)).write_unused(false);
     let rbox  = EditBox::new(&pbox.used_rect().bottom_row()).with_style(&style);
     Dialog {
       prompt:   pbox,
-      response: Response::Text(rbox),
+      response: Response::Edit(rbox),
     }
   }
   pub fn ask(prompt: &str, input: &str, style: Style, rect: &Rect) -> Self {

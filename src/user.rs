@@ -3,7 +3,7 @@
 mod style;
 mod keys;
 
-pub use self::style::StyleModTable;
+pub use self::style::{StyleModTable, BorderSpec, MarginSpec};
 pub use self::keys::{KeysTable, Action};
 
 use crate::{

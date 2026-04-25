@@ -2,11 +2,12 @@
 
 use crate::{
   common as c,
-  widget::{Rect, Style, write_reset, MarginSpec, BorderSpec},
+  user::{MarginSpec, BorderSpec},
+  widget::{Rect, Style, write_reset},
 };
 use crossterm::{
   QueueableCommand, 
-  cursor::{MoveTo},
+  cursor::{position, MoveTo, MoveLeft, MoveUp, MoveDown, MoveRight},
   style::{Print},
 };
 use std::{
@@ -54,12 +55,9 @@ impl Frame {
     self
   }
   pub fn resize(&mut self, screen: &Rect) {
-    self.border_rect = 
-      self.screen_margin_spec.get_rect(screen);
-    self.outer_rect = 
-      self.screen_margin_spec.get_rect(screen).crop_x(1).crop_y(1);
-    self.inner_rect = 
-      self.text_margin_spec.get_rect(&self.outer_rect);
+    self.border_rect = self.screen_margin_spec.get_rect(screen);
+    self.outer_rect  = self.screen_margin_spec.get_rect(screen).crop_x(1).crop_y(1);
+    self.inner_rect  = self.text_margin_spec.get_rect(&self.outer_rect);
   }
   pub fn write<W: Write>(&self, writer: &mut W) -> io::Result<()> {
     self.write_frame(writer)?;
@@ -110,42 +108,51 @@ impl Frame {
     write_reset(writer)?;
     Ok(())
   }
-  pub fn write_banner<W>(&self, text: &str, writer: &mut W) -> io::Result<()>
-  where W: Write
-  {
+  pub fn write_footer<W: Write>(&self, text: &str, writer: &mut W) -> io::Result<()> {
     self.border_spec.style.write(writer)?;
-    let y = self.border_rect.y;
-    let mut x_range = self.inner_rect.x_range();
+    let mut x = self.inner_rect.x_end().saturating_sub(1);
+    let     y = self.border_rect.y_end().saturating_sub(1);
     writer
-      .queue(MoveTo(x_range.start, y))?
-      .queue(Print(self.border_spec.open))?;
-    x_range.start += 1;
-    self.banner_style.write(writer)?;
-    let chars: Vec<char> = text.chars().collect();
-    let range_len = x_range.len();
-    let chars_len = chars.len();
-    for (x, c) in x_range.clone().zip(chars.iter()) {
-      writer.queue(MoveTo(x, y))?.queue(Print(c))?;
+      .queue(MoveTo(x, y))?
+      .queue(Print(self.border_spec.close))?
+      .queue(MoveLeft(2))?
+      .queue(Print(' '))?;
+    x -= 2;
+    for (c, _) in text.chars().rev().zip(self.inner_rect.cropped_x(2).x_range()) {
+      writer.queue(MoveLeft(2))?.queue(Print(c))?;
+      x -= 1;
     }
-    // close bracket before limit
-    if chars_len < range_len {
-      x_range.start += u16::try_from(chars_len)
-          .expect("We do not have Allah's permission");
-      write_reset(writer)?;
-      self.border_spec.style.write(writer)?;
-      writer
-        .queue(MoveTo(x_range.start, y))?
-        .queue(Print(self.border_spec.close))?;
-      x_range.start += 1;
-      for x in x_range {
-        writer.queue(MoveTo(x, y))?.queue(Print(c::X_LINE))?;
-      }
-    // close bracket at limit
-    } else {
-      write_reset(writer)?;
-      self.border_spec.style.write(writer)?;
-      writer.queue(MoveTo(x_range.end - 1, y))?
-        .queue(Print(self.border_spec.close))?;
+    writer
+      .queue(MoveLeft(2))?.queue(Print(' '))?
+      .queue(MoveLeft(2))?.queue(Print(self.border_spec.open))?;
+    x -= 2;
+    for _ in self.inner_rect.x..x {
+      writer.queue(MoveLeft(2))?.queue(Print(c::X_LINE))?;
+    }
+    write_reset(writer)?;
+    Ok(())
+  }
+  pub fn write_banner<W: Write>(&self, text: &str, writer: &mut W) -> io::Result<()> {
+    let mut x = self.inner_rect.x;
+    let     y = self.border_rect.y;
+    self.border_spec.style.write(writer)?;
+    writer
+      .queue(MoveTo(x, y))?
+      .queue(Print(self.border_spec.open))?
+      .queue(Print(' '))?;
+    x += 2;
+    self.banner_style.write(writer)?;
+    for (c, _) in text.chars().zip(self.inner_rect.cropped_x(2).x_range()) {
+      writer.queue(Print(c))?;
+      x += 1;
+    }
+    self.border_spec.style.write(writer)?;
+    writer
+      .queue(Print(' '))?
+      .queue(Print(self.border_spec.close))?;
+    x += 2;
+    for _ in x..self.inner_rect.x_end() {
+      writer.queue(Print(c::X_LINE))?;
     }
     write_reset(writer)?;
     Ok(())
