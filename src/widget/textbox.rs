@@ -118,42 +118,6 @@ impl TextBox {
     write_reset(writer)?;
     Ok(())
   }
-  pub fn write_full<W: Write>(&self, writer: &mut W) -> io::Result<()> {
-    write_reset(writer)?;
-    self.style.write(writer)?;
-    // render lines
-    let lines = &self.content.text[self.pos.y_scroll()..];
-    for (y, (idx, line)) in self.rect.y_range().zip(lines.iter()) {
-      // render chars
-      self.content.source[*idx].style.write(writer)?;
-      let x_scroll = 
-        line.text.len().saturating_sub(1).min(self.pos.x_scroll());
-      let chars = &line.text[x_scroll..];
-      for (x, c) in self.rect.x_range().zip(chars.iter()) {
-        writer.queue(MoveTo(x, y))?.queue(Print(c))?;
-      }
-      // render line space
-      write_reset(writer)?;
-      self.style.write(writer)?;
-      if let Ok(len) = u16::try_from(chars.len()) {
-        for x in self.rect.cropped_west_range(len) {
-          writer.queue(MoveTo(x, y))?.queue(Print(' '))?;
-        }
-      }
-    }
-    // render page space
-    write_reset(writer)?;
-    self.style.write(writer)?;
-    if let Ok(len) = u16::try_from(lines.len()) {
-      for y in self.rect.cropped_north_range(len) {
-        for x in self.rect.x_range() {
-          writer.queue(MoveTo(x, y))?.queue(Print(' '))?;
-        }
-      }
-    }
-    write_reset(writer)?;
-    Ok(())
-  }
   pub fn write_style<W: Write>(&self, style: &Style, writer: &mut W) -> io::Result<()> {
     write_reset(writer)?;
     style.write(writer)?;
@@ -196,12 +160,11 @@ impl TextBox {
     self.style.write(writer)?;
     let y_scroll = self.pos.y_scroll();
     // render lines
-    for (_, (idx, line)) in self.rect.y_range().zip(self.content.text[y_scroll..].iter()) 
-    {
+    for (idx, line) in self.content.text[y_scroll..].iter().take(self.rect.h.into()) {
       // render chars
       self.content.source[*idx].style.write(writer)?;
       let x_scroll = self.pos.x_scroll().min(line.text.len().saturating_sub(1));
-      for (_, c) in self.rect.x_range().zip(line.text[x_scroll..].iter()) {
+      for c in line.text[x_scroll..].iter().take(self.rect.w.into()) {
         writer.queue(Print(c))?;
         x += 1;
       }

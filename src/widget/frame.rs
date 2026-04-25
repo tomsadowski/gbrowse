@@ -118,7 +118,7 @@ impl Frame {
       .queue(MoveLeft(2))?
       .queue(Print(' '))?;
     x -= 2;
-    for (c, _) in text.chars().rev().zip(self.inner_rect.cropped_x(2).x_range()) {
+    for c in text.chars().rev().take(self.inner_rect.cropped_x(2).w.into()) {
       writer.queue(MoveLeft(2))?.queue(Print(c))?;
       x -= 1;
     }
@@ -142,7 +142,7 @@ impl Frame {
       .queue(Print(' '))?;
     x += 2;
     self.banner_style.write(writer)?;
-    for (c, _) in text.chars().zip(self.inner_rect.cropped_x(2).x_range()) {
+    for c in text.chars().take(self.inner_rect.cropped_x(2).w.into()) {
       writer.queue(Print(c))?;
       x += 1;
     }
