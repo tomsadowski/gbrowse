@@ -79,8 +79,6 @@ impl UserField {
 }
 #[derive(Clone, Debug)]
 pub struct User {
-  pub override_style: Option<String>,
-  pub override_keys:  Option<String>,
   pub timeout:        u64,
   pub save_file:      String,
   pub init_url:       String,
@@ -97,8 +95,6 @@ impl FromStr for User {
 impl Default for User {
   fn default() -> Self {
     Self {
-      override_style: None,
-      override_keys:  None,
       timeout:        10,
       init_url:       "gemini://geminiprotocol.net/".into(),
       save_file:      format!("{}/{}", c::USER_DATA, c::USER_URLS),
@@ -124,22 +120,22 @@ impl UserTable<UserField> for User {
         let path   = format!("{}/{}/{}", c::USER_DATA, c::USER_STYLES, modname);
         let text   = fs::read_to_string(path).map_err(|e| e.to_string())?;
         let table  = text.parse::<Table>().map_err(|e| e.to_string())?;
-        self.style = StyleModTable::default().read_table(table)?;
+        self.style.read_table_in_place(table)?;
       }
       // read keys from another file
       (UserField::Keys, Value::String(modname)) => {
         let path  = format!("{}/{}/{}", c::USER_DATA, c::USER_KEYS, modname);
         let text  = fs::read_to_string(path).map_err(|e| e.to_string())?;
         let table = text.parse::<Table>().map_err(|e| e.to_string())?;
-        self.keys = KeysTable::default().read_table(table)?;
+        self.keys.read_table_in_place(table)?;
       }
       // read style from this file
       (UserField::Style, Value::Table(v)) => {
-        self.style = StyleModTable::default().read_table(v)?;
+        self.style.read_table_in_place(v)?;
       }
       // read keys from this file
       (UserField::Keys, Value::Table(v)) => {
-        self.keys = KeysTable::default().read_table(v)?;
+        self.keys.read_table_in_place(v)?;
       }
       (f, v) => 
         return Err(format!("field {:?} value {:?} not valid here", f, v))
@@ -158,10 +154,8 @@ impl User {
     self.style.read_table_in_place(table)?;
     Ok(())
   }
-  pub fn get_help(&self) -> Vec<String> {  
-    format!(
-      "Gemini help:\n{:?}", 
-      self).lines().map(|s| s.to_string()).collect()
+  pub fn get_settings(&self) -> Vec<String> {  
+    format!("{:#?}", self).lines().map(|s| s.into()).collect()
   }
   pub fn get_frame(&self, screen: &Rect) -> Frame {
     Frame::new(

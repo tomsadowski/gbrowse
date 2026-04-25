@@ -232,13 +232,14 @@ impl App {
                 self.tabs.delete();
                 self.focus = Focus::Tab;
               }
-              _ => {self.focus = Focus::Tab;}
+              _ => self.focus = Focus::Tab,
             }
             _ => {}
           } 
           Response::Select(textbox) => match action {
             Action::Cancel => self.focus = Focus::Tab,
             Action::Select => match task {
+              Task::Default => self.focus = Focus::Tab,
               Task::NewTab => {
                 if self.urls.len() > 0 {
                   let url_str = &self.urls[textbox.get_source_idx()].clone();
@@ -287,6 +288,9 @@ impl App {
                   Ok(entries) => self.select(Task::ChangeStyle, "Choose style", entries),
                   Err(e)      => self.ack(&format!("Problem: {}", &e)),
                 }
+                c::VIEW_SETTINGS => {
+                  self.select(Task::Default, "Current Settings", self.user.get_settings());
+                }
                 _ => self.focus = Focus::Tab,
               }
               _ => {},
@@ -309,7 +313,7 @@ impl App {
               }
               _ => {},
             }
-            action => {action.use_editbox(editbox)},
+            action => action.use_editbox(editbox),
           }
         }
         Focus::Tab => match action {
@@ -341,6 +345,22 @@ impl App {
               self.ack(&format!("URL {} already saved", url_str)); 
             }
           }
+          Action::Select => {
+            if let Some(gemdoc) = &self.tabs.gemdoc {
+              match gemdoc.doc[self.tabs.get_source_idx()].tag.clone() {
+                GemTag::Link(Scheme::Gemini, url) => {
+                  let prompt = &format!("go to {}?", url);
+                  self.ask(Task::Go(url.into()), prompt);
+                }
+                GemTag::Link(_, url) => {
+                  self.ack(&format!("Protocol {} not yet supported", url));
+                }
+                gemtext => {
+                  self.ack(&format!("you've selected {:?}", gemtext));
+                }
+              }
+            }
+          }
           Action::NewTab => {
             self.text(Task::NewTab, "enter path: ");
           }
@@ -358,23 +378,7 @@ impl App {
               self.tabs.wrapping_forward(1);
             }
           }
-          Action::Select => {
-            if let Some(gemdoc) = &self.tabs.gemdoc {
-              match gemdoc.doc[self.tabs.get_source_idx()].tag.clone() {
-                GemTag::Link(Scheme::Gemini, url) => {
-                  let prompt = &format!("go to {}?", url);
-                  self.ask(Task::Go(url.into()), prompt);
-                }
-                GemTag::Link(_, url) => {
-                  self.ack(&format!("Protocol {} not yet supported", url));
-                }
-                gemtext => {
-                  self.ack(&format!("you've selected {:?}", gemtext));
-                }
-              }
-            }
-          }
-          action => {action.use_textbox(&mut self.tabs)}
+          action => action.use_textbox(&mut self.tabs),
         }
       }
       _ => {}
@@ -391,23 +395,18 @@ impl App {
       Event::Key(KeyEvent {
         code: kc, kind: KeyEventKind::Press, ..
       }) => match &self.focus {
+        Focus::Tab => 
+          self.user.keys.get_tab_action(&kc).map(|a| Message::Action(a)),
         Focus::Dialog(task, dialog) => match &dialog.response {
           Response::Ack(_) => 
-            self.user.keys.get_ack_dialog_action(&kc)
-              .map(|a| Message::Action(a)),
+            self.user.keys.get_ack_dialog_action(&kc).map(|a| Message::Action(a)),
           Response::Ask(_) => 
-            self.user.keys.get_ask_dialog_action(&kc)
-              .map(|a| Message::Action(a)),
+            self.user.keys.get_ask_dialog_action(&kc).map(|a| Message::Action(a)),
           Response::Text(_) => 
-            self.user.keys.get_text_dialog_action(&kc)
-              .map(|a| Message::Action(a)),
+            self.user.keys.get_text_dialog_action(&kc).map(|a| Message::Action(a)),
           Response::Select(_) => 
-            self.user.keys.get_select_dialog_action(&kc)
-              .map(|a| Message::Action(a)),
+            self.user.keys.get_select_dialog_action(&kc).map(|a| Message::Action(a)),
         }
-        Focus::Tab => 
-          self.user.keys.get_tab_action(&kc)
-            .map(|a| Message::Action(a)),
       }
       _ => None,
     }

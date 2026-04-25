@@ -8,10 +8,16 @@ pub const USER_STYLES: &str = "styles";
 pub const USER_KEYS:   &str = "keys";
 
 // menu
-pub const MANUAL:       &str = "User manual";
-pub const CHANGE_KEYS:  &str = "Change keys";
-pub const CHANGE_STYLE: &str = "Change style";
-pub const MENU: [&str; 3]    = [MANUAL, CHANGE_KEYS, CHANGE_STYLE];
+pub const MANUAL:        &str = "User manual";
+pub const CHANGE_KEYS:   &str = "Change keys";
+pub const CHANGE_STYLE:  &str = "Change style";
+pub const VIEW_SETTINGS: &str = "View settings";
+pub const MENU: [&str; 4] = [
+  MANUAL, 
+  CHANGE_KEYS, 
+  CHANGE_STYLE,
+  VIEW_SETTINGS, 
+];
 
 // corners 
 pub const A_SQR: char = '\u{250C}';
