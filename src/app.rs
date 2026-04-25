@@ -30,6 +30,8 @@ pub enum Task {
   DelTab,
   LoadUrl,
   Menu,
+  ChangeStyle,
+  ChangeKeys,
   Input(String),
   Redirect(String),
   Go(String), 
@@ -170,6 +172,19 @@ impl App {
       }
     }
   }
+  pub fn push_style(&mut self) {
+  }
+  pub fn get_entries(&self, path: &str) -> Result<Vec<String>, String> {
+    let mut vec: Vec<String> = vec![];
+    let mut results = fs::read_dir(format!("{}/{}", c::USER_DATA, path))
+      .map_err(|e| e.to_string())?;
+    for result in results {
+      let s = result.map_err(|e| e.to_string())?.file_name().into_string()
+        .map_err(|_| "Could not convert OsString to String".to_string())?;
+      vec.push(s);
+    }
+    Ok(vec)
+  }
   pub fn update(&mut self, message: &Message) {
     self.clear = false;
     self.new_dlg = false;
@@ -223,15 +238,44 @@ impl App {
                   self.focus = Focus::Tab;
                 }
               }
+              Task::ChangeKeys => {
+                let path = format!("{}/{}/{}", c::USER_DATA, c::USER_KEYS, textbox.get_source());
+                match fs::read_to_string(path) {
+                  Ok(s)  => {
+                    if let Err(e) = self.user.update_keys_from_str(&s) {
+                      self.ack(&format!("Problem: {}", &e));
+                    } else {
+                      self.focus = Focus::Tab;
+                    }
+                  }
+                  Err(e) => self.ack(&format!("Problem: {}", &e)),
+                }
+              }
+              Task::ChangeStyle => {
+                let path = format!("{}/{}/{}", c::USER_DATA, c::USER_STYLES, textbox.get_source());
+                match fs::read_to_string(path) {
+                  Ok(s)  => {
+                    if let Err(e) = self.user.update_style_from_str(&s) {
+                      self.ack(&format!("Problem: {}", &e));
+                    } else {
+                      self.focus = Focus::Tab;
+                    }
+                    self.push_style();
+                  }
+                  Err(e) => self.ack(&format!("Problem: {}", &e)),
+                }
+              }
               Task::Menu => match c::MENU[textbox.get_source_idx()] {
                 c::MANUAL => {
                   self.ack("View manual");
                 }
-                c::CHANGE_KEYS => {
-                  self.ack("Change keys");
+                c::CHANGE_KEYS => match self.get_entries(c::USER_KEYS) {
+                  Ok(entries) => self.select(Task::ChangeKeys, "Choose keys", entries),
+                  Err(e)      => self.ack(&format!("Problem: {}", &e)),
                 }
-                c::CHANGE_STYLE => {
-                  self.ack("Change style");
+                c::CHANGE_STYLE => match self.get_entries(c::USER_STYLES) {
+                  Ok(entries) => self.select(Task::ChangeStyle, "Choose style", entries),
+                  Err(e)      => self.ack(&format!("Problem: {}", &e)),
                 }
                 _ => self.focus = Focus::Tab,
               }

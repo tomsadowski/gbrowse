@@ -240,6 +240,9 @@ impl StyledTextPlane {
   pub fn get_source_idx(&self) -> usize {
     self.text[self.head()].0
   }
+  pub fn get_source(&self) -> String {
+    self.source[self.get_source_idx()].text.clone()
+  }
   pub fn get_idx(&self) -> usize {
     self.text[..self.head()]
       .iter()

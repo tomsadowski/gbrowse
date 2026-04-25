@@ -55,6 +55,12 @@ impl TextBox {
   pub fn y_len(&self) -> usize {
     self.content.y_len()
   }
+  pub fn get_source_idx(&self) -> usize {
+    self.content.get_source_idx()
+  }
+  pub fn get_source(&self) -> String {
+    self.content.get_source()
+  }
   pub fn used_rect(&self) -> Rect {
     if let Ok(h) = u16::try_from(self.content.y_len()) {
       self.rect.limit_h(h)
@@ -64,9 +70,6 @@ impl TextBox {
   }
   pub fn reset_state(&mut self) {
     self.write = true;
-  }
-  pub fn get_source_idx(&self) -> usize {
-    self.content.get_source_idx()
   }
   pub fn resize(&mut self, rect: &Rect) {
     self.rect = rect.clone();

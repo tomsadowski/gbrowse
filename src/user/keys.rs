@@ -6,7 +6,7 @@ use crate::{
   widget::{TextBox, EditBox},
 };
 use crossterm::event::KeyCode;
-use toml::Value;
+use toml::{Table, Value};
 use std::str::FromStr;
 
 #[derive(Clone, Debug)]

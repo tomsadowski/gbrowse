@@ -25,6 +25,13 @@ pub trait UserTable<F>: Sized where F: FromStr<Err = String> {
     }
     Ok(self)
   }
+  fn read_table_in_place(&mut self, table: Table) -> Result<(), String> {
+    for (key, value) in table.into_iter() {
+      let field = F::from_str(&key)?;
+      self.try_assign(field, value)?;
+    }
+    Ok(())
+  }
 }
 #[derive(Debug)]
 enum UserField {
@@ -140,6 +147,16 @@ impl UserTable<UserField> for User {
   }
 }
 impl User {
+  pub fn update_keys_from_str(&mut self, s: &str) -> Result<(), String> {  
+    let table = s.parse::<Table>().map_err(|e| e.to_string())?;
+    self.keys.read_table_in_place(table)?;
+    Ok(())
+  }
+  pub fn update_style_from_str(&mut self, s: &str) -> Result<(), String> {  
+    let table = s.parse::<Table>().map_err(|e| e.to_string())?;
+    self.style.read_table_in_place(table)?;
+    Ok(())
+  }
   pub fn get_help(&self) -> Vec<String> {  
     format!(
       "Gemini help:\n{:?}", 

@@ -8,7 +8,7 @@ use crate::{
 use crossterm::{
   style::{Color},
 };
-use toml::{Value};
+use toml::{Value, Table};
 use std::str::FromStr;
 
 pub fn parse_color(v: &Value) -> Result<Color, String> {
