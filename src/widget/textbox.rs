@@ -108,8 +108,7 @@ impl TextBox {
     } else {false}
   }
   pub fn clear<W: Write>(&self, writer: &mut W) -> io::Result<()> {
-    writer.queue(reset())?;
-    self.style.write(writer)?;
+    writer.queue(reset())?.queue(&self.style)?;
     for y in self.rect.y_range() {
       for x in self.rect.x_range() {
         writer.queue(MoveTo(x, y))?.queue(Print(' '))?;
@@ -152,7 +151,7 @@ impl TextBox {
     let y_scroll = self.pos.y_scroll();
     for (idx, line) in self.content.text[y_scroll..].iter().take(self.rect.h.into()) {
       // render chars
-      self.content.source[*idx].style.write(writer)?;
+      writer.queue(&self.content.source[*idx].style)?;
       let x_scroll = self.pos.x_scroll().min(line.text.len().saturating_sub(1));
       for c in line.text[x_scroll..].iter().take(self.rect.w.into()) {
         writer.queue(Print(c))?;

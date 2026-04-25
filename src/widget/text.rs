@@ -110,25 +110,6 @@ impl Command for Style {
     Ok(())
   }
 }
-impl Style {
-  pub fn write<W>(&self, writer: &mut W) -> io::Result<()> 
-  where W: Write
-  {
-    if let Some(fg) = self.fg {
-      writer.queue(SetForegroundColor(fg))?;
-    }
-    if let Some(bg) = self.bg {
-      writer.queue(SetBackgroundColor(bg))?;
-    }
-    if self.bold {
-      writer.queue(SetAttribute(Attribute::Bold))?;
-    }
-    if self.underline {
-      writer.queue(SetAttribute(Attribute::Underlined))?;
-    }
-    Ok(())
-  }
-}
 #[derive(Clone, Debug, Default)]
 pub struct StyledText {
   pub style: Style,
