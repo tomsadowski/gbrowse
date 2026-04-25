@@ -1,12 +1,12 @@
 // src/widget/textbox.rs
 
 use crate::{
-  widget::{Rect, PlaneView, write_reset, StyledText, StyledTextPlane, Style, Planar},
+  widget::{Rect, PlaneView, reset, StyledText, StyledTextPlane, Style, Planar},
 };
 use crossterm::{
   QueueableCommand, 
   cursor::{position, MoveTo, MoveDown, MoveRight, MoveLeft, MoveUp, MoveToColumn},
-  style::{Print},
+  style::{Print, SetAttribute, Attribute},
 };
 use std::{
   io::{self, Write},
@@ -108,58 +108,48 @@ impl TextBox {
     } else {false}
   }
   pub fn clear<W: Write>(&self, writer: &mut W) -> io::Result<()> {
-    write_reset(writer)?;
+    writer.queue(reset())?;
     self.style.write(writer)?;
     for y in self.rect.y_range() {
       for x in self.rect.x_range() {
         writer.queue(MoveTo(x, y))?.queue(Print(' '))?;
       }
     }
-    write_reset(writer)?;
+    writer.queue(reset())?;
     Ok(())
   }
   pub fn write_style<W: Write>(&self, style: &Style, writer: &mut W) -> io::Result<()> {
-    write_reset(writer)?;
-    style.write(writer)?;
+    let mut x = self.rect.x;
+    let mut y = self.rect.y;
+    writer.queue(MoveTo(x, y))?.queue(reset())?.queue(&style)?;
     // render lines
-    let lines = &self.content.text[self.pos.y_scroll()..];
-    for (y, (_, line)) in self.rect.y_range().zip(lines.iter()) {
+    let y_scroll = self.pos.y_scroll();
+    for (_, line) in self.content.text[y_scroll..].iter().take(self.rect.h.into()) {
       // render chars
       let x_scroll = self.pos.x_scroll().min(line.text.len().saturating_sub(1));
-      let chars = &line.text[x_scroll..];
-      for (x, c) in self.rect.x_range().zip(chars.iter()) {
-        writer.queue(MoveTo(x, y))?.queue(Print(c))?;
+      for c in line.text[x_scroll..].iter().take(self.rect.w.into()) {
+        writer.queue(Print(c))?;
+        x += 1;
       }
+      // render line space
       if self.write_unused_x {
-        // render empty chars
-        if let Ok(len) = u16::try_from(chars.len()) {
-          for x in self.rect.cropped_west_range(len) {
-            writer.queue(MoveTo(x, y))?.queue(Print(' '))?;
-          }
+        for _ in x..self.rect.x_end() {
+          writer.queue(Print(' '))?;
         }
       }
+      x = self.rect.x;
+      y += 1;
+      writer.queue(MoveTo(x, y))?;
     }
-    // render empty lines
-    if self.write_unused_y {
-      if let Ok(len) = u16::try_from(lines.len()) {
-        for y in self.rect.cropped_north_range(len) {
-          for x in self.rect.x_range() {
-            writer.queue(MoveTo(x, y))?.queue(Print(' '))?;
-          }
-        }
-      }
-    }
-    write_reset(writer)?;
+    writer.queue(reset())?;
     Ok(())
   }
   pub fn write_all<W: Write>(&self, writer: &mut W) -> io::Result<()> {
     let mut x = self.rect.x;
     let mut y = self.rect.y;
-    writer.queue(MoveTo(x, y))?;
-    write_reset(writer)?;
-    self.style.write(writer)?;
-    let y_scroll = self.pos.y_scroll();
+    writer.queue(MoveTo(x, y))?.queue(reset())?.queue(&self.style)?;
     // render lines
+    let y_scroll = self.pos.y_scroll();
     for (idx, line) in self.content.text[y_scroll..].iter().take(self.rect.h.into()) {
       // render chars
       self.content.source[*idx].style.write(writer)?;
@@ -170,8 +160,7 @@ impl TextBox {
       }
       // render line space
       if self.write_unused_x {
-        write_reset(writer)?;
-        self.style.write(writer)?;
+        writer.queue(reset())?.queue(&self.style)?;
         for _ in x..self.rect.x_end() {
           writer.queue(Print(' '))?;
         }
@@ -182,8 +171,7 @@ impl TextBox {
     }
     // render empty lines
     if self.write_unused_y {
-      write_reset(writer)?;
-      self.style.write(writer)?;
+      writer.queue(reset())?.queue(&self.style)?;
       for _ in y..self.rect.y_end() {
         for _ in self.rect.x_range() {
           writer.queue(Print(' '))?;
@@ -193,7 +181,7 @@ impl TextBox {
         writer.queue(MoveTo(x, y))?;
       }
     }
-    write_reset(writer)?;
+    writer.queue(reset())?;
     Ok(())
   }
 }

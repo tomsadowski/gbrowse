@@ -3,7 +3,7 @@
 use crate::{
   common as c,
   user::{MarginSpec, BorderSpec},
-  widget::{Rect, Style, write_reset},
+  widget::{Rect, Style, reset},
 };
 use crossterm::{
   QueueableCommand, 
@@ -65,13 +65,12 @@ impl Frame {
   }
   pub fn write_frame<W: Write>(&self, writer: &mut W) -> io::Result<()> {
     // border
-    write_reset(writer)?;
-    self.border_spec.style.write(writer)?;
     let (ax, ay) = self.border_rect.a();
     let (bx, by) = self.border_rect.b();
     let (cx, cy) = self.border_rect.c();
     let (dx, dy) = self.border_rect.d();
     writer
+      .queue(reset())?.queue(&self.border_spec.style)?
       .queue(MoveTo(ax, ay))?.queue(Print(self.border_spec.a))?
       .queue(MoveTo(bx, by))?.queue(Print(self.border_spec.b))?
       .queue(MoveTo(cx, cy))?.queue(Print(self.border_spec.c))?
@@ -87,8 +86,7 @@ impl Frame {
         .queue(MoveTo(bx, y))?.queue(Print(c::Y_LINE))?;
     }
     // margin
-    write_reset(writer)?;
-    self.margin_style.write(writer)?;
+    writer.queue(reset())?.queue(&self.margin_style)?;
     for x in self.outer_rect.x_range() {
       for y in self.outer_rect.north_range(&self.inner_rect) {
         writer.queue(MoveTo(x, y))?.queue(Print(' '))?;
@@ -105,15 +103,15 @@ impl Frame {
         writer.queue(MoveTo(x, y))?.queue(Print(' '))?;
       }
     }
-    write_reset(writer)?;
+    writer.queue(reset())?;
     Ok(())
   }
   pub fn write_footer<W: Write>(&self, text: &str, writer: &mut W) -> io::Result<()> {
-    self.border_spec.style.write(writer)?;
     let mut x = self.inner_rect.x_end().saturating_sub(1);
     let     y = self.border_rect.y_end().saturating_sub(1);
     writer
       .queue(MoveTo(x, y))?
+      .queue(&self.border_spec.style)?
       .queue(Print(self.border_spec.close))?
       .queue(MoveLeft(2))?
       .queue(Print(' '))?;
@@ -129,32 +127,32 @@ impl Frame {
     for _ in self.inner_rect.x..x {
       writer.queue(MoveLeft(2))?.queue(Print(c::X_LINE))?;
     }
-    write_reset(writer)?;
+    writer.queue(reset())?;
     Ok(())
   }
   pub fn write_banner<W: Write>(&self, text: &str, writer: &mut W) -> io::Result<()> {
     let mut x = self.inner_rect.x;
     let     y = self.border_rect.y;
-    self.border_spec.style.write(writer)?;
     writer
       .queue(MoveTo(x, y))?
+      .queue(&self.border_spec.style)?
       .queue(Print(self.border_spec.open))?
-      .queue(Print(' '))?;
+      .queue(Print(' '))?
+      .queue(&self.banner_style)?;
     x += 2;
-    self.banner_style.write(writer)?;
     for c in text.chars().take(self.inner_rect.cropped_x(2).w.into()) {
       writer.queue(Print(c))?;
       x += 1;
     }
-    self.border_spec.style.write(writer)?;
     writer
+      .queue(&self.border_spec.style)?
       .queue(Print(' '))?
       .queue(Print(self.border_spec.close))?;
     x += 2;
     for _ in x..self.inner_rect.x_end() {
       writer.queue(Print(c::X_LINE))?;
     }
-    write_reset(writer)?;
+    writer.queue(reset())?;
     Ok(())
   }
 }

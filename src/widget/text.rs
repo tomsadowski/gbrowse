@@ -4,42 +4,17 @@ use crate::{
   widget::{Linear, Planar},
 };
 use crossterm::{
-  QueueableCommand, 
+  Command, QueueableCommand, 
   style::{
-    SetAttribute, Attribute,
+    SetStyle, ContentStyle, SetAttribute, Attribute, Attributes,
     SetForegroundColor, SetBackgroundColor, Color, 
   },
 };
 use std::{
+  fmt,
   io::{self, Write}
 };
 
-pub fn wrap(text: Vec<char>, width: usize) -> Vec<Vec<char>> {
-  let mut idx = usize::MIN;
-  let mut vec: Vec<Vec<char>> = vec![];
-  while idx < text.len() {
-    let line: Vec<char> = {
-      let text = &text[idx..];
-      if text.len() <= width {
-        text.to_vec()
-      } else {
-        // search for first whitespace from right
-        let s: Vec<&char> = text[..width]
-          .iter().rev().skip_while(|c| !c.is_whitespace()).collect();
-        // no space found, return whole slice
-        if s.len() == 0 {
-          text[..width].iter().copied().collect()
-        // space found, return up to that space
-        } else {
-          s.into_iter().rev().copied().collect()
-        }
-      }
-    };
-    idx += line.len();
-    vec.push(line);
-  }
-  vec
-}
 #[derive(Clone, Debug, Default)]
 pub struct EditLine {
   pub head: usize,
@@ -118,6 +93,23 @@ pub struct Style {
   pub fg:        Option<Color>,
   pub bg:        Option<Color>,
 }
+impl Command for Style {
+  fn write_ansi(&self, f: &mut impl fmt::Write) -> fmt::Result {
+    let mut contentstyle = ContentStyle::new();
+    contentstyle.foreground_color = self.fg;
+    contentstyle.background_color = self.bg;
+    let mut attributes = Attributes::none();
+    if self.bold {
+      attributes.set(Attribute::Bold);
+    }
+    if self.underline {
+      attributes.set(Attribute::Underlined);
+    }
+    contentstyle.attributes = attributes;
+    SetStyle(contentstyle).write_ansi(f)?;
+    Ok(())
+  }
+}
 impl Style {
   pub fn write<W>(&self, writer: &mut W) -> io::Result<()> 
   where W: Write
@@ -170,13 +162,40 @@ impl StyledText {
     self.wrap = wrap;
     self
   }
+
+  pub fn wrap_text(text: Vec<char>, width: usize) -> Vec<Vec<char>> {
+    let mut idx = usize::MIN;
+    let mut vec: Vec<Vec<char>> = vec![];
+    while idx < text.len() {
+      let line: Vec<char> = {
+        let text = &text[idx..];
+        if text.len() <= width {
+          text.to_vec()
+        } else {
+          // search for first whitespace from right
+          let s: Vec<&char> = text[..width]
+            .iter().rev().skip_while(|c| !c.is_whitespace()).collect();
+          // no space found, return whole slice
+          if s.len() == 0 {
+            text[..width].iter().copied().collect()
+          // space found, return up to that space
+          } else {
+            s.into_iter().rev().copied().collect()
+          }
+        }
+      };
+      idx += line.len();
+      vec.push(line);
+    }
+    vec
+  }
   // get owned chars
   pub fn print(&self, width: usize) -> Vec<Vec<char>> {
     let text: Vec<char> = self.text.chars().collect();
     if text.len() == 0 {
       vec![vec![' ']]
     } else if self.wrap {
-      wrap(text, width)
+      Self::wrap_text(text, width)
     } else {
       vec![text]
     }

@@ -1,7 +1,7 @@
 // src/editbox.rs
 
 use crate::{
-  widget::{Rect, LineView, write_reset, Style, EditLine, Linear},
+  widget::{Rect, LineView, reset, Style, EditLine, Linear},
 };
 use crossterm::{
   QueueableCommand,
@@ -87,8 +87,7 @@ impl EditBox {
     } else {false}
   }
   pub fn write_all<W: Write>(&self, writer: &mut W) -> io::Result<()> {
-    write_reset(writer)?;
-    self.style.write(writer)?;
+    writer.queue(reset())?.queue(&self.style)?;
     // render chars
     let scroll = self.pos.scroll();
     let text   = &self.content.text[scroll..];
@@ -97,15 +96,14 @@ impl EditBox {
     }
     // render page space
     if self.write_unused_x {
-      write_reset(writer)?;
-      self.style.write(writer)?;
+      writer.queue(reset())?.queue(&self.style)?;
       if let Ok(len) = u16::try_from(text.len()) {
         for x in self.rect.cropped_west_range(len) {
           writer.queue(MoveTo(x, self.rect.y))?.queue(Print(' '))?;
         }
       }
     }
-    write_reset(writer)?;
+    writer.queue(reset())?;
     Ok(())
   }
 }

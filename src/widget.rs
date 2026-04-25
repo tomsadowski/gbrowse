@@ -26,6 +26,13 @@ use std::{
   io::{self, Write}
 };
 
+pub fn reset() -> SetAttribute {
+  SetAttribute(Attribute::Reset)
+}
+pub fn cursor_hide<W: Write>(writer: &mut W) -> io::Result<()> {
+  writer.queue(cursor::Hide)?;
+  Ok(())
+}
 pub trait Linear {
   fn len(&self) -> usize;
   fn head(&self) -> usize;
@@ -106,14 +113,6 @@ impl<P: Planar> Linear for P {
   fn head_mut(&mut self) -> &mut usize {
     self.y_head_mut()
   }
-}
-pub fn write_reset<W: Write>(writer: &mut W) -> io::Result<()> {
-  writer.queue(SetAttribute(Attribute::Reset))?;
-  Ok(())
-}
-pub fn cursor_hide<W: Write>(writer: &mut W) -> io::Result<()> {
-  writer.queue(cursor::Hide)?;
-  Ok(())
 }
 pub trait PlaneWidget {
   fn pos(&self) -> (u16, u16);
