@@ -52,6 +52,7 @@ pub struct App {
   pub frame:     Frame,
   pub user:      User,
   pub urls:      Vec<String>,
+  pub screen:    Rect,
   pub rect:      Rect,
   pub tabs:      TabList,
   pub focus:     Focus,
@@ -64,7 +65,8 @@ impl App {
   pub fn init(path: &str, w: u16, h: u16) -> Self {
     let user_text = fs::read_to_string(path).unwrap_or("".into());
     let user      = User::from_str(&user_text).unwrap_or_default();
-    let frame     = user.get_frame(&Rect::new(w, h));
+    let screen    = Rect::new(w, h);
+    let frame     = user.get_frame(&screen);
     let rect      = frame.inner_rect.clone();
     let tab       = Tab::init(&rect, &user.init_url);
     let urls: Vec<String> = 
@@ -73,6 +75,7 @@ impl App {
         Err(e) => vec![],
       };
     let mut app = Self {
+      screen,
       frame,
       user,
       rect,
@@ -173,6 +176,12 @@ impl App {
     }
   }
   pub fn push_style(&mut self) {
+    self.frame = self.user.get_frame(&self.screen);
+    self.rect = self.frame.inner_rect;
+    for tab in self.tabs.tabs.iter_mut() {
+      self.user.update_tab_style(&self.rect, tab);
+    }
+    self.clear = true;
   }
   pub fn get_entries(&self, path: &str) -> Result<Vec<String>, String> {
     let mut vec: Vec<String> = vec![];
@@ -194,7 +203,8 @@ impl App {
         self.quit = true;
       }
       Message::Resize(w, h) => {
-        self.frame.resize(&Rect::new(*w, *h));
+        self.screen = Rect::new(*w, *h);
+        self.frame.resize(&self.screen);
         self.rect = self.frame.inner_rect.clone();
         if let Focus::Dialog(_, dialog) = &mut self.focus {
           dialog.resize(&self.rect);

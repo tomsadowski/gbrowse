@@ -71,6 +71,12 @@ impl TextBox {
   pub fn reset_state(&mut self) {
     self.write = true;
   }
+  pub fn restyle(&mut self, text: Vec<StyledText>, rect: &Rect) {
+    self.rect = rect.clone();
+    self.content.restyle(text, rect.w);
+    self.pos.resize(&self.content, &rect);
+    self.reset_state();
+  }
   pub fn resize(&mut self, rect: &Rect) {
     self.rect = rect.clone();
     self.content.resize(rect.w);

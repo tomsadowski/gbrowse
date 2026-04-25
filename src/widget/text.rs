@@ -258,6 +258,13 @@ impl StyledTextPlane {
     }
     self.right(idx);
   }
+  pub fn restyle(&mut self, source: Vec<StyledText>, width: u16) {
+    let idx   = self.get_idx();
+    self.source = source;
+    self.text = StyledText::print_vec(&self.source, usize::from(width)).into_iter()
+      .map(|(idx, text)| (idx, TextLine::from(text))).collect();
+    self.set_idx(idx);
+  }
   pub fn resize(&mut self, width: u16) {
     let idx   = self.get_idx();
     self.text = StyledText::print_vec(&self.source, usize::from(width)).into_iter()

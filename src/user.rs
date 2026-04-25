@@ -8,6 +8,7 @@ pub use self::keys::{KeysTable, Action};
 
 use crate::{
   common as c,
+  tab::Tab,
   widget::{Rect, Frame, TextBox, StyledText},
   protocol::{GemText, GemTag, GemDoc},
 };
@@ -170,6 +171,15 @@ impl User {
         self.style.text_margin.clone()
       ).with_banner_style(&self.style.banner.style)
       .with_margin_style(&self.style.general.style)
+  }
+  pub fn update_tab_style(&self, rect: &Rect, tab: &mut Tab) {  
+    if let Some(gem) = &tab.gemdoc {
+      tab.content.restyle(
+        gem.doc.iter().map(|gem| self.gem_to_styled(gem)).collect(),
+        rect,
+        )
+    }
+    tab.content.style = self.style.general.style.clone();
   }
   pub fn get_gem_textbox(&self, rect: &Rect, gem: &GemDoc) -> TextBox {
     TextBox::new(
