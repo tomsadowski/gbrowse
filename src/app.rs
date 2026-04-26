@@ -49,18 +49,19 @@ pub enum Focus {
 }
 pub struct App {
   pub init_path: String,
-  pub frame:     Frame,
-  pub user:      User,
-  pub urls:      Vec<String>,
-  pub screen:    Rect,
-  pub rect:      Rect,
-  pub tabs:      TabList,
-  pub focus:     Focus,
-  pub new_dlg:   bool,
-  pub request:   Option<Request>,
-  pub clear:     bool,
+  pub frame:       Frame,
+  pub user:        User,
+  pub urls:        Vec<String>,
+  pub screen:      Rect,
+  pub rect:        Rect,
+  pub tabs:        TabList,
+  pub focus:       Focus,
+  pub new_dlg:     bool,
+  pub request:     Option<Request>,
+  pub clear:       bool,
+  pub guide:       String,
   pub tab_changed: bool,
-  pub quit:      bool,
+  pub quit:        bool,
 } 
 impl App {
   pub fn init(path: &str, w: u16, h: u16) -> Self {
@@ -81,6 +82,7 @@ impl App {
       user,
       rect,
       urls,
+      guide:       "".into(),
       init_path:   path.into(),
       tabs:        TabList::new(tab),
       request:     None,
@@ -90,14 +92,20 @@ impl App {
       clear:       true,
       quit:        false,
     };
+    app.tab();
     app.try_spawn_request(&app.user.init_url.clone());
     app
+  }
+  pub fn tab(&mut self) {
+    self.focus = Focus::Tab;
+    self.guide = format!("Press {} for menu", self.user.keys.menu);
   }
   fn ack(&mut self, prompt: &str) {
     let style    = self.user.style.info.style.clone();
     let help     = &format!("Press any key to acknowledge");
     let dialog   = Dialog::ack(prompt, help, style, &self.rect);
     self.focus   = Focus::Dialog(Task::Default, dialog);
+    self.guide = format!("Press any key to acknowledge");
     self.new_dlg = true;
   }
   fn ask(&mut self, task: Task, prompt: &str) {
@@ -105,18 +113,21 @@ impl App {
     let help     = &format!("{} yes {} no", self.user.keys.yes, self.user.keys.no);
     let dialog   = Dialog::ask(prompt, help, style, &self.rect);
     self.focus   = Focus::Dialog(task, dialog);
+    self.guide   = format!("{} yes {} no", self.user.keys.yes, self.user.keys.no);
     self.new_dlg = true;
   }
   fn edit(&mut self, task: Task, prompt: &str) {
     let style    = self.user.style.info.style.clone();
     let dialog   = Dialog::edit(prompt, style, &self.rect);
     self.focus   = Focus::Dialog(task, dialog);
+    self.guide = format!("Press {} to cancel", self.user.keys.cancel);
     self.new_dlg = true;
   }
   fn select(&mut self, task: Task, prompt: &str, options: Vec<String>) {
     let style    = self.user.style.info.style.clone();
     let dialog   = Dialog::select(prompt, options, style, &self.rect);
     self.focus   = Focus::Dialog(task, dialog);
+    self.guide   = format!("Press {} to select", self.user.keys.select);
     self.new_dlg = true;
   }
   fn set_gemdoc(&mut self, url: &Url, gemdoc: GemDoc) {
@@ -213,39 +224,39 @@ impl App {
       }
       Message::Action(action) => match &mut self.focus {
         Focus::Dialog(task, dialog) => match &mut dialog.response {
-          Response::Ack(_) => self.focus = Focus::Tab, 
+          Response::Ack(_) => self.tab(), 
           Response::Ask(_) => match action {
-            Action::Cancel | Action::No => self.focus = Focus::Tab,
+            Action::Cancel | Action::No => self.tab(),
             Action::Yes => match task {
               Task::Go(url) => {
                 let url = url.clone();
-                self.focus = Focus::Tab;
+                self.tab();
                 self.try_spawn_request(&url);
               }
               Task::Redirect(url_str) => {
                 let text = url_str.trim().replace(" ", "%20");
-                self.focus = Focus::Tab;
+                self.tab();
                 self.try_spawn_request(&format!("{}?{}", self.tabs.url_str, text));
               }
               Task::DelTab => {
                 self.tabs.delete();
-                self.focus = Focus::Tab;
+                self.tab();
               }
-              _ => self.focus = Focus::Tab,
+              _ => self.tab(),
             }
             _ => {}
           } 
           Response::Select(textbox) => match action {
-            Action::Cancel => self.focus = Focus::Tab,
+            Action::Cancel => self.tab(),
             Action::Select => match task {
-              Task::Default => self.focus = Focus::Tab,
+              Task::Default => self.tab(),
               Task::NewTab => {
                 if self.urls.len() > 0 {
                   let url_str = &self.urls[textbox.get_source_idx()].clone();
-                  self.focus = Focus::Tab;
+                  self.tab();
                   self.try_spawn_request(url_str);
                 } else {
-                  self.focus = Focus::Tab;
+                  self.tab();
                 }
               }
               Task::ChangeKeys => {
@@ -255,7 +266,7 @@ impl App {
                     if let Err(e) = self.user.update_keys_from_str(&s) {
                       self.ack(&format!("Problem: {}", &e));
                     } else {
-                      self.focus = Focus::Tab;
+                      self.tab();
                     }
                   }
                   Err(e) => self.ack(&format!("Problem: {}", &e)),
@@ -268,7 +279,7 @@ impl App {
                     if let Err(e) = self.user.update_style_from_str(&s) {
                       self.ack(&format!("Problem: {}", &e));
                     } else {
-                      self.focus = Focus::Tab;
+                      self.tab();
                     }
                     self.push_style();
                   }
@@ -290,25 +301,25 @@ impl App {
                 c::VIEW_SETTINGS => {
                   self.select(Task::Default, "Current Settings", self.user.get_settings());
                 }
-                _ => self.focus = Focus::Tab,
+                _ => self.tab(),
               }
               _ => {},
             }
             action => action.use_textbox(textbox),
           }
           Response::Edit(editbox) => match action {
-            Action::Cancel => self.focus = Focus::Tab,
+            Action::Cancel => self.tab(),
             Action::Enter => match task {
               Task::Reply => {
                 let text = editbox.content.text.to_string();
                 let text = text.trim().replace(" ", "%20");
-                self.focus = Focus::Tab;
+                self.tab();
                 self.tab_changed = true;
                 self.try_spawn_request(&format!("{}?{}", self.tabs.url_str, text));
               }
               Task::NewTab => {
                 let text = editbox.content.text.to_string();
-                self.focus = Focus::Tab;
+                self.tab();
                 self.tab_changed = true;
                 self.try_spawn_request(&text);
               }
@@ -427,8 +438,8 @@ impl App {
       stdout.queue(Clear(ClearType::All))?;
       self.frame.write(stdout)?;
       self.frame.write_banner(&banner_text, stdout)?;
-      self.frame.write_footer(&banner_text, stdout)?;
     }
+    self.frame.write_footer(&self.guide, stdout)?;
     if self.tab_changed {
       self.frame.write_banner(&banner_text, stdout)?;
     }
@@ -436,7 +447,6 @@ impl App {
       if self.new_dlg {
         if let Some(fg) = self.user.style.covered.fg {
           self.tabs.write_style(&self.user.style.covered, stdout)?;
-          self.frame.write_footer(&dialog.prompt.content.source[0].text, stdout)?;
         } else {
           self.tabs.clear(stdout)?;
         }
