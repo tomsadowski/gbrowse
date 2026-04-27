@@ -132,8 +132,8 @@ impl TextBox {
     let mut x = self.rect.x;
     let mut y = self.rect.y;
     writer.queue(MoveTo(x, y))?.queue(reset())?.queue(&style)?;
-    for (_, line) in self.content.current(self.pos.y_scroll(), self.rect.h) {
-      for c in line.current(self.pos.x_scroll(), self.rect.w) {
+    for (_, line) in self.content.window(self.pos.y_scroll(), self.rect.h) {
+      for c in line.window(self.pos.x_scroll(), self.rect.w) {
         writer.queue(Print(c))?;
         x += 1;
       }
@@ -153,9 +153,9 @@ impl TextBox {
     let mut x = self.rect.x;
     let mut y = self.rect.y;
     writer.queue(MoveTo(x, y))?.queue(reset())?.queue(&self.style)?;
-    for (idx, line) in self.content.current(self.pos.y_scroll(), self.rect.h) {
+    for (idx, line) in self.content.window(self.pos.y_scroll(), self.rect.h) {
       writer.queue(&self.content.source[*idx].style)?;
-      for c in line.current(self.pos.x_scroll(), self.rect.w) {
+      for c in line.window(self.pos.x_scroll(), self.rect.w) {
         writer.queue(Print(c))?;
         x += 1;
       }

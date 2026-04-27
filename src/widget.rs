@@ -1,4 +1,4 @@
-// src/widget/mod.rs
+// src/widget.rs
 
 mod frame;
 mod text;
@@ -40,9 +40,9 @@ pub trait Linear<T> {
   fn head_mut(&mut self) -> &mut usize;
   fn max_head(&self) -> usize;
 
-  fn current(&self, scroll: usize, screen: u16) -> std::iter::Take<std::slice::Iter<'_, T>> {
-    let scroll = std::cmp::min(scroll, self.items().len().saturating_sub(1));
-    self.items()[scroll..].iter().take(screen.into()) 
+  fn window(&self, shift: usize, length: u16) -> std::iter::Take<std::slice::Iter<'_, T>> {
+    let shift = std::cmp::min(shift, self.items().len().saturating_sub(1));
+    self.items()[shift..].iter().take(length.into()) 
   }
   fn fit(&mut self, new_cursor: usize) {
     *self.head_mut() = self.max_head().min(new_cursor);

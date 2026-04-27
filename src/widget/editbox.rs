@@ -102,7 +102,7 @@ impl EditBox {
     let     y = self.rect.y;
     writer.queue(MoveTo(x, y))?.queue(reset())?.queue(&self.style)?;
     // render chars
-    for c in self.content.current(self.pos.scroll(), self.rect.w) {
+    for c in self.content.window(self.pos.scroll(), self.rect.w) {
       writer.queue(Print(c))?;
       x += 1;
     }
