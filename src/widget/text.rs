@@ -1,7 +1,7 @@
 // src/text.rs
 
 use crate::{
-  widget::{Linear, Planar},
+  widget::{Linear, LinearMut, Planar},
 };
 use crossterm::{
   Command, QueueableCommand, 
@@ -31,11 +31,8 @@ impl ToString for EditLine {
   }
 }
 impl Linear<char> for EditLine {
-  fn get_items(&self) -> &Vec<char> {
+  fn items(&self) -> &Vec<char> {
     &self.text
-  }
-  fn max_head(&self) -> usize {
-    self.text.len()
   }
   fn head_mut(&mut self) -> &mut usize {
     &mut self.head
@@ -43,31 +40,13 @@ impl Linear<char> for EditLine {
   fn head(&self) -> usize {
     self.head
   }
+  fn max_head(&self) -> usize {
+    self.text.len()
+  }
 }
-impl EditLine {
-  pub fn delete(&mut self) -> bool {
-    if self.head < self.text.len() {
-      self.text.remove(self.head);
-      true
-    } else {false}
-  }
-  pub fn backspace(&mut self) -> bool {
-    if self.peek_backward(1) == 0 {
-      self.backward(1);
-      self.text.remove(self.head);
-      true
-    } else {false}
-  }
-  pub fn insert(&mut self, c: char) -> bool {
-    if self.head + 1 == self.text.len() || self.text.len() == 0 {
-      self.text.push(c);
-      self.forward(1);
-      true
-    } else {
-      self.text.insert(self.head, c);
-      self.forward(1);
-      true
-    }
+impl LinearMut<char> for EditLine {
+  fn items_mut(&mut self) -> &mut Vec<char> {
+    &mut self.text
   }
 }
 #[derive(Clone, Debug, Default)]
@@ -86,7 +65,7 @@ impl From<Vec<char>> for TextLine {
   }
 }
 impl Linear<char> for TextLine {
-  fn get_items(&self) -> &Vec<char> {
+  fn items(&self) -> &Vec<char> {
     &self.text
   }
   fn head_mut(&mut self) -> &mut usize {
@@ -95,8 +74,10 @@ impl Linear<char> for TextLine {
   fn head(&self) -> usize {
     self.head
   }
+  fn max_head(&self) -> usize {
+    self.text.len().saturating_sub(1)
+  }
 }
-
 #[derive(Clone, Debug, Default)]
 pub struct Style {
   pub underline: bool,
@@ -200,6 +181,7 @@ impl StyledText {
       ).collect()
   }
 }
+#[derive(Clone, Debug, Default)]
 pub struct StyledTextPlane {
   // usize: location of StyledText in source
   pub text:   Vec<(usize, TextLine)>, 
@@ -207,18 +189,8 @@ pub struct StyledTextPlane {
   pub head:   usize,
   pub pref_x: usize,
 }
-impl Default for StyledTextPlane {
-  fn default() -> Self {
-    Self {
-      head: 0,
-      pref_x: 0,
-      text: vec![],
-      source: vec![],
-    }
-  }
-}
 impl Linear<(usize, TextLine)> for StyledTextPlane {
-  fn get_items(&self) -> &Vec<(usize, TextLine)> {
+  fn items(&self) -> &Vec<(usize, TextLine)> {
     &self.text
   }
   fn head_mut(&mut self) -> &mut usize {
@@ -227,18 +199,21 @@ impl Linear<(usize, TextLine)> for StyledTextPlane {
   fn head(&self) -> usize {
     self.head
   }
+  fn max_head(&self) -> usize {
+    self.text.len().saturating_sub(1)
+  }
 }
 impl Planar for StyledTextPlane {
   fn x_len(&self) -> usize {
-    self.text[self.head].1.len()
+    self.text[self.head].1.items().len()
+  }
+  fn y_len(&self) -> usize {
+    self.text.len()
   }
   fn x_head(&self) -> usize {
     if self.text.len() > 0 {
       self.text[self.head].1.head()
     } else {0}
-  }
-  fn y_len(&self) -> usize {
-    self.text.len()
   }
   fn y_head(&self) -> usize {
     self.head
@@ -267,7 +242,7 @@ impl StyledTextPlane {
   pub fn get_idx(&self) -> usize {
     self.text[..self.head()]
       .iter()
-      .map(|(_, line)| line.len().max(1))
+      .map(|(_, line)| line.items().len().max(1))
       .chain(std::iter::once(self.x_head()))
       .sum()
   }

@@ -2,15 +2,6 @@
 
 use std::ops::Range;
 
-pub fn safe_range<T>(a: T, b: T) -> Range<T> 
-where T: PartialOrd + PartialEq
-{
-  if a <= b {
-    Range {start: a, end: b}
-  } else {
-    Range {start: b, end: a}
-  }
-}
 #[derive(Clone, Default, Copy)]
 pub struct Rect {
   pub x: u16,
@@ -22,14 +13,43 @@ impl Rect {
   pub fn new(w: u16, h: u16) -> Self {
     Self {x: 0, y: 0, w, h}
   }
+  pub fn crop_north(mut self, step: u16) -> Self {
+    if step * 2 < self.h {
+      self.y += step;
+      self.h -= step;
+    }
+    self
+  }
+  pub fn crop_south(mut self, step: u16) -> Self {
+    if step < self.h {
+      self.h -= step;
+    }
+    self
+  }
+  pub fn crop_east(mut self, step: u16) -> Self {
+    if step < self.w {
+      self.w -= step
+    }
+    self
+  }
+  pub fn crop_west(mut self, step: u16) -> Self {
+    if step * 2 < self.w {
+      self.x += step;
+      self.w -= step;
+    }
+    self
+  }
+  pub fn crop_y(mut self, step: u16) -> Self {
+    self.crop_north(step).crop_south(step)
+  }
+  pub fn crop_x(mut self, step: u16) -> Self {
+    self.crop_east(step).crop_west(step)
+  }
   pub fn x_end(&self) -> u16 {
     self.x + self.w
   }
   pub fn y_end(&self) -> u16 {
     self.y + self.h
-  }
-  pub fn row(&self, y: u16) -> Self {
-    Self {x: self.x, y: y, w: self.w, h: 1}
   }
   pub fn a(&self) -> (u16, u16) {
     (self.x, self.y)
@@ -42,6 +62,9 @@ impl Rect {
   }
   pub fn d(&self) -> (u16, u16) {
     (self.x_end().saturating_sub(1), self.y_end().saturating_sub(1))
+  }
+  pub fn row(&self, y: u16) -> Self {
+    Self {x: self.x, y: y, w: self.w, h: 1}
   }
   pub fn bottom_row(&self) -> Self {
     self.row(self.y_end())
@@ -84,74 +107,34 @@ impl Rect {
     self.w = w; 
     self.h = h;
   }
-  pub fn cropped_x(mut self, step: u16) -> Self {
-    self.clone().crop_south(step).crop_north(step)
-  }
-  pub fn cropped_y(mut self, step: u16) -> Self {
-    self.clone().crop_west(step).crop_east(step)
-  }
-  pub fn cropped_south(mut self, step: u16) -> Self {
+  pub fn cropped_south(&self, step: u16) -> Self {
     self.clone().crop_south(step)
   }
-  pub fn cropped_east(mut self, step: u16) -> Self {
+  pub fn cropped_east(&self, step: u16) -> Self {
     self.clone().crop_east(step)
   }
-  pub fn cropped_north(mut self, step: u16) -> Self {
+  pub fn cropped_north(&self, step: u16) -> Self {
     self.clone().crop_north(step)
   }
-  pub fn cropped_west(mut self, step: u16) -> Self {
+  pub fn cropped_west(&self, step: u16) -> Self {
     self.clone().crop_west(step)
   }
-  pub fn crop_south(mut self, step: u16) -> Self {
-    if step < self.h {
-      self.h -= step;
-    }
-    self
+  pub fn cropped_x(&self, step: u16) -> Self {
+    self.clone().crop_south(step).crop_north(step)
   }
-  pub fn crop_east(mut self, step: u16) -> Self {
-    if step < self.w {
-      self.w -= step
-    }
-    self
-  }
-  pub fn crop_north(mut self, step: u16) -> Self {
-    if step * 2 < self.h {
-      self.y += step;
-      self.h -= step;
-    }
-    self
-  }
-  pub fn crop_west(mut self, step: u16) -> Self {
-    if step * 2 < self.w {
-      self.x += step;
-      self.w -= step;
-    }
-    self
-  }
-  pub fn crop_y(self, step: u16) -> Self {
-    self.crop_north(step).crop_south(step)
-  }
-  pub fn crop_x(self, step: u16) -> Self {
-    self.crop_east(step).crop_west(step)
+  pub fn cropped_y(&self, step: u16) -> Self {
+    self.clone().crop_west(step).crop_east(step)
   }
   pub fn south_range(&self, rect: &Rect) -> Range<u16> {
-    let a = self.y_end();
-    let b = rect.y_end();
-    safe_range(a, b)
+    Range {start: self.y_end(), end: rect.y_end()}
   }
   pub fn east_range(&self, rect: &Rect) -> Range<u16> {
-    let a = self.x_end();
-    let b = rect.x_end();
-    safe_range(a, b)
+    Range {start: self.x_end(), end: rect.x_end()}
   }
   pub fn north_range(&self, rect: &Rect) -> Range<u16> {
-    let a = self.y;
-    let b = rect.y;
-    safe_range(a, b)
+    Range {start: self.y, end: rect.y}
   }
   pub fn west_range(&self, rect: &Rect) -> Range<u16> {
-    let a = self.x;
-    let b = rect.x;
-    safe_range(a, b)
+    Range {start: self.x, end: rect.x}
   }
 }

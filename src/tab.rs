@@ -1,7 +1,7 @@
 // src/tab.rs
 
 use crate::{
-  widget::{Rect, Linear, TextBox},
+  widget::{Rect, Linear, LinearMut, TextBox},
   protocol::{GemDoc},
 };
 use std::{
@@ -13,8 +13,13 @@ pub struct TabList {
   pub head: usize,
   pub tabs: Vec<Tab>,
 } 
+impl LinearMut<Tab> for TabList {
+  fn items_mut(&mut self) -> &mut Vec<Tab> {
+    &mut self.tabs
+  }
+}
 impl Linear<Tab> for TabList {
-  fn get_items(&self) -> &Vec<Tab> {
+  fn items(&self) -> &Vec<Tab> {
     &self.tabs
   }
   fn head_mut(&mut self) -> &mut usize {
@@ -22,6 +27,9 @@ impl Linear<Tab> for TabList {
   }
   fn head(&self) -> usize {
     self.head
+  }
+  fn max_head(&self) -> usize {
+    self.tabs.len().saturating_sub(1)
   }
 }
 impl Deref for TabList {

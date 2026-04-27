@@ -5,7 +5,7 @@ use crate::{
   user::{User, Action},
   tab::{Tab, TabList},
   dialog::{Response, Dialog},
-  widget::{Rect, Linear, Frame, cursor_hide, PlaneWidget, TextBox, EditBox},
+  widget::{Rect, Linear, LinearMut, Frame, cursor_hide, PlaneWidget, TextBox, EditBox},
   protocol::{Request, GemDoc, GemTag, Status, Scheme},
 };
 use crossterm::{
@@ -240,6 +240,7 @@ impl App {
               }
               Task::DelTab => {
                 self.tabs.delete();
+                self.tab_changed = true;
                 self.tab();
               }
               _ => self.tab(),
@@ -378,17 +379,15 @@ impl App {
           }
           Action::DelTab => {
             self.ask(Task::DelTab, "Delete current tab?");
-            self.tabs.delete();
-            self.tab_changed = true;
           }
           Action::CycleLeft => {
-            if self.tabs.len() > 1 {
+            if self.tabs.items().len() > 1 {
               self.tabs.wrapping_backward(1);
               self.tab_changed = true;
             }
           }
           Action::CycleRight => {
-            if self.tabs.len() > 1 {
+            if self.tabs.items().len() > 1 {
               self.tabs.wrapping_forward(1);
               self.tab_changed = true;
             }
@@ -428,21 +427,18 @@ impl App {
   }
   pub fn write(&self, stdout: &mut Stdout) -> io::Result<()> {
     cursor_hide(stdout)?;
+    if self.clear {
+      stdout.queue(Clear(ClearType::All))?;
+      self.frame.write(stdout)?;
+    }
     let banner_text = {
       let text = self.tabs.banner_text();
       if let Some(request) = &self.request {
         format!("(pending response) {}", text)
       } else {text}
     };
-    if self.clear {
-      stdout.queue(Clear(ClearType::All))?;
-      self.frame.write(stdout)?;
-      self.frame.write_banner(&banner_text, stdout)?;
-    }
+    self.frame.write_banner(&banner_text, stdout)?;
     self.frame.write_footer(&self.guide, stdout)?;
-    if self.tab_changed {
-      self.frame.write_banner(&banner_text, stdout)?;
-    }
     if let Focus::Dialog(_, dialog) = &self.focus {
       if self.new_dlg {
         if let Some(fg) = self.user.style.covered.fg {

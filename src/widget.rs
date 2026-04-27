@@ -33,20 +33,16 @@ pub fn cursor_hide<W: Write>(writer: &mut W) -> io::Result<()> {
   writer.queue(cursor::Hide)?;
   Ok(())
 }
+  //fn items_mut(&self) -> &mut Vec<T>;
 pub trait Linear<T> {
-  fn get_items(&self) -> &Vec<T>;
+  fn items(&self) -> &Vec<T>;
   fn head(&self) -> usize;
   fn head_mut(&mut self) -> &mut usize;
+  fn max_head(&self) -> usize;
 
   fn current(&self, scroll: usize, screen: u16) -> std::iter::Take<std::slice::Iter<'_, T>> {
-    let scroll = scroll.min(self.get_items().len().saturating_sub(1));
-    self.get_items()[scroll..].iter().take(screen.into()) 
-  }
-  fn len(&self) -> usize {
-    self.get_items().len()
-  }
-  fn max_head(&self) -> usize {
-    self.len().saturating_sub(1)
+    let scroll = std::cmp::min(scroll, self.items().len().saturating_sub(1));
+    self.items()[scroll..].iter().take(screen.into()) 
   }
   fn fit(&mut self, new_cursor: usize) {
     *self.head_mut() = self.max_head().min(new_cursor);
@@ -103,6 +99,37 @@ pub trait Linear<T> {
     }
   }
 }
+pub trait LinearMut<T>: Linear<T> {
+  fn items_mut(&mut self) -> &mut Vec<T>;
+
+  fn delete(&mut self) -> bool {
+    let head = self.head();
+    if head < self.items().len() {
+      self.items_mut().remove(head);
+      true
+    } else {false}
+  }
+  fn backspace(&mut self) -> bool {
+    if self.peek_backward(1) == 0 {
+      self.backward(1);
+      let head = self.head();
+      self.items_mut().remove(head);
+      true
+    } else {false}
+  }
+  fn insert(&mut self, c: T) -> bool {
+    let head = self.head();
+    if head + 1 == self.items().len() || self.items().len() == 0 {
+      self.items_mut().push(c);
+      self.forward(1);
+      true
+    } else {
+      self.items_mut().insert(head, c);
+      self.forward(1);
+      true
+    }
+  }
+}
 pub trait Planar {
   fn x_len(&self) -> usize;
   fn x_head(&self) -> usize;
@@ -117,28 +144,6 @@ pub trait PlaneWidget {
   fn write_cursor<W: Write>(&self, writer: &mut W) -> io::Result<()> {
     let (x, y) = self.pos();
     writer.queue(MoveTo(x, y))?.queue(cursor::Show)?;
-    Ok(())
-  }
-}
-impl PlaneWidget for TextBox {
-  fn pos(&self) -> (u16, u16) {
-    (self.pos.x_cursor(), self.pos.y_cursor())
-  }
-  fn write<W: Write>(&self, writer: &mut W) -> io::Result<()> {
-    if self.write {
-      self.write_all(writer)?;
-    }
-    Ok(())
-  }
-}
-impl PlaneWidget for EditBox {
-  fn pos(&self) -> (u16, u16) {
-    (self.pos.cursor(), self.rect.y)
-  }
-  fn write<W: Write>(&self, writer: &mut W) -> io::Result<()> {
-    if self.write {
-      self.write_all(writer)?;
-    }
     Ok(())
   }
 }

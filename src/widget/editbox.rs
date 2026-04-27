@@ -1,12 +1,12 @@
 // src/editbox.rs
 
 use crate::{
-  widget::{Rect, LineView, reset, Style, EditLine, Linear},
+  widget::{Rect, LineView, reset, Style, EditLine, Linear, LinearMut, PlaneWidget},
 };
 use crossterm::{
   QueueableCommand,
   style::Print,
-  cursor::{MoveTo},
+  cursor::MoveTo,
 };
 use std::{
   io::{self, Write}
@@ -21,6 +21,17 @@ pub struct EditBox {
   pub content:        EditLine,
   pub pos:            LineView,
   pub write_unused_x: bool,
+}
+impl PlaneWidget for EditBox {
+  fn pos(&self) -> (u16, u16) {
+    (self.pos.cursor(), self.rect.y)
+  }
+  fn write<W: Write>(&self, writer: &mut W) -> io::Result<()> {
+    if self.write {
+      self.write_all(writer)?;
+    }
+    Ok(())
+  }
 }
 impl EditBox {
   pub fn new(rect: &Rect) -> Self {
@@ -88,13 +99,14 @@ impl EditBox {
   }
   pub fn write_all<W: Write>(&self, writer: &mut W) -> io::Result<()> {
     let mut x = self.rect.x;
-    writer.queue(MoveTo(x, self.rect.y))?.queue(reset())?.queue(&self.style)?;
+    let     y = self.rect.y;
+    writer.queue(MoveTo(x, y))?.queue(reset())?.queue(&self.style)?;
     // render chars
     for c in self.content.current(self.pos.scroll(), self.rect.w) {
       writer.queue(Print(c))?;
       x += 1;
     }
-    writer.queue(MoveTo(x, self.rect.y))?;
+    writer.queue(MoveTo(x, y))?;
     // render page space
     if self.write_unused_x {
       for _ in x..self.rect.x_end() {

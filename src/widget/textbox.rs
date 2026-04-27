@@ -1,7 +1,7 @@
 // src/widget/textbox.rs
 
 use crate::{
-  widget::{Rect, Linear, PlaneView, reset, StyledText, StyledTextPlane, Style, Planar},
+  widget::{Rect, Linear, PlaneView, reset, StyledText, StyledTextPlane, Style, Planar, PlaneWidget},
 };
 use crossterm::{
   QueueableCommand, 
@@ -21,6 +21,17 @@ pub struct TextBox {
   pub write:          bool,
   pub write_unused_x: bool,
   pub write_unused_y: bool,
+}
+impl PlaneWidget for TextBox {
+  fn pos(&self) -> (u16, u16) {
+    (self.pos.x_cursor(), self.pos.y_cursor())
+  }
+  fn write<W: Write>(&self, writer: &mut W) -> io::Result<()> {
+    if self.write {
+      self.write_all(writer)?;
+    }
+    Ok(())
+  }
 }
 impl TextBox {
   pub fn new(text: Vec<StyledText>, rect: &Rect) -> Self {
@@ -121,15 +132,11 @@ impl TextBox {
     let mut x = self.rect.x;
     let mut y = self.rect.y;
     writer.queue(MoveTo(x, y))?.queue(reset())?.queue(&style)?;
-    // render lines
-    let y_scroll = self.pos.y_scroll();
-    for (_, line) in self.content.text[y_scroll..].iter().take(self.rect.h.into()) {
-      // render chars
+    for (_, line) in self.content.current(self.pos.y_scroll(), self.rect.h) {
       for c in line.current(self.pos.x_scroll(), self.rect.w) {
         writer.queue(Print(c))?;
         x += 1;
       }
-      // render line space
       if self.write_unused_x {
         for _ in x..self.rect.x_end() {
           writer.queue(Print(' '))?;
@@ -146,17 +153,12 @@ impl TextBox {
     let mut x = self.rect.x;
     let mut y = self.rect.y;
     writer.queue(MoveTo(x, y))?.queue(reset())?.queue(&self.style)?;
-    // render lines
-    let y_scroll = self.pos.y_scroll();
-    for (idx, line) in self.content.text[y_scroll..].iter().take(self.rect.h.into()) {
-      // render chars
+    for (idx, line) in self.content.current(self.pos.y_scroll(), self.rect.h) {
       writer.queue(&self.content.source[*idx].style)?;
-      let x_scroll = self.pos.x_scroll().min(line.text.len().saturating_sub(1));
-      for c in line.text[x_scroll..].iter().take(self.rect.w.into()) {
+      for c in line.current(self.pos.x_scroll(), self.rect.w) {
         writer.queue(Print(c))?;
         x += 1;
       }
-      // render line space
       if self.write_unused_x {
         writer.queue(reset())?.queue(&self.style)?;
         for _ in x..self.rect.x_end() {
@@ -167,7 +169,6 @@ impl TextBox {
       y += 1;
       writer.queue(MoveTo(x, y))?;
     }
-    // render empty lines
     if self.write_unused_y {
       writer.queue(reset())?.queue(&self.style)?;
       for _ in y..self.rect.y_end() {
