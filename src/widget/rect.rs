@@ -126,10 +126,10 @@ impl Rect {
     self.clone().crop_west(step).crop_east(step)
   }
   pub fn south_range(&self, rect: &Rect) -> Range<u16> {
-    Range {start: self.y_end(), end: rect.y_end()}
+    Range {start: rect.y_end(), end: self.y_end()}
   }
   pub fn east_range(&self, rect: &Rect) -> Range<u16> {
-    Range {start: self.x_end(), end: rect.x_end()}
+    Range {start: rect.x_end(), end: self.x_end()}
   }
   pub fn north_range(&self, rect: &Rect) -> Range<u16> {
     Range {start: self.y, end: rect.y}
