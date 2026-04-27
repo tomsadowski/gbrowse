@@ -33,13 +33,15 @@ pub fn cursor_hide<W: Write>(writer: &mut W) -> io::Result<()> {
   writer.queue(cursor::Hide)?;
   Ok(())
 }
-  //fn items_mut(&self) -> &mut Vec<T>;
 pub trait Linear<T> {
   fn items(&self) -> &Vec<T>;
   fn head(&self) -> usize;
   fn head_mut(&mut self) -> &mut usize;
   fn max_head(&self) -> usize;
-
+  
+  fn current(&self) -> &T {
+    &self.items()[self.head()]
+  }
   fn window(&self, shift: usize, length: u16) -> std::iter::Take<std::slice::Iter<'_, T>> {
     let shift = std::cmp::min(shift, self.items().len().saturating_sub(1));
     self.items()[shift..].iter().take(length.into()) 
@@ -129,13 +131,6 @@ pub trait LinearMut<T>: Linear<T> {
       true
     }
   }
-}
-pub trait Planar {
-  fn x_len(&self) -> usize;
-  fn x_head(&self) -> usize;
-  fn y_len(&self) -> usize;
-  fn y_head(&self) -> usize;
-  fn y_head_mut(&mut self) -> &mut usize;
 }
 pub trait PlaneWidget {
   fn pos(&self) -> (u16, u16);

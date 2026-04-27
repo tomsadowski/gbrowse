@@ -1,7 +1,7 @@
 // src/text.rs
 
 use crate::{
-  widget::{Linear, LinearMut, Planar},
+  widget::{Linear, LinearMut},
 };
 use crossterm::{
   Command, QueueableCommand, 
@@ -12,7 +12,8 @@ use crossterm::{
 };
 use std::{
   fmt,
-  io::{self, Write}
+  io::{self, Write},
+  ops::{Deref, DerefMut},
 };
 
 #[derive(Clone, Debug, Default)]
@@ -182,15 +183,35 @@ impl StyledText {
   }
 }
 #[derive(Clone, Debug, Default)]
+pub struct ShiftedTextLine {
+  pub idx:  usize,
+  pub text: TextLine,
+}
+impl ShiftedTextLine {
+  pub fn new(idx: usize, text: TextLine) -> Self {
+    Self {idx, text}
+  }
+}
+impl Deref for ShiftedTextLine {
+  type Target = TextLine;
+  fn deref(&self) -> &Self::Target {
+    &self.text
+  }
+}
+impl DerefMut for ShiftedTextLine {
+  fn deref_mut(&mut self) -> &mut Self::Target {
+    &mut self.text
+  }
+}
+#[derive(Clone, Debug, Default)]
 pub struct StyledTextPlane {
-  // usize: location of StyledText in source
-  pub text:   Vec<(usize, TextLine)>, 
+  pub text:   Vec<ShiftedTextLine>, 
   pub source: Vec<StyledText>,
   pub head:   usize,
   pub pref_x: usize,
 }
-impl Linear<(usize, TextLine)> for StyledTextPlane {
-  fn items(&self) -> &Vec<(usize, TextLine)> {
+impl Linear<ShiftedTextLine> for StyledTextPlane {
+  fn items(&self) -> &Vec<ShiftedTextLine> {
     &self.text
   }
   fn head_mut(&mut self) -> &mut usize {
@@ -203,29 +224,10 @@ impl Linear<(usize, TextLine)> for StyledTextPlane {
     self.text.len().saturating_sub(1)
   }
 }
-impl Planar for StyledTextPlane {
-  fn x_len(&self) -> usize {
-    self.text[self.head].1.items().len()
-  }
-  fn y_len(&self) -> usize {
-    self.text.len()
-  }
-  fn x_head(&self) -> usize {
-    if self.text.len() > 0 {
-      self.text[self.head].1.head()
-    } else {0}
-  }
-  fn y_head(&self) -> usize {
-    self.head
-  }
-  fn y_head_mut(&mut self) -> &mut usize {
-    &mut self.head
-  }
-}
 impl StyledTextPlane {
   pub fn new(source: Vec<StyledText>, width: u16) -> Self {
     let text = StyledText::print_vec(&source, usize::from(width)).into_iter()
-      .map(|(idx, text)| (idx, TextLine::from(text)));
+      .map(|(idx, text)| ShiftedTextLine::new(idx, TextLine::from(text)));
     Self {
       source,
       head:   0, 
@@ -234,23 +236,24 @@ impl StyledTextPlane {
     }
   }
   pub fn get_source_idx(&self) -> usize {
-    self.text[self.head()].0
+    self.current().idx
   }
   pub fn get_source(&self) -> String {
     self.source[self.get_source_idx()].text.clone()
   }
   pub fn get_idx(&self) -> usize {
+    let x_head = self.current().head();
     self.text[..self.head()]
       .iter()
-      .map(|(_, line)| line.items().len().max(1))
-      .chain(std::iter::once(self.x_head()))
+      .map(|line| line.items().len().max(1))
+      .chain(std::iter::once(x_head))
       .sum()
   }
   fn set_idx(&mut self, idx: usize) {
     self.start();
     // this guard responds to an error only encountered on windows
     if self.text.len() > 0 {
-      self.text[self.head].1.start();
+      self.text[self.head].start();
     }
     self.right(idx);
   }
@@ -258,37 +261,35 @@ impl StyledTextPlane {
     let idx   = self.get_idx();
     self.source = source;
     self.text = StyledText::print_vec(&self.source, usize::from(width)).into_iter()
-      .map(|(idx, text)| (idx, TextLine::from(text))).collect();
+      .map(|(idx, text)| ShiftedTextLine::new(idx, TextLine::from(text))).collect();
     self.set_idx(idx);
   }
   pub fn resize(&mut self, width: u16) {
     let idx   = self.get_idx();
     self.text = StyledText::print_vec(&self.source, usize::from(width)).into_iter()
-      .map(|(idx, text)| (idx, TextLine::from(text))).collect();
+      .map(|(idx, text)| ShiftedTextLine::new(idx, TextLine::from(text))).collect();
     self.set_idx(idx);
   }
   pub fn up(&mut self, step: usize) -> bool {
-    let x = self.x_head();
     if self.backward(step) != step {
-      self.text[self.head].1.fit(self.pref_x);
+      self.text[self.head].fit(self.pref_x);
       true
     } else {false}
   }
   pub fn down(&mut self, step: usize) -> bool {
-    let x = self.x_head();
     if self.forward(step) != step {
-      self.text[self.head].1.fit(self.pref_x);
+      self.text[self.head].fit(self.pref_x);
       true
     } else {false}
   }
   pub fn left(&mut self, step: usize) -> usize {
     if self.text.len() == 0 {return step}
-    let remainder = self.text[self.head].1.backward(step);
+    let remainder = self.text[self.head].backward(step);
     if remainder == 0 {
-      self.pref_x = self.text[self.head].1.head;
+      self.pref_x = self.text[self.head].head;
       0
     } else if self.backward(1) == 0 {
-      self.text[self.head].1.end();
+      self.text[self.head].end();
       self.left(remainder.saturating_sub(1))
     } else {
       remainder
@@ -296,12 +297,12 @@ impl StyledTextPlane {
   }
   pub fn right(&mut self, step: usize) -> usize {
     if self.text.len() == 0 {return step}
-    let remainder = self.text[self.head].1.forward(step);
+    let remainder = self.text[self.head].forward(step);
     if remainder == 0 {
-      self.pref_x = self.text[self.head].1.head;
+      self.pref_x = self.text[self.head].head;
       0
     } else if self.forward(1) == 0 {
-      self.text[self.head].1.start();
+      self.text[self.head].start();
       self.right(remainder.saturating_sub(1))
     } else {
       remainder

@@ -1,7 +1,7 @@
 // src/planeview.rs
 
 use crate::{
-  widget::{Rect, Planar},
+  widget::{Rect, Linear},
 };
 
 #[derive(Clone, Debug, Default)]
@@ -28,13 +28,17 @@ impl PlaneView {
   pub fn y_scroll(&self) -> usize {
     self.y.line_start
   }
-  pub fn resize<P: Planar>(&mut self, plane: &P, rect: &Rect) {
-    self.x.resize(plane.x_head(), rect.x, rect.w);
-    self.y.resize(plane.y_head(), rect.y, rect.h);
+  pub fn resize<X, Y, Z>(&mut self, plane: &Y, rect: &Rect) 
+  where Y: Linear<X>, X: Linear<Z>
+  {
+    self.y.resize(plane.head(), rect.y, rect.h);
+    self.x.resize(plane.current().head(), rect.x, rect.w);
   }
-  pub fn update<P: Planar>(&mut self, plane: &P) -> bool {
-    let x = self.x.update(plane.x_head());
-    let y = self.y.update(plane.y_head());
+  pub fn update<X, Y, Z>(&mut self, plane: &Y) -> bool 
+  where Y: Linear<X>, X: Linear<Z>
+  {
+    let y = self.y.update(plane.head());
+    let x = self.x.update(plane.current().head());
     x || y
   }
 }
