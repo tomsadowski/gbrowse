@@ -23,7 +23,7 @@ use crossterm::{
   cursor::{self, MoveTo},
 };
 use std::{
-  io::{self, Write}
+  io::{self, Write},
 };
 
 pub fn reset() -> SetAttribute {
@@ -33,10 +33,19 @@ pub fn cursor_hide<W: Write>(writer: &mut W) -> io::Result<()> {
   writer.queue(cursor::Hide)?;
   Ok(())
 }
+pub trait LinearList<T> {
+  fn get_items(&self) -> &Vec<T>;
+
+  fn current(&self, scroll: usize, screen: u16) -> std::iter::Take<std::slice::Iter<'_, T>> {
+    let scroll = scroll.min(self.get_items().len().saturating_sub(1));
+    self.get_items()[scroll..].iter().take(screen.into()) 
+  }
+}
 pub trait Linear {
   fn len(&self) -> usize;
   fn head(&self) -> usize;
   fn head_mut(&mut self) -> &mut usize;
+
 
   fn max_head(&self) -> usize {
     self.len().saturating_sub(1)

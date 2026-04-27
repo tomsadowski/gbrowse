@@ -1,7 +1,7 @@
 // src/widget/textbox.rs
 
 use crate::{
-  widget::{Rect, PlaneView, reset, StyledText, StyledTextPlane, Style, Planar},
+  widget::{Rect, LinearList, PlaneView, reset, StyledText, StyledTextPlane, Style, Planar},
 };
 use crossterm::{
   QueueableCommand, 
@@ -125,8 +125,7 @@ impl TextBox {
     let y_scroll = self.pos.y_scroll();
     for (_, line) in self.content.text[y_scroll..].iter().take(self.rect.h.into()) {
       // render chars
-      let x_scroll = self.pos.x_scroll().min(line.text.len().saturating_sub(1));
-      for c in line.text[x_scroll..].iter().take(self.rect.w.into()) {
+      for c in line.current(self.pos.x_scroll(), self.rect.w) {
         writer.queue(Print(c))?;
         x += 1;
       }

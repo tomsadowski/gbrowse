@@ -1,7 +1,7 @@
 // src/text.rs
 
 use crate::{
-  widget::{Linear, Planar},
+  widget::{Linear, LinearList, Planar},
 };
 use crossterm::{
   Command, QueueableCommand, 
@@ -86,6 +86,12 @@ impl Linear for TextLine {
     self.head
   }
 }
+impl LinearList<char> for TextLine {
+  fn get_items(&self) -> &Vec<char> {
+    &self.text
+  }
+}
+
 #[derive(Clone, Debug, Default)]
 pub struct Style {
   pub underline: bool,
