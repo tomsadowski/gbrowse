@@ -192,6 +192,20 @@ impl ShiftedTextLine {
     Self {idx, text}
   }
 }
+impl Linear<char> for ShiftedTextLine {
+  fn items(&self) -> &Vec<char> {
+    &self.text.text
+  }
+  fn head_mut(&mut self) -> &mut usize {
+    &mut self.text.head
+  }
+  fn head(&self) -> usize {
+    self.text.head
+  }
+  fn max_head(&self) -> usize {
+    self.text.text.len().saturating_sub(1)
+  }
+}
 impl Deref for ShiftedTextLine {
   type Target = TextLine;
   fn deref(&self) -> &Self::Target {
@@ -286,7 +300,7 @@ impl StyledTextPlane {
     if self.text.len() == 0 {return step}
     let remainder = self.text[self.head].backward(step);
     if remainder == 0 {
-      self.pref_x = self.text[self.head].head;
+      self.pref_x = self.text[self.head].head();
       0
     } else if self.backward(1) == 0 {
       self.text[self.head].end();
@@ -299,7 +313,7 @@ impl StyledTextPlane {
     if self.text.len() == 0 {return step}
     let remainder = self.text[self.head].forward(step);
     if remainder == 0 {
-      self.pref_x = self.text[self.head].head;
+      self.pref_x = self.text[self.head].head();
       0
     } else if self.forward(1) == 0 {
       self.text[self.head].start();

@@ -1,7 +1,7 @@
 // src/widget/textbox.rs
 
 use crate::{
-  widget::{Rect, Linear, PlaneView, reset, StyledText, StyledTextPlane, Style, Planar, PlaneWidget},
+  widget::{Rect, Linear, PlaneView, reset, StyledText, StyledTextPlane, Style, PlaneWidget},
 };
 use crossterm::{
   QueueableCommand, 
@@ -64,7 +64,7 @@ impl TextBox {
     self
   }
   pub fn y_len(&self) -> usize {
-    self.content.y_len()
+    self.content.items().len()
   }
   pub fn get_source_idx(&self) -> usize {
     self.content.get_source_idx()
@@ -73,7 +73,7 @@ impl TextBox {
     self.content.get_source()
   }
   pub fn used_rect(&self) -> Rect {
-    if let Ok(h) = u16::try_from(self.content.y_len()) {
+    if let Ok(h) = u16::try_from(self.y_len()) {
       self.rect.limit_h(h)
     } else {
       self.rect.clone()
@@ -132,7 +132,7 @@ impl TextBox {
     let mut x = self.rect.x;
     let mut y = self.rect.y;
     writer.queue(MoveTo(x, y))?.queue(reset())?.queue(&style)?;
-    for (_, line) in self.content.window(self.pos.y_scroll(), self.rect.h) {
+    for line in self.content.window(self.pos.y_scroll(), self.rect.h) {
       for c in line.window(self.pos.x_scroll(), self.rect.w) {
         writer.queue(Print(c))?;
         x += 1;
@@ -153,8 +153,8 @@ impl TextBox {
     let mut x = self.rect.x;
     let mut y = self.rect.y;
     writer.queue(MoveTo(x, y))?.queue(reset())?.queue(&self.style)?;
-    for (idx, line) in self.content.window(self.pos.y_scroll(), self.rect.h) {
-      writer.queue(&self.content.source[*idx].style)?;
+    for line in self.content.window(self.pos.y_scroll(), self.rect.h) {
+      writer.queue(&self.content.source[line.idx].style)?;
       for c in line.window(self.pos.x_scroll(), self.rect.w) {
         writer.queue(Print(c))?;
         x += 1;
