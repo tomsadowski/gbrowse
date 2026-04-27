@@ -1,7 +1,7 @@
 // src/widget/textbox.rs
 
 use crate::{
-  widget::{Rect, LinearList, PlaneView, reset, StyledText, StyledTextPlane, Style, Planar},
+  widget::{Rect, Linear, PlaneView, reset, StyledText, StyledTextPlane, Style, Planar},
 };
 use crossterm::{
   QueueableCommand, 

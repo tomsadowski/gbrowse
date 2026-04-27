@@ -1,7 +1,7 @@
 // src/text.rs
 
 use crate::{
-  widget::{Linear, LinearList, Planar},
+  widget::{Linear, Planar},
 };
 use crossterm::{
   Command, QueueableCommand, 
@@ -18,16 +18,21 @@ use std::{
 #[derive(Clone, Debug, Default)]
 pub struct EditLine {
   pub head: usize,
-  pub text: String,
+  pub text: Vec<char>,
 }
 impl From<&str> for EditLine {
   fn from(item: &str) -> Self {
-    Self {head: 0, text: item.into()}
+    Self {head: 0, text: item.chars().collect()}
   }
 }
-impl Linear for EditLine {
-  fn len(&self) -> usize {
-    self.text.len()
+impl ToString for EditLine {
+  fn to_string(&self) -> String {
+    self.text.iter().collect()
+  }
+}
+impl Linear<char> for EditLine {
+  fn get_items(&self) -> &Vec<char> {
+    &self.text
   }
   fn max_head(&self) -> usize {
     self.text.len()
@@ -70,25 +75,25 @@ pub struct TextLine {
   pub head: usize,
   pub text: Vec<char>,
 }
+impl From<&str> for TextLine {
+  fn from(item: &str) -> Self {
+    Self {head: 0, text: item.chars().collect()}
+  }
+}
 impl From<Vec<char>> for TextLine {
   fn from(item: Vec<char>) -> Self {
     Self {head: 0, text: item}
   }
 }
-impl Linear for TextLine {
-  fn len(&self) -> usize {
-    self.text.len()
+impl Linear<char> for TextLine {
+  fn get_items(&self) -> &Vec<char> {
+    &self.text
   }
   fn head_mut(&mut self) -> &mut usize {
     &mut self.head
   }
   fn head(&self) -> usize {
     self.head
-  }
-}
-impl LinearList<char> for TextLine {
-  fn get_items(&self) -> &Vec<char> {
-    &self.text
   }
 }
 
@@ -210,6 +215,17 @@ impl Default for StyledTextPlane {
       text: vec![],
       source: vec![],
     }
+  }
+}
+impl Linear<(usize, TextLine)> for StyledTextPlane {
+  fn get_items(&self) -> &Vec<(usize, TextLine)> {
+    &self.text
+  }
+  fn head_mut(&mut self) -> &mut usize {
+    &mut self.head
+  }
+  fn head(&self) -> usize {
+    self.head
   }
 }
 impl Planar for StyledTextPlane {

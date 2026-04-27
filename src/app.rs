@@ -311,14 +311,14 @@ impl App {
             Action::Cancel => self.tab(),
             Action::Enter => match task {
               Task::Reply => {
-                let text = editbox.content.text.to_string();
+                let text = editbox.content.to_string();
                 let text = text.trim().replace(" ", "%20");
                 self.tab();
                 self.tab_changed = true;
                 self.try_spawn_request(&format!("{}?{}", self.tabs.url_str, text));
               }
               Task::NewTab => {
-                let text = editbox.content.text.to_string();
+                let text = editbox.content.to_string();
                 self.tab();
                 self.tab_changed = true;
                 self.try_spawn_request(&text);

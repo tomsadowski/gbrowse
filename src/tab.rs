@@ -13,9 +13,9 @@ pub struct TabList {
   pub head: usize,
   pub tabs: Vec<Tab>,
 } 
-impl Linear for TabList {
-  fn len(&self) -> usize {
-    self.tabs.len()
+impl Linear<Tab> for TabList {
+  fn get_items(&self) -> &Vec<Tab> {
+    &self.tabs
   }
   fn head_mut(&mut self) -> &mut usize {
     &mut self.head
