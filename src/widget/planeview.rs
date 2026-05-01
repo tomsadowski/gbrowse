@@ -74,36 +74,32 @@ impl LineView {
   {
     let cursor_position = self.view_head - self.view_start;
     self.view_start = new_view_start;
-    self.view_size = new_view_size;
-    self.line_head = new_line_head;
+    self.view_size  = new_view_size;
+    self.line_head  = new_line_head;
 
     // go to beginning of line
     if new_line_head < usize::from(new_view_size) {
       self.line_start = 0;
-      self.view_head = self.view_start + u16::try_from(self.line_head)
-          .expect("We do not have Allah's permission");
+      self.view_head  = self.view_start + u16::try_from(self.line_head).unwrap();
 
     // cursor_position must be lowered to fit within new bounds
     } else if cursor_position > new_view_size - 1 {
-      self.view_head = self.view_start + self.view_size - 1;
+      self.view_head  = self.view_start + self.view_size - 1;
       self.line_start = self.line_head - usize::from(self.view_size - 1);
 
     // cursor_position can be preserved
     } else {
-      self.view_head = self.view_start + cursor_position;
-      self.line_start = self.line_head
-        .saturating_sub(usize::from(cursor_position));
+      self.view_head  = self.view_start + cursor_position;
+      self.line_start = self.line_head.saturating_sub(usize::from(cursor_position));
     }
   }
   pub fn update(&mut self, new_line_head: usize) -> bool {
     let mut scroll = false;
     // forward
     if new_line_head > self.line_head {
-      let diff = new_line_head - self.line_head;
+      let diff     = new_line_head - self.line_head;
       let proposed = usize::from(self.view_head) + diff;
-      let max = 
-        usize::from(self.view_start) + 
-        usize::from(self.view_size) - 1;
+      let max      = usize::from(self.view_start + self.view_size) - 1;
       // scroll forward
       if proposed >= max {
         self.line_start = self.line_start + proposed - max;
@@ -111,18 +107,15 @@ impl LineView {
       }
     // backward
     } else if new_line_head < self.line_head {
-      let diff = self.line_head - new_line_head;
-      let max_diff = 
-        usize::from(self.view_head.saturating_sub(self.view_start));
+      let diff     = self.line_head - new_line_head;
+      let max_diff = usize::from(self.view_head.saturating_sub(self.view_start));
       // scroll backward
       if diff > max_diff {
         self.line_start = self.line_start.saturating_sub(diff - max_diff);
         scroll = true;
       }
     }
-    self.view_head = self.view_start + 
-      u16::try_from(new_line_head - self.line_start)
-        .expect("We do not have Allah's permission");
+    self.view_head = self.view_start + u16::try_from(new_line_head - self.line_start).unwrap();
     self.line_head = new_line_head;
     scroll
   }
