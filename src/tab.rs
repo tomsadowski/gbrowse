@@ -1,7 +1,7 @@
 // src/tab.rs
 
 use crate::{
-  widget::{Rect, Linear, LinearMut, TextBox},
+  widget::{Rect, DataCursor, DataCursorMut, TextBox},
   protocol::{GemDoc},
 };
 use std::{
@@ -13,13 +13,8 @@ pub struct TabList {
   pub head: usize,
   pub tabs: Vec<Tab>,
 } 
-impl LinearMut<Tab> for TabList {
-  fn items_mut(&mut self) -> &mut Vec<Tab> {
-    &mut self.tabs
-  }
-}
-impl Linear<Tab> for TabList {
-  fn items(&self) -> &Vec<Tab> {
+impl DataCursor<Tab> for TabList {
+  fn data(&self) -> &Vec<Tab> {
     &self.tabs
   }
   fn head_mut(&mut self) -> &mut usize {
@@ -30,6 +25,11 @@ impl Linear<Tab> for TabList {
   }
   fn max_head(&self) -> usize {
     self.tabs.len().saturating_sub(1)
+  }
+}
+impl DataCursorMut<Tab> for TabList {
+  fn data_mut(&mut self) -> &mut Vec<Tab> {
+    &mut self.tabs
   }
 }
 impl Deref for TabList {

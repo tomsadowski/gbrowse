@@ -5,7 +5,7 @@ use crate::{
   user::{User, Action},
   tab::{Tab, TabList},
   dialog::{Response, Dialog},
-  widget::{Rect, Linear, LinearMut, Frame, cursor_hide, PlaneWidget, TextBox, EditBox},
+  widget::{Rect, DataCursor, DataCursorMut, Frame, cursor_hide, PlaneWidget, TextBox, EditBox},
   protocol::{Request, GemDoc, GemTag, Status, Scheme},
 };
 use crossterm::{
@@ -381,13 +381,13 @@ impl App {
             self.ask(Task::DelTab, "Delete current tab?");
           }
           Action::CycleLeft => {
-            if self.tabs.items().len() > 1 {
+            if self.tabs.data().len() > 1 {
               self.tabs.wrapping_backward(1);
               self.tab_changed = true;
             }
           }
           Action::CycleRight => {
-            if self.tabs.items().len() > 1 {
+            if self.tabs.data().len() > 1 {
               self.tabs.wrapping_forward(1);
               self.tab_changed = true;
             }
@@ -438,7 +438,7 @@ impl App {
       } else {text}
     };
     self.frame.write_banner(&banner_text, stdout)?;
-    self.frame.write_footer(&self.guide, stdout)?;
+    self.frame.write_footer(&self.guide, &self.user.style.info.style, stdout)?;
     if let Focus::Dialog(_, dialog) = &self.focus {
       if self.new_dlg {
         if let Some(fg) = self.user.style.covered.fg {

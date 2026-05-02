@@ -142,8 +142,7 @@ pub struct StatusText {
 impl StatusText {
   pub fn parse(line: &str) -> Self {
     let line = line.trim();
-    let (code_str, msg) = 
-      split_whitespace_once(line).unwrap_or((line, line));
+    let (code_str, msg) = split_whitespace_once(line).unwrap_or((line, line));
     let tag = Status::from(code_str);
     Self {tag, txt: msg.into()}
   }

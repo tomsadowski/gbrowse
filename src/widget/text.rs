@@ -1,7 +1,7 @@
 // src/text.rs
 
 use crate::{
-  widget::{Linear, LinearMut},
+  widget::{DataCursor, DataCursorMut},
 };
 use crossterm::{
   Command, QueueableCommand, 
@@ -31,8 +31,8 @@ impl ToString for EditLine {
     self.text.iter().collect()
   }
 }
-impl Linear<char> for EditLine {
-  fn items(&self) -> &Vec<char> {
+impl DataCursor<char> for EditLine {
+  fn data(&self) -> &Vec<char> {
     &self.text
   }
   fn head_mut(&mut self) -> &mut usize {
@@ -45,8 +45,8 @@ impl Linear<char> for EditLine {
     self.text.len()
   }
 }
-impl LinearMut<char> for EditLine {
-  fn items_mut(&mut self) -> &mut Vec<char> {
+impl DataCursorMut<char> for EditLine {
+  fn data_mut(&mut self) -> &mut Vec<char> {
     &mut self.text
   }
 }
@@ -65,8 +65,8 @@ impl From<Vec<char>> for TextLine {
     Self {head: 0, text: item}
   }
 }
-impl Linear<char> for TextLine {
-  fn items(&self) -> &Vec<char> {
+impl DataCursor<char> for TextLine {
+  fn data(&self) -> &Vec<char> {
     &self.text
   }
   fn head_mut(&mut self) -> &mut usize {
@@ -192,8 +192,8 @@ impl ShiftedTextLine {
     Self {idx, text}
   }
 }
-impl Linear<char> for ShiftedTextLine {
-  fn items(&self) -> &Vec<char> {
+impl DataCursor<char> for ShiftedTextLine {
+  fn data(&self) -> &Vec<char> {
     &self.text.text
   }
   fn head_mut(&mut self) -> &mut usize {
@@ -224,8 +224,8 @@ pub struct StyledTextPlane {
   pub head:   usize,
   pub pref_x: usize,
 }
-impl Linear<ShiftedTextLine> for StyledTextPlane {
-  fn items(&self) -> &Vec<ShiftedTextLine> {
+impl DataCursor<ShiftedTextLine> for StyledTextPlane {
+  fn data(&self) -> &Vec<ShiftedTextLine> {
     &self.text
   }
   fn head_mut(&mut self) -> &mut usize {
@@ -259,7 +259,7 @@ impl StyledTextPlane {
     let x_head = self.current().head();
     self.text[..self.head()]
       .iter()
-      .map(|line| line.items().len().max(1))
+      .map(|line| line.data().len().max(1))
       .chain(std::iter::once(x_head))
       .sum()
   }

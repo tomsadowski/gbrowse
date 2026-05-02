@@ -1,7 +1,7 @@
 // src/widget/textbox.rs
 
 use crate::{
-  widget::{Rect, Linear, PlaneView, StyledText, StyledTextPlane, Style, PlaneWidget},
+  widget::{Rect, DataCursor, ScreenCursor, StyledText, StyledTextPlane, Style, PlaneWidget},
 };
 use crossterm::{
   QueueableCommand, 
@@ -17,14 +17,14 @@ pub struct TextBox {
   pub rect:           Rect,
   pub style:          Style,
   pub content:        StyledTextPlane,
-  pub pos:            PlaneView,
+  pub cursor:            ScreenCursor,
   pub write:          bool,
   pub write_unused_x: bool,
   pub write_unused_y: bool,
 }
 impl PlaneWidget for TextBox {
   fn pos(&self) -> (u16, u16) {
-    (self.pos.x_cursor(), self.pos.y_cursor())
+    (self.cursor.x_cursor(), self.cursor.y_cursor())
   }
   fn write<W: Write>(&self, writer: &mut W) -> io::Result<()> {
     if self.write {
@@ -36,14 +36,14 @@ impl PlaneWidget for TextBox {
 impl TextBox {
   pub fn new(text: Vec<StyledText>, rect: &Rect) -> Self {
     let content = StyledTextPlane::new(text, rect.w);
-    let pos     = PlaneView::new(&rect);
+    let pos     = ScreenCursor::new(&rect);
     Self {
       write_unused_x: true,
       write_unused_y: true,
       style: Style::default(),
       write: true,
       rect:   rect.clone(),
-      pos, content,
+      cursor: pos, content,
     }
   }
   pub fn with_style(mut self, style: &Style) -> Self {
@@ -70,7 +70,7 @@ impl TextBox {
     self.content.get_source()
   }
   pub fn used_rect(&self) -> Rect {
-    if let Ok(h) = u16::try_from(self.content.items().len()) {
+    if let Ok(h) = u16::try_from(self.content.data().len()) {
       self.rect.clone().cap_height(h)
     } else {
       self.rect.clone()
@@ -82,36 +82,36 @@ impl TextBox {
   pub fn restyle(&mut self, text: Vec<StyledText>, rect: &Rect) {
     self.rect = rect.clone();
     self.content.restyle(text, rect.w);
-    self.pos.resize(&self.content, &rect);
+    self.cursor.resize(&self.content, &rect);
     self.reset_state();
   }
   pub fn resize(&mut self, rect: &Rect) {
     self.rect = rect.clone();
     self.content.resize(rect.w);
-    self.pos.resize(&self.content, &rect);
+    self.cursor.resize(&self.content, &rect);
     self.reset_state();
   }
   pub fn left(&mut self, delta: usize) -> bool {
     if self.content.left(delta) == 0 {
-      self.write = self.pos.update(&self.content);
+      self.write = self.cursor.update(&self.content);
       true
     } else {false}
   }
   pub fn right(&mut self, delta: usize) -> bool {
     if self.content.right(delta) == 0 {
-      self.write = self.pos.update(&self.content);
+      self.write = self.cursor.update(&self.content);
       true
     } else {false}
   }
   pub fn down(&mut self, delta: usize) -> bool {
     if self.content.down(delta) {
-      self.write = self.pos.update(&self.content);
+      self.write = self.cursor.update(&self.content);
       true
     } else {false}
   }
   pub fn up(&mut self, delta: usize) -> bool {
     if self.content.up(delta) {
-      self.write = self.pos.update(&self.content);
+      self.write = self.cursor.update(&self.content);
       true
     } else {false}
   }
@@ -129,8 +129,8 @@ impl TextBox {
     let mut x = self.rect.x;
     let mut y = self.rect.y;
     writer.queue(MoveTo(x, y))?.queue(SetAttribute(Attribute::Reset))?.queue(&style)?;
-    for line in self.content.window(self.pos.y_scroll(), self.rect.h) {
-      for c in line.window(self.pos.x_scroll(), self.rect.w) {
+    for line in self.content.current_view(self.cursor.y_scroll(), self.rect.h) {
+      for c in line.current_view(self.cursor.x_scroll(), self.rect.w) {
         writer.queue(Print(c))?;
         x += 1;
       }
@@ -149,10 +149,13 @@ impl TextBox {
   pub fn write_all<W: Write>(&self, writer: &mut W) -> io::Result<()> {
     let mut x = self.rect.x;
     let mut y = self.rect.y;
-    writer.queue(MoveTo(x, y))?.queue(SetAttribute(Attribute::Reset))?.queue(&self.style)?;
-    for line in self.content.window(self.pos.y_scroll(), self.rect.h) {
+    writer
+      .queue(MoveTo(x, y))?
+      .queue(SetAttribute(Attribute::Reset))?
+      .queue(&self.style)?;
+    for line in self.content.current_view(self.cursor.y_scroll(), self.rect.h) {
       writer.queue(&self.content.source[line.idx].style)?;
-      for c in line.window(self.pos.x_scroll(), self.rect.w) {
+      for c in line.current_view(self.cursor.x_scroll(), self.rect.w) {
         writer.queue(Print(c))?;
         x += 1;
       }

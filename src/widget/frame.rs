@@ -106,7 +106,9 @@ impl Frame {
     writer.queue(SetAttribute(Attribute::Reset))?;
     Ok(())
   }
-  pub fn write_footer<W: Write>(&self, text: &str, writer: &mut W) -> io::Result<()> {
+  pub fn write_footer<W: Write>(&self, text: &str, style: &Style, writer: &mut W) 
+    -> io::Result<()> 
+  {
     let mut x = self.inner_rect.x_end().saturating_sub(1);
     let     y = self.border_rect.y_end().saturating_sub(1);
     writer

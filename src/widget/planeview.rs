@@ -1,56 +1,18 @@
 // src/planeview.rs
 
 use crate::{
-  widget::{Rect, Linear},
+  widget::{Rect, DataCursor},
 };
 
 #[derive(Clone, Debug, Default)]
-pub struct PlaneView {
-  x: LineView,
-  y: LineView,
-}
-impl PlaneView {
-  pub fn new(rect: &Rect) -> Self {
-    Self {
-      x: LineView::new(rect.x, rect.w),
-      y: LineView::new(rect.y, rect.h),
-    }
-  }
-  pub fn x_cursor(&self) -> u16 {
-    self.x.view_head
-  }
-  pub fn y_cursor(&self) -> u16 {
-    self.y.view_head
-  }
-  pub fn x_scroll(&self) -> usize {
-    self.x.line_start
-  }
-  pub fn y_scroll(&self) -> usize {
-    self.y.line_start
-  }
-  pub fn resize<X, Y, Z>(&mut self, plane: &Y, rect: &Rect) 
-  where Y: Linear<X>, X: Linear<Z>
-  {
-    self.y.resize(plane.head(), rect.y, rect.h);
-    self.x.resize(plane.current().head(), rect.x, rect.w);
-  }
-  pub fn update<X, Y, Z>(&mut self, plane: &Y) -> bool 
-  where Y: Linear<X>, X: Linear<Z>
-  {
-    let y = self.y.update(plane.head());
-    let x = self.x.update(plane.current().head());
-    x || y
-  }
-}
-#[derive(Clone, Debug, Default)]
-pub struct LineView {
+pub struct ViewCursor {
   pub line_head:  usize,
   pub line_start: usize,
   pub view_head:  u16,
   pub view_start: u16,
   pub view_size:  u16,
 }
-impl LineView {
+impl ViewCursor {
   pub fn new(view_start: u16, view_size: u16) -> Self {
     Self {
       line_start: 0, 
@@ -67,11 +29,7 @@ impl LineView {
     self.view_head
   }
   // preserve cursor position if it still fits in the new bounds
-  pub fn resize(&mut self, 
-                new_line_head:  usize, 
-                new_view_start: u16, 
-                new_view_size:  u16) 
-  {
+  pub fn resize(&mut self, new_line_head: usize, new_view_start: u16, new_view_size: u16) {
     let cursor_position = self.view_head - self.view_start;
     self.view_start = new_view_start;
     self.view_size  = new_view_size;
@@ -118,5 +76,44 @@ impl LineView {
     self.view_head = self.view_start + u16::try_from(new_line_head - self.line_start).unwrap();
     self.line_head = new_line_head;
     scroll
+  }
+}
+
+#[derive(Clone, Debug, Default)]
+pub struct ScreenCursor {
+  x: ViewCursor,
+  y: ViewCursor,
+}
+impl ScreenCursor {
+  pub fn new(rect: &Rect) -> Self {
+    Self {
+      x: ViewCursor::new(rect.x, rect.w),
+      y: ViewCursor::new(rect.y, rect.h),
+    }
+  }
+  pub fn x_cursor(&self) -> u16 {
+    self.x.view_head
+  }
+  pub fn y_cursor(&self) -> u16 {
+    self.y.view_head
+  }
+  pub fn x_scroll(&self) -> usize {
+    self.x.line_start
+  }
+  pub fn y_scroll(&self) -> usize {
+    self.y.line_start
+  }
+  pub fn resize<X, Y, Z>(&mut self, plane: &Y, rect: &Rect) 
+  where Y: DataCursor<X>, X: DataCursor<Z>
+  {
+    self.y.resize(plane.head(), rect.y, rect.h);
+    self.x.resize(plane.current().head(), rect.x, rect.w);
+  }
+  pub fn update<X, Y, Z>(&mut self, plane: &Y) -> bool 
+  where Y: DataCursor<X>, X: DataCursor<Z>
+  {
+    let y = self.y.update(plane.head());
+    let x = self.x.update(plane.current().head());
+    x || y
   }
 }

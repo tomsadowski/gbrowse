@@ -11,7 +11,7 @@ pub use self::frame::Frame;
 pub use self::textbox::TextBox;
 pub use self::editbox::EditBox;
 pub use self::rect::Rect;
-pub use self::planeview::{LineView, PlaneView};
+pub use self::planeview::{ViewCursor, ScreenCursor};
 pub use self::text::{TextLine, EditLine, Style, StyledText, StyledTextPlane};
 
 use crate::{
@@ -30,18 +30,18 @@ pub fn cursor_hide<W: Write>(writer: &mut W) -> io::Result<()> {
   writer.queue(cursor::Hide)?;
   Ok(())
 }
-pub trait Linear<T> {
-  fn items(&self) -> &Vec<T>;
+pub trait DataCursor<T> {
+  fn data(&self) -> &Vec<T>;
   fn head(&self) -> usize;
   fn head_mut(&mut self) -> &mut usize;
   fn max_head(&self) -> usize;
   
   fn current(&self) -> &T {
-    &self.items()[self.head()]
+    &self.data()[self.head()]
   }
-  fn window(&self, shift: usize, length: u16) -> std::iter::Take<std::slice::Iter<'_, T>> {
-    let shift = std::cmp::min(shift, self.items().len().saturating_sub(1));
-    self.items()[shift..].iter().take(length.into()) 
+  fn current_view(&self, shift: usize, length: u16) -> std::iter::Take<std::slice::Iter<'_, T>> {
+    let shift = std::cmp::min(shift, self.data().len().saturating_sub(1));
+    self.data()[shift..].iter().take(length.into()) 
   }
   fn fit(&mut self, new_cursor: usize) {
     *self.head_mut() = self.max_head().min(new_cursor);
@@ -98,13 +98,13 @@ pub trait Linear<T> {
     }
   }
 }
-pub trait LinearMut<T>: Linear<T> {
-  fn items_mut(&mut self) -> &mut Vec<T>;
+pub trait DataCursorMut<T>: DataCursor<T> {
+  fn data_mut(&mut self) -> &mut Vec<T>;
 
   fn delete(&mut self) -> bool {
     let head = self.head();
-    if head < self.items().len() {
-      self.items_mut().remove(head);
+    if head < self.data().len() {
+      self.data_mut().remove(head);
       true
     } else {false}
   }
@@ -112,18 +112,18 @@ pub trait LinearMut<T>: Linear<T> {
     if self.peek_backward(1) == 0 {
       self.backward(1);
       let head = self.head();
-      self.items_mut().remove(head);
+      self.data_mut().remove(head);
       true
     } else {false}
   }
   fn insert(&mut self, c: T) -> bool {
     let head = self.head();
-    if head + 1 == self.items().len() || self.items().len() == 0 {
-      self.items_mut().push(c);
+    if head + 1 == self.data().len() || self.data().len() == 0 {
+      self.data_mut().push(c);
       self.forward(1);
       true
     } else {
-      self.items_mut().insert(head, c);
+      self.data_mut().insert(head, c);
       self.forward(1);
       true
     }

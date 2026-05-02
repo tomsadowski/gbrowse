@@ -3,7 +3,7 @@
 use crate::{
   user::UserTable,
   dialog::{Dialog, Response},
-  widget::{Linear, TextBox, EditBox},
+  widget::{DataCursor, TextBox, EditBox},
 };
 use crossterm::event::KeyCode;
 use toml::{Table, Value};
@@ -58,8 +58,8 @@ impl Action {
     match self {
       Action::PageDown  => {textbox.down(usize::from(textbox.rect.h));}
       Action::PageUp    => {textbox.up(usize::from(textbox.rect.h));}
-      Action::Bottom    => {textbox.down(textbox.content.items().len());}
-      Action::Top       => {textbox.up(textbox.content.items().len());}
+      Action::Bottom    => {textbox.down(textbox.content.data().len());}
+      Action::Top       => {textbox.up(textbox.content.data().len());}
       Action::MoveDown  => {textbox.down(1);}
       Action::MoveUp    => {textbox.up(1);}
       Action::MoveLeft  => {textbox.left(1);}
@@ -104,15 +104,14 @@ pub struct KeysTable {
   pub pgdown:      KeyCode,
   pub cycle_left:  KeyCode,
   pub cycle_right: KeyCode,
+  pub select:      KeyCode,
 
   pub menu:        KeyCode,
   pub load_url:    KeyCode,
   pub save_url:    KeyCode,
-  pub select:      KeyCode,
   pub delete_tab:  KeyCode,
   pub new_tab:     KeyCode,
 
-  pub ack:         KeyCode, 
   pub yes:         KeyCode, 
   pub no:          KeyCode,
   pub cancel:      KeyCode,
@@ -136,7 +135,6 @@ impl Default for KeysTable {
       cycle_left:  KeyCode::Char(','),
       cycle_right: KeyCode::Char('.'),
       select:      KeyCode::Enter,
-      ack:         KeyCode::Enter, 
       yes:         KeyCode::Char('y'), 
       no:          KeyCode::Char('n'),
       cancel:      KeyCode::Esc,
@@ -241,7 +239,6 @@ impl UserTable<Action> for KeysTable {
       Action::DelTab     => self.delete_tab  = value,
       Action::NewTab     => self.new_tab     = value,
       Action::Select     => self.select      = value,
-      Action::Ack        => self.ack         = value,
       Action::Yes        => self.yes         = value,
       Action::No         => self.no          = value,
       Action::Cancel     => self.cancel      = value,
