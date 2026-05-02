@@ -26,9 +26,6 @@ use std::{
   io::{self, Write},
 };
 
-pub fn reset() -> SetAttribute {
-  SetAttribute(Attribute::Reset)
-}
 pub fn cursor_hide<W: Write>(writer: &mut W) -> io::Result<()> {
   writer.queue(cursor::Hide)?;
   Ok(())
@@ -55,49 +52,49 @@ pub trait Linear<T> {
   fn end(&mut self) {
     *self.head_mut() = self.max_head();
   }
-  fn peek_backward(&self, step: usize) -> usize {
-    if step > self.head() {
-      step - self.head()
+  fn peek_backward(&self, delta: usize) -> usize {
+    if delta > self.head() {
+      delta - self.head()
     } else {0}
   }
-  fn peek_forward(&self, step: usize) -> usize {
+  fn peek_forward(&self, delta: usize) -> usize {
     let max_head = self.max_head();
-    if self.head() + step > max_head {
-      self.head() + step - max_head
+    if self.head() + delta > max_head {
+      self.head() + delta - max_head
     } else {0}
   }
-  fn backward(&mut self, mut step: usize) -> usize {
-    if step > self.head() {
-      step -= self.head();
+  fn backward(&mut self, mut delta: usize) -> usize {
+    if delta > self.head() {
+      delta -= self.head();
       *self.head_mut() = 0;
-      step
+      delta
     } else {
-      *self.head_mut() -= step;
+      *self.head_mut() -= delta;
       0
     }
   }
-  fn forward(&mut self, mut step: usize) -> usize {
-    if self.head() + step > self.max_head() {
-      step = self.head() + step - self.max_head();
+  fn forward(&mut self, mut delta: usize) -> usize {
+    if self.head() + delta > self.max_head() {
+      delta = self.head() + delta - self.max_head();
       *self.head_mut() = self.max_head();
-      step
+      delta
     } else {
-      *self.head_mut() += step;
+      *self.head_mut() += delta;
       0
     }
   }
-  fn wrapping_backward(&mut self, step: usize) {
-    if step > self.head() {
+  fn wrapping_backward(&mut self, delta: usize) {
+    if delta > self.head() {
       self.end();
     } else {
-      *self.head_mut() -= step;
+      *self.head_mut() -= delta;
     }
   }
-  fn wrapping_forward(&mut self, step: usize) {
-    if self.head() + step > self.max_head() {
+  fn wrapping_forward(&mut self, delta: usize) {
+    if self.head() + delta > self.max_head() {
       self.start();
     } else {
-      *self.head_mut() += step;
+      *self.head_mut() += delta;
     }
   }
 }

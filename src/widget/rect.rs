@@ -13,37 +13,45 @@ impl Rect {
   pub fn new(w: u16, h: u16) -> Self {
     Self {x: 0, y: 0, w, h}
   }
-  pub fn crop_north(mut self, step: u16) -> Self {
-    if step * 2 < self.h {
-      self.y += step;
-      self.h -= step;
+  pub fn crop_north(mut self, delta: u16) -> Self {
+    if delta * 2 < self.h {
+      self.y += delta;
+      self.h -= delta;
     }
     self
   }
-  pub fn crop_south(mut self, step: u16) -> Self {
-    if step < self.h {
-      self.h -= step;
+  pub fn crop_south(mut self, delta: u16) -> Self {
+    if delta < self.h {
+      self.h -= delta;
     }
     self
   }
-  pub fn crop_east(mut self, step: u16) -> Self {
-    if step < self.w {
-      self.w -= step
+  pub fn crop_east(mut self, delta: u16) -> Self {
+    if delta < self.w {
+      self.w -= delta
     }
     self
   }
-  pub fn crop_west(mut self, step: u16) -> Self {
-    if step * 2 < self.w {
-      self.x += step;
-      self.w -= step;
+  pub fn crop_west(mut self, delta: u16) -> Self {
+    if delta * 2 < self.w {
+      self.x += delta;
+      self.w -= delta;
     }
     self
   }
-  pub fn crop_y(mut self, step: u16) -> Self {
-    self.crop_north(step).crop_south(step)
+  pub fn crop_y(mut self, delta: u16) -> Self {
+    self.crop_north(delta).crop_south(delta)
   }
-  pub fn crop_x(mut self, step: u16) -> Self {
-    self.crop_east(step).crop_west(step)
+  pub fn crop_x(mut self, delta: u16) -> Self {
+    self.crop_east(delta).crop_west(delta)
+  }
+  pub fn cap_width(mut self, w: u16) -> Self {
+    self.w = w.min(self.w);
+    self
+  }
+  pub fn cap_height(mut self, h: u16) -> Self {
+    self.h = h.min(self.h);
+    self
   }
   pub fn x_end(&self) -> u16 {
     self.x + self.w
@@ -75,55 +83,50 @@ impl Rect {
   pub fn y_range(&self) -> Range<u16> {
     Range {start: self.y, end: self.y_end()}
   }
-  pub fn limit_h(&self, h: u16) -> Self {
-    let mut rect = self.clone();
-    rect.h = h.min(self.h);
-    rect
-  }
-  pub fn cropped_west_range(&self, step: u16) -> Range<u16> {
-    if self.w >= step {
-      Range {start: self.x + step, end: self.x_end()}
+  pub fn cropped_west_range(&self, delta: u16) -> Range<u16> {
+    if self.w >= delta {
+      Range {start: self.x + delta, end: self.x_end()}
     } else {
       Range {start: self.x_end(), end: self.x_end()}
     }
   }
-  pub fn cropped_north_range(&self, step: u16) -> Range<u16> {
-    if self.h >= step {
-      Range {start: self.y + step, end: self.y_end()}
+  pub fn cropped_north_range(&self, delta: u16) -> Range<u16> {
+    if self.h >= delta {
+      Range {start: self.y + delta, end: self.y_end()}
     } else {
       Range {start: self.y_end(), end: self.y_end()}
     }
   }
-  pub fn cropped_x_range(&self, step: u16) -> Range<u16> {
-    Range {start: self.x + step, end: self.x_end() - step}
+  pub fn cropped_x_range(&self, delta: u16) -> Range<u16> {
+    Range {start: self.x + delta, end: self.x_end() - delta}
   }
-  pub fn cropped_y_range(&self, step: u16) -> Range<u16> {
-    Range {start: self.y + step, end: self.y_end() - step}
+  pub fn cropped_y_range(&self, delta: u16) -> Range<u16> {
+    Range {start: self.y + delta, end: self.y_end() - delta}
   }
-  pub fn cropped_x_points(&self, step: u16) -> (u16, u16) {
-    (self.x + step, self.x_end() - (step + 1))
+  pub fn cropped_x_points(&self, delta: u16) -> (u16, u16) {
+    (self.x + delta, self.x_end() - (delta + 1))
   }
   pub fn resize(&mut self, w: u16, h: u16) {
     self.w = w; 
     self.h = h;
   }
-  pub fn cropped_south(&self, step: u16) -> Self {
-    self.clone().crop_south(step)
+  pub fn cropped_south(&self, delta: u16) -> Self {
+    self.clone().crop_south(delta)
   }
-  pub fn cropped_east(&self, step: u16) -> Self {
-    self.clone().crop_east(step)
+  pub fn cropped_east(&self, delta: u16) -> Self {
+    self.clone().crop_east(delta)
   }
-  pub fn cropped_north(&self, step: u16) -> Self {
-    self.clone().crop_north(step)
+  pub fn cropped_north(&self, delta: u16) -> Self {
+    self.clone().crop_north(delta)
   }
-  pub fn cropped_west(&self, step: u16) -> Self {
-    self.clone().crop_west(step)
+  pub fn cropped_west(&self, delta: u16) -> Self {
+    self.clone().crop_west(delta)
   }
-  pub fn cropped_x(&self, step: u16) -> Self {
-    self.clone().crop_south(step).crop_north(step)
+  pub fn cropped_x(&self, delta: u16) -> Self {
+    self.clone().crop_south(delta).crop_north(delta)
   }
-  pub fn cropped_y(&self, step: u16) -> Self {
-    self.clone().crop_west(step).crop_east(step)
+  pub fn cropped_y(&self, delta: u16) -> Self {
+    self.clone().crop_west(delta).crop_east(delta)
   }
   pub fn south_range(&self, rect: &Rect) -> Range<u16> {
     Range {start: rect.y_end(), end: self.y_end()}

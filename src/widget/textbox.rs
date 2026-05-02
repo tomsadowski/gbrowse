@@ -1,7 +1,7 @@
 // src/widget/textbox.rs
 
 use crate::{
-  widget::{Rect, Linear, PlaneView, reset, StyledText, StyledTextPlane, Style, PlaneWidget},
+  widget::{Rect, Linear, PlaneView, StyledText, StyledTextPlane, Style, PlaneWidget},
 };
 use crossterm::{
   QueueableCommand, 
@@ -63,18 +63,15 @@ impl TextBox {
     self.write_unused_y = write;
     self
   }
-  pub fn y_len(&self) -> usize {
-    self.content.items().len()
-  }
   pub fn get_source_idx(&self) -> usize {
-    self.content.get_source_idx()
+    self.content.current().idx
   }
   pub fn get_source(&self) -> String {
     self.content.get_source()
   }
   pub fn used_rect(&self) -> Rect {
-    if let Ok(h) = u16::try_from(self.y_len()) {
-      self.rect.limit_h(h)
+    if let Ok(h) = u16::try_from(self.content.items().len()) {
+      self.rect.clone().cap_height(h)
     } else {
       self.rect.clone()
     }
@@ -94,44 +91,44 @@ impl TextBox {
     self.pos.resize(&self.content, &rect);
     self.reset_state();
   }
-  pub fn left(&mut self, step: usize) -> bool {
-    if self.content.left(step) == 0 {
+  pub fn left(&mut self, delta: usize) -> bool {
+    if self.content.left(delta) == 0 {
       self.write = self.pos.update(&self.content);
       true
     } else {false}
   }
-  pub fn right(&mut self, step: usize) -> bool {
-    if self.content.right(step) == 0 {
+  pub fn right(&mut self, delta: usize) -> bool {
+    if self.content.right(delta) == 0 {
       self.write = self.pos.update(&self.content);
       true
     } else {false}
   }
-  pub fn down(&mut self, step: usize) -> bool {
-    if self.content.down(step) {
+  pub fn down(&mut self, delta: usize) -> bool {
+    if self.content.down(delta) {
       self.write = self.pos.update(&self.content);
       true
     } else {false}
   }
-  pub fn up(&mut self, step: usize) -> bool {
-    if self.content.up(step) {
+  pub fn up(&mut self, delta: usize) -> bool {
+    if self.content.up(delta) {
       self.write = self.pos.update(&self.content);
       true
     } else {false}
   }
   pub fn clear<W: Write>(&self, writer: &mut W) -> io::Result<()> {
-    writer.queue(reset())?.queue(&self.style)?;
+    writer.queue(SetAttribute(Attribute::Reset))?.queue(&self.style)?;
     for y in self.rect.y_range() {
       for x in self.rect.x_range() {
         writer.queue(MoveTo(x, y))?.queue(Print(' '))?;
       }
     }
-    writer.queue(reset())?;
+    writer.queue(SetAttribute(Attribute::Reset))?;
     Ok(())
   }
   pub fn write_style<W: Write>(&self, style: &Style, writer: &mut W) -> io::Result<()> {
     let mut x = self.rect.x;
     let mut y = self.rect.y;
-    writer.queue(MoveTo(x, y))?.queue(reset())?.queue(&style)?;
+    writer.queue(MoveTo(x, y))?.queue(SetAttribute(Attribute::Reset))?.queue(&style)?;
     for line in self.content.window(self.pos.y_scroll(), self.rect.h) {
       for c in line.window(self.pos.x_scroll(), self.rect.w) {
         writer.queue(Print(c))?;
@@ -146,13 +143,13 @@ impl TextBox {
       y += 1;
       writer.queue(MoveTo(x, y))?;
     }
-    writer.queue(reset())?;
+    writer.queue(SetAttribute(Attribute::Reset))?;
     Ok(())
   }
   pub fn write_all<W: Write>(&self, writer: &mut W) -> io::Result<()> {
     let mut x = self.rect.x;
     let mut y = self.rect.y;
-    writer.queue(MoveTo(x, y))?.queue(reset())?.queue(&self.style)?;
+    writer.queue(MoveTo(x, y))?.queue(SetAttribute(Attribute::Reset))?.queue(&self.style)?;
     for line in self.content.window(self.pos.y_scroll(), self.rect.h) {
       writer.queue(&self.content.source[line.idx].style)?;
       for c in line.window(self.pos.x_scroll(), self.rect.w) {
@@ -160,7 +157,7 @@ impl TextBox {
         x += 1;
       }
       if self.write_unused_x {
-        writer.queue(reset())?.queue(&self.style)?;
+        writer.queue(SetAttribute(Attribute::Reset))?.queue(&self.style)?;
         for _ in x..self.rect.x_end() {
           writer.queue(Print(' '))?;
         }
@@ -170,7 +167,7 @@ impl TextBox {
       writer.queue(MoveTo(x, y))?;
     }
     if self.write_unused_y {
-      writer.queue(reset())?.queue(&self.style)?;
+      writer.queue(SetAttribute(Attribute::Reset))?.queue(&self.style)?;
       for _ in y..self.rect.y_end() {
         for _ in self.rect.x_range() {
           writer.queue(Print(' '))?;
@@ -180,7 +177,7 @@ impl TextBox {
         writer.queue(MoveTo(x, y))?;
       }
     }
-    writer.queue(reset())?;
+    writer.queue(SetAttribute(Attribute::Reset))?;
     Ok(())
   }
 }

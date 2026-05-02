@@ -253,7 +253,7 @@ impl StyledTextPlane {
     self.current().idx
   }
   pub fn get_source(&self) -> String {
-    self.source[self.get_source_idx()].text.clone()
+    self.source[self.current().idx].text.clone()
   }
   pub fn get_idx(&self) -> usize {
     let x_head = self.current().head();
@@ -284,21 +284,21 @@ impl StyledTextPlane {
       .map(|(idx, text)| ShiftedTextLine::new(idx, TextLine::from(text))).collect();
     self.set_idx(idx);
   }
-  pub fn up(&mut self, step: usize) -> bool {
-    if self.backward(step) != step {
+  pub fn up(&mut self, delta: usize) -> bool {
+    if self.backward(delta) != delta {
       self.text[self.head].fit(self.pref_x);
       true
     } else {false}
   }
-  pub fn down(&mut self, step: usize) -> bool {
-    if self.forward(step) != step {
+  pub fn down(&mut self, delta: usize) -> bool {
+    if self.forward(delta) != delta {
       self.text[self.head].fit(self.pref_x);
       true
     } else {false}
   }
-  pub fn left(&mut self, step: usize) -> usize {
-    if self.text.len() == 0 {return step}
-    let remainder = self.text[self.head].backward(step);
+  pub fn left(&mut self, delta: usize) -> usize {
+    if self.text.len() == 0 {return delta}
+    let remainder = self.text[self.head].backward(delta);
     if remainder == 0 {
       self.pref_x = self.text[self.head].head();
       0
@@ -309,9 +309,9 @@ impl StyledTextPlane {
       remainder
     }
   }
-  pub fn right(&mut self, step: usize) -> usize {
-    if self.text.len() == 0 {return step}
-    let remainder = self.text[self.head].forward(step);
+  pub fn right(&mut self, delta: usize) -> usize {
+    if self.text.len() == 0 {return delta}
+    let remainder = self.text[self.head].forward(delta);
     if remainder == 0 {
       self.pref_x = self.text[self.head].head();
       0

@@ -3,12 +3,12 @@
 use crate::{
   common as c,
   user::{MarginSpec, BorderSpec},
-  widget::{Rect, Style, reset},
+  widget::{Rect, Style},
 };
 use crossterm::{
   QueueableCommand, 
   cursor::{position, MoveTo, MoveLeft, MoveUp, MoveDown, MoveRight},
-  style::{Print},
+  style::{Print, SetAttribute, Attribute},
 };
 use std::{
   io::{self, Write}
@@ -70,7 +70,7 @@ impl Frame {
     let (cx, cy) = self.border_rect.c();
     let (dx, dy) = self.border_rect.d();
     writer
-      .queue(reset())?.queue(&self.border_spec.style)?
+      .queue(SetAttribute(Attribute::Reset))?.queue(&self.border_spec.style)?
       .queue(MoveTo(ax, ay))?.queue(Print(self.border_spec.a))?
       .queue(MoveTo(bx, by))?.queue(Print(self.border_spec.b))?
       .queue(MoveTo(cx, cy))?.queue(Print(self.border_spec.c))?
@@ -86,7 +86,7 @@ impl Frame {
         .queue(MoveTo(bx, y))?.queue(Print(c::Y_LINE))?;
     }
     // margin
-    writer.queue(reset())?.queue(&self.margin_style)?;
+    writer.queue(SetAttribute(Attribute::Reset))?.queue(&self.margin_style)?;
     for x in self.outer_rect.x_range() {
       for y in self.outer_rect.north_range(&self.inner_rect) {
         writer.queue(MoveTo(x, y))?.queue(Print(' '))?;
@@ -103,7 +103,7 @@ impl Frame {
         writer.queue(MoveTo(x, y))?.queue(Print(' '))?;
       }
     }
-    writer.queue(reset())?;
+    writer.queue(SetAttribute(Attribute::Reset))?;
     Ok(())
   }
   pub fn write_footer<W: Write>(&self, text: &str, writer: &mut W) -> io::Result<()> {
@@ -127,7 +127,7 @@ impl Frame {
     for _ in self.inner_rect.x..x {
       writer.queue(MoveLeft(2))?.queue(Print(c::X_LINE))?;
     }
-    writer.queue(reset())?;
+    writer.queue(SetAttribute(Attribute::Reset))?;
     Ok(())
   }
   pub fn write_banner<W: Write>(&self, text: &str, writer: &mut W) -> io::Result<()> {
@@ -152,7 +152,7 @@ impl Frame {
     for _ in x..self.inner_rect.x_end() {
       writer.queue(Print(c::X_LINE))?;
     }
-    writer.queue(reset())?;
+    writer.queue(SetAttribute(Attribute::Reset))?;
     Ok(())
   }
 }

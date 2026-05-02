@@ -1,11 +1,11 @@
 // src/editbox.rs
 
 use crate::{
-  widget::{Rect, LineView, reset, Style, EditLine, Linear, LinearMut, PlaneWidget},
+  widget::{Rect, LineView, Style, EditLine, Linear, LinearMut, PlaneWidget},
 };
 use crossterm::{
   QueueableCommand,
-  style::Print,
+  style::{Print, SetAttribute, Attribute},
   cursor::MoveTo,
 };
 use std::{
@@ -62,14 +62,14 @@ impl EditBox {
   pub fn reset_state(&mut self) {
     self.write = true;
   }
-  pub fn left(&mut self, step: usize) -> bool {
-    if self.content.backward(step) == 0 {
+  pub fn left(&mut self, delta: usize) -> bool {
+    if self.content.backward(delta) == 0 {
       self.write = self.pos.update(self.content.head);
       true
     } else {false}
   }
-  pub fn right(&mut self, step: usize) -> bool {
-    if self.content.forward(step) == 0 {
+  pub fn right(&mut self, delta: usize) -> bool {
+    if self.content.forward(delta) == 0 {
       self.write = self.pos.update(self.content.head);
       true
     } else {false}
@@ -100,7 +100,7 @@ impl EditBox {
   pub fn write_all<W: Write>(&self, writer: &mut W) -> io::Result<()> {
     let mut x = self.rect.x;
     let     y = self.rect.y;
-    writer.queue(MoveTo(x, y))?.queue(reset())?.queue(&self.style)?;
+    writer.queue(MoveTo(x, y))?.queue(SetAttribute(Attribute::Reset))?.queue(&self.style)?;
     // render chars
     for c in self.content.window(self.pos.scroll(), self.rect.w) {
       writer.queue(Print(c))?;
@@ -113,7 +113,7 @@ impl EditBox {
         writer.queue(Print(' '))?;
       }
     }
-    writer.queue(reset())?;
+    writer.queue(SetAttribute(Attribute::Reset))?;
     Ok(())
   }
 }

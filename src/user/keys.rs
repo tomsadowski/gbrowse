@@ -3,7 +3,7 @@
 use crate::{
   user::UserTable,
   dialog::{Dialog, Response},
-  widget::{TextBox, EditBox},
+  widget::{Linear, TextBox, EditBox},
 };
 use crossterm::event::KeyCode;
 use toml::{Table, Value};
@@ -58,8 +58,8 @@ impl Action {
     match self {
       Action::PageDown  => {textbox.down(usize::from(textbox.rect.h));}
       Action::PageUp    => {textbox.up(usize::from(textbox.rect.h));}
-      Action::Bottom    => {textbox.down(textbox.y_len());}
-      Action::Top       => {textbox.up(textbox.y_len());}
+      Action::Bottom    => {textbox.down(textbox.content.items().len());}
+      Action::Top       => {textbox.up(textbox.content.items().len());}
       Action::MoveDown  => {textbox.down(1);}
       Action::MoveUp    => {textbox.up(1);}
       Action::MoveLeft  => {textbox.left(1);}

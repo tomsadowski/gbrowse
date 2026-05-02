@@ -105,7 +105,7 @@ impl App {
     let help     = &format!("Press any key to acknowledge");
     let dialog   = Dialog::ack(prompt, help, style, &self.rect);
     self.focus   = Focus::Dialog(Task::Default, dialog);
-    self.guide = format!("Press any key to acknowledge");
+    self.guide   = format!("Press any key to acknowledge");
     self.new_dlg = true;
   }
   fn ask(&mut self, task: Task, prompt: &str) {
@@ -120,7 +120,7 @@ impl App {
     let style    = self.user.style.info.style.clone();
     let dialog   = Dialog::edit(prompt, style, &self.rect);
     self.focus   = Focus::Dialog(task, dialog);
-    self.guide = format!("Press {} to cancel", self.user.keys.cancel);
+    self.guide   = format!("Press {} to cancel", self.user.keys.cancel);
     self.new_dlg = true;
   }
   fn select(&mut self, task: Task, prompt: &str, options: Vec<String>) {
