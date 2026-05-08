@@ -197,7 +197,10 @@ impl App {
     let mut results = fs::read_dir(format!("{}/{}", c::USER_DATA, path))
       .map_err(|e| e.to_string())?;
     for result in results {
-      let s = result.map_err(|e| e.to_string())?.file_name().into_string()
+      let s = result
+        .map_err(|e| e.to_string())?
+        .file_name()
+        .into_string()
         .map_err(|_| "Could not convert OsString to String".to_string())?;
       vec.push(s);
     }

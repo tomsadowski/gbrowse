@@ -43,15 +43,6 @@ pub trait DataCursor<T> {
     let shift = std::cmp::min(shift, self.data().len().saturating_sub(1));
     self.data()[shift..].iter().take(length.into()) 
   }
-  fn fit(&mut self, new_cursor: usize) {
-    *self.head_mut() = self.max_head().min(new_cursor);
-  }
-  fn start(&mut self) {
-    *self.head_mut() = 0;
-  }
-  fn end(&mut self) {
-    *self.head_mut() = self.max_head();
-  }
   fn peek_backward(&self, delta: usize) -> usize {
     if delta > self.head() {
       delta - self.head()
@@ -62,6 +53,15 @@ pub trait DataCursor<T> {
     if self.head() + delta > max_head {
       self.head() + delta - max_head
     } else {0}
+  }
+  fn fit(&mut self, new_cursor: usize) {
+    *self.head_mut() = self.max_head().min(new_cursor);
+  }
+  fn start(&mut self) {
+    *self.head_mut() = 0;
+  }
+  fn end(&mut self) {
+    *self.head_mut() = self.max_head();
   }
   fn backward(&mut self, mut delta: usize) -> usize {
     if delta > self.head() {
