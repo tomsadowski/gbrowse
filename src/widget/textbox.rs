@@ -40,10 +40,11 @@ impl TextBox {
     Self {
       write_unused_x: true,
       write_unused_y: true,
-      style: Style::default(),
-      write: true,
-      rect:   rect.clone(),
-      cursor: pos, content,
+      style:          Style::default(),
+      write:          true,
+      rect:           rect.clone(),
+      cursor:         pos, 
+      content,
     }
   }
   pub fn with_style(mut self, style: &Style) -> Self {

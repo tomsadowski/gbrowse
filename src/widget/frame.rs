@@ -116,14 +116,15 @@ impl Frame {
       .queue(&self.border_spec.style)?
       .queue(Print(self.border_spec.close))?
       .queue(MoveLeft(2))?
-      .queue(Print(' '))?;
+      .queue(Print(' '))?
+      .queue(&self.banner_style)?;
     x -= 2;
     for c in text.chars().rev().take(self.inner_rect.cropped_x(2).w.into()) {
       writer.queue(MoveLeft(2))?.queue(Print(c))?;
       x -= 1;
     }
     writer
-      .queue(MoveLeft(2))?.queue(Print(' '))?
+      .queue(MoveLeft(2))?.queue(Print(' '))?.queue(&self.border_spec.style)?
       .queue(MoveLeft(2))?.queue(Print(self.border_spec.open))?;
     x -= 2;
     for _ in self.inner_rect.x..x {
