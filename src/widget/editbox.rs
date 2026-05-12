@@ -105,7 +105,7 @@ impl EditBox {
       .queue(SetAttribute(Attribute::Reset))?
       .queue(&self.style)?;
     // render chars
-    for c in self.content.current_view(self.cursor.scroll(), self.rect.w) {
+    for c in self.content.current_view(self.cursor.scroll()).take(self.rect.w.into()) {
       writer.queue(Print(c))?;
       x += 1;
     }

@@ -1,0 +1,33 @@
+# moonmoss
+
+screen_margin = {n = 1, s = 1, e = 24, w = 24}
+text_margin   = {n = 1, s = 1, e = 4, w = 4}
+
+border    = {fg = "506060", bg = "202425", corner = "round", bracket = "tort"}
+covered   = {fg = "202425", bg = "202425"}
+banner    = {fg = "808c8c"}
+general   = {fg = "d8d4b0", bg = "202425"}
+list      = {fg = "b2b09a"}
+info      = {fg = "b2b09a"}
+quote     = {fg = "b2b09a"}
+preformat = {fg = "e0a0a0", wrap = false}
+link      = {fg = "a8c8c4", underline = true}
+header1   = {fg = "d89468", bold = true, underline = true}
+header2   = {fg = "d89468", bold = true}
+header3   = {fg = "d89468"}
+#p.black.g    = "#202425"
+
+#p.dblue.g    = "#252a30"
+#p.dyellow.g  = "#3c3a20"
+#p.dcyan.g    = "#203850"
+
+#p.dgrey.g    = "#506060"
+#p.grey.g     = "#808c8c"
+#p.dmagenta.g = "#a8a4c8"
+
+#p.white.g    = "#b2b09a"
+#p.yellow.g   = "#d8d4b0"
+
+#p.red.g      = "#d89468"
+#p.cyan.g     = "#a8c8c4"
+#p.magenta.g  = "#e0a0a0"

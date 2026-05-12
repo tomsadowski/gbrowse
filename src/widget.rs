@@ -39,9 +39,9 @@ pub trait DataCursor<T> {
   fn current(&self) -> &T {
     &self.data()[self.head()]
   }
-  fn current_view(&self, shift: usize, length: u16) -> std::iter::Take<std::slice::Iter<'_, T>> {
+  fn current_view(&self, shift: usize) -> std::slice::Iter<'_, T> {
     let shift = std::cmp::min(shift, self.data().len().saturating_sub(1));
-    self.data()[shift..].iter().take(length.into()) 
+    self.data()[shift..].iter()
   }
   fn peek_backward(&self, delta: usize) -> usize {
     if delta > self.head() {

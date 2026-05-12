@@ -340,11 +340,11 @@ impl FromStr for BracketValue {
   type Err = String;
   fn from_str(s: &str) -> Result<Self, Self::Err> {
     match s {
-      "tortoise" | "t" | "tort" => Ok(BracketValue::Tortoise),
-      "J" | "j" | "int" | 
-      "i" | "integral"          => Ok(BracketValue::Integral),
-      "square" | "sqr"          => Ok(BracketValue::Square),
-      "E" | "e"                 => Ok(BracketValue::E),
+      "tortoise" | "tort" | "t" => Ok(BracketValue::Tortoise),
+      "integral" | "int"  | "i" | 
+      "j"        | "J"          => Ok(BracketValue::Integral),
+      "square"   | "sqr"        => Ok(BracketValue::Square),
+      "E"        | "e"          => Ok(BracketValue::E),
       s => Err(format!("Bracket field does not contain {}", s)),
     }
   }

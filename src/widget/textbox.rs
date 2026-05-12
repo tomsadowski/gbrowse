@@ -17,7 +17,7 @@ pub struct TextBox {
   pub rect:           Rect,
   pub style:          Style,
   pub content:        StyledTextPlane,
-  pub cursor:            ScreenCursor,
+  pub cursor:         ScreenCursor,
   pub write:          bool,
   pub write_unused_x: bool,
   pub write_unused_y: bool,
@@ -129,8 +129,8 @@ impl TextBox {
     let mut x = self.rect.x;
     let mut y = self.rect.y;
     writer.queue(MoveTo(x, y))?.queue(SetAttribute(Attribute::Reset))?.queue(&style)?;
-    for line in self.content.current_view(self.cursor.y_scroll(), self.rect.h) {
-      for c in line.current_view(self.cursor.x_scroll(), self.rect.w) {
+    for line in self.content.current_view(self.cursor.y_scroll()).take(self.rect.h.into()) {
+      for c in line.current_view(self.cursor.x_scroll()).take(self.rect.w.into()) {
         writer.queue(Print(c))?;
         x += 1;
       }
@@ -149,13 +149,10 @@ impl TextBox {
   pub fn write_all<W: Write>(&self, writer: &mut W) -> io::Result<()> {
     let mut x = self.rect.x;
     let mut y = self.rect.y;
-    writer
-      .queue(MoveTo(x, y))?
-      .queue(SetAttribute(Attribute::Reset))?
-      .queue(&self.style)?;
-    for line in self.content.current_view(self.cursor.y_scroll(), self.rect.h) {
+    writer.queue(MoveTo(x, y))?.queue(SetAttribute(Attribute::Reset))?.queue(&self.style)?;
+    for line in self.content.current_view(self.cursor.y_scroll()).take(self.rect.h.into()) {
       writer.queue(&self.content.source[line.idx].style)?;
-      for c in line.current_view(self.cursor.x_scroll(), self.rect.w) {
+      for c in line.current_view(self.cursor.x_scroll()).take(self.rect.w.into()) {
         writer.queue(Print(c))?;
         x += 1;
       }
