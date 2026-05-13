@@ -154,8 +154,11 @@ impl App {
   pub fn try_join_request(&mut self) -> bool {
     if let Some(request) = &mut self.request {
       if request.handle.is_finished() {
-        let result = request.rx.recv().unwrap()
-          .map(|(r, c)| GemDoc::new(&request.url, r, c)).flatten();
+        let result = request.rx
+          .recv()
+          .unwrap()
+          .map(|(r, c)| GemDoc::new(&request.url, r, c))
+          .flatten();
         match result {
           Err(e)     => self.ack(&e),
           Ok(gemdoc) => {
@@ -186,7 +189,7 @@ impl App {
   }
   pub fn push_style(&mut self) {
     self.frame = self.user.get_frame(&self.screen);
-    self.rect = self.frame.inner_rect;
+    self.rect  = self.frame.inner_rect;
     for tab in self.tabs.tabs.iter_mut() {
       self.user.update_tab_style(&self.rect, tab);
     }
@@ -207,9 +210,9 @@ impl App {
     Ok(vec)
   }
   pub fn update(&mut self, message: &Message) {
-    self.clear = false;
+    self.clear       = false;
     self.tab_changed = false;
-    self.new_dlg = false;
+    self.new_dlg     = false;
     self.tabs.reset_state();
     match message {
       Message::Quit => {
@@ -346,7 +349,9 @@ impl App {
             if !self.urls.iter().any(|url| **url == url_str) {
               self.urls.push(url_str.clone());
               // write to save file
-              match fs::OpenOptions::new().write(true).truncate(true).open(&self.user.save_file) {
+              match fs::OpenOptions::new()
+                .write(true).truncate(true).open(&self.user.save_file) 
+              {
                 Err(e) => {
                   self.ack(&format!("could not create save file: {}", &e)); 
                 }
@@ -413,16 +418,26 @@ impl App {
         code: kc, kind: KeyEventKind::Press, ..
       }) => match &self.focus {
         Focus::Tab => 
-          self.user.keys.get_tab_action(&kc).map(|a| Message::Action(a)),
+          self.user.keys
+            .get_tab_action(&kc)
+            .map(|a| Message::Action(a)),
         Focus::Dialog(task, dialog) => match &dialog.response {
           Response::Ack(_) => 
-            self.user.keys.get_ack_dialog_action(&kc).map(|a| Message::Action(a)),
+            self.user.keys
+              .get_ack_dialog_action(&kc)
+              .map(|a| Message::Action(a)),
           Response::Ask(_) => 
-            self.user.keys.get_ask_dialog_action(&kc).map(|a| Message::Action(a)),
+            self.user.keys
+              .get_ask_dialog_action(&kc)
+              .map(|a| Message::Action(a)),
           Response::Edit(_) => 
-            self.user.keys.get_edit_dialog_action(&kc).map(|a| Message::Action(a)),
+            self.user.keys
+              .get_edit_dialog_action(&kc)
+              .map(|a| Message::Action(a)),
           Response::Select(_) => 
-            self.user.keys.get_select_dialog_action(&kc).map(|a| Message::Action(a)),
+            self.user.keys
+              .get_select_dialog_action(&kc)
+              .map(|a| Message::Action(a)),
         }
       }
       _ => None,
@@ -444,11 +459,7 @@ impl App {
     self.frame.write_footer(&self.guide, &self.user.style.info.style, stdout)?;
     if let Focus::Dialog(_, dialog) = &self.focus {
       if self.new_dlg {
-        if let Some(fg) = self.user.style.covered.fg {
-          self.tabs.write_style(&self.user.style.covered, stdout)?;
-        } else {
-          self.tabs.clear(stdout)?;
-        }
+        self.tabs.clear(stdout)?;
       }
       dialog.prompt.write(stdout)?;
       match &dialog.response {

@@ -30,7 +30,9 @@ impl Request {
 }
 
 pub fn split_whitespace_once(line: &str) -> Option<(&str, &str)> {
-  line.find('\u{0009}').or(line.find(' '))
+  line
+    .find('\u{0009}')
+    .or(line.find(' '))
     .map(|i| (line[..i].trim(), line[i..].trim()))
 }
 pub fn join_if_relative(base: &Url, url_str: &str) -> Result<Url, ParseError> {
@@ -69,7 +71,7 @@ impl GemText {
     Self {tag, txt: String::from(txt)}
   }
   pub fn parse_doc(text_str: &str, source: &Url) -> Vec<Self> {
-    let mut vec = vec![];
+    let mut vec       = vec![];
     let mut preformat = false;
     for line in text_str.lines() {
       if let Some(("```", _)) = line.split_at_checked(3) {

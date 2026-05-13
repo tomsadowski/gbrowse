@@ -71,7 +71,6 @@ pub enum StyleMarginField {
 #[derive(Debug)]
 pub enum StyleModField {
   Border,
-  Covered,
   Margin(StyleMarginField),
   Text(StyleTextField),
 }
@@ -80,7 +79,6 @@ impl FromStr for StyleModField {
   fn from_str(s: &str) -> Result<Self, Self::Err> {
     match s {
       "border"        => Ok(Self::Border),
-      "covered"       => Ok(Self::Covered),
       "text_margin"   => Ok(Self::Margin(StyleMarginField::Text)),
       "screen_margin" => Ok(Self::Margin(StyleMarginField::Screen)),
       "general"       => Ok(Self::Text(StyleTextField::General)),
@@ -147,7 +145,6 @@ pub struct StyleModTable {
   pub text_margin:     MarginSpec,
   pub screen_margin:   MarginSpec,
   pub border:          BorderSpec,
-  pub covered:         Style,
   pub general:         TextTable,
   pub banner:          TextTable,
   pub info:            TextTable,
@@ -166,9 +163,6 @@ impl UserTable<StyleModField> for StyleModTable {
     match (field, value) {
       (StyleModField::Border, Value::Table(v)) => {
         self.border = BorderSpec::default().read_table(v)?;
-      }
-      (StyleModField::Covered, Value::Table(v)) => {
-        self.covered = Style::default().read_table(v)?;
       }
       (StyleModField::Text(f), Value::Table(v)) => {
         let v = TextTable::default().read_table(v)?;

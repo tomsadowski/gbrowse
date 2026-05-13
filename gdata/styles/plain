@@ -4,7 +4,6 @@ screen_margin = {n = 1, s = 1, e = 8, w = 8}
 text_margin   = {n = 1, s = 1, e = 4, w = 4}
 
 border    = {corner = "round", bracket = "tort"}
-covered   = {}
 banner    = {}
 general   = {}
 list      = {}

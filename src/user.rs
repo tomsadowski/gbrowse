@@ -50,7 +50,8 @@ impl FromStr for UserField {
       "timeout"  => Ok(Self::Timeout),
       "style"    => Ok(Self::Style),
       "keys"     => Ok(Self::Keys),
-      "gsave" | "save_file" => Ok(Self::SaveFile),
+      "gsave" | "save_file" 
+                 => Ok(Self::SaveFile),
       s          => Err(format!("No field {} in User table", s)),
     }
   }
@@ -163,14 +164,15 @@ impl User {
         self.style.border.clone(),
         self.style.screen_margin.clone(),
         self.style.text_margin.clone()
-      ).with_banner_style(&self.style.banner.style)
+      )
+      .with_banner_style(&self.style.banner.style)
       .with_margin_style(&self.style.general.style)
   }
   pub fn update_tab_style(&self, rect: &Rect, tab: &mut Tab) {  
     if let Some(gem) = &tab.gemdoc {
       tab.content.restyle(
-        gem.doc.iter().map(|gem| self.gem_to_styled(gem)).collect(),
-        rect,
+          gem.doc.iter().map(|gem| self.gem_to_styled(gem)).collect(),
+          rect,
         )
     }
     tab.content.style = self.style.general.style.clone();
@@ -179,7 +181,8 @@ impl User {
     TextBox::new(
         gem.doc.iter().map(|gem| self.gem_to_styled(gem)).collect(),
         rect,
-      ).with_style(&self.style.general.style)
+      )
+      .with_style(&self.style.general.style)
   }
   pub fn get_info_styledtext(&self, msg: &str) -> StyledText {
     StyledText::from(msg)

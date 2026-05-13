@@ -28,9 +28,8 @@ impl Dialog {
     let ptext = StyledText::from(prompt).with_style(&style);
     let pbox  = TextBox::new(vec![ptext], &rect.cropped_south(2)).write_unused(false);
     let rtext = input.iter().map(|s| StyledText::from(s.as_str()).with_style(&style));
-    let rbox  = 
-      TextBox::new(rtext.collect(), &rect.cropped_north(pbox.used_rect().h))
-        .write_unused_x(true);
+    let rbox  = TextBox::new(rtext.collect(), &rect.cropped_north(pbox.used_rect().h))
+        .write_unused(false);
     Dialog {
       prompt:   pbox,
       response: Response::Select(rbox),

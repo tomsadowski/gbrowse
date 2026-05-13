@@ -219,7 +219,7 @@ impl UserTable<Action> for KeysTable {
           "home"           => Ok(KeyCode::Home),
           s => 
             s.chars().next().map(|c| KeyCode::Char(c))
-            .ok_or("could not parse keycode from string".into()),
+              .ok_or("could not parse keycode from string".into()),
         }
       } else {
         Err("could not parse keycode from value".into())

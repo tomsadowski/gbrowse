@@ -50,7 +50,8 @@ impl TabList {
   // maybe return bool
   pub fn add(&mut self, url_str: &str) {
     // search for tab with same url_str
-    let search = self.tabs.iter_mut().enumerate().find(|(_, tab)| tab.url_str == url_str);
+    let search = self.tabs.iter_mut().enumerate()
+      .find(|(_, tab)| tab.url_str == url_str);
     // move head to location of tab with url_str
     if let Some((idx, _)) = search {
       self.head = idx;
@@ -103,7 +104,7 @@ impl DerefMut for Tab {
 impl Tab {
   pub fn init(rect: &Rect, url_str: &str) -> Self {
     let mut content = TextBox::default();
-    content.rect = rect.clone();
+    content.rect    = rect.clone();
     Self {
       content, 
       gemdoc:  None,

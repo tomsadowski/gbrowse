@@ -70,17 +70,18 @@ impl Frame {
     let (cx, cy) = self.border_rect.c();
     let (dx, dy) = self.border_rect.d();
     writer
-      .queue(SetAttribute(Attribute::Reset))?.queue(&self.border_spec.style)?
+      .queue(SetAttribute(Attribute::Reset))?
+      .queue(&self.border_spec.style)?
       .queue(MoveTo(ax, ay))?.queue(Print(self.border_spec.a))?
       .queue(MoveTo(bx, by))?.queue(Print(self.border_spec.b))?
       .queue(MoveTo(cx, cy))?.queue(Print(self.border_spec.c))?
       .queue(MoveTo(dx, dy))?.queue(Print(self.border_spec.d))?;
-    for x in self.border_rect.cropped_x_range(1) {
+    for x in self.border_rect.cropped_x(1).x_range() {
       writer
         .queue(MoveTo(x, ay))?.queue(Print(c::X_LINE))?
         .queue(MoveTo(x, cy))?.queue(Print(c::X_LINE))?;
     }
-    for y in self.border_rect.cropped_y_range(1) {
+    for y in self.border_rect.cropped_y(1).y_range() {
       writer
         .queue(MoveTo(ax, y))?.queue(Print(c::Y_LINE))?
         .queue(MoveTo(bx, y))?.queue(Print(c::Y_LINE))?;
@@ -124,8 +125,11 @@ impl Frame {
       x -= 1;
     }
     writer
-      .queue(MoveLeft(2))?.queue(Print(' '))?.queue(&self.border_spec.style)?
-      .queue(MoveLeft(2))?.queue(Print(self.border_spec.open))?;
+      .queue(MoveLeft(2))?
+      .queue(Print(' '))?
+      .queue(&self.border_spec.style)?
+      .queue(MoveLeft(2))?
+      .queue(Print(self.border_spec.open))?;
     x -= 2;
     for _ in self.inner_rect.x..x {
       writer.queue(MoveLeft(2))?.queue(Print(c::X_LINE))?;

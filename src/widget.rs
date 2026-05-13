@@ -39,7 +39,7 @@ pub trait DataCursor<T> {
   fn current(&self) -> &T {
     &self.data()[self.head()]
   }
-  fn current_view(&self, shift: usize) -> std::slice::Iter<'_, T> {
+  fn iter_from(&self, shift: usize) -> std::slice::Iter<'_, T> {
     let shift = std::cmp::min(shift, self.data().len().saturating_sub(1));
     self.data()[shift..].iter()
   }

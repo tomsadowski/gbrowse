@@ -117,7 +117,9 @@ impl TextBox {
     } else {false}
   }
   pub fn clear<W: Write>(&self, writer: &mut W) -> io::Result<()> {
-    writer.queue(SetAttribute(Attribute::Reset))?.queue(&self.style)?;
+    writer
+      .queue(SetAttribute(Attribute::Reset))?
+      .queue(&self.style)?;
     for y in self.rect.y_range() {
       for x in self.rect.x_range() {
         writer.queue(MoveTo(x, y))?.queue(Print(' '))?;
@@ -126,39 +128,29 @@ impl TextBox {
     writer.queue(SetAttribute(Attribute::Reset))?;
     Ok(())
   }
-  pub fn write_style<W: Write>(&self, style: &Style, writer: &mut W) -> io::Result<()> {
-    let mut x = self.rect.x;
-    let mut y = self.rect.y;
-    writer.queue(MoveTo(x, y))?.queue(SetAttribute(Attribute::Reset))?.queue(&style)?;
-    for line in self.content.current_view(self.cursor.y_scroll()).take(self.rect.h.into()) {
-      for c in line.current_view(self.cursor.x_scroll()).take(self.rect.w.into()) {
-        writer.queue(Print(c))?;
-        x += 1;
-      }
-      if self.write_unused_x {
-        for _ in x..self.rect.x_end() {
-          writer.queue(Print(' '))?;
-        }
-      }
-      x = self.rect.x;
-      y += 1;
-      writer.queue(MoveTo(x, y))?;
-    }
-    writer.queue(SetAttribute(Attribute::Reset))?;
-    Ok(())
-  }
   pub fn write_all<W: Write>(&self, writer: &mut W) -> io::Result<()> {
     let mut x = self.rect.x;
     let mut y = self.rect.y;
-    writer.queue(MoveTo(x, y))?.queue(SetAttribute(Attribute::Reset))?.queue(&self.style)?;
-    for line in self.content.current_view(self.cursor.y_scroll()).take(self.rect.h.into()) {
+    writer
+      .queue(MoveTo(x, y))?
+      .queue(SetAttribute(Attribute::Reset))?
+      .queue(&self.style)?;
+    for line in self.content
+      .iter_from(self.cursor.y_scroll())
+      .take(self.rect.h.into()) 
+    {
       writer.queue(&self.content.source[line.idx].style)?;
-      for c in line.current_view(self.cursor.x_scroll()).take(self.rect.w.into()) {
+      for c in line
+        .iter_from(self.cursor.x_scroll())
+        .take(self.rect.w.into()) 
+      {
         writer.queue(Print(c))?;
         x += 1;
       }
       if self.write_unused_x {
-        writer.queue(SetAttribute(Attribute::Reset))?.queue(&self.style)?;
+        writer
+          .queue(SetAttribute(Attribute::Reset))?
+          .queue(&self.style)?;
         for _ in x..self.rect.x_end() {
           writer.queue(Print(' '))?;
         }
@@ -168,7 +160,9 @@ impl TextBox {
       writer.queue(MoveTo(x, y))?;
     }
     if self.write_unused_y {
-      writer.queue(SetAttribute(Attribute::Reset))?.queue(&self.style)?;
+      writer
+        .queue(SetAttribute(Attribute::Reset))?
+        .queue(&self.style)?;
       for _ in y..self.rect.y_end() {
         for _ in self.rect.x_range() {
           writer.queue(Print(' '))?;

@@ -175,11 +175,11 @@ impl StyledText {
   }
   // get indexed owned chars
   pub fn print_vec(vec: &Vec<Self>, width: usize) -> Vec<(usize, Vec<char>)> {
-    vec.iter().enumerate()
-      .flat_map(|(idx, styled)| 
-        styled.print(width).into_iter()
-          .map(move |text| (idx, text))
-      ).collect()
+    vec.iter().enumerate().flat_map(
+      |(idx, styled)| 
+        styled.print(width).into_iter().map(move |text| (idx, text))
+      )
+      .collect()
   }
 }
 #[derive(Clone, Debug, Default)]
@@ -240,7 +240,8 @@ impl DataCursor<ShiftedTextLine> for StyledTextPlane {
 }
 impl StyledTextPlane {
   pub fn new(source: Vec<StyledText>, width: u16) -> Self {
-    let text = StyledText::print_vec(&source, usize::from(width)).into_iter()
+    let text = StyledText::print_vec(&source, usize::from(width))
+      .into_iter()
       .map(|(idx, text)| ShiftedTextLine::new(idx, TextLine::from(text)));
     Self {
       source,
@@ -272,16 +273,20 @@ impl StyledTextPlane {
     self.right(idx);
   }
   pub fn restyle(&mut self, source: Vec<StyledText>, width: u16) {
-    let idx   = self.get_idx();
     self.source = source;
-    self.text = StyledText::print_vec(&self.source, usize::from(width)).into_iter()
-      .map(|(idx, text)| ShiftedTextLine::new(idx, TextLine::from(text))).collect();
+    let idx   = self.get_idx();
+    self.text = StyledText::print_vec(&self.source, usize::from(width))
+      .into_iter()
+      .map(|(idx, text)| ShiftedTextLine::new(idx, TextLine::from(text)))
+      .collect();
     self.set_idx(idx);
   }
   pub fn resize(&mut self, width: u16) {
     let idx   = self.get_idx();
-    self.text = StyledText::print_vec(&self.source, usize::from(width)).into_iter()
-      .map(|(idx, text)| ShiftedTextLine::new(idx, TextLine::from(text))).collect();
+    self.text = StyledText::print_vec(&self.source, usize::from(width))
+      .into_iter()
+      .map(|(idx, text)| ShiftedTextLine::new(idx, TextLine::from(text)))
+      .collect();
     self.set_idx(idx);
   }
   pub fn up(&mut self, delta: usize) -> bool {
