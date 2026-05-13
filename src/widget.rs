@@ -22,6 +22,7 @@ use crossterm::{
   style::{SetAttribute, Attribute},
   cursor::{self, MoveTo},
 };
+use unicode_width::UnicodeWidthChar;
 use std::{
   io::{self, Write},
 };

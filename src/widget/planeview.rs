@@ -3,6 +3,7 @@
 use crate::{
   widget::{Rect, DataCursor},
 };
+use unicode_width::UnicodeWidthChar;
 
 #[derive(Clone, Debug, Default)]
 pub struct ViewCursor {

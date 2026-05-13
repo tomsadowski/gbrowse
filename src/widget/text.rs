@@ -10,6 +10,7 @@ use crossterm::{
     SetForegroundColor, SetBackgroundColor, Color, 
   },
 };
+use unicode_width::UnicodeWidthChar;
 use std::{
   fmt,
   io::{self, Write},
@@ -137,27 +138,33 @@ impl StyledText {
     self
   }
   pub fn wrap_text(text: Vec<char>, width: usize) -> Vec<Vec<char>> {
-    let mut idx = usize::MIN;
     let mut vec: Vec<Vec<char>> = vec![];
-    while idx < text.len() {
+    let mut start = usize::MIN;
+    while start < text.len() {
+      let text          = &text[start..];
+      let mut w         = 0;
+      let mut max_width = 0;
+      while w < width && max_width < text.len() {
+        w         += &text[max_width].width().unwrap_or(0);
+        max_width += 1;
+      }
       let line: Vec<char> = {
-        let text = &text[idx..];
-        if text.len() <= width {
+        if text.len() <= max_width {
           text.to_vec()
         } else {
           // search for first whitespace from right
-          let s: Vec<&char> = text[..width]
+          let s: Vec<&char> = text[..max_width]
             .iter().rev().skip_while(|c| !c.is_whitespace()).collect();
           // no space found, return whole slice
           if s.len() == 0 {
-            text[..width].iter().copied().collect()
+            text[..max_width].iter().copied().collect()
           // space found, return up to that space
           } else {
             s.into_iter().rev().copied().collect()
           }
         }
       };
-      idx += line.len();
+      start += line.len();
       vec.push(line);
     }
     vec
