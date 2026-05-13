@@ -1,6 +1,6 @@
 # moonmoss
 
-screen_margin = {n = 1, s = 1, e = 24, w = 24}
+screen_margin = {n = 1, s = 1, e = 4, w = 4}
 text_margin   = {n = 1, s = 1, e = 4, w = 4}
 
 border    = {fg = "505858", bg = "202425", corner = "round", bracket = "tort"}
