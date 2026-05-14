@@ -1,7 +1,7 @@
 // src/tab.rs
 
 use crate::{
-  widget::{Rect, DataCursor, DataCursorMut, TextBox},
+  widget::{Rect, UnitCursor, UnitCursorMut, TextBox},
   protocol::{GemDoc},
 };
 use std::{
@@ -13,8 +13,8 @@ pub struct TabList {
   pub head: usize,
   pub tabs: Vec<Tab>,
 } 
-impl DataCursor<Tab> for TabList {
-  fn data(&self) -> &Vec<Tab> {
+impl UnitCursor<Tab> for TabList {
+  fn units(&self) -> &Vec<Tab> {
     &self.tabs
   }
   fn head_mut(&mut self) -> &mut usize {
@@ -27,8 +27,8 @@ impl DataCursor<Tab> for TabList {
     self.tabs.len().saturating_sub(1)
   }
 }
-impl DataCursorMut<Tab> for TabList {
-  fn data_mut(&mut self) -> &mut Vec<Tab> {
+impl UnitCursorMut<Tab> for TabList {
+  fn units_mut(&mut self) -> &mut Vec<Tab> {
     &mut self.tabs
   }
 }

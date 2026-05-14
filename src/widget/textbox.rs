@@ -1,7 +1,7 @@
 // src/widget/textbox.rs
 
 use crate::{
-  widget::{Rect, DataCursor, ScreenCursor, StyledText, StyledTextPlane, Style, PlaneWidget},
+  widget::{Rect, UnitCursor, ScreenCursor, StyledText, StyledTextPlane, Style, PlaneWidget},
 };
 use crossterm::{
   QueueableCommand, 
@@ -71,7 +71,7 @@ impl TextBox {
     self.content.get_source()
   }
   pub fn used_rect(&self) -> Rect {
-    if let Ok(h) = u16::try_from(self.content.data().len()) {
+    if let Ok(h) = u16::try_from(self.content.units().len()) {
       self.rect.clone().cap_height(h)
     } else {
       self.rect.clone()

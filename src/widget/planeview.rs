@@ -1,14 +1,14 @@
-// src/screencursor.rs
+// src/planeview.rs
 
 use crate::{
-  widget::{Rect, DataCursor},
+  widget::{Rect, UnitCursor},
 };
 use unicode_width::UnicodeWidthChar;
 
 #[derive(Clone, Debug, Default)]
 pub struct ViewCursor {
-  pub line_head:  usize,
-  pub line_start: usize,
+  pub unit_head:  usize,
+  pub unit_start: usize,
   pub view_head:  u16,
   pub view_start: u16,
   pub view_size:  u16,
@@ -16,136 +16,154 @@ pub struct ViewCursor {
 impl ViewCursor {
   pub fn new(view_start: u16, view_size: u16) -> Self {
     Self {
-      line_start: 0, 
-      line_head:  0, 
+      unit_start: 0, 
+      unit_head:  0, 
       view_head:  view_start, 
       view_start, 
       view_size
     }
   }
   pub fn scroll(&self) -> usize {
-    self.line_start
+    self.unit_start
   }
   pub fn cursor(&self) -> u16 {
     self.view_head
   }
   // preserve cursor position if it still fits in the new bounds
   pub fn resize_y<Y, X>(&mut self, 
-                      datacursor: &Y, 
+                      unit_cursor: &Y, 
                       new_view_start: u16, 
                       new_view_size: u16
                       ) 
-  where Y: DataCursor<X>,
+  where Y: UnitCursor<X>,
   {
-    let new_line_head   = datacursor.head();
+    let new_line_head   = unit_cursor.head();
     let cursor_position = self.view_head - self.view_start;
     self.view_start     = new_view_start;
     self.view_size      = new_view_size;
-    self.line_head      = new_line_head;
+    self.unit_head      = new_line_head;
 
     // go to beginning of line
     if new_line_head < usize::from(new_view_size) {
-      self.line_start = 0;
-      self.view_head  = self.view_start + u16::try_from(self.line_head).unwrap();
+      self.unit_start = 0;
+      self.view_head  = self.view_start + u16::try_from(self.unit_head).unwrap();
 
     // cursor_position must be lowered to fit within new bounds
     } else if cursor_position > new_view_size - 1 {
       self.view_head  = self.view_start + self.view_size - 1;
-      self.line_start = self.line_head - usize::from(self.view_size - 1);
+      self.unit_start = self.unit_head - usize::from(self.view_size - 1);
 
     // cursor_position can be preserved
     } else {
       self.view_head  = self.view_start + cursor_position;
-      self.line_start = self.line_head.saturating_sub(usize::from(cursor_position));
+      self.unit_start = self.unit_head.saturating_sub(usize::from(cursor_position));
     }
   }
   // preserve cursor position if it still fits in the new bounds
   pub fn resize_x<X, Z>(&mut self, 
-                      datacursor: &X, 
-                      new_view_start: u16, 
-                      new_view_size: u16
-                      ) 
-  where X: DataCursor<Z>, Z: UnicodeWidthChar,
+                        unit_cursor: &X, 
+                        new_view_start: u16, 
+                        new_view_size: u16
+                        ) 
+  where X: UnitCursor<Z>, Z: UnicodeWidthChar,
   {
-    let new_line_head   = datacursor.head();
+    let new_line_head   = unit_cursor.head();
     let cursor_position = self.view_head - self.view_start;
     self.view_start     = new_view_start;
     self.view_size      = new_view_size;
-    self.line_head      = new_line_head;
+    self.unit_head      = new_line_head;
 
     // go to beginning of line
     if new_line_head < usize::from(new_view_size) {
-      self.line_start = 0;
-      self.view_head  = self.view_start + u16::try_from(self.line_head).unwrap();
+      self.unit_start = 0;
+      self.view_head  = self.view_start + u16::try_from(self.unit_head).unwrap();
 
     // cursor_position must be lowered to fit within new bounds
     } else if cursor_position > new_view_size - 1 {
       self.view_head  = self.view_start + self.view_size - 1;
-      self.line_start = self.line_head - usize::from(self.view_size - 1);
+      self.unit_start = self.unit_head - usize::from(self.view_size - 1);
 
     // cursor_position can be preserved
     } else {
       self.view_head  = self.view_start + cursor_position;
-      self.line_start = self.line_head.saturating_sub(usize::from(cursor_position));
+      self.unit_start = self.unit_head.saturating_sub(usize::from(cursor_position));
     }
   }
-  pub fn update_y<Y, X>(&mut self, datacursor: &Y) -> bool 
-  where Y: DataCursor<X>
+  pub fn yupdate<Y, X>(&mut self, unit_cursor: &Y) -> bool 
+  where Y: UnitCursor<X>
   {
-    let mut scroll = false;
-    let new_line_head = datacursor.head();
+    let mut scroll    = false;
+    let new_line_head = unit_cursor.head();
     // forward
-    if new_line_head > self.line_head {
-      let diff     = new_line_head - self.line_head;
+    if new_line_head > self.unit_head {
+      let diff     = new_line_head - self.unit_head;
       let proposed = usize::from(self.view_head) + diff;
       let max      = usize::from(self.view_start + self.view_size) - 1;
       // scroll forward
       if proposed >= max {
-        self.line_start = self.line_start + proposed - max;
-        scroll = true;
+        self.unit_start = self.unit_start + proposed - max;
+        scroll          = true;
       }
     // backward
-    } else if new_line_head < self.line_head {
-      let diff     = self.line_head - new_line_head;
+    } else if new_line_head < self.unit_head {
+      let diff     = self.unit_head - new_line_head;
       let max_diff = usize::from(self.view_head.saturating_sub(self.view_start));
       // scroll backward
       if diff > max_diff {
-        self.line_start = self.line_start.saturating_sub(diff - max_diff);
-        scroll = true;
+        self.unit_start = self.unit_start.saturating_sub(diff - max_diff);
+        scroll          = true;
       }
     }
-    self.view_head = self.view_start + u16::try_from(new_line_head - self.line_start).unwrap();
-    self.line_head = new_line_head;
+    self.view_head = self.view_start 
+      + u16::try_from(new_line_head - self.unit_start).unwrap();
+    self.unit_head = new_line_head;
     scroll
   }
-  pub fn update_x<X, Z>(&mut self, datacursor: &X) -> bool 
-  where X: DataCursor<Z>, Z: UnicodeWidthChar,
+  pub fn xupdate<X, Z>(&mut self, cursor: &X) -> bool 
+  where X: UnitCursor<Z>, Z: UnicodeWidthChar + Copy,
   {
-    let mut scroll = false;
-    let new_line_head = datacursor.head();
-    // forward
-    if new_line_head > self.line_head {
-      let diff     = new_line_head - self.line_head;
-      let proposed = usize::from(self.view_head) + diff;
-      let max      = usize::from(self.view_start + self.view_size) - 1;
-      // scroll forward
-      if proposed >= max {
-        self.line_start = self.line_start + proposed - max;
-        scroll = true;
+    eprintln!("unit_head: {}", self.unit_head);
+    // move right
+    if self.unit_head < cursor.head() {
+      let view_delta = cursor.units()[self.unit_head..cursor.head()].iter()
+        .fold(0, |acc, u| acc + u.width().unwrap_or(0));
+      let unit_delta     = cursor.head() - self.unit_head;
+      let max_view_delta = usize::from((self.view_start + self.view_size)
+        .saturating_sub(self.view_head));
+      // scroll right
+      if view_delta >= max_view_delta {
+        self.view_head  += u16::try_from(view_delta - max_view_delta).unwrap();
+        self.unit_start += unit_delta.saturating_sub(max_view_delta);
+        self.unit_head = cursor.head();
+        true
+      // no scroll
+      } else {
+        self.view_head += u16::try_from(view_delta).unwrap();
+        self.unit_head = cursor.head();
+        false
       }
-    // backward
-    } else if new_line_head < self.line_head {
-      let diff     = self.line_head - new_line_head;
-      let max_diff = usize::from(self.view_head.saturating_sub(self.view_start));
-      // scroll backward
-      if diff > max_diff {
-        self.line_start = self.line_start.saturating_sub(diff - max_diff);
-        scroll = true;
+    // move left
+    } else if self.unit_head > cursor.head() {
+      self.unit_head = self.unit_head.min(cursor.units().len());
+      let view_delta = cursor.units()[cursor.head()..self.unit_head].iter()
+        .fold(0, |acc, u| acc + u.width().unwrap_or(0));
+      let max_delta = usize::from(self.view_head.saturating_sub(self.view_start));
+      // scroll left
+      if view_delta > max_delta {
+        self.unit_start = self.unit_start .saturating_sub( view_delta - max_delta );
+        self.view_head = self.view_start + u16::try_from(cursor.head() - self.unit_start).unwrap();
+        self.unit_head = cursor.head();
+        true
+      // no scroll
+      } else {
+        self.view_head = self.view_start + u16::try_from(cursor.head() - self.unit_start).unwrap();
+        self.unit_head = cursor.head();
+        false
       }
+    // no move
+    } else {
+      false
     }
-    self.view_head = self.view_start + u16::try_from(new_line_head - self.line_start).unwrap();
-    self.line_head = new_line_head;
-    scroll
   }
 }
 
@@ -168,22 +186,22 @@ impl ScreenCursor {
     self.y.view_head
   }
   pub fn x_scroll(&self) -> usize {
-    self.x.line_start
+    self.x.unit_start
   }
   pub fn y_scroll(&self) -> usize {
-    self.y.line_start
+    self.y.unit_start
   }
   pub fn resize<X, Y, Z>(&mut self, plane: &Y, rect: &Rect) 
-  where Y: DataCursor<X>, X: DataCursor<Z>, Z: UnicodeWidthChar,
+  where Y: UnitCursor<X>, X: UnitCursor<Z>, Z: UnicodeWidthChar,
   {
     self.y.resize_y(plane, rect.y, rect.h);
     self.x.resize_x(plane.current(), rect.x, rect.w);
   }
   pub fn update<X, Y, Z>(&mut self, plane: &Y) -> bool 
-  where Y: DataCursor<X>, X: DataCursor<Z>, Z: UnicodeWidthChar,
+  where Y: UnitCursor<X>, X: UnitCursor<Z>, Z: UnicodeWidthChar + Copy,
   {
-    let y = self.y.update_y(plane);
-    let x = self.x.update_x(plane.current());
+    let y = self.y.yupdate(plane);
+    let x = self.x.xupdate(plane.current());
     x || y
   }
 }

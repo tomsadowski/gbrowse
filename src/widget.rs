@@ -31,18 +31,27 @@ pub fn cursor_hide<W: Write>(writer: &mut W) -> io::Result<()> {
   writer.queue(cursor::Hide)?;
   Ok(())
 }
-pub trait DataCursor<T> {
-  fn data(&self) -> &Vec<T>;
-  fn head(&self) -> usize;
-  fn head_mut(&mut self) -> &mut usize;
-  fn max_head(&self) -> usize;
+pub trait UnitCursor<U> {
+  fn units(&self)           -> &Vec<U>;
+  fn head(&self)            -> usize;
+  fn head_mut(&mut self)    -> &mut usize;
+  fn max_head(&self)        -> usize;
   
-  fn current(&self) -> &T {
-    &self.data()[self.head()]
+  fn current(&self) -> &U {
+    &self.units()[self.head()]
   }
-  fn iter_from(&self, shift: usize) -> std::slice::Iter<'_, T> {
-    let shift = std::cmp::min(shift, self.data().len().saturating_sub(1));
-    self.data()[shift..].iter()
+  fn fit(&mut self, new_cursor: usize) {
+    *self.head_mut() = self.max_head().min(new_cursor);
+  }
+  fn start(&mut self) {
+    *self.head_mut() = 0;
+  }
+  fn end(&mut self) {
+    *self.head_mut() = self.max_head();
+  }
+  fn iter_from(&self, shift: usize) -> std::slice::Iter<'_, U> {
+    let shift = std::cmp::min(shift, self.units().len().saturating_sub(1));
+    self.units()[shift..].iter()
   }
   fn peek_backward(&self, delta: usize) -> usize {
     if delta > self.head() {
@@ -54,15 +63,6 @@ pub trait DataCursor<T> {
     if self.head() + delta > max_head {
       self.head() + delta - max_head
     } else {0}
-  }
-  fn fit(&mut self, new_cursor: usize) {
-    *self.head_mut() = self.max_head().min(new_cursor);
-  }
-  fn start(&mut self) {
-    *self.head_mut() = 0;
-  }
-  fn end(&mut self) {
-    *self.head_mut() = self.max_head();
   }
   fn backward(&mut self, mut delta: usize) -> usize {
     if delta > self.head() {
@@ -99,13 +99,13 @@ pub trait DataCursor<T> {
     }
   }
 }
-pub trait DataCursorMut<T>: DataCursor<T> {
-  fn data_mut(&mut self) -> &mut Vec<T>;
+pub trait UnitCursorMut<U>: UnitCursor<U> {
+  fn units_mut(&mut self) -> &mut Vec<U>;
 
   fn delete(&mut self) -> bool {
     let head = self.head();
-    if head < self.data().len() {
-      self.data_mut().remove(head);
+    if head < self.units().len() {
+      self.units_mut().remove(head);
       true
     } else {false}
   }
@@ -113,18 +113,18 @@ pub trait DataCursorMut<T>: DataCursor<T> {
     if self.peek_backward(1) == 0 {
       self.backward(1);
       let head = self.head();
-      self.data_mut().remove(head);
+      self.units_mut().remove(head);
       true
     } else {false}
   }
-  fn insert(&mut self, c: T) -> bool {
+  fn insert(&mut self, c: U) -> bool {
     let head = self.head();
-    if head + 1 == self.data().len() || self.data().len() == 0 {
-      self.data_mut().push(c);
+    if head + 1 == self.units().len() || self.units().len() == 0 {
+      self.units_mut().push(c);
       self.forward(1);
       true
     } else {
-      self.data_mut().insert(head, c);
+      self.units_mut().insert(head, c);
       self.forward(1);
       true
     }

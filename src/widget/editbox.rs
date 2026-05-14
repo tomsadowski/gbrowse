@@ -1,7 +1,7 @@
 // src/editbox.rs
 
 use crate::{
-  widget::{Rect, ViewCursor, Style, EditLine, DataCursor, DataCursorMut, PlaneWidget},
+  widget::{Rect, ViewCursor, Style, EditLine, UnitCursor, UnitCursorMut, PlaneWidget},
 };
 use crossterm::{
   QueueableCommand,
@@ -64,20 +64,20 @@ impl EditBox {
   }
   pub fn left(&mut self, delta: usize) -> bool {
     if self.content.backward(delta) == 0 {
-      self.write = self.cursor.update_x(&self.content);
+      self.write = self.cursor.xupdate(&self.content);
       true
     } else {false}
   }
   pub fn right(&mut self, delta: usize) -> bool {
     if self.content.forward(delta) == 0 {
-      self.write = self.cursor.update_x(&self.content);
+      self.write = self.cursor.xupdate(&self.content);
       true
     } else {false}
   }
   pub fn delete(&mut self) -> bool {
     if self.content.delete() {
       self.write_unused_x = true;
-      self.cursor.update_x(&self.content);
+      self.cursor.xupdate(&self.content);
       self.write = true;
       true
     } else {false}
@@ -85,14 +85,14 @@ impl EditBox {
   pub fn backspace(&mut self) -> bool {
     if self.content.backspace() {
       self.write_unused_x = true;
-      self.cursor.update_x(&self.content);
+      self.cursor.xupdate(&self.content);
       self.write = true;
       true
     } else {false}
   }
   pub fn insert(&mut self, c: char) -> bool {
     if self.content.insert(c) {
-      self.cursor.update_x(&self.content);
+      self.cursor.xupdate(&self.content);
       self.write = true;
       true
     } else {false}
