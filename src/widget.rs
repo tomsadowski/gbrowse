@@ -145,22 +145,20 @@ pub trait UnitCursorMut: UnitCursor {
   }
 }
 pub trait SizedCursor {
-  fn full_size(&self) -> usize;
   fn head_size(&self) -> usize;
-  fn range_size(&self) -> usize;
+  fn full_size(&self) -> usize;
+  fn range_size(&self, a: usize, b: usize) -> usize;
 }
-
-//impl<U, C> SizedCursor for U 
-//where U: UnitCursor<C>, 
-//      C: UnicodeWidthChar 
-//{
-//  fn full_size(&self) -> usize {
-//    0
-//  }
-//  fn head_size(&self) -> usize {
-//    0
-//  }
-//  fn range_size(&self) -> usize {
-//    0
-//  }
-//}
+impl<U, C> SizedCursor for U 
+where U: UnitCursor<Unit = C>, C: UnicodeWidthChar + Copy
+{
+  fn head_size(&self) -> usize {
+    self.current().width().unwrap_or(0)
+  }
+  fn full_size(&self) -> usize {
+    self.units().iter().fold(0, |acc, u| acc + u.width().unwrap_or(0))
+  }
+  fn range_size(&self, a: usize, b: usize) -> usize {
+    self.units()[a..b].iter().fold(0, |acc, u| acc + u.width().unwrap_or(0))
+  }
+}
