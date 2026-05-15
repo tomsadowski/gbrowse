@@ -60,12 +60,12 @@ impl ViewCursor {
     }
   }
   // preserve cursor position if it still fits in the new bounds
-  pub fn resize_x<X, Z>(&mut self, 
+  pub fn resize_x<X>(&mut self, 
                         unit_cursor: &X, 
                         new_view_start: u16, 
                         new_view_size: u16
                         ) 
-  where X: UnitCursor<Unit = Z>, Z: UnicodeWidthChar,
+  where X: UnitCursor<Unit = char>
   {
     let new_line_head   = unit_cursor.head();
     let cursor_position = self.view_head - self.view_start;
@@ -89,8 +89,8 @@ impl ViewCursor {
       self.unit_start = self.unit_head.saturating_sub(usize::from(cursor_position));
     }
   }
-  pub fn yupdate<Y, X>(&mut self, unit_cursor: &Y) -> bool 
-  where Y: UnitCursor<Unit = X>
+  pub fn yupdate<Y>(&mut self, unit_cursor: &Y) -> bool 
+  where Y: UnitCursor
   {
     let mut scroll    = false;
     let new_line_head = unit_cursor.head();
@@ -119,8 +119,8 @@ impl ViewCursor {
     self.unit_head = new_line_head;
     scroll
   }
-  pub fn xupdate<X, Z>(&mut self, cursor: &X) -> bool 
-  where X: UnitCursor<Unit = Z>, Z: UnicodeWidthChar + Copy,
+  pub fn xupdate<X>(&mut self, cursor: &X) -> bool 
+  where X: UnitCursor<Unit = char>
   {
     eprintln!("unit_head: {}", self.unit_head);
     // move right
@@ -199,14 +199,14 @@ impl ScreenCursor {
   pub fn y_scroll(&self) -> usize {
     self.y.unit_start
   }
-  pub fn resize<X, Y, Z>(&mut self, plane: &Y, rect: &Rect) 
-  where Y: UnitCursor<Unit = X> , X: UnitCursor<Unit = Z>, Z: UnicodeWidthChar,
+  pub fn resize<X, Y>(&mut self, plane: &Y, rect: &Rect) 
+  where Y: UnitCursor<Unit = X> , X: UnitCursor<Unit = char>
   {
     self.y.resize_y(plane, rect.y, rect.h);
     self.x.resize_x(plane.current(), rect.x, rect.w);
   }
-  pub fn update<X, Y, Z>(&mut self, plane: &Y) -> bool 
-  where Y: UnitCursor<Unit = X> , X: UnitCursor<Unit = Z>, Z: UnicodeWidthChar + Copy,
+  pub fn update<X, Y>(&mut self, plane: &Y) -> bool 
+  where Y: UnitCursor<Unit = X> , X: UnitCursor<Unit = char>
   {
     let y = self.y.yupdate(plane);
     let x = self.x.xupdate(plane.current());

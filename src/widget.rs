@@ -149,8 +149,8 @@ pub trait SizedCursor {
   fn full_size(&self) -> usize;
   fn range_size(&self, a: usize, b: usize) -> usize;
 }
-impl<U, C> SizedCursor for U 
-where U: UnitCursor<Unit = C>, C: UnicodeWidthChar + Copy
+impl<U> SizedCursor for U 
+where U: UnitCursor<Unit = char>
 {
   fn head_size(&self) -> usize {
     self.current().width().unwrap_or(0)
