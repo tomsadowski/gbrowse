@@ -13,7 +13,8 @@ pub struct TabList {
   pub head: usize,
   pub tabs: Vec<Tab>,
 } 
-impl UnitCursor<Tab> for TabList {
+impl UnitCursor for TabList {
+  type Unit = Tab;
   fn units(&self) -> &Vec<Tab> {
     &self.tabs
   }
@@ -27,7 +28,7 @@ impl UnitCursor<Tab> for TabList {
     self.tabs.len().saturating_sub(1)
   }
 }
-impl UnitCursorMut<Tab> for TabList {
+impl UnitCursorMut for TabList {
   fn units_mut(&mut self) -> &mut Vec<Tab> {
     &mut self.tabs
   }

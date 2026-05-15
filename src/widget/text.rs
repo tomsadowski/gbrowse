@@ -32,7 +32,8 @@ impl ToString for EditLine {
     self.text.iter().collect()
   }
 }
-impl UnitCursor<char> for EditLine {
+impl UnitCursor for EditLine {
+  type Unit = char;
   fn units(&self) -> &Vec<char> {
     &self.text
   }
@@ -46,7 +47,7 @@ impl UnitCursor<char> for EditLine {
     self.text.len()
   }
 }
-impl UnitCursorMut<char> for EditLine {
+impl UnitCursorMut for EditLine {
   fn units_mut(&mut self) -> &mut Vec<char> {
     &mut self.text
   }
@@ -66,7 +67,8 @@ impl From<Vec<char>> for TextLine {
     Self {head: 0, text: item}
   }
 }
-impl UnitCursor<char> for TextLine {
+impl UnitCursor for TextLine {
+  type Unit = char;
   fn units(&self) -> &Vec<char> {
     &self.text
   }
@@ -199,7 +201,8 @@ impl ShiftedTextLine {
     Self {idx, text}
   }
 }
-impl UnitCursor<char> for ShiftedTextLine {
+impl UnitCursor for ShiftedTextLine {
+  type Unit = char;
   fn units(&self) -> &Vec<char> {
     &self.text.text
   }
@@ -231,7 +234,8 @@ pub struct StyledTextPlane {
   pub head:   usize,
   pub pref_x: usize,
 }
-impl UnitCursor<ShiftedTextLine> for StyledTextPlane {
+impl UnitCursor for StyledTextPlane {
+  type Unit = ShiftedTextLine;
   fn units(&self) -> &Vec<ShiftedTextLine> {
     &self.text
   }

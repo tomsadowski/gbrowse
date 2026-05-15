@@ -135,6 +135,7 @@ impl TextBox {
       .queue(MoveTo(x, y))?
       .queue(SetAttribute(Attribute::Reset))?
       .queue(&self.style)?;
+
     for line in self.content
       .iter_from(self.cursor.y_scroll())
       .take(self.rect.h.into()) 

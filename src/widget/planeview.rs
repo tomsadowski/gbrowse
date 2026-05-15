@@ -30,12 +30,12 @@ impl ViewCursor {
     self.view_head
   }
   // preserve cursor position if it still fits in the new bounds
-  pub fn resize_y<Y, X>(&mut self, 
+  pub fn resize_y<Y>(&mut self, 
                       unit_cursor: &Y, 
                       new_view_start: u16, 
                       new_view_size: u16
                       ) 
-  where Y: UnitCursor<X>,
+  where Y: UnitCursor,
   {
     let new_line_head   = unit_cursor.head();
     let cursor_position = self.view_head - self.view_start;
@@ -65,7 +65,7 @@ impl ViewCursor {
                         new_view_start: u16, 
                         new_view_size: u16
                         ) 
-  where X: UnitCursor<Z>, Z: UnicodeWidthChar,
+  where X: UnitCursor<Unit = Z>, Z: UnicodeWidthChar,
   {
     let new_line_head   = unit_cursor.head();
     let cursor_position = self.view_head - self.view_start;
@@ -90,7 +90,7 @@ impl ViewCursor {
     }
   }
   pub fn yupdate<Y, X>(&mut self, unit_cursor: &Y) -> bool 
-  where Y: UnitCursor<X>
+  where Y: UnitCursor<Unit = X>
   {
     let mut scroll    = false;
     let new_line_head = unit_cursor.head();
@@ -120,21 +120,25 @@ impl ViewCursor {
     scroll
   }
   pub fn xupdate<X, Z>(&mut self, cursor: &X) -> bool 
-  where X: UnitCursor<Z>, Z: UnicodeWidthChar + Copy,
+  where X: UnitCursor<Unit = Z>, Z: UnicodeWidthChar + Copy,
   {
     eprintln!("unit_head: {}", self.unit_head);
     // move right
     if self.unit_head < cursor.head() {
-      let view_delta = cursor.units()[self.unit_head..cursor.head()].iter()
+      let view_delta = cursor
+        .units()[self.unit_head..cursor.head()]
+        .iter()
         .fold(0, |acc, u| acc + u.width().unwrap_or(0));
+
       let unit_delta     = cursor.head() - self.unit_head;
-      let max_view_delta = usize::from((self.view_start + self.view_size)
-        .saturating_sub(self.view_head));
+      let max_view_delta = usize::from(
+        (self.view_start + self.view_size).saturating_sub(self.view_head));
+
       // scroll right
       if view_delta >= max_view_delta {
         self.view_head  += u16::try_from(view_delta - max_view_delta).unwrap();
         self.unit_start += unit_delta.saturating_sub(max_view_delta);
-        self.unit_head = cursor.head();
+        self.unit_head   = cursor.head();
         true
       // no scroll
       } else {
@@ -145,18 +149,22 @@ impl ViewCursor {
     // move left
     } else if self.unit_head > cursor.head() {
       self.unit_head = self.unit_head.min(cursor.units().len());
-      let view_delta = cursor.units()[cursor.head()..self.unit_head].iter()
+      let max_delta  = usize::from(self.view_head.saturating_sub(self.view_start));
+      let view_delta = cursor
+        .units()[cursor.head()..self.unit_head]
+        .iter()
         .fold(0, |acc, u| acc + u.width().unwrap_or(0));
-      let max_delta = usize::from(self.view_head.saturating_sub(self.view_start));
       // scroll left
       if view_delta > max_delta {
-        self.unit_start = self.unit_start .saturating_sub( view_delta - max_delta );
-        self.view_head = self.view_start + u16::try_from(cursor.head() - self.unit_start).unwrap();
-        self.unit_head = cursor.head();
+        self.unit_start = self.unit_start.saturating_sub(view_delta - max_delta);
+        self.view_head  = self.view_start 
+          + u16::try_from(cursor.head() - self.unit_start).unwrap();
+        self.unit_head  = cursor.head();
         true
       // no scroll
       } else {
-        self.view_head = self.view_start + u16::try_from(cursor.head() - self.unit_start).unwrap();
+        self.view_head = self.view_start 
+          + u16::try_from(cursor.head() - self.unit_start).unwrap();
         self.unit_head = cursor.head();
         false
       }
@@ -192,13 +200,13 @@ impl ScreenCursor {
     self.y.unit_start
   }
   pub fn resize<X, Y, Z>(&mut self, plane: &Y, rect: &Rect) 
-  where Y: UnitCursor<X>, X: UnitCursor<Z>, Z: UnicodeWidthChar,
+  where Y: UnitCursor<Unit = X> , X: UnitCursor<Unit = Z>, Z: UnicodeWidthChar,
   {
     self.y.resize_y(plane, rect.y, rect.h);
     self.x.resize_x(plane.current(), rect.x, rect.w);
   }
   pub fn update<X, Y, Z>(&mut self, plane: &Y) -> bool 
-  where Y: UnitCursor<X>, X: UnitCursor<Z>, Z: UnicodeWidthChar + Copy,
+  where Y: UnitCursor<Unit = X> , X: UnitCursor<Unit = Z>, Z: UnicodeWidthChar + Copy,
   {
     let y = self.y.yupdate(plane);
     let x = self.x.xupdate(plane.current());

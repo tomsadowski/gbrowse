@@ -31,13 +31,27 @@ pub fn cursor_hide<W: Write>(writer: &mut W) -> io::Result<()> {
   writer.queue(cursor::Hide)?;
   Ok(())
 }
-pub trait UnitCursor<U> {
-  fn units(&self)           -> &Vec<U>;
+pub trait PlaneWidget {
+  fn pos(&self) -> (u16, u16);
+  fn write<W: Write>(&self, writer: &mut W) -> io::Result<()>;
+
+  fn write_cursor<W: Write>(&self, writer: &mut W) -> io::Result<()> {
+    let (x, y) = self.pos();
+    writer.queue(MoveTo(x, y))?.queue(cursor::Show)?;
+    Ok(())
+  }
+}
+
+
+pub trait UnitCursor {
+  type Unit;
+
+  fn units(&self)           -> &Vec<Self::Unit>;
   fn head(&self)            -> usize;
   fn head_mut(&mut self)    -> &mut usize;
   fn max_head(&self)        -> usize;
   
-  fn current(&self) -> &U {
+  fn current(&self) -> &Self::Unit {
     &self.units()[self.head()]
   }
   fn fit(&mut self, new_cursor: usize) {
@@ -49,7 +63,7 @@ pub trait UnitCursor<U> {
   fn end(&mut self) {
     *self.head_mut() = self.max_head();
   }
-  fn iter_from(&self, shift: usize) -> std::slice::Iter<'_, U> {
+  fn iter_from(&self, shift: usize) -> std::slice::Iter<'_, Self::Unit> {
     let shift = std::cmp::min(shift, self.units().len().saturating_sub(1));
     self.units()[shift..].iter()
   }
@@ -99,8 +113,8 @@ pub trait UnitCursor<U> {
     }
   }
 }
-pub trait UnitCursorMut<U>: UnitCursor<U> {
-  fn units_mut(&mut self) -> &mut Vec<U>;
+pub trait UnitCursorMut: UnitCursor {
+  fn units_mut(&mut self) -> &mut Vec<Self::Unit>;
 
   fn delete(&mut self) -> bool {
     let head = self.head();
@@ -117,7 +131,7 @@ pub trait UnitCursorMut<U>: UnitCursor<U> {
       true
     } else {false}
   }
-  fn insert(&mut self, c: U) -> bool {
+  fn insert(&mut self, c: Self::Unit) -> bool {
     let head = self.head();
     if head + 1 == self.units().len() || self.units().len() == 0 {
       self.units_mut().push(c);
@@ -130,13 +144,23 @@ pub trait UnitCursorMut<U>: UnitCursor<U> {
     }
   }
 }
-pub trait PlaneWidget {
-  fn pos(&self) -> (u16, u16);
-  fn write<W: Write>(&self, writer: &mut W) -> io::Result<()>;
-
-  fn write_cursor<W: Write>(&self, writer: &mut W) -> io::Result<()> {
-    let (x, y) = self.pos();
-    writer.queue(MoveTo(x, y))?.queue(cursor::Show)?;
-    Ok(())
-  }
+pub trait SizedCursor {
+  fn full_size(&self) -> usize;
+  fn head_size(&self) -> usize;
+  fn range_size(&self) -> usize;
 }
+
+//impl<U, C> SizedCursor for U 
+//where U: UnitCursor<C>, 
+//      C: UnicodeWidthChar 
+//{
+//  fn full_size(&self) -> usize {
+//    0
+//  }
+//  fn head_size(&self) -> usize {
+//    0
+//  }
+//  fn range_size(&self) -> usize {
+//    0
+//  }
+//}
