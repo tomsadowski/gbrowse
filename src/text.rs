@@ -4,19 +4,8 @@ use crate::{
   cursor::{UnitCursor, UnitCursorMut},
   style::Style,
 };
-use crossterm::{
-  Command, QueueableCommand, 
-  style::{
-    SetStyle, ContentStyle, SetAttribute, Attribute, Attributes,
-    SetForegroundColor, SetBackgroundColor, Color, 
-  },
-};
 use unicode_width::UnicodeWidthChar;
-use std::{
-  fmt,
-  io::{self, Write},
-  ops::{Deref, DerefMut},
-};
+use std::ops::{Deref, DerefMut};
 
 #[derive(Clone, Debug, Default)]
 pub struct EditLine {

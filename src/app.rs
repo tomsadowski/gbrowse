@@ -2,29 +2,22 @@
 
 use crate::{
   common as c,
-  cursor::{UnitCursor, UnitCursorMut},
-  dialog::{Response, Dialog},
+  cursor::UnitCursor,
   frame::Frame,
   user::User,
   keys::Action,
   tab::{Tab, TabList},
-  widget::{TextBox, EditBox},
+  widget::{Response, Dialog},
   rect::Rect,
   protocol::{Request, GemDoc, GemTag, Status, Scheme},
 };
 use crossterm::{
-  QueueableCommand,
-  cursor::{self, SetCursorStyle},
-  terminal::{self, Clear, ClearType},
-  event::{self, Event, KeyEvent, KeyEventKind, KeyCode, KeyModifiers},
+  QueueableCommand, cursor,
+  terminal::{Clear, ClearType},
+  event::{Event, KeyEvent, KeyEventKind, KeyCode, KeyModifiers},
 };
 use url::Url;
-use std::{
-  fs, env,
-  time::Duration,
-  str::FromStr,
-  io::{self, Write, stdout, Stdout},
-};
+use std::{fs, str::FromStr, io::{self, Write, Stdout}};
 
 #[derive(Clone, Debug)]
 pub enum Task {

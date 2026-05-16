@@ -7,7 +7,7 @@ use crate::{
 };
 use crossterm::{
   QueueableCommand, 
-  cursor::{position, MoveTo, MoveLeft, MoveUp, MoveDown, MoveRight},
+  cursor::{MoveTo, MoveLeft},
   style::{Print, SetAttribute, Attribute},
 };
 use std::io::{self, Write};

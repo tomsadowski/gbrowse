@@ -1,12 +1,10 @@
 // src/cursor.rs
 
 use crate::{
-  common as c,
   rect::Rect,
 };
 use crossterm::{
   QueueableCommand, 
-  style::{SetAttribute, Attribute},
   cursor::{self, MoveTo},
 };
 use unicode_width::UnicodeWidthChar;

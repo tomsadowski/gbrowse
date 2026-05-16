@@ -6,17 +6,11 @@ use crate::{
   rect::Rect,
 };
 use crossterm::{
-  Command, QueueableCommand, 
-  style::{
-    SetStyle, ContentStyle, SetAttribute, Attribute, Attributes,
-    SetForegroundColor, SetBackgroundColor, Color, 
-  },
+  Command,
+  style::{SetStyle, ContentStyle, Attribute, Attributes, Color},
 };
-use toml::{Value, Table};
-use std::{
-  fmt,
-  str::FromStr,
-};
+use toml::Value;
+use std::{fmt, str::FromStr};
 
 pub fn parse_color(v: &Value) -> Result<Color, String> {
   if let Value::String(s) = v {

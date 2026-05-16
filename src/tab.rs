@@ -8,7 +8,6 @@ use crate::{
 };
 use std::ops::{Deref, DerefMut};
 
-
 pub struct TabList {
   pub head: usize,
   pub tabs: Vec<Tab>,

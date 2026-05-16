@@ -9,7 +9,6 @@
 mod app;
 mod common;
 mod cursor;
-mod dialog;
 mod frame;
 mod protocol;
 mod rect;
@@ -22,23 +21,18 @@ mod widget;
 
 use crate::{
   common as c,
-  app::{App, Message},
-  tab::{Tab, TabList},
-  dialog::{Response, Dialog},
-  protocol::{Request, GemDoc, GemTag, Status, Scheme},
+  app::App,
 };
 use crossterm::{
   QueueableCommand,
+  terminal,
+  event,
   cursor::{SetCursorStyle},
-  terminal::{self, Clear, ClearType},
-  event::{self, Event, KeyEvent, KeyEventKind, KeyCode, KeyModifiers},
 };
-use url::Url;
 use std::{
-  fs, env,
+  env,
   time::Duration,
-  str::FromStr,
-  io::{self, Write, stdout, Stdout},
+  io::{self, Write, stdout},
 };
 
 fn main() -> io::Result<()> {

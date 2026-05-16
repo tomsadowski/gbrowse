@@ -1,9 +1,9 @@
 // src/user.rs
 
 use crate::{
-  keys::{KeysTable, Action},
-  style::{StyleModTable, BorderSpec, MarginSpec},
   common as c,
+  keys::KeysTable,
+  style::StyleModTable,
   tab::Tab,
   widget::TextBox,
   rect::Rect,

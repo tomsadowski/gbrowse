@@ -1,13 +1,12 @@
-// src/userkeys.rs
+// src/keys.rs
 
 use crate::{
   cursor::UnitCursor,
-  dialog::{Dialog, Response},
   user::UserTable,
-  widget::{TextBox, EditBox},
+  widget::{Dialog, Response, EditBox, TextBox},
 };
 use crossterm::event::KeyCode;
-use toml::{Table, Value};
+use toml::Value;
 use std::str::FromStr;
 
 #[derive(Clone, Debug)]
