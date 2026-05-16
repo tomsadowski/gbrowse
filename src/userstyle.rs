@@ -1,9 +1,10 @@
-// src/user/style.rs
+// src/userstyle.rs
 
 use crate::{
   common as c,
   user::UserTable,
-  widget::{Rect, Style},
+  rect::{Rect},
+  text::{Style},
 };
 use crossterm::{
   style::{Color},
@@ -97,7 +98,6 @@ impl FromStr for StyleModField {
     }
   }
 }
-
 #[derive(Debug, Clone)]
 pub struct MarginSpec {
   pub north: u16,
@@ -194,7 +194,6 @@ impl UserTable<StyleModField> for StyleModTable {
     Ok(())
   }
 }
-
 #[derive(Debug)]
 enum MarginField {
   North, South, East, West,

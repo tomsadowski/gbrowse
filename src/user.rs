@@ -1,19 +1,18 @@
 // src/usr/mod.rs
 
-mod style;
-mod keys;
-
-pub use self::style::{StyleModTable, BorderSpec, MarginSpec};
-pub use self::keys::{KeysTable, Action};
-
 use crate::{
+  userkeys::{KeysTable, Action},
+  userstyle::{StyleModTable, BorderSpec, MarginSpec},
   common as c,
   tab::Tab,
-  widget::{Rect, Frame, TextBox, StyledText},
+  widget::{TextBox},
+  rect::{Rect},
+  frame::{Frame},
+  text::{StyledText},
   protocol::{GemText, GemTag, GemDoc},
 };
 use toml::{Table, Value};
-use std::{fs, str::{FromStr}};
+use std::{fs, str::FromStr};
 
 
 pub trait UserTable<F>: Sized where F: FromStr<Err = String> {

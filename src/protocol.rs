@@ -28,7 +28,6 @@ impl Request {
     Self {url: url.clone(), rx, handle}
   }
 }
-
 pub fn split_whitespace_once(line: &str) -> Option<(&str, &str)> {
   line
     .find('\u{0009}')

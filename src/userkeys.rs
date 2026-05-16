@@ -1,9 +1,10 @@
-// src/user/keys.rs
+// src/userkeys.rs
 
 use crate::{
-  user::UserTable,
+  cursor::{UnitCursor},
   dialog::{Dialog, Response},
-  widget::{UnitCursor, TextBox, EditBox},
+  user::UserTable,
+  widget::{TextBox, EditBox},
 };
 use crossterm::event::KeyCode;
 use toml::{Table, Value};
@@ -16,7 +17,6 @@ pub enum Action {
   Backspace,
   Enter,
   Delete,
-
   // tab
   Menu,
   LoadUrl,
@@ -25,7 +25,6 @@ pub enum Action {
   NewTab, 
   CycleLeft, 
   CycleRight, 
-
   // selector
   MoveUp, 
   MoveDown, 
@@ -36,7 +35,6 @@ pub enum Action {
   PageUp,
   PageDown,
   Select, 
-
   // dialog
   Ack, 
   Yes, 

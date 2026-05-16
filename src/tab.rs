@@ -1,12 +1,12 @@
 // src/tab.rs
 
 use crate::{
-  widget::{Rect, UnitCursor, UnitCursorMut, TextBox},
+  cursor::{UnitCursor, UnitCursorMut},
+  rect::{Rect},
+  widget::{TextBox},
   protocol::{GemDoc},
 };
-use std::{
-  ops::{Deref, DerefMut},
-};
+use std::ops::{Deref, DerefMut};
 
 
 pub struct TabList {
@@ -85,7 +85,6 @@ impl TabList {
     }
   }
 }
-
 pub struct Tab {
   pub url_str: String,
   pub gemdoc:  Option<GemDoc>,

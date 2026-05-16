@@ -7,20 +7,25 @@
 #![allow(unused_variables)]
 
 mod app;
-mod widget;
-mod user;
 mod common;
-mod protocol;
+mod cursor;
+mod cursorview;
 mod dialog;
+mod frame;
+mod protocol;
+mod rect;
 mod tab;
+mod text;
+mod user;
+mod userkeys;
+mod userstyle;
+mod widget;
 
 use crate::{
   common as c,
   app::{App, Message},
-  user::{User, Action},
   tab::{Tab, TabList},
   dialog::{Response, Dialog},
-  widget::{Rect, Frame},
   protocol::{Request, GemDoc, GemTag, Status, Scheme},
 };
 use crossterm::{
@@ -57,7 +62,6 @@ fn main() -> io::Result<()> {
     .queue(terminal::DisableLineWrap)?;
   // initial display
   app.write(&mut stdout)?;
-
   // break on control-c
   while !app.quit {
     if app.try_join_request() {
@@ -70,7 +74,6 @@ fn main() -> io::Result<()> {
       } 
     } 
   }
-
   // return terminal to normal state
   stdout
     .queue(terminal::LeaveAlternateScreen)?

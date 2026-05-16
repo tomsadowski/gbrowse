@@ -1,7 +1,9 @@
 // src/dialog.rs
 
 use crate::{
-  widget::{Rect, TextBox, EditBox, Style, StyledText},
+  text::{Style, StyledText},
+  rect::{Rect},
+  widget::{TextBox, EditBox},
 };
 
 pub enum Response {

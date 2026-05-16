@@ -2,17 +2,16 @@
 
 use crate::{
   common as c,
-  user::{MarginSpec, BorderSpec},
-  widget::{Rect, Style},
+  userstyle::{MarginSpec, BorderSpec},
+  rect::{Rect},
+  text::{Style},
 };
 use crossterm::{
   QueueableCommand, 
   cursor::{position, MoveTo, MoveLeft, MoveUp, MoveDown, MoveRight},
   style::{Print, SetAttribute, Attribute},
 };
-use std::{
-  io::{self, Write}
-};
+use std::io::{self, Write};
 
 #[derive(Default)]
 pub struct Frame {

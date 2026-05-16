@@ -2,10 +2,14 @@
 
 use crate::{
   common as c,
-  user::{User, Action},
+  user::{User},
+  userkeys::{Action},
   tab::{Tab, TabList},
   dialog::{Response, Dialog},
-  widget::{Rect, UnitCursor, UnitCursorMut, Frame, TextBox, EditBox},
+  widget::{TextBox, EditBox},
+  rect::{Rect},
+  frame::{Frame},
+  cursor::{UnitCursor, UnitCursorMut},
   protocol::{Request, GemDoc, GemTag, Status, Scheme},
 };
 use crossterm::{

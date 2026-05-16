@@ -1,16 +1,15 @@
-// src/planeview.rs
+// src/cursorview.rs
 
 use crate::{
-  widget::{Rect, UnitCursor, WeightedCursor},
+  cursor::{UnitCursor, WeightedCursor},
+  rect::{Rect},
 };
 use crossterm::{
   QueueableCommand, 
   style::{SetAttribute, Attribute},
   cursor::{self, MoveTo},
 };
-use std::{
-  io::{self, Write},
-};
+use std::io::{self, Write};
 
 #[derive(Clone, Debug, Default)]
 pub struct UnitCursorView {
@@ -37,12 +36,8 @@ impl UnitCursorView {
     self.view_head
   }
   // preserve cursor position if it still fits in the new bounds
-  pub fn resize<C>(&mut self, 
-                      cursor: &C, 
-                      new_view_start: u16, 
-                      new_view_size: u16
-                      ) 
-  where C: UnitCursor,
+  pub fn resize<C: UnitCursor>
+    (&mut self, cursor: &C, new_view_start: u16, new_view_size: u16) 
   {
     let new_line_head   = cursor.head();
     let cursor_position = self.view_head - self.view_start;
@@ -66,9 +61,7 @@ impl UnitCursorView {
       self.unit_start = self.unit_head.saturating_sub(usize::from(cursor_position));
     }
   }
-  pub fn update<C>(&mut self, cursor: &C) -> bool 
-  where C: UnitCursor
-  {
+  pub fn update<C: UnitCursor>(&mut self, cursor: &C) -> bool {
     let mut scroll    = false;
     let new_line_head = cursor.head();
     // forward
@@ -122,18 +115,14 @@ impl WeightedCursorView {
     self.view_head
   }
   // preserve cursor position if it still fits in the new bounds
-  pub fn resize<C>(&mut self, 
-                        cursor: &C, 
-                        new_view_start: u16, 
-                        new_view_size: u16
-                        ) 
-  where C: UnitCursor<Unit = char>
+  pub fn resize<C: WeightedCursor>
+    (&mut self, cursor: &C, new_view_start: u16, new_view_size: u16) 
   {
     let new_line_head   = cursor.head();
     let cursor_position = self.view_head - self.view_start;
     self.view_start     = new_view_start;
     self.view_size      = new_view_size;
-    self.weighted_head      = new_line_head;
+    self.weighted_head  = new_line_head;
 
     // go to beginning of line
     if new_line_head < usize::from(new_view_size) {
@@ -151,9 +140,7 @@ impl WeightedCursorView {
       self.weighted_start = self.weighted_head.saturating_sub(usize::from(cursor_position));
     }
   }
-  pub fn update<C>(&mut self, cursor: &C) -> bool 
-  where C: WeightedCursor
-  {
+  pub fn update<C: WeightedCursor>(&mut self, cursor: &C) -> bool {
     // move right
     if usize::from(self.view_head) < cursor.weighted_head() {
       let view_delta     = cursor.weighted_range(self.weighted_head, cursor.head());

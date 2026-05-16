@@ -1,7 +1,7 @@
 // src/text.rs
 
 use crate::{
-  widget::{UnitCursor, UnitCursorMut},
+  cursor::{UnitCursor, UnitCursorMut},
 };
 use crossterm::{
   Command, QueueableCommand, 
