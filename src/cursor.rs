@@ -10,7 +10,6 @@ use crossterm::{
 use unicode_width::UnicodeWidthChar;
 use std::io::{self, Write};
 
-
 pub trait UnitCursor {
   type Unit;
   fn units(&self)        -> &Vec<Self::Unit>;
@@ -221,7 +220,7 @@ impl WeightedCursorView {
     Self {
       weighted_start: 0, 
       weighted_head:  0, 
-      view_head:  view_start, 
+      view_head:      view_start, 
       view_start, 
       view_size
     }
@@ -245,16 +244,16 @@ impl WeightedCursorView {
     // go to beginning of line
     if new_line_head < usize::from(new_view_size) {
       self.weighted_start = 0;
-      self.view_head  = self.view_start + u16::try_from(self.weighted_head).unwrap();
+      self.view_head      = self.view_start + u16::try_from(self.weighted_head).unwrap();
 
     // cursor_position must be lowered to fit within new bounds
     } else if cursor_position > new_view_size - 1 {
-      self.view_head  = self.view_start + self.view_size - 1;
+      self.view_head      = self.view_start + self.view_size - 1;
       self.weighted_start = self.weighted_head - usize::from(self.view_size - 1);
 
     // cursor_position can be preserved
     } else {
-      self.view_head  = self.view_start + cursor_position;
+      self.view_head      = self.view_start + cursor_position;
       self.weighted_start = self.weighted_head.saturating_sub(usize::from(cursor_position));
     }
   }
@@ -268,13 +267,13 @@ impl WeightedCursorView {
 
       // scroll right
       if view_delta >= max_view_delta {
-        self.view_head  += u16::try_from(view_delta - max_view_delta).unwrap();
+        self.view_head      += u16::try_from(view_delta - max_view_delta).unwrap();
         self.weighted_start += unit_delta.saturating_sub(max_view_delta);
         self.weighted_head   = cursor.weighted_head();
         true
       // no scroll
       } else {
-        self.view_head += u16::try_from(view_delta).unwrap();
+        self.view_head     += u16::try_from(view_delta).unwrap();
         self.weighted_head  = cursor.weighted_head();
         false
       }
@@ -292,13 +291,13 @@ impl WeightedCursorView {
       // scroll left
       if view_delta > max_view_delta {
         self.weighted_start = self.weighted_start.saturating_sub(view_delta - max_view_delta);
-        self.view_head  = self.view_start 
+        self.view_head      = self.view_start 
           + u16::try_from(cursor.head() - self.weighted_start).unwrap();
         self.weighted_head  = cursor.weighted_head();
         true
       // no scroll
       } else {
-        self.view_head -= u16::try_from(view_delta).unwrap();
+        self.view_head     -= u16::try_from(view_delta).unwrap();
         self.weighted_head  = cursor.weighted_head();
         false
       }

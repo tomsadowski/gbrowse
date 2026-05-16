@@ -10,7 +10,6 @@ use std::{
   net::{TcpStream, ToSocketAddrs},
 };
 
-
 pub struct Request {
   pub url:    Url,
   pub rx:     mpsc::Receiver<Result<(String, String), String>>,

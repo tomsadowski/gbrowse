@@ -85,7 +85,7 @@ impl FromStr for Action {
       "yes"         => Ok(Self::Yes),
       "no"          => Ok(Self::No),
       "cancel"      => Ok(Self::Cancel),
-      s => Err(format!("Keys table does not contain field {}", s)),
+      s             => Err(format!("Keys table does not contain field {}", s)),
     }
   }
 }

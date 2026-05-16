@@ -1,15 +1,13 @@
 // src/widget.rs
 
 use crate::{
-  rect::Rect,
   cursor::{UnitCursor, UnitCursorMut, ScreenCursor},
-  text::{EditLine, StyledText, StyledTextPlane},
+  rect::Rect,
   style::Style,
+  text::{EditLine, StyledText, StyledTextPlane},
 };
 use crossterm::{
-  QueueableCommand, 
-  cursor::{MoveTo},
-  style::{Print, SetAttribute, Attribute},
+  QueueableCommand, cursor::MoveTo, style::{Print, SetAttribute, Attribute},
 };
 use std::io::{self, Write};
 
@@ -107,9 +105,7 @@ impl TextBox {
     } else {false}
   }
   pub fn clear<W: Write>(&self, writer: &mut W) -> io::Result<()> {
-    writer
-      .queue(SetAttribute(Attribute::Reset))?
-      .queue(&self.style)?;
+    writer.queue(SetAttribute(Attribute::Reset))?.queue(&self.style)?;
     for y in self.rect.y_range() {
       for x in self.rect.x_range() {
         writer.queue(MoveTo(x, y))?.queue(Print(' '))?;
@@ -129,25 +125,16 @@ impl TextBox {
     let mut y = self.rect.y;
     writer
       .queue(MoveTo(x, y))?
-      .queue(SetAttribute(Attribute::Reset))?
-      .queue(&self.style)?;
+      .queue(SetAttribute(Attribute::Reset))?.queue(&self.style)?;
 
-    for line in self.content
-      .iter_from(self.cursor.y_scroll())
-      .take(self.rect.h.into()) 
-    {
+    for line in self.content.iter_from(self.cursor.y_scroll()).take(self.rect.h.into()) {
       writer.queue(&self.content.source[line.idx].style)?;
-      for c in line
-        .iter_from(self.cursor.x_scroll())
-        .take(self.rect.w.into()) 
-      {
+      for c in line.iter_from(self.cursor.x_scroll()).take(self.rect.w.into()) {
         writer.queue(Print(c))?;
         x += 1;
       }
       if self.write_unused_x {
-        writer
-          .queue(SetAttribute(Attribute::Reset))?
-          .queue(&self.style)?;
+        writer.queue(SetAttribute(Attribute::Reset))?.queue(&self.style)?;
         for _ in x..self.rect.x_end() {
           writer.queue(Print(' '))?;
         }
@@ -157,9 +144,7 @@ impl TextBox {
       writer.queue(MoveTo(x, y))?;
     }
     if self.write_unused_y {
-      writer
-        .queue(SetAttribute(Attribute::Reset))?
-        .queue(&self.style)?;
+      writer.queue(SetAttribute(Attribute::Reset))?.queue(&self.style)?;
       for _ in y..self.rect.y_end() {
         for _ in self.rect.x_range() {
           writer.queue(Print(' '))?;
@@ -259,13 +244,9 @@ impl EditBox {
     let     y = self.rect.y;
     writer
       .queue(MoveTo(x, y))?
-      .queue(SetAttribute(Attribute::Reset))?
-      .queue(&self.style)?;
+      .queue(SetAttribute(Attribute::Reset))?.queue(&self.style)?;
     // render chars
-    for c in self.content
-      .iter_from(self.cursor.x_scroll())
-      .take(self.rect.w.into()) 
-    {
+    for c in self.content.iter_from(self.cursor.x_scroll()).take(self.rect.w.into()) {
       writer.queue(Print(c))?;
       x += 1;
     }

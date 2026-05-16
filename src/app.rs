@@ -41,11 +41,10 @@ pub enum Message {
   Resize(u16, u16),
 }
 pub enum Focus {
-  Tab, 
-  Dialog(Task, Dialog),
+  Tab, Dialog(Task, Dialog),
 }
 pub struct App {
-  pub init_path: String,
+  pub init_path:   String,
   pub frame:       Frame,
   pub user:        User,
   pub urls:        Vec<String>,
