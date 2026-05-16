@@ -124,6 +124,11 @@ impl<U> WeightedCursor for U where U: UnitCursor<Unit = char> {
       .fold(0, |acc, u| acc + u.width().unwrap_or(0))
   }
   fn weighted_range(&self, a: usize, b: usize) -> usize {
+    let b =
+      std::cmp::min(
+        b, 
+        self.weighted_len()
+        );
     self.units()[a..b].iter()
       .fold(0, |acc, u| acc + u.width().unwrap_or(0))
   }
@@ -258,51 +263,48 @@ impl WeightedCursorView {
     }
   }
   pub fn update<C: WeightedCursor>(&mut self, cursor: &C) -> bool {
+    eprint!("start:\n {:#?}\n", self);
     // move right
-    if usize::from(self.view_head) < cursor.weighted_head() {
-      let view_delta     = cursor.weighted_range(self.weighted_head, cursor.head());
-      let unit_delta     = cursor.head() - self.weighted_head;
+    if self.weighted_head < cursor.weighted_head() {
+      let view_delta     = cursor.weighted_head() - self.weighted_head;
       let max_view_delta = usize::from(
         (self.view_start + self.view_size).saturating_sub(self.view_head));
-
       // scroll right
       if view_delta >= max_view_delta {
-        self.view_head      += u16::try_from(view_delta - max_view_delta).unwrap();
-        self.weighted_start += unit_delta.saturating_sub(max_view_delta);
+        self.view_head      += u16::try_from(max_view_delta).unwrap();
+        self.weighted_start += view_delta.saturating_sub(max_view_delta);
         self.weighted_head   = cursor.weighted_head();
+        eprint!("right scroll:\n {:#?}\n", self);
         true
       // no scroll
       } else {
         self.view_head     += u16::try_from(view_delta).unwrap();
         self.weighted_head  = cursor.weighted_head();
+        eprint!("right:\n {:#?}\n", self);
         false
       }
     // move left
-    } else if usize::from(self.view_head) > cursor.weighted_head() {
-      self.view_head =
-        u16::try_from(
-        std::cmp::min(
-          usize::from(self.view_head), 
-          cursor.weighted_len()
-          )).unwrap();
-//      self.size_head     = std::cmp::min(cursor.units().len(), self.size_head);
+    } else if self.weighted_head > cursor.weighted_head() {
+      let view_delta     = self.weighted_head - cursor.weighted_head();
       let max_view_delta = usize::from(self.view_head.saturating_sub(self.view_start));
-      let view_delta     = cursor.weighted_range(cursor.head(), self.weighted_head);
       // scroll left
       if view_delta > max_view_delta {
         self.weighted_start = self.weighted_start.saturating_sub(view_delta - max_view_delta);
         self.view_head      = self.view_start 
           + u16::try_from(cursor.head() - self.weighted_start).unwrap();
         self.weighted_head  = cursor.weighted_head();
+        eprint!("left scroll:\n {:#?}\n", self);
         true
       // no scroll
       } else {
         self.view_head     -= u16::try_from(view_delta).unwrap();
         self.weighted_head  = cursor.weighted_head();
+        eprint!("left:\n {:#?}\n", self);
         false
       }
     // no move
     } else {
+      eprint!("no move:\n {:#?}\n", self);
       false
     }
   }
