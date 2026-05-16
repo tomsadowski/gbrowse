@@ -1,10 +1,10 @@
 // src/widget.rs
 
 use crate::{
-  rect::{Rect},
-  cursor::{UnitCursor, UnitCursorMut},
-  cursorview::{ScreenCursor},
-  text::{EditLine, StyledText, StyledTextPlane, Style},
+  rect::Rect,
+  cursor::{UnitCursor, UnitCursorMut, ScreenCursor},
+  text::{EditLine, StyledText, StyledTextPlane},
+  style::Style,
 };
 use crossterm::{
   QueueableCommand, 

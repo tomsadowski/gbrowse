@@ -1,10 +1,9 @@
-// src/widget/frame.rs
+// src/frame.rs
 
 use crate::{
   common as c,
-  userstyle::{MarginSpec, BorderSpec},
-  rect::{Rect},
-  text::{Style},
+  rect::Rect,
+  style::{BorderSpec, MarginSpec, Style},
 };
 use crossterm::{
   QueueableCommand, 

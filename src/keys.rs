@@ -1,7 +1,7 @@
 // src/userkeys.rs
 
 use crate::{
-  cursor::{UnitCursor},
+  cursor::UnitCursor,
   dialog::{Dialog, Response},
   user::UserTable,
   widget::{TextBox, EditBox},

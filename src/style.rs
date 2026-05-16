@@ -1,16 +1,22 @@
-// src/userstyle.rs
+// src/style.rs
 
 use crate::{
   common as c,
   user::UserTable,
-  rect::{Rect},
-  text::{Style},
+  rect::Rect,
 };
 use crossterm::{
-  style::{Color},
+  Command, QueueableCommand, 
+  style::{
+    SetStyle, ContentStyle, SetAttribute, Attribute, Attributes,
+    SetForegroundColor, SetBackgroundColor, Color, 
+  },
 };
 use toml::{Value, Table};
-use std::str::FromStr;
+use std::{
+  fmt,
+  str::FromStr,
+};
 
 pub fn parse_color(v: &Value) -> Result<Color, String> {
   if let Value::String(s) = v {
@@ -48,6 +54,30 @@ pub fn parse_color(v: &Value) -> Result<Color, String> {
     Ok(Color::Rgb {r, g, b})
   } else {
     Err(format!("could not parse color from value {}", v))
+  }
+}
+#[derive(Clone, Debug, Default)]
+pub struct Style {
+  pub underline: bool,
+  pub bold:      bool,
+  pub fg:        Option<Color>,
+  pub bg:        Option<Color>,
+}
+impl Command for Style {
+  fn write_ansi(&self, f: &mut impl fmt::Write) -> fmt::Result {
+    let mut contentstyle = ContentStyle::new();
+    contentstyle.foreground_color = self.fg;
+    contentstyle.background_color = self.bg;
+    let mut attributes = Attributes::none();
+    if self.bold {
+      attributes.set(Attribute::Bold);
+    }
+    if self.underline {
+      attributes.set(Attribute::Underlined);
+    }
+    contentstyle.attributes = attributes;
+    SetStyle(contentstyle).write_ansi(f)?;
+    Ok(())
   }
 }
 #[derive(Debug)]

@@ -1,14 +1,14 @@
-// src/usr/mod.rs
+// src/user.rs
 
 use crate::{
-  userkeys::{KeysTable, Action},
-  userstyle::{StyleModTable, BorderSpec, MarginSpec},
+  keys::{KeysTable, Action},
+  style::{StyleModTable, BorderSpec, MarginSpec},
   common as c,
   tab::Tab,
-  widget::{TextBox},
-  rect::{Rect},
-  frame::{Frame},
-  text::{StyledText},
+  widget::TextBox,
+  rect::Rect,
+  frame::Frame,
+  text::StyledText,
   protocol::{GemText, GemTag, GemDoc},
 };
 use toml::{Table, Value};

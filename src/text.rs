@@ -2,6 +2,7 @@
 
 use crate::{
   cursor::{UnitCursor, UnitCursorMut},
+  style::Style,
 };
 use crossterm::{
   Command, QueueableCommand, 
@@ -80,30 +81,6 @@ impl UnitCursor for TextLine {
   }
   fn max_head(&self) -> usize {
     self.text.len().saturating_sub(1)
-  }
-}
-#[derive(Clone, Debug, Default)]
-pub struct Style {
-  pub underline: bool,
-  pub bold:      bool,
-  pub fg:        Option<Color>,
-  pub bg:        Option<Color>,
-}
-impl Command for Style {
-  fn write_ansi(&self, f: &mut impl fmt::Write) -> fmt::Result {
-    let mut contentstyle = ContentStyle::new();
-    contentstyle.foreground_color = self.fg;
-    contentstyle.background_color = self.bg;
-    let mut attributes = Attributes::none();
-    if self.bold {
-      attributes.set(Attribute::Bold);
-    }
-    if self.underline {
-      attributes.set(Attribute::Underlined);
-    }
-    contentstyle.attributes = attributes;
-    SetStyle(contentstyle).write_ansi(f)?;
-    Ok(())
   }
 }
 #[derive(Clone, Debug, Default)]

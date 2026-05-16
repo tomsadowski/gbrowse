@@ -9,7 +9,6 @@
 mod app;
 mod common;
 mod cursor;
-mod cursorview;
 mod dialog;
 mod frame;
 mod protocol;
@@ -17,8 +16,8 @@ mod rect;
 mod tab;
 mod text;
 mod user;
-mod userkeys;
-mod userstyle;
+mod keys;
+mod style;
 mod widget;
 
 use crate::{

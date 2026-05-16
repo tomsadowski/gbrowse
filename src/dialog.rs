@@ -1,8 +1,9 @@
 // src/dialog.rs
 
 use crate::{
-  text::{Style, StyledText},
-  rect::{Rect},
+  rect::Rect,
+  style::Style,
+  text::StyledText,
   widget::{TextBox, EditBox},
 };
 

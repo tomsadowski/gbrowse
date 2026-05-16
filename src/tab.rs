@@ -2,9 +2,9 @@
 
 use crate::{
   cursor::{UnitCursor, UnitCursorMut},
-  rect::{Rect},
-  widget::{TextBox},
-  protocol::{GemDoc},
+  rect::Rect,
+  widget::TextBox,
+  protocol::GemDoc,
 };
 use std::ops::{Deref, DerefMut};
 
