@@ -11,7 +11,7 @@ pub use self::frame::Frame;
 pub use self::textbox::TextBox;
 pub use self::editbox::EditBox;
 pub use self::rect::Rect;
-pub use self::planeview::{UnitCursorView, SizeCursorView, ScreenCursor};
+pub use self::planeview::{UnitCursorView, WeightedCursorView, ScreenCursor};
 pub use self::text::{TextLine, EditLine, Style, StyledText, StyledTextPlane};
 
 use crate::{
@@ -26,21 +26,6 @@ use unicode_width::UnicodeWidthChar;
 use std::{
   io::{self, Write},
 };
-
-pub fn cursor_hide<W: Write>(writer: &mut W) -> io::Result<()> {
-  writer.queue(cursor::Hide)?;
-  Ok(())
-}
-pub trait PlaneWidget {
-  fn pos(&self) -> (u16, u16);
-  fn write<W: Write>(&self, writer: &mut W) -> io::Result<()>;
-
-  fn write_cursor<W: Write>(&self, writer: &mut W) -> io::Result<()> {
-    let (x, y) = self.pos();
-    writer.queue(MoveTo(x, y))?.queue(cursor::Show)?;
-    Ok(())
-  }
-}
 
 
 pub trait UnitCursor {
@@ -144,23 +129,21 @@ pub trait UnitCursorMut: UnitCursor {
     }
   }
 }
-pub trait SizedCursor {
-  fn head_size(&self) -> usize;
-  fn full_size(&self) -> usize;
-  fn range_size(&self, a: usize, b: usize) -> usize;
+pub trait WeightedCursor: UnitCursor {
+  fn weighted_head(&self) -> usize;
+  fn weighted_len(&self) -> usize;
+  fn weighted_range(&self, a: usize, b: usize) -> usize;
 }
-impl<U> SizedCursor for U 
-where U: UnitCursor<Unit = char>
-{
-  fn head_size(&self) -> usize {
+impl<U> WeightedCursor for U where U: UnitCursor<Unit = char> {
+  fn weighted_head(&self) -> usize {
     self.units()[..self.head()].iter()
       .fold(0, |acc, u| acc + u.width().unwrap_or(0))
   }
-  fn full_size(&self) -> usize {
+  fn weighted_len(&self) -> usize {
     self.units().iter()
       .fold(0, |acc, u| acc + u.width().unwrap_or(0))
   }
-  fn range_size(&self, a: usize, b: usize) -> usize {
+  fn weighted_range(&self, a: usize, b: usize) -> usize {
     self.units()[a..b].iter()
       .fold(0, |acc, u| acc + u.width().unwrap_or(0))
   }

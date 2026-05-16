@@ -1,13 +1,14 @@
 // src/editbox.rs
 
 use crate::{
-  widget::{Rect, SizeCursorView, Style, EditLine, UnitCursor, UnitCursorMut, PlaneWidget},
+  widget::{Rect, ScreenCursor, Style, EditLine, UnitCursor, UnitCursorMut},
 };
 use crossterm::{
   QueueableCommand,
   style::{Print, SetAttribute, Attribute},
   cursor::MoveTo,
 };
+use unicode_width::UnicodeWidthChar;
 use std::{
   io::{self, Write}
 };
@@ -19,30 +20,20 @@ pub struct EditBox {
   pub write:          bool,
   pub rect:           Rect,
   pub content:        EditLine,
-  pub cursor:         SizeCursorView,
+  pub cursor:         ScreenCursor,
   pub write_unused_x: bool,
-}
-impl PlaneWidget for EditBox {
-  fn pos(&self) -> (u16, u16) {
-    (self.cursor.cursor(), self.rect.y)
-  }
-  fn write<W: Write>(&self, writer: &mut W) -> io::Result<()> {
-    if self.write {
-      self.write_all(writer)?;
-    }
-    Ok(())
-  }
 }
 impl EditBox {
   pub fn new(rect: &Rect) -> Self {
     let content = EditLine::from("");
-    let cursor  = SizeCursorView::new(rect.x, rect.w);
+    let rect    = rect.top_row();
+    let pos     = ScreenCursor::new(&rect);
     Self {
       rect:           rect.clone(),
       style:          Style::default(),
       write_unused_x: false,
       write:          true,
-      cursor, 
+      cursor: pos, 
       content, 
     }
   }
@@ -55,8 +46,8 @@ impl EditBox {
     self
   }
   pub fn resize(&mut self, rect: &Rect) {
-    self.rect = rect.clone();
-    self.cursor.resize(&self.content, self.rect.x, self.rect.w);
+    self.rect = rect.top_row();
+    self.cursor.x.resize(&self.content, self.rect.x, self.rect.w);
     self.reset_state();
   }
   pub fn reset_state(&mut self) {
@@ -64,20 +55,20 @@ impl EditBox {
   }
   pub fn left(&mut self, delta: usize) -> bool {
     if self.content.backward(delta) == 0 {
-      self.write = self.cursor.update(&self.content);
+      self.write = self.cursor.x.update(&self.content);
       true
     } else {false}
   }
   pub fn right(&mut self, delta: usize) -> bool {
     if self.content.forward(delta) == 0 {
-      self.write = self.cursor.update(&self.content);
+      self.write = self.cursor.x.update(&self.content);
       true
     } else {false}
   }
   pub fn delete(&mut self) -> bool {
     if self.content.delete() {
       self.write_unused_x = true;
-      self.cursor.update(&self.content);
+      self.cursor.x.update(&self.content);
       self.write = true;
       true
     } else {false}
@@ -85,17 +76,23 @@ impl EditBox {
   pub fn backspace(&mut self) -> bool {
     if self.content.backspace() {
       self.write_unused_x = true;
-      self.cursor.update(&self.content);
+      self.cursor.x.update(&self.content);
       self.write = true;
       true
     } else {false}
   }
   pub fn insert(&mut self, c: char) -> bool {
     if self.content.insert(c) {
-      self.cursor.update(&self.content);
+      self.cursor.x.update(&self.content);
       self.write = true;
       true
     } else {false}
+  }
+  pub fn write<W: Write>(&self, writer: &mut W) -> io::Result<()> {
+    if self.write {
+      self.write_all(writer)?;
+    }
+    Ok(())
   }
   pub fn write_all<W: Write>(&self, writer: &mut W) -> io::Result<()> {
     let mut x = self.rect.x;
@@ -106,7 +103,7 @@ impl EditBox {
       .queue(&self.style)?;
     // render chars
     for c in self.content
-      .iter_from(self.cursor.scroll())
+      .iter_from(self.cursor.x_scroll())
       .take(self.rect.w.into()) 
     {
       writer.queue(Print(c))?;

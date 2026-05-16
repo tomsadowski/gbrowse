@@ -1,7 +1,7 @@
 // src/widget/textbox.rs
 
 use crate::{
-  widget::{Rect, UnitCursor, ScreenCursor, StyledText, StyledTextPlane, Style, PlaneWidget},
+  widget::{Rect, UnitCursor, ScreenCursor, StyledText, StyledTextPlane, Style},
 };
 use crossterm::{
   QueueableCommand, 
@@ -21,17 +21,6 @@ pub struct TextBox {
   pub write:          bool,
   pub write_unused_x: bool,
   pub write_unused_y: bool,
-}
-impl PlaneWidget for TextBox {
-  fn pos(&self) -> (u16, u16) {
-    (self.cursor.x_cursor(), self.cursor.y_cursor())
-  }
-  fn write<W: Write>(&self, writer: &mut W) -> io::Result<()> {
-    if self.write {
-      self.write_all(writer)?;
-    }
-    Ok(())
-  }
 }
 impl TextBox {
   pub fn new(text: Vec<StyledText>, rect: &Rect) -> Self {
@@ -126,6 +115,12 @@ impl TextBox {
       }
     }
     writer.queue(SetAttribute(Attribute::Reset))?;
+    Ok(())
+  }
+  pub fn write<W: Write>(&self, writer: &mut W) -> io::Result<()> {
+    if self.write {
+      self.write_all(writer)?;
+    }
     Ok(())
   }
   pub fn write_all<W: Write>(&self, writer: &mut W) -> io::Result<()> {

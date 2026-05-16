@@ -20,7 +20,7 @@ use crate::{
   user::{User, Action},
   tab::{Tab, TabList},
   dialog::{Response, Dialog},
-  widget::{Rect, Frame, cursor_hide, PlaneWidget},
+  widget::{Rect, Frame},
   protocol::{Request, GemDoc, GemTag, Status, Scheme},
 };
 use crossterm::{

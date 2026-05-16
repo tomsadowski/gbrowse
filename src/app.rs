@@ -5,12 +5,12 @@ use crate::{
   user::{User, Action},
   tab::{Tab, TabList},
   dialog::{Response, Dialog},
-  widget::{Rect, UnitCursor, UnitCursorMut, Frame, cursor_hide, PlaneWidget, TextBox, EditBox},
+  widget::{Rect, UnitCursor, UnitCursorMut, Frame, TextBox, EditBox},
   protocol::{Request, GemDoc, GemTag, Status, Scheme},
 };
 use crossterm::{
   QueueableCommand,
-  cursor::{SetCursorStyle},
+  cursor::{self, SetCursorStyle},
   terminal::{self, Clear, ClearType},
   event::{self, Event, KeyEvent, KeyEventKind, KeyCode, KeyModifiers},
 };
@@ -444,7 +444,7 @@ impl App {
     }
   }
   pub fn write(&self, stdout: &mut Stdout) -> io::Result<()> {
-    cursor_hide(stdout)?;
+    stdout.queue(cursor::Hide)?;
     if self.clear {
       stdout.queue(Clear(ClearType::All))?;
       self.frame.write(stdout)?;
@@ -467,16 +467,16 @@ impl App {
           r.write(stdout)?,
         Response::Edit(r) => {
           r.write(stdout)?;
-          r.write_cursor(stdout)?;
+          r.cursor.write(stdout)?;
         }
         Response::Select(r) => {
           r.write(stdout)?;
-          r.write_cursor(stdout)?;
+          r.cursor.write(stdout)?;
         }
       }
     } else {
       self.tabs.write(stdout)?;
-      self.tabs.write_cursor(stdout)?;
+      self.tabs.cursor.write(stdout)?;
     }
     stdout.flush()
   }

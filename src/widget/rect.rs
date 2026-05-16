@@ -78,6 +78,9 @@ impl Rect {
   pub fn row(&self, y: u16) -> Self {
     Self {x: self.x, y: y, w: self.w, h: 1}
   }
+  pub fn top_row(&self) -> Self {
+    self.row(self.y)
+  }
   pub fn bottom_row(&self) -> Self {
     self.row(self.y_end())
   }
