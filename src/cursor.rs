@@ -28,9 +28,11 @@ pub trait UnitCursor {
   fn end(&mut self) {
     *self.head_mut() = self.max_head();
   }
-  fn iter_from(&self, shift: usize) -> std::slice::Iter<'_, Self::Unit> {
-    let shift = std::cmp::min(shift, self.units().len().saturating_sub(1));
-    self.units()[shift..].iter()
+  fn view_units(&self, start: usize, width: usize) 
+    -> std::iter::Take<std::slice::Iter<'_, Self::Unit>> 
+  {
+    let start = std::cmp::min(start, self.units().len().saturating_sub(1));
+    self.units()[start..].iter().take(width) 
   }
   fn peek_backward(&self, delta: usize) -> usize {
     if delta > self.head() {
@@ -113,7 +115,8 @@ pub trait WeightedCursor: UnitCursor {
   fn weighted_head(&self) -> usize;
   fn weighted_len(&self) -> usize;
   fn weighted_range(&self, a: usize, b: usize) -> usize;
-  fn till(&self, start: usize, width: usize);
+  fn view_weighted(&self, start: usize, width: usize)
+    -> std::iter::Take<std::slice::Iter<'_, Self::Unit>>;
 }
 impl<U> WeightedCursor for U where U: UnitCursor<Unit = char> {
   fn weighted_head(&self) -> usize {
@@ -128,7 +131,9 @@ impl<U> WeightedCursor for U where U: UnitCursor<Unit = char> {
     self.units()[a..b].iter()
       .fold(0, |acc, u| acc + u.width().unwrap_or(0))
   }
-  fn till(&self, start: usize, width: usize) {
+  fn view_weighted(&self, start: usize, width: usize) 
+    -> std::iter::Take<std::slice::Iter<'_, Self::Unit>> 
+  {
     let start = std::cmp::min(start, self.units().len().saturating_sub(1));
     let text          = &self.units()[start..];
     let mut w         = 0;

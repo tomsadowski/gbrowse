@@ -1,7 +1,7 @@
 // src/widget.rs
 
 use crate::{
-  cursor::{UnitCursor, UnitCursorMut, ScreenCursor},
+  cursor::{UnitCursor, UnitCursorMut, WeightedCursor,  ScreenCursor},
   rect::Rect,
   style::Style,
   text::{EditLine, StyledText, StyledTextPlane},
@@ -9,6 +9,7 @@ use crate::{
 use crossterm::{
   QueueableCommand, cursor::MoveTo, style::{Print, SetAttribute, Attribute},
 };
+use unicode_width::UnicodeWidthChar;
 use std::io::{self, Write};
 
 #[derive(Default)]
@@ -127,11 +128,11 @@ impl TextBox {
       .queue(MoveTo(x, y))?
       .queue(SetAttribute(Attribute::Reset))?.queue(&self.style)?;
 
-    for line in self.content.iter_from(self.cursor.y_scroll()).take(self.rect.h.into()) {
+    for line in self.content.view_units(self.cursor.y_scroll(), self.rect.h.into()) {
       writer.queue(&self.content.source[line.idx].style)?;
-      for c in line.iter_from(self.cursor.x_scroll()).take(self.rect.w.into()) {
+      for c in line.view_weighted(self.cursor.x_scroll(), self.rect.w.into()) {
         writer.queue(Print(c))?;
-        x += 1;
+        x += u16::try_from(c.width().unwrap_or(0)).unwrap();
       }
       if self.write_unused_x {
         writer.queue(SetAttribute(Attribute::Reset))?.queue(&self.style)?;
@@ -246,9 +247,9 @@ impl EditBox {
       .queue(MoveTo(x, y))?
       .queue(SetAttribute(Attribute::Reset))?.queue(&self.style)?;
     // render chars
-    for c in self.content.iter_from(self.cursor.x_scroll()).take(self.rect.w.into()) {
+    for c in self.content.view_weighted(self.cursor.x_scroll(), self.rect.w.into()) {
       writer.queue(Print(c))?;
-      x += 1;
+      x += u16::try_from(c.width().unwrap_or(0)).unwrap();
     }
     writer.queue(MoveTo(x, y))?;
     // render page space
