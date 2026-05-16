@@ -113,6 +113,7 @@ pub trait WeightedCursor: UnitCursor {
   fn weighted_head(&self) -> usize;
   fn weighted_len(&self) -> usize;
   fn weighted_range(&self, a: usize, b: usize) -> usize;
+  fn till(&self, start: usize, width: usize);
 }
 impl<U> WeightedCursor for U where U: UnitCursor<Unit = char> {
   fn weighted_head(&self) -> usize {
@@ -124,13 +125,19 @@ impl<U> WeightedCursor for U where U: UnitCursor<Unit = char> {
       .fold(0, |acc, u| acc + u.width().unwrap_or(0))
   }
   fn weighted_range(&self, a: usize, b: usize) -> usize {
-    let b =
-      std::cmp::min(
-        b, 
-        self.weighted_len()
-        );
     self.units()[a..b].iter()
       .fold(0, |acc, u| acc + u.width().unwrap_or(0))
+  }
+  fn till(&self, start: usize, width: usize) {
+    let start = std::cmp::min(start, self.units().len().saturating_sub(1));
+    let text          = &self.units()[start..];
+    let mut w         = 0;
+    let mut max_width = 0;
+    while w < width && max_width < text.len() {
+      w         += &text[max_width].width().unwrap_or(0);
+      max_width += 1;
+    }
+    self.units()[start..].iter().take(max_width)
   }
 }
 #[derive(Clone, Debug, Default)]
@@ -291,7 +298,7 @@ impl WeightedCursorView {
       if view_delta > max_view_delta {
         self.weighted_start = self.weighted_start.saturating_sub(view_delta - max_view_delta);
         self.view_head      = self.view_start 
-          + u16::try_from(cursor.head() - self.weighted_start).unwrap();
+          + u16::try_from(cursor.weighted_head() - self.weighted_start).unwrap();
         self.weighted_head  = cursor.weighted_head();
         eprint!("left scroll:\n {:#?}\n", self);
         true
