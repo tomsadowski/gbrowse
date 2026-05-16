@@ -1,7 +1,7 @@
 // src/editbox.rs
 
 use crate::{
-  widget::{Rect, ViewCursor, Style, EditLine, UnitCursor, UnitCursorMut, PlaneWidget},
+  widget::{Rect, SizeCursorView, Style, EditLine, UnitCursor, UnitCursorMut, PlaneWidget},
 };
 use crossterm::{
   QueueableCommand,
@@ -19,7 +19,7 @@ pub struct EditBox {
   pub write:          bool,
   pub rect:           Rect,
   pub content:        EditLine,
-  pub cursor:         ViewCursor,
+  pub cursor:         SizeCursorView,
   pub write_unused_x: bool,
 }
 impl PlaneWidget for EditBox {
@@ -36,7 +36,7 @@ impl PlaneWidget for EditBox {
 impl EditBox {
   pub fn new(rect: &Rect) -> Self {
     let content = EditLine::from("");
-    let cursor  = ViewCursor::new(rect.x, rect.w);
+    let cursor  = SizeCursorView::new(rect.x, rect.w);
     Self {
       rect:           rect.clone(),
       style:          Style::default(),
@@ -56,7 +56,7 @@ impl EditBox {
   }
   pub fn resize(&mut self, rect: &Rect) {
     self.rect = rect.clone();
-    self.cursor.resize_x(&self.content, self.rect.x, self.rect.w);
+    self.cursor.resize(&self.content, self.rect.x, self.rect.w);
     self.reset_state();
   }
   pub fn reset_state(&mut self) {
@@ -64,20 +64,20 @@ impl EditBox {
   }
   pub fn left(&mut self, delta: usize) -> bool {
     if self.content.backward(delta) == 0 {
-      self.write = self.cursor.xupdate(&self.content);
+      self.write = self.cursor.update(&self.content);
       true
     } else {false}
   }
   pub fn right(&mut self, delta: usize) -> bool {
     if self.content.forward(delta) == 0 {
-      self.write = self.cursor.xupdate(&self.content);
+      self.write = self.cursor.update(&self.content);
       true
     } else {false}
   }
   pub fn delete(&mut self) -> bool {
     if self.content.delete() {
       self.write_unused_x = true;
-      self.cursor.xupdate(&self.content);
+      self.cursor.update(&self.content);
       self.write = true;
       true
     } else {false}
@@ -85,14 +85,14 @@ impl EditBox {
   pub fn backspace(&mut self) -> bool {
     if self.content.backspace() {
       self.write_unused_x = true;
-      self.cursor.xupdate(&self.content);
+      self.cursor.update(&self.content);
       self.write = true;
       true
     } else {false}
   }
   pub fn insert(&mut self, c: char) -> bool {
     if self.content.insert(c) {
-      self.cursor.xupdate(&self.content);
+      self.cursor.update(&self.content);
       self.write = true;
       true
     } else {false}
