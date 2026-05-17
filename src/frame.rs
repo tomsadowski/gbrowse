@@ -1,18 +1,16 @@
-// src/widget/frame.rs
+// src/frame.rs
 
 use crate::{
   common as c,
-  user::{MarginSpec, BorderSpec},
-  widget::{Rect, Style},
+  rect::Rect,
+  style::{BorderSpec, MarginSpec, Style},
 };
 use crossterm::{
   QueueableCommand, 
-  cursor::{position, MoveTo, MoveLeft, MoveUp, MoveDown, MoveRight},
+  cursor::{MoveTo, MoveLeft},
   style::{Print, SetAttribute, Attribute},
 };
-use std::{
-  io::{self, Write}
-};
+use std::io::{self, Write};
 
 #[derive(Default)]
 pub struct Frame {
@@ -70,8 +68,7 @@ impl Frame {
     let (cx, cy) = self.border_rect.c();
     let (dx, dy) = self.border_rect.d();
     writer
-      .queue(SetAttribute(Attribute::Reset))?
-      .queue(&self.border_spec.style)?
+      .queue(SetAttribute(Attribute::Reset))?.queue(&self.border_spec.style)?
       .queue(MoveTo(ax, ay))?.queue(Print(self.border_spec.a))?
       .queue(MoveTo(bx, by))?.queue(Print(self.border_spec.b))?
       .queue(MoveTo(cx, cy))?.queue(Print(self.border_spec.c))?
@@ -116,8 +113,7 @@ impl Frame {
       .queue(MoveTo(x, y))?
       .queue(&self.border_spec.style)?
       .queue(Print(self.border_spec.close))?
-      .queue(MoveLeft(2))?
-      .queue(Print(' '))?
+      .queue(MoveLeft(2))?.queue(Print(' '))?
       .queue(&self.banner_style)?;
     x -= 2;
     for c in text.chars().rev().take(self.inner_rect.cropped_x(2).w.into()) {
@@ -125,11 +121,9 @@ impl Frame {
       x -= 1;
     }
     writer
-      .queue(MoveLeft(2))?
-      .queue(Print(' '))?
+      .queue(MoveLeft(2))?.queue(Print(' '))?
       .queue(&self.border_spec.style)?
-      .queue(MoveLeft(2))?
-      .queue(Print(self.border_spec.open))?;
+      .queue(MoveLeft(2))?.queue(Print(self.border_spec.open))?;
     x -= 2;
     for _ in self.inner_rect.x..x {
       writer.queue(MoveLeft(2))?.queue(Print(c::X_LINE))?;
@@ -153,8 +147,7 @@ impl Frame {
     }
     writer
       .queue(&self.border_spec.style)?
-      .queue(Print(' '))?
-      .queue(Print(self.border_spec.close))?;
+      .queue(Print(' '))?.queue(Print(self.border_spec.close))?;
     x += 2;
     for _ in x..self.inner_rect.x_end() {
       writer.queue(Print(c::X_LINE))?;

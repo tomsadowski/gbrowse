@@ -1,13 +1,14 @@
-// src/user/keys.rs
+// src/keys.rs
 
 use crate::{
+  cursor::UnitCursor,
   user::UserTable,
-  dialog::{Dialog, Response},
-  widget::{DataCursor, TextBox, EditBox},
+  widget::{Dialog, Response, EditBox, TextBox},
 };
 use crossterm::event::KeyCode;
-use toml::{Table, Value};
+use toml::Value;
 use std::str::FromStr;
+
 
 #[derive(Clone, Debug)]
 pub enum Action {
@@ -16,7 +17,6 @@ pub enum Action {
   Backspace,
   Enter,
   Delete,
-
   // tab
   Menu,
   LoadUrl,
@@ -25,7 +25,6 @@ pub enum Action {
   NewTab, 
   CycleLeft, 
   CycleRight, 
-
   // selector
   MoveUp, 
   MoveDown, 
@@ -36,7 +35,6 @@ pub enum Action {
   PageUp,
   PageDown,
   Select, 
-
   // dialog
   Ack, 
   Yes, 
@@ -58,8 +56,8 @@ impl Action {
     match self {
       Action::PageDown  => {textbox.down(usize::from(textbox.rect.h));}
       Action::PageUp    => {textbox.up(usize::from(textbox.rect.h));}
-      Action::Bottom    => {textbox.down(textbox.content.data().len());}
-      Action::Top       => {textbox.up(textbox.content.data().len());}
+      Action::Bottom    => {textbox.down(textbox.content.units().len());}
+      Action::Top       => {textbox.up(textbox.content.units().len());}
       Action::MoveDown  => {textbox.down(1);}
       Action::MoveUp    => {textbox.up(1);}
       Action::MoveLeft  => {textbox.left(1);}
@@ -88,7 +86,7 @@ impl FromStr for Action {
       "yes"         => Ok(Self::Yes),
       "no"          => Ok(Self::No),
       "cancel"      => Ok(Self::Cancel),
-      s => Err(format!("Keys table does not contain field {}", s)),
+      s             => Err(format!("Keys table does not contain field {}", s)),
     }
   }
 }

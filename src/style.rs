@@ -1,15 +1,17 @@
-// src/user/style.rs
+// src/style.rs
 
 use crate::{
   common as c,
   user::UserTable,
-  widget::{Rect, Style},
+  rect::Rect,
 };
 use crossterm::{
-  style::{Color},
+  Command,
+  style::{SetStyle, ContentStyle, Attribute, Attributes, Color},
 };
-use toml::{Value, Table};
-use std::str::FromStr;
+use toml::Value;
+use std::{fmt, str::FromStr};
+
 
 pub fn parse_color(v: &Value) -> Result<Color, String> {
   if let Value::String(s) = v {
@@ -49,6 +51,32 @@ pub fn parse_color(v: &Value) -> Result<Color, String> {
     Err(format!("could not parse color from value {}", v))
   }
 }
+
+#[derive(Clone, Debug, Default)]
+pub struct Style {
+  pub underline: bool,
+  pub bold:      bool,
+  pub fg:        Option<Color>,
+  pub bg:        Option<Color>,
+}
+impl Command for Style {
+  fn write_ansi(&self, f: &mut impl fmt::Write) -> fmt::Result {
+    let mut contentstyle = ContentStyle::new();
+    contentstyle.foreground_color = self.fg;
+    contentstyle.background_color = self.bg;
+    let mut attributes = Attributes::none();
+    if self.bold {
+      attributes.set(Attribute::Bold);
+    }
+    if self.underline {
+      attributes.set(Attribute::Underlined);
+    }
+    contentstyle.attributes = attributes;
+    SetStyle(contentstyle).write_ansi(f)?;
+    Ok(())
+  }
+}
+
 #[derive(Debug)]
 pub enum StyleTextField {
   General,
@@ -97,7 +125,6 @@ impl FromStr for StyleModField {
     }
   }
 }
-
 #[derive(Debug, Clone)]
 pub struct MarginSpec {
   pub north: u16,
@@ -194,7 +221,6 @@ impl UserTable<StyleModField> for StyleModTable {
     Ok(())
   }
 }
-
 #[derive(Debug)]
 enum MarginField {
   North, South, East, West,
@@ -399,8 +425,7 @@ impl UserTable<BorderField> for BorderSpec {
           }
         }
       }
-      (f, v) => 
-        return Err(format!("field {:?} value {:?} not valid here", f, v))
+      (f, v) => return Err(format!("field {:?} value {:?} not valid here", f, v))
     }
     Ok(())
   }

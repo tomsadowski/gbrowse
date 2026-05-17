@@ -1,20 +1,12 @@
 // src/text.rs
 
 use crate::{
-  widget::{DataCursor, DataCursorMut},
+  cursor::{UnitCursor, UnitCursorMut},
+  style::Style,
 };
-use crossterm::{
-  Command, QueueableCommand, 
-  style::{
-    SetStyle, ContentStyle, SetAttribute, Attribute, Attributes,
-    SetForegroundColor, SetBackgroundColor, Color, 
-  },
-};
-use std::{
-  fmt,
-  io::{self, Write},
-  ops::{Deref, DerefMut},
-};
+use unicode_width::UnicodeWidthChar;
+use std::ops::{Deref, DerefMut};
+
 
 #[derive(Clone, Debug, Default)]
 pub struct EditLine {
@@ -31,8 +23,9 @@ impl ToString for EditLine {
     self.text.iter().collect()
   }
 }
-impl DataCursor<char> for EditLine {
-  fn data(&self) -> &Vec<char> {
+impl UnitCursor for EditLine {
+  type Unit = char;
+  fn units(&self) -> &Vec<char> {
     &self.text
   }
   fn head_mut(&mut self) -> &mut usize {
@@ -45,11 +38,12 @@ impl DataCursor<char> for EditLine {
     self.text.len()
   }
 }
-impl DataCursorMut<char> for EditLine {
-  fn data_mut(&mut self) -> &mut Vec<char> {
+impl UnitCursorMut for EditLine {
+  fn units_mut(&mut self) -> &mut Vec<char> {
     &mut self.text
   }
 }
+
 #[derive(Clone, Debug, Default)]
 pub struct TextLine {
   pub head: usize,
@@ -65,8 +59,9 @@ impl From<Vec<char>> for TextLine {
     Self {head: 0, text: item}
   }
 }
-impl DataCursor<char> for TextLine {
-  fn data(&self) -> &Vec<char> {
+impl UnitCursor for TextLine {
+  type Unit = char;
+  fn units(&self) -> &Vec<char> {
     &self.text
   }
   fn head_mut(&mut self) -> &mut usize {
@@ -79,30 +74,7 @@ impl DataCursor<char> for TextLine {
     self.text.len().saturating_sub(1)
   }
 }
-#[derive(Clone, Debug, Default)]
-pub struct Style {
-  pub underline: bool,
-  pub bold:      bool,
-  pub fg:        Option<Color>,
-  pub bg:        Option<Color>,
-}
-impl Command for Style {
-  fn write_ansi(&self, f: &mut impl fmt::Write) -> fmt::Result {
-    let mut contentstyle = ContentStyle::new();
-    contentstyle.foreground_color = self.fg;
-    contentstyle.background_color = self.bg;
-    let mut attributes = Attributes::none();
-    if self.bold {
-      attributes.set(Attribute::Bold);
-    }
-    if self.underline {
-      attributes.set(Attribute::Underlined);
-    }
-    contentstyle.attributes = attributes;
-    SetStyle(contentstyle).write_ansi(f)?;
-    Ok(())
-  }
-}
+
 #[derive(Clone, Debug, Default)]
 pub struct StyledText {
   pub style: Style,
@@ -137,27 +109,33 @@ impl StyledText {
     self
   }
   pub fn wrap_text(text: Vec<char>, width: usize) -> Vec<Vec<char>> {
-    let mut idx = usize::MIN;
     let mut vec: Vec<Vec<char>> = vec![];
-    while idx < text.len() {
+    let mut start = usize::MIN;
+    while start < text.len() {
+      let text          = &text[start..];
+      let mut w         = 0;
+      let mut max_width = 0;
+      while w < width && max_width < text.len() {
+        w         += &text[max_width].width().unwrap_or(0);
+        max_width += 1;
+      }
       let line: Vec<char> = {
-        let text = &text[idx..];
-        if text.len() <= width {
+        if text.len() <= max_width {
           text.to_vec()
         } else {
           // search for first whitespace from right
-          let s: Vec<&char> = text[..width]
+          let s: Vec<&char> = text[..max_width]
             .iter().rev().skip_while(|c| !c.is_whitespace()).collect();
           // no space found, return whole slice
           if s.len() == 0 {
-            text[..width].iter().copied().collect()
+            text[..max_width].iter().copied().collect()
           // space found, return up to that space
           } else {
             s.into_iter().rev().copied().collect()
           }
         }
       };
-      idx += line.len();
+      start += line.len();
       vec.push(line);
     }
     vec
@@ -182,6 +160,7 @@ impl StyledText {
       .collect()
   }
 }
+
 #[derive(Clone, Debug, Default)]
 pub struct ShiftedTextLine {
   pub idx:  usize,
@@ -192,8 +171,9 @@ impl ShiftedTextLine {
     Self {idx, text}
   }
 }
-impl DataCursor<char> for ShiftedTextLine {
-  fn data(&self) -> &Vec<char> {
+impl UnitCursor for ShiftedTextLine {
+  type Unit = char;
+  fn units(&self) -> &Vec<char> {
     &self.text.text
   }
   fn head_mut(&mut self) -> &mut usize {
@@ -217,6 +197,7 @@ impl DerefMut for ShiftedTextLine {
     &mut self.text
   }
 }
+
 #[derive(Clone, Debug, Default)]
 pub struct StyledTextPlane {
   pub text:   Vec<ShiftedTextLine>, 
@@ -224,8 +205,9 @@ pub struct StyledTextPlane {
   pub head:   usize,
   pub pref_x: usize,
 }
-impl DataCursor<ShiftedTextLine> for StyledTextPlane {
-  fn data(&self) -> &Vec<ShiftedTextLine> {
+impl UnitCursor for StyledTextPlane {
+  type Unit = ShiftedTextLine;
+  fn units(&self) -> &Vec<ShiftedTextLine> {
     &self.text
   }
   fn head_mut(&mut self) -> &mut usize {
@@ -250,20 +232,24 @@ impl StyledTextPlane {
       text:   text.collect(), 
     }
   }
+
   pub fn get_source_idx(&self) -> usize {
     self.current().idx
   }
+
   pub fn get_source(&self) -> String {
     self.source[self.current().idx].text.clone()
   }
+
   pub fn get_idx(&self) -> usize {
     let x_head = self.current().head();
     self.text[..self.head()]
       .iter()
-      .map(|line| line.data().len().max(1))
+      .map(|line| line.units().len().max(1))
       .chain(std::iter::once(x_head))
       .sum()
   }
+  
   fn set_idx(&mut self, idx: usize) {
     self.start();
     // this guard responds to an error only encountered on windows
@@ -272,6 +258,7 @@ impl StyledTextPlane {
     }
     self.right(idx);
   }
+
   pub fn restyle(&mut self, source: Vec<StyledText>, width: u16) {
     self.source = source;
     let idx   = self.get_idx();
@@ -281,6 +268,7 @@ impl StyledTextPlane {
       .collect();
     self.set_idx(idx);
   }
+
   pub fn resize(&mut self, width: u16) {
     let idx   = self.get_idx();
     self.text = StyledText::print_vec(&self.source, usize::from(width))
@@ -289,18 +277,21 @@ impl StyledTextPlane {
       .collect();
     self.set_idx(idx);
   }
+
   pub fn up(&mut self, delta: usize) -> bool {
     if self.backward(delta) != delta {
       self.text[self.head].fit(self.pref_x);
       true
     } else {false}
   }
+
   pub fn down(&mut self, delta: usize) -> bool {
     if self.forward(delta) != delta {
       self.text[self.head].fit(self.pref_x);
       true
     } else {false}
   }
+
   pub fn left(&mut self, delta: usize) -> usize {
     if self.text.len() == 0 {return delta}
     let remainder = self.text[self.head].backward(delta);
@@ -314,6 +305,7 @@ impl StyledTextPlane {
       remainder
     }
   }
+
   pub fn right(&mut self, delta: usize) -> usize {
     if self.text.len() == 0 {return delta}
     let remainder = self.text[self.head].forward(delta);

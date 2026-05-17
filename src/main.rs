@@ -7,35 +7,22 @@
 #![allow(unused_variables)]
 
 mod app;
-mod widget;
-mod user;
 mod common;
+mod cursor;
+mod frame;
 mod protocol;
-mod dialog;
+mod rect;
 mod tab;
+mod text;
+mod user;
+mod keys;
+mod style;
+mod widget;
 
-use crate::{
-  common as c,
-  app::{App, Message},
-  user::{User, Action},
-  tab::{Tab, TabList},
-  dialog::{Response, Dialog},
-  widget::{Rect, Frame, cursor_hide, PlaneWidget},
-  protocol::{Request, GemDoc, GemTag, Status, Scheme},
-};
-use crossterm::{
-  QueueableCommand,
-  cursor::{SetCursorStyle},
-  terminal::{self, Clear, ClearType},
-  event::{self, Event, KeyEvent, KeyEventKind, KeyCode, KeyModifiers},
-};
-use url::Url;
-use std::{
-  fs, env,
-  time::Duration,
-  str::FromStr,
-  io::{self, Write, stdout, Stdout},
-};
+use crate::{common as c, app::App};
+use crossterm::{QueueableCommand, terminal, event, cursor::{SetCursorStyle}};
+use std::{env, time::Duration, io::{self, Write, stdout}};
+
 
 fn main() -> io::Result<()> {
   // initialize app
@@ -57,7 +44,6 @@ fn main() -> io::Result<()> {
     .queue(terminal::DisableLineWrap)?;
   // initial display
   app.write(&mut stdout)?;
-
   // break on control-c
   while !app.quit {
     if app.try_join_request() {
@@ -70,7 +56,6 @@ fn main() -> io::Result<()> {
       } 
     } 
   }
-
   // return terminal to normal state
   stdout
     .queue(terminal::LeaveAlternateScreen)?

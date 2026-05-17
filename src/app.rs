@@ -2,25 +2,22 @@
 
 use crate::{
   common as c,
-  user::{User, Action},
+  cursor::UnitCursor,
+  frame::Frame,
+  user::User,
+  keys::Action,
   tab::{Tab, TabList},
-  dialog::{Response, Dialog},
-  widget::{Rect, DataCursor, DataCursorMut, Frame, cursor_hide, PlaneWidget, TextBox, EditBox},
+  widget::{Response, Dialog},
+  rect::Rect,
   protocol::{Request, GemDoc, GemTag, Status, Scheme},
 };
 use crossterm::{
-  QueueableCommand,
-  cursor::{SetCursorStyle},
-  terminal::{self, Clear, ClearType},
-  event::{self, Event, KeyEvent, KeyEventKind, KeyCode, KeyModifiers},
+  QueueableCommand, cursor,
+  terminal::{Clear, ClearType},
+  event::{Event, KeyEvent, KeyEventKind, KeyCode, KeyModifiers},
 };
 use url::Url;
-use std::{
-  fs, env,
-  time::Duration,
-  str::FromStr,
-  io::{self, Write, stdout, Stdout},
-};
+use std::{fs, str::FromStr, io::{self, Write, Stdout}};
 
 #[derive(Clone, Debug)]
 pub enum Task {
@@ -36,6 +33,7 @@ pub enum Task {
   Redirect(String),
   Go(String), 
 }
+
 #[derive(Clone, Debug)]
 pub enum Message {
   Quit,
@@ -43,12 +41,13 @@ pub enum Message {
   Action(Action),
   Resize(u16, u16),
 }
+
 pub enum Focus {
-  Tab, 
-  Dialog(Task, Dialog),
+  Tab, Dialog(Task, Dialog),
 }
+
 pub struct App {
-  pub init_path: String,
+  pub init_path:   String,
   pub frame:       Frame,
   pub user:        User,
   pub urls:        Vec<String>,
@@ -96,10 +95,12 @@ impl App {
     app.try_spawn_request(&app.user.init_url.clone());
     app
   }
+
   pub fn tab(&mut self) {
     self.focus = Focus::Tab;
     self.guide = format!("Press {} for menu", self.user.keys.menu);
   }
+
   fn ack(&mut self, prompt: &str) {
     let style    = self.user.style.info.style.clone();
     let help     = &format!("Press any key to acknowledge");
@@ -108,6 +109,7 @@ impl App {
     self.guide   = format!("Press any key to acknowledge");
     self.new_dlg = true;
   }
+
   fn ask(&mut self, task: Task, prompt: &str) {
     let style    = self.user.style.info.style.clone();
     let help     = &format!("{} yes {} no", self.user.keys.yes, self.user.keys.no);
@@ -116,6 +118,7 @@ impl App {
     self.guide   = format!("{} yes {} no", self.user.keys.yes, self.user.keys.no);
     self.new_dlg = true;
   }
+
   fn edit(&mut self, task: Task, prompt: &str) {
     let style    = self.user.style.info.style.clone();
     let dialog   = Dialog::edit(prompt, style, &self.rect);
@@ -123,6 +126,7 @@ impl App {
     self.guide   = format!("Press {} to cancel", self.user.keys.cancel);
     self.new_dlg = true;
   }
+
   fn select(&mut self, task: Task, prompt: &str, options: Vec<String>) {
     let style    = self.user.style.info.style.clone();
     let dialog   = Dialog::select(prompt, options, style, &self.rect);
@@ -130,6 +134,7 @@ impl App {
     self.guide   = format!("Press {} to select", self.user.keys.select);
     self.new_dlg = true;
   }
+
   fn set_gemdoc(&mut self, url: &Url, gemdoc: GemDoc) {
     self.tabs.add(url.as_str());
     self.tab_changed = true;
@@ -151,6 +156,7 @@ impl App {
     self.tabs.content = self.user.get_gem_textbox(&self.rect, &gemdoc);
     self.tabs.gemdoc  = Some(gemdoc);
   }
+
   pub fn try_join_request(&mut self) -> bool {
     if let Some(request) = &mut self.request {
       if request.handle.is_finished() {
@@ -171,6 +177,7 @@ impl App {
       } else {false}
     } else {false}
   }
+
   pub fn try_spawn_request(&mut self, url_str: &str) {
     match Url::parse(url_str) {
       Err(e)  => {
@@ -187,6 +194,7 @@ impl App {
       }
     }
   }
+
   pub fn push_style(&mut self) {
     self.frame = self.user.get_frame(&self.screen);
     self.rect  = self.frame.inner_rect;
@@ -195,6 +203,7 @@ impl App {
     }
     self.clear = true;
   }
+
   pub fn get_entries(&self, path: &str) -> Result<Vec<String>, String> {
     let mut vec: Vec<String> = vec![];
     let mut results = fs::read_dir(format!("{}/{}", c::USER_DATA, path))
@@ -209,6 +218,7 @@ impl App {
     }
     Ok(vec)
   }
+
   pub fn update(&mut self, message: &Message) {
     self.clear       = false;
     self.tab_changed = false;
@@ -389,13 +399,13 @@ impl App {
             self.ask(Task::DelTab, "Delete current tab?");
           }
           Action::CycleLeft => {
-            if self.tabs.data().len() > 1 {
+            if self.tabs.units().len() > 1 {
               self.tabs.wrapping_backward(1);
               self.tab_changed = true;
             }
           }
           Action::CycleRight => {
-            if self.tabs.data().len() > 1 {
+            if self.tabs.units().len() > 1 {
               self.tabs.wrapping_forward(1);
               self.tab_changed = true;
             }
@@ -406,6 +416,7 @@ impl App {
       _ => {}
     }
   }
+
   pub fn get_update(&self, event: Event) -> Option<Message> {
     match event {
       Event::Key(KeyEvent {
@@ -443,8 +454,9 @@ impl App {
       _ => None,
     }
   }
+
   pub fn write(&self, stdout: &mut Stdout) -> io::Result<()> {
-    cursor_hide(stdout)?;
+    stdout.queue(cursor::Hide)?;
     if self.clear {
       stdout.queue(Clear(ClearType::All))?;
       self.frame.write(stdout)?;
@@ -467,16 +479,16 @@ impl App {
           r.write(stdout)?,
         Response::Edit(r) => {
           r.write(stdout)?;
-          r.write_cursor(stdout)?;
+          r.cursor.write(stdout)?;
         }
         Response::Select(r) => {
           r.write(stdout)?;
-          r.write_cursor(stdout)?;
+          r.cursor.write(stdout)?;
         }
       }
     } else {
       self.tabs.write(stdout)?;
-      self.tabs.write_cursor(stdout)?;
+      self.tabs.cursor.write(stdout)?;
     }
     stdout.flush()
   }
