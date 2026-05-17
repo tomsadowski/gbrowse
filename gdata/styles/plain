@@ -6,7 +6,7 @@ text_margin   = {n = 1, s = 1, e = 4, w = 4}
 border    = {corner = "square", bracket = "tort"}
 banner    = {}
 general   = {}
-text      = {wrap = false}
+text      = {}
 list      = {}
 info      = {}
 quote     = {}
