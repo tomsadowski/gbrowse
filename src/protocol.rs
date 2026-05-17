@@ -10,6 +10,7 @@ use std::{
   net::{TcpStream, ToSocketAddrs},
 };
 
+
 pub struct Request {
   pub url:    Url,
   pub rx:     mpsc::Receiver<Result<(String, String), String>>,
@@ -27,12 +28,14 @@ impl Request {
     Self {url: url.clone(), rx, handle}
   }
 }
+
 pub fn split_whitespace_once(line: &str) -> Option<(&str, &str)> {
   line
     .find('\u{0009}')
     .or(line.find(' '))
     .map(|i| (line[..i].trim(), line[i..].trim()))
 }
+
 pub fn join_if_relative(base: &Url, url_str: &str) -> Result<Url, ParseError> {
   Url::parse(url_str).or_else(|e|
     if let ParseError::RelativeUrlWithoutBase = e {
@@ -42,6 +45,7 @@ pub fn join_if_relative(base: &Url, url_str: &str) -> Result<Url, ParseError> {
     }
   )
 }
+
 pub struct GemDoc {
   pub status: StatusText,
   pub doc:    Vec<GemText>,
@@ -59,6 +63,7 @@ impl GemDoc {
     Ok(Self {status, doc})
   }
 }
+
 #[derive(Clone, PartialEq, Debug)]
 pub struct GemText {
   pub tag: GemTag,
@@ -68,6 +73,7 @@ impl GemText {
   pub fn new(tag: GemTag, txt: &str) -> Self {
     Self {tag, txt: String::from(txt)}
   }
+
   pub fn parse_doc(text_str: &str, source: &Url) -> Vec<Self> {
     let mut vec       = vec![];
     let mut preformat = false;
@@ -82,6 +88,7 @@ impl GemText {
     }
     vec
   }
+
   pub fn parse_formatted(line: &str, source: &Url) -> Self {
     // look for 3 character symbols
     if let Some(("###", text)) = line.split_at_checked(3) {
@@ -122,6 +129,7 @@ impl GemText {
     return Self::new(GemTag::Text, line.into())
   }
 }
+
 #[derive(Clone, PartialEq, Debug)]
 pub enum GemTag {
   HeadingOne,
@@ -147,6 +155,7 @@ impl StatusText {
     Self {tag, txt: msg.into()}
   }
 }
+
 #[derive(Debug, Clone)]
 pub enum Status {
   InputExpected,
@@ -204,6 +213,7 @@ impl From<&str> for Status {
     }
   }
 }
+
 #[derive(Clone, PartialEq, Debug)]
 pub enum Scheme {
   Gemini, 
@@ -222,6 +232,7 @@ impl From<&Url> for Scheme {
     }
   }
 }
+
 // returns response and content
 pub fn get_data(url: &Url, timeout: u64) -> Result<(String, String), String> {
   let host = url.host_str().unwrap_or("");

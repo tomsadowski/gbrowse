@@ -16,35 +16,41 @@ pub trait UnitCursor {
   fn head(&self)         -> usize;
   fn head_mut(&mut self) -> &mut usize;
   fn max_head(&self)     -> usize;
+
   fn current(&self) -> &Self::Unit {
     &self.units()[self.head()]
   }
+
   fn fit(&mut self, new_cursor: usize) {
     *self.head_mut() = self.max_head().min(new_cursor);
   }
+
   fn start(&mut self) {
     *self.head_mut() = 0;
   }
+
   fn end(&mut self) {
     *self.head_mut() = self.max_head();
   }
-  fn view_units(&self, start: usize, width: usize) 
-    -> std::iter::Take<std::slice::Iter<'_, Self::Unit>> 
-  {
+
+  fn view_units(&self, start: usize, width: usize) -> std::iter::Take<std::slice::Iter<'_, Self::Unit>> {
     let start = std::cmp::min(start, self.units().len().saturating_sub(1));
     self.units()[start..].iter().take(width) 
   }
+
   fn peek_backward(&self, delta: usize) -> usize {
     if delta > self.head() {
       delta - self.head()
     } else {0}
   }
+
   fn peek_forward(&self, delta: usize) -> usize {
     let max_head = self.max_head();
     if self.head() + delta > max_head {
       self.head() + delta - max_head
     } else {0}
   }
+
   fn backward(&mut self, mut delta: usize) -> usize {
     if delta > self.head() {
       delta -= self.head();
@@ -55,6 +61,7 @@ pub trait UnitCursor {
       0
     }
   }
+
   fn forward(&mut self, mut delta: usize) -> usize {
     if self.head() + delta > self.max_head() {
       delta = self.head() + delta - self.max_head();
@@ -65,6 +72,7 @@ pub trait UnitCursor {
       0
     }
   }
+
   fn wrapping_backward(&mut self, delta: usize) {
     if delta > self.head() {
       self.end();
@@ -72,6 +80,7 @@ pub trait UnitCursor {
       *self.head_mut() -= delta;
     }
   }
+
   fn wrapping_forward(&mut self, delta: usize) {
     if self.head() + delta > self.max_head() {
       self.start();
@@ -80,6 +89,7 @@ pub trait UnitCursor {
     }
   }
 }
+
 pub trait UnitCursorMut: UnitCursor {
   fn units_mut(&mut self) -> &mut Vec<Self::Unit>;
 
@@ -90,6 +100,7 @@ pub trait UnitCursorMut: UnitCursor {
       true
     } else {false}
   }
+
   fn backspace(&mut self) -> bool {
     if self.peek_backward(1) == 0 {
       self.backward(1);
@@ -98,6 +109,7 @@ pub trait UnitCursorMut: UnitCursor {
       true
     } else {false}
   }
+
   fn insert(&mut self, c: Self::Unit) -> bool {
     let head = self.head();
     if head + 1 == self.units().len() || self.units().len() == 0 {
@@ -111,30 +123,23 @@ pub trait UnitCursorMut: UnitCursor {
     }
   }
 }
+
 pub trait WeightedCursor: UnitCursor {
   fn weighted_head(&self) -> usize;
   fn weighted_len(&self) -> usize;
-  fn weighted_range(&self, a: usize, b: usize) -> usize;
-  fn view_weighted(&self, start: usize, width: usize)
-    -> std::iter::Take<std::slice::Iter<'_, Self::Unit>>;
+  fn view_weighted(&self, start: usize, width: usize) -> std::iter::Take<std::slice::Iter<'_, Self::Unit>>;
 }
 impl<U> WeightedCursor for U where U: UnitCursor<Unit = char> {
   fn weighted_head(&self) -> usize {
-    self.units()[..self.head()].iter()
-      .fold(0, |acc, u| acc + u.width().unwrap_or(0))
+    self.units()[..self.head()].iter().fold(0, |acc, u| acc + u.width().unwrap_or(0))
   }
+
   fn weighted_len(&self) -> usize {
-    self.units().iter()
-      .fold(0, |acc, u| acc + u.width().unwrap_or(0))
+    self.units().iter().fold(0, |acc, u| acc + u.width().unwrap_or(0))
   }
-  fn weighted_range(&self, a: usize, b: usize) -> usize {
-    self.units()[a..b].iter()
-      .fold(0, |acc, u| acc + u.width().unwrap_or(0))
-  }
-  fn view_weighted(&self, start: usize, width: usize) 
-    -> std::iter::Take<std::slice::Iter<'_, Self::Unit>> 
-  {
-    let start = std::cmp::min(start, self.units().len().saturating_sub(1));
+
+  fn view_weighted(&self, start: usize, width: usize) -> std::iter::Take<std::slice::Iter<'_, Self::Unit>> {
+    let start         = std::cmp::min(start, self.units().len().saturating_sub(1));
     let text          = &self.units()[start..];
     let mut w         = 0;
     let mut max_width = 0;
@@ -145,6 +150,7 @@ impl<U> WeightedCursor for U where U: UnitCursor<Unit = char> {
     self.units()[start..].iter().take(max_width)
   }
 }
+
 #[derive(Clone, Debug, Default)]
 pub struct UnitCursorView {
   pub unit_head:  usize,
@@ -163,16 +169,17 @@ impl UnitCursorView {
       view_size
     }
   }
+
   pub fn scroll(&self) -> usize {
     self.unit_start
   }
+
   pub fn cursor(&self) -> u16 {
     self.view_head
   }
+
   // preserve cursor position if it still fits in the new bounds
-  pub fn resize<C: UnitCursor>
-    (&mut self, cursor: &C, new_view_start: u16, new_view_size: u16) 
-  {
+  pub fn resize<C: UnitCursor>(&mut self, cursor: &C, new_view_start: u16, new_view_size: u16) {
     let new_line_head   = cursor.head();
     let cursor_position = self.view_head - self.view_start;
     self.view_start     = new_view_start;
@@ -197,33 +204,37 @@ impl UnitCursorView {
   }
   pub fn update<C: UnitCursor>(&mut self, cursor: &C) -> bool {
     let mut scroll    = false;
-    let new_line_head = cursor.head();
+    let new_head = cursor.head();
+
     // forward
-    if new_line_head > self.unit_head {
-      let diff     = new_line_head - self.unit_head;
+    if new_head > self.unit_head {
+      let diff     = new_head - self.unit_head;
       let proposed = usize::from(self.view_head) + diff;
       let max      = usize::from(self.view_start + self.view_size) - 1;
+
       // scroll forward
       if proposed >= max {
         self.unit_start = self.unit_start + proposed - max;
         scroll          = true;
       }
+
     // backward
-    } else if new_line_head < self.unit_head {
-      let diff     = self.unit_head - new_line_head;
+    } else if new_head < self.unit_head {
+      let diff     = self.unit_head - new_head;
       let max_diff = usize::from(self.view_head.saturating_sub(self.view_start));
+
       // scroll backward
       if diff > max_diff {
         self.unit_start = self.unit_start.saturating_sub(diff - max_diff);
         scroll          = true;
       }
     }
-    self.view_head = self.view_start 
-      + u16::try_from(new_line_head - self.unit_start).unwrap();
-    self.unit_head = new_line_head;
+    self.view_head = self.view_start + u16::try_from(new_head - self.unit_start).unwrap();
+    self.unit_head = new_head;
     scroll
   }
 }
+
 #[derive(Clone, Debug, Default)]
 pub struct WeightedCursorView {
   pub weighted_head:  usize,
@@ -242,24 +253,25 @@ impl WeightedCursorView {
       view_size
     }
   }
+
   pub fn scroll(&self) -> usize {
     self.weighted_start
   }
+
   pub fn cursor(&self) -> u16 {
     self.view_head
   }
+
   // preserve cursor position if it still fits in the new bounds
-  pub fn resize<C: WeightedCursor>
-    (&mut self, cursor: &C, new_view_start: u16, new_view_size: u16) 
-  {
-    let new_line_head   = cursor.head();
-    let cursor_position = self.view_head - self.view_start;
-    self.view_start     = new_view_start;
-    self.view_size      = new_view_size;
-    self.weighted_head  = new_line_head;
+  pub fn resize<C: WeightedCursor>(&mut self, cursor: &C, new_view_start: u16, new_view_size: u16) {
+    let new_weighted_head = cursor.weighted_head();
+    let cursor_position   = self.view_head - self.view_start;
+    self.view_start       = new_view_start;
+    self.view_size        = new_view_size;
+    self.weighted_head    = new_weighted_head;
 
     // go to beginning of line
-    if new_line_head < usize::from(new_view_size) {
+    if new_weighted_head < usize::from(new_view_size) {
       self.weighted_start = 0;
       self.view_head      = self.view_start + u16::try_from(self.weighted_head).unwrap();
 
@@ -274,53 +286,55 @@ impl WeightedCursorView {
       self.weighted_start = self.weighted_head.saturating_sub(usize::from(cursor_position));
     }
   }
+
   pub fn update<C: WeightedCursor>(&mut self, cursor: &C) -> bool {
-    eprint!("start:\n {:#?}\n", self);
-    // move right
-    if self.weighted_head < cursor.weighted_head() {
-      let view_delta     = cursor.weighted_head() - self.weighted_head;
-      let max_view_delta = usize::from(
-        (self.view_start + self.view_size).saturating_sub(self.view_head));
-      // scroll right
-      if view_delta >= max_view_delta {
-        self.view_head      += u16::try_from(max_view_delta).unwrap();
-        self.weighted_start += view_delta.saturating_sub(max_view_delta);
-        self.weighted_head   = cursor.weighted_head();
-        eprint!("right scroll:\n {:#?}\n", self);
-        true
-      // no scroll
-      } else {
-        self.view_head     += u16::try_from(view_delta).unwrap();
-        self.weighted_head  = cursor.weighted_head();
-        eprint!("right:\n {:#?}\n", self);
-        false
-      }
-    // move left
-    } else if self.weighted_head > cursor.weighted_head() {
-      let view_delta     = self.weighted_head - cursor.weighted_head();
-      let max_view_delta = usize::from(self.view_head.saturating_sub(self.view_start));
-      // scroll left
-      if view_delta > max_view_delta {
-        self.weighted_start = self.weighted_start.saturating_sub(view_delta - max_view_delta);
-        self.view_head      = self.view_start 
-          + u16::try_from(cursor.weighted_head() - self.weighted_start).unwrap();
-        self.weighted_head  = cursor.weighted_head();
-        eprint!("left scroll:\n {:#?}\n", self);
-        true
-      // no scroll
-      } else {
-        self.view_head     -= u16::try_from(view_delta).unwrap();
-        self.weighted_head  = cursor.weighted_head();
-        eprint!("left:\n {:#?}\n", self);
-        false
-      }
+    let new_weighted_head = cursor.weighted_head();
+
     // no move
-    } else {
-      eprint!("no move:\n {:#?}\n", self);
+    if self.weighted_head == new_weighted_head {
       false
-    }
+
+    // move forward
+    } else if self.weighted_head < new_weighted_head {
+      let delta_size     = new_weighted_head - self.weighted_head;
+      let max_view_delta = (self.view_start + self.view_size).saturating_sub(self.view_head);
+
+      // no scroll
+      if delta_size <= usize::from(max_view_delta) { 
+        self.view_head     += u16::try_from(delta_size).unwrap();
+        self.weighted_head  = new_weighted_head;
+        false
+
+      // scroll forward
+      } else {
+        self.weighted_start += delta_size - usize::from(max_view_delta);
+        self.view_head      += max_view_delta;
+        self.weighted_head   = new_weighted_head;
+        true
+      }
+
+    // move backward
+    } else { 
+      let delta_size     = self.weighted_head - new_weighted_head;
+      let max_view_delta = self.view_head.saturating_sub(self.view_start);
+
+      // no scroll
+      if delta_size <= usize::from(max_view_delta) {
+        self.view_head     -= u16::try_from(delta_size).unwrap();
+        self.weighted_head  = new_weighted_head;
+        false
+
+      // scroll backward
+      } else { 
+        self.weighted_start = self.weighted_start.saturating_sub(delta_size - usize::from(max_view_delta));
+        self.view_head      = self.view_start + u16::try_from(new_weighted_head - self.weighted_start).unwrap();
+        self.weighted_head  = new_weighted_head;
+        true
+      }
+    } 
   }
 }
+
 #[derive(Clone, Debug, Default)]
 pub struct ScreenCursor {
   pub x: WeightedCursorView,
@@ -333,24 +347,30 @@ impl ScreenCursor {
       y: UnitCursorView::new(rect.y, rect.h),
     }
   }
+
   pub fn x_cursor(&self) -> u16 {
     self.x.view_head
   }
+
   pub fn y_cursor(&self) -> u16 {
     self.y.view_head
   }
+
   pub fn x_scroll(&self) -> usize {
     self.x.weighted_start
   }
+
   pub fn y_scroll(&self) -> usize {
     self.y.unit_start
   }
+
   pub fn resize<X, Y>(&mut self, plane: &Y, rect: &Rect) 
   where Y: UnitCursor<Unit = X> , X: UnitCursor<Unit = char>
   {
     self.y.resize(plane, rect.y, rect.h);
     self.x.resize(plane.current(), rect.x, rect.w);
   }
+
   pub fn update<X, Y>(&mut self, plane: &Y) -> bool 
   where Y: UnitCursor<Unit = X> , X: WeightedCursor
   {
@@ -358,6 +378,7 @@ impl ScreenCursor {
     let x = self.x.update(plane.current());
     x || y
   }
+
   pub fn write<W: Write>(&self, writer: &mut W) -> io::Result<()> {
     writer
       .queue(MoveTo(self.x.cursor(), self.y.cursor()))?

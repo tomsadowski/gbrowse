@@ -8,6 +8,7 @@ use crate::{
 };
 use std::ops::{Deref, DerefMut};
 
+
 pub struct TabList {
   pub head: usize,
   pub tabs: Vec<Tab>,
@@ -69,21 +70,25 @@ impl TabList {
     }
     self.reset_state();
   }
+
   pub fn delete(&mut self) {
     if self.tabs.len() > 1 {
       self.tabs.remove(self.head);
       self.wrapping_backward(1);
     }
   }
+
   pub fn new(tab: Tab) -> Self {
     Self {tabs: vec![tab], head: 0}
   }
+
   pub fn resize(&mut self, rect: &Rect) {
     for tab in self.tabs.iter_mut() {
       tab.resize(rect);
     }
   }
 }
+
 pub struct Tab {
   pub url_str: String,
   pub gemdoc:  Option<GemDoc>,

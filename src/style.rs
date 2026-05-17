@@ -12,6 +12,7 @@ use crossterm::{
 use toml::Value;
 use std::{fmt, str::FromStr};
 
+
 pub fn parse_color(v: &Value) -> Result<Color, String> {
   if let Value::String(s) = v {
     fn try_hex(c: char) -> Result<u8, String> {
@@ -50,6 +51,7 @@ pub fn parse_color(v: &Value) -> Result<Color, String> {
     Err(format!("could not parse color from value {}", v))
   }
 }
+
 #[derive(Clone, Debug, Default)]
 pub struct Style {
   pub underline: bool,
@@ -74,6 +76,7 @@ impl Command for Style {
     Ok(())
   }
 }
+
 #[derive(Debug)]
 pub enum StyleTextField {
   General,
@@ -422,8 +425,7 @@ impl UserTable<BorderField> for BorderSpec {
           }
         }
       }
-      (f, v) => 
-        return Err(format!("field {:?} value {:?} not valid here", f, v))
+      (f, v) => return Err(format!("field {:?} value {:?} not valid here", f, v))
     }
     Ok(())
   }

@@ -25,6 +25,7 @@ pub trait UserTable<F>: Sized where F: FromStr<Err = String> {
     }
     Ok(self)
   }
+
   fn read_table_in_place(&mut self, table: Table) -> Result<(), String> {
     for (key, value) in table.into_iter() {
       let field = F::from_str(&key)?;
@@ -33,6 +34,7 @@ pub trait UserTable<F>: Sized where F: FromStr<Err = String> {
     Ok(())
   }
 }
+
 #[derive(Debug)]
 enum UserField {
   InitUrl, 
@@ -77,6 +79,7 @@ impl UserField {
     ]
   }
 }
+
 #[derive(Clone, Debug)]
 pub struct User {
   pub timeout:        u64,
@@ -149,14 +152,17 @@ impl User {
     self.keys.read_table_in_place(table)?;
     Ok(())
   }
+
   pub fn update_style_from_str(&mut self, s: &str) -> Result<(), String> {  
     let table = s.parse::<Table>().map_err(|e| e.to_string())?;
     self.style.read_table_in_place(table)?;
     Ok(())
   }
+
   pub fn get_settings(&self) -> Vec<String> {  
     format!("{:#?}", self).lines().map(|s| s.into()).collect()
   }
+  
   pub fn get_frame(&self, screen: &Rect) -> Frame {
     Frame::new(
         &screen, 
@@ -167,6 +173,7 @@ impl User {
       .with_banner_style(&self.style.banner.style)
       .with_margin_style(&self.style.general.style)
   }
+
   pub fn update_tab_style(&self, rect: &Rect, tab: &mut Tab) {  
     if let Some(gem) = &tab.gemdoc {
       tab.content.restyle(
@@ -176,6 +183,7 @@ impl User {
     }
     tab.content.style = self.style.general.style.clone();
   }
+
   pub fn get_gem_textbox(&self, rect: &Rect, gem: &GemDoc) -> TextBox {
     TextBox::new(
         gem.doc.iter().map(|gem| self.gem_to_styled(gem)).collect(),
@@ -183,11 +191,13 @@ impl User {
       )
       .with_style(&self.style.general.style)
   }
+
   pub fn get_info_styledtext(&self, msg: &str) -> StyledText {
     StyledText::from(msg)
       .with_style(&self.style.info.style)
       .wrap(self.style.info.wrap)
   }
+
   pub fn gem_to_styled(&self, gemtext: &GemText) -> StyledText {
     match gemtext.tag {
       GemTag::HeadingOne => 

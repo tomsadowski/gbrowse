@@ -23,6 +23,7 @@ use crate::{common as c, app::App};
 use crossterm::{QueueableCommand, terminal, event, cursor::{SetCursorStyle}};
 use std::{env, time::Duration, io::{self, Write, stdout}};
 
+
 fn main() -> io::Result<()> {
   // initialize app
   let mut app = {
