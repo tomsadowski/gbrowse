@@ -34,8 +34,12 @@ pub trait UnitCursor {
   }
 
   fn view_units(&self, start: usize, width: usize) -> std::iter::Take<std::slice::Iter<'_, Self::Unit>> {
-    let start = std::cmp::min(start, self.units().len().saturating_sub(1));
-    self.units()[start..].iter().take(width) 
+    if start < self.units().len() {
+      let start = std::cmp::min(start, self.units().len().saturating_sub(1));
+      self.units()[start..].iter().take(width) 
+    } else {
+      self.units().iter().take(0) 
+    }
   }
 
   fn peek_backward(&self, delta: usize) -> usize {
@@ -139,15 +143,19 @@ impl<U> WeightedCursor for U where U: UnitCursor<Unit = char> {
   }
 
   fn view_weighted(&self, start: usize, width: usize) -> std::iter::Take<std::slice::Iter<'_, Self::Unit>> {
-    let start         = std::cmp::min(start, self.units().len().saturating_sub(1));
-    let text          = &self.units()[start..];
-    let mut w         = 0;
-    let mut max_width = 0;
-    while w < width && max_width < text.len() {
-      w         += &text[max_width].width().unwrap_or(0);
-      max_width += 1;
+    if start < self.units().len() {
+      let start         = std::cmp::min(start, self.units().len().saturating_sub(1));
+      let text          = &self.units()[start..];
+      let mut w         = 0;
+      let mut max_width = 0;
+      while w < width && max_width < text.len() {
+        w         += &text[max_width].width().unwrap_or(0);
+        max_width += 1;
+      }
+      self.units()[start..].iter().take(max_width)
+    } else {
+      self.units().iter().take(0) 
     }
-    self.units()[start..].iter().take(max_width)
   }
 }
 
