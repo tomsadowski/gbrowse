@@ -8,7 +8,7 @@ use crossterm::{
   cursor::{self, MoveTo},
 };
 use unicode_width::UnicodeWidthChar;
-use std::io::{self, Write};
+use std::{iter::Take, slice, io::{self, Write}};
 
 pub trait UnitCursor {
   type Unit;
@@ -33,12 +33,11 @@ pub trait UnitCursor {
     *self.head_mut() = self.max_head();
   }
 
-  fn view_units(&self, start: usize, width: usize) -> std::iter::Take<std::slice::Iter<'_, Self::Unit>> {
-    if start < self.units().len() {
-      let start = std::cmp::min(start, self.units().len().saturating_sub(1));
-      self.units()[start..].iter().take(width) 
-    } else {
+  fn view_units(&self, start: usize, width: usize) -> Take<slice::Iter<'_, Self::Unit>> {
+    if start >= self.units().len() {
       self.units().iter().take(0) 
+    } else {
+      self.units()[start..].iter().take(width) 
     }
   }
 
@@ -131,7 +130,7 @@ pub trait UnitCursorMut: UnitCursor {
 pub trait WeightedCursor: UnitCursor {
   fn weighted_head(&self) -> usize;
   fn weighted_len(&self) -> usize;
-  fn view_weighted(&self, start: usize, width: usize) -> std::iter::Take<std::slice::Iter<'_, Self::Unit>>;
+  fn view_weighted(&self, start: usize, width: usize) -> Take<slice::Iter<'_, Self::Unit>>;
 }
 impl<U> WeightedCursor for U where U: UnitCursor<Unit = char> {
   fn weighted_head(&self) -> usize {
@@ -142,19 +141,18 @@ impl<U> WeightedCursor for U where U: UnitCursor<Unit = char> {
     self.units().iter().fold(0, |acc, u| acc + u.width().unwrap_or(0))
   }
 
-  fn view_weighted(&self, start: usize, width: usize) -> std::iter::Take<std::slice::Iter<'_, Self::Unit>> {
-    if start < self.units().len() {
-      let start         = std::cmp::min(start, self.units().len().saturating_sub(1));
-      let text          = &self.units()[start..];
-      let mut w         = 0;
-      let mut max_width = 0;
-      while w < width && max_width < text.len() {
-        w         += &text[max_width].width().unwrap_or(0);
-        max_width += 1;
-      }
-      self.units()[start..].iter().take(max_width)
-    } else {
+  fn view_weighted(&self, start: usize, width: usize) -> Take<slice::Iter<'_, Self::Unit>> {
+    if start >= self.units().len() {
       self.units().iter().take(0) 
+    } else {
+      let text           = &self.units()[start..];
+      let mut acc_width  = 0;
+      let mut unit_count = 0;
+      while acc_width < width && unit_count < text.len() {
+        acc_width  += &text[unit_count].width().unwrap_or(0);
+        unit_count += 1;
+      }
+      text.iter().take(unit_count)
     }
   }
 }
