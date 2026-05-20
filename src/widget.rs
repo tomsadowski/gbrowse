@@ -37,36 +37,29 @@ impl TextBox {
       content,
     }
   }
-
   pub fn with_style(mut self, style: &Style) -> Self {
     self.style = style.clone();
     self
   }
-
   pub fn write_unused_x(mut self, write: bool) -> Self {
     self.write_unused_x = write;
     self
   }
-
   pub fn write_unused_y(mut self, write: bool) -> Self {
     self.write_unused_y = write;
     self
   }
-
   pub fn write_unused(mut self, write: bool) -> Self {
     self.write_unused_x = write;
     self.write_unused_y = write;
     self
   }
-
   pub fn get_source_idx(&self) -> usize {
     self.content.current().idx
   }
-
   pub fn get_source(&self) -> String {
     self.content.get_source()
   }
-
   pub fn used_rect(&self) -> Rect {
     if let Ok(h) = u16::try_from(self.content.units().len()) {
       self.rect.clone().cap_height(h)
@@ -74,53 +67,45 @@ impl TextBox {
       self.rect.clone()
     }
   }
-
   pub fn reset_state(&mut self) {
     self.write = true;
   }
-
   pub fn restyle(&mut self, text: Vec<StyledText>, rect: &Rect) {
     self.rect = rect.clone();
     self.content.restyle(text, rect.w);
     self.cursor.resize(&self.content, &rect);
     self.reset_state();
   }
-
   pub fn resize(&mut self, rect: &Rect) {
     self.rect = rect.clone();
     self.content.resize(rect.w);
     self.cursor.resize(&self.content, &rect);
     self.reset_state();
   }
-
   pub fn left(&mut self, delta: usize) -> bool {
     if self.content.left(delta) == 0 {
       self.write = self.cursor.update(&self.content);
       true
     } else {false}
   }
-
   pub fn right(&mut self, delta: usize) -> bool {
     if self.content.right(delta) == 0 {
       self.write = self.cursor.update(&self.content);
       true
     } else {false}
   }
-
   pub fn down(&mut self, delta: usize) -> bool {
     if self.content.down(delta) {
       self.write = self.cursor.update(&self.content);
       true
     } else {false}
   }
-
   pub fn up(&mut self, delta: usize) -> bool {
     if self.content.up(delta) {
       self.write = self.cursor.update(&self.content);
       true
     } else {false}
   }
-
   pub fn clear<W: Write>(&self, writer: &mut W) -> io::Result<()> {
     writer.queue(SetAttribute(Attribute::Reset))?.queue(&self.style)?;
     for y in self.rect.y_range() {
@@ -131,14 +116,12 @@ impl TextBox {
     writer.queue(SetAttribute(Attribute::Reset))?;
     Ok(())
   }
-
   pub fn write<W: Write>(&self, writer: &mut W) -> io::Result<()> {
     if self.write {
       self.write_all(writer)?;
     }
     Ok(())
   }
-
   pub fn write_all<W: Write>(&self, writer: &mut W) -> io::Result<()> {
     let mut x = self.rect.x;
     let mut y = self.rect.y;
@@ -201,41 +184,34 @@ impl EditBox {
       content, 
     }
   }
-
   pub fn with_style(mut self, style: &Style) -> Self {
     self.style = style.clone();
     self
   }
-
   pub fn write_unused_x(mut self, write: bool) -> Self {
     self.write_unused_x = write;
     self
   }
-
   pub fn resize(&mut self, rect: &Rect) {
     self.rect = rect.top_row();
     self.cursor.x.resize(self.content.weighted_head(), self.rect.x, self.rect.w);
     self.reset_state();
   }
-
   pub fn reset_state(&mut self) {
     self.write = true;
   }
-
   pub fn left(&mut self, delta: usize) -> bool {
     if self.content.backward(delta) == 0 {
       self.write = self.cursor.x.update(self.content.weighted_head());
       true
     } else {false}
   }
-
   pub fn right(&mut self, delta: usize) -> bool {
     if self.content.forward(delta) == 0 {
       self.write = self.cursor.x.update(self.content.weighted_head());
       true
     } else {false}
   }
-
   pub fn delete(&mut self) -> bool {
     if self.content.delete() {
       self.cursor.x.update(self.content.weighted_head());
@@ -243,7 +219,6 @@ impl EditBox {
       true
     } else {false}
   }
-
   pub fn backspace(&mut self) -> bool {
     if self.content.backspace() {
       self.cursor.x.update(self.content.weighted_head());
@@ -251,7 +226,6 @@ impl EditBox {
       true
     } else {false}
   }
-
   pub fn insert(&mut self, c: char) -> bool {
     if self.content.insert(c) {
       self.cursor.x.update(self.content.weighted_head());
@@ -259,14 +233,12 @@ impl EditBox {
       true
     } else {false}
   }
-
   pub fn write<W: Write>(&self, writer: &mut W) -> io::Result<()> {
     if self.write {
       self.write_all(writer)?;
     }
     Ok(())
   }
-
   pub fn write_all<W: Write>(&self, writer: &mut W) -> io::Result<()> {
     let mut x = self.rect.x;
     let     y = self.rect.y;
@@ -311,48 +283,74 @@ impl Dialog {
       Response::Select(r) => r.resize(&rect.cropped_north(self.prompt.used_rect().h)),
     }
   }
-
   pub fn select(prompt: &str, input: Vec<String>, style: Style, rect: &Rect) -> Self {
-    let ptext = StyledText::from(prompt).with_style(&style);
-    let pbox  = TextBox::new(vec![ptext], &rect.cropped_south(2)).write_unused_y(false);
-    let rtext = input.iter().map(|s| StyledText::from(s.as_str()).with_style(&style));
-    let rbox  = TextBox::new(rtext.collect(), &rect.cropped_north(pbox.used_rect().h))
-      .write_unused_y(false);
+    let prompt_box = TextBox::new(
+        vec![StyledText::from(prompt).with_style(&style)], 
+        &rect.cropped_south(2)
+      )
+      .write_unused_y(false)
+      .with_style(&style);
+    let response_box  = TextBox::new(
+        input.iter().map(|s| StyledText::from(s.as_str()).with_style(&style)).collect(), 
+        &rect.cropped_north(prompt_box.used_rect().h)
+      )
+      .write_unused_y(false)
+      .with_style(&style);
     Dialog {
-      prompt:   pbox,
-      response: Response::Select(rbox),
+      prompt:   prompt_box,
+      response: Response::Select(response_box),
     }
   }
-
   pub fn edit(prompt: &str, style: Style, rect: &Rect) -> Self {
-    let ptext = StyledText::from(prompt).with_style(&style);
-    let pbox  = TextBox::new(vec![ptext], &rect.cropped_south(2)).write_unused_y(false);
-    let rbox  = EditBox::new(&pbox.used_rect().bottom_row()).with_style(&style);
+    let prompt_box = TextBox::new(
+        vec![StyledText::from(prompt).with_style(&style)],
+        &rect.cropped_south(2)
+      )
+      .write_unused_y(false)
+      .with_style(&style);
+    let response_box  = EditBox::new(
+        &prompt_box.used_rect().bottom_row()
+      )
+      .with_style(&style);
     Dialog {
-      prompt:   pbox,
-      response: Response::Edit(rbox),
+      prompt:   prompt_box,
+      response: Response::Edit(response_box),
     }
   }
-
   pub fn ask(prompt: &str, input: &str, style: Style, rect: &Rect) -> Self {
-    let ptext = StyledText::from(prompt).with_style(&style);
-    let pbox  = TextBox::new(vec![ptext], &rect.cropped_south(2)).write_unused_y(false);
-    let rtext = StyledText::from(input).with_style(&style);
-    let rbox  = TextBox::new(vec![rtext], &pbox.used_rect().bottom_row()).write_unused_y(false);
+    let prompt_box = TextBox::new(
+        vec![StyledText::from(prompt).with_style(&style)], 
+        &rect.cropped_south(2)
+      )
+      .write_unused_y(false)
+      .with_style(&style);
+    let response_box = TextBox::new(
+        vec![StyledText::from(input).with_style(&style)], 
+        &prompt_box.used_rect().bottom_row()
+      )
+      .write_unused_y(false)
+      .with_style(&style);
     Dialog {
-      prompt:   pbox,
-      response: Response::Ask(rbox),
+      prompt:   prompt_box,
+      response: Response::Ask(response_box),
     }
   }
-
   pub fn ack(prompt: &str, input: &str, style: Style, rect: &Rect) -> Self {
-    let ptext = StyledText::from(prompt).with_style(&style);
-    let pbox  = TextBox::new(vec![ptext], &rect.cropped_south(2)).write_unused_y(false);
-    let rtext = StyledText::from(input).with_style(&style);
-    let rbox  = TextBox::new(vec![rtext], &pbox.used_rect().bottom_row()).write_unused_y(false);
+    let prompt_box = TextBox::new(
+        vec![StyledText::from(prompt).with_style(&style)], 
+        &rect.cropped_south(2)
+      )
+      .write_unused_y(false)
+      .with_style(&style);
+    let response_box = TextBox::new(
+        vec![StyledText::from(input).with_style(&style)], 
+        &prompt_box.used_rect().bottom_row()
+      )
+      .write_unused_y(false)
+      .with_style(&style);
     Dialog {
-      prompt:   pbox,
-      response: Response::Ack(rbox),
+      prompt:   prompt_box,
+      response: Response::Ack(response_box),
     }
   }
 }

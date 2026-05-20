@@ -9,6 +9,37 @@ use std::ops::{Deref, DerefMut};
 
 
 #[derive(Clone, Debug, Default)]
+pub struct TextLine {
+  pub head: usize,
+  pub text: Vec<char>,
+}
+impl From<&str> for TextLine {
+  fn from(item: &str) -> Self {
+    Self {head: 0, text: item.chars().collect()}
+  }
+}
+impl From<Vec<char>> for TextLine {
+  fn from(item: Vec<char>) -> Self {
+    Self {head: 0, text: item}
+  }
+}
+impl UnitCursor for TextLine {
+  type Unit = char;
+  fn units(&self) -> &Vec<char> {
+    &self.text
+  }
+  fn head_mut(&mut self) -> &mut usize {
+    &mut self.head
+  }
+  fn head(&self) -> usize {
+    self.head
+  }
+  fn max_head(&self) -> usize {
+    self.text.len().saturating_sub(1)
+  }
+}
+
+#[derive(Clone, Debug, Default)]
 pub struct EditLine {
   pub head: usize,
   pub text: Vec<char>,
@@ -41,37 +72,6 @@ impl UnitCursor for EditLine {
 impl UnitCursorMut for EditLine {
   fn units_mut(&mut self) -> &mut Vec<char> {
     &mut self.text
-  }
-}
-
-#[derive(Clone, Debug, Default)]
-pub struct TextLine {
-  pub head: usize,
-  pub text: Vec<char>,
-}
-impl From<&str> for TextLine {
-  fn from(item: &str) -> Self {
-    Self {head: 0, text: item.chars().collect()}
-  }
-}
-impl From<Vec<char>> for TextLine {
-  fn from(item: Vec<char>) -> Self {
-    Self {head: 0, text: item}
-  }
-}
-impl UnitCursor for TextLine {
-  type Unit = char;
-  fn units(&self) -> &Vec<char> {
-    &self.text
-  }
-  fn head_mut(&mut self) -> &mut usize {
-    &mut self.head
-  }
-  fn head(&self) -> usize {
-    self.head
-  }
-  fn max_head(&self) -> usize {
-    self.text.len().saturating_sub(1)
   }
 }
 
