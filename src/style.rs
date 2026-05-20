@@ -29,8 +29,24 @@ pub fn parse_color(v: &Value) -> Result<Color, String> {
 
 pub fn parse_color_name(s: &str) -> Result<Color, String> {
   match s {
-    "Red"    | "red"    => Ok(Color::Red),
-    "Yellow" | "yellow" => Ok(Color::Yellow),
+    "Red"         | "red"         => Ok(Color::Red),
+    "Yellow"      | "yellow"      => Ok(Color::Yellow),
+    "Green"       | "green"       => Ok(Color::Green),
+    "Cyan"        | "cyan"        => Ok(Color::Cyan),
+    "Blue"        | "blue"        => Ok(Color::Blue),
+    "Magenta"     | "magenta"     => Ok(Color::Magenta),
+    "Black"       | "black"       => Ok(Color::Black),
+    "White"       | "white"       => Ok(Color::White),
+    "Grey"        | "grey"     | 
+    "Gray"        | "gray"        => Ok(Color::Grey),
+    "DarkGrey"    | "darkgrey" | 
+    "DarkGray"    | "darkgray"    => Ok(Color::DarkGrey),
+    "DarkRed"     | "darkred"     => Ok(Color::DarkRed),
+    "DarkYellow"  | "darkyellow"  => Ok(Color::DarkYellow),
+    "DarkGreen"   | "darkgreen"   => Ok(Color::DarkGreen),
+    "DarkCyan"    | "darkcyan"    => Ok(Color::DarkCyan),
+    "DarkBlue"    | "darkblue"    => Ok(Color::DarkBlue),
+    "DarkMagenta" | "darkmagenta" => Ok(Color::DarkMagenta),
     _ => Err(format!("could not parse color from value {}", s))
   }
 }
@@ -372,12 +388,13 @@ impl FromStr for CornerValue {
 }
 #[derive(Debug, Clone)]
 pub enum BracketValue {
-  Tortoise, E, Integral, Square,
+  Tortoise, E, Integral, Square, Space,
 }
 impl FromStr for BracketValue {
   type Err = String;
   fn from_str(s: &str) -> Result<Self, Self::Err> {
     match s {
+      "space"                   => Ok(BracketValue::Space),
       "tortoise" | "tort" | "t" => Ok(BracketValue::Tortoise),
       "integral" | "int"  | "i" | 
       "j"        | "J"          => Ok(BracketValue::Integral),
@@ -425,6 +442,10 @@ impl UserTable<BorderField> for BorderSpec {
       }
       (BorderField::Bracket, Value::String(v)) => {
         match BracketValue::from_str(&v)? {
+          BracketValue::Space => {
+            self.open  = ' ';
+            self.close = ' ';
+          }
           BracketValue::Tortoise => {
             self.open  = c::OPEN_TORT;
             self.close = c::CLOSE_TORT;
