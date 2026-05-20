@@ -214,7 +214,7 @@ impl EditBox {
 
   pub fn resize(&mut self, rect: &Rect) {
     self.rect = rect.top_row();
-    self.cursor.x.resize(&self.content, self.rect.x, self.rect.w);
+    self.cursor.x.resize(self.content.weighted_head(), self.rect.x, self.rect.w);
     self.reset_state();
   }
 
@@ -224,14 +224,14 @@ impl EditBox {
 
   pub fn left(&mut self, delta: usize) -> bool {
     if self.content.backward(delta) == 0 {
-      self.write = self.cursor.x.update(&self.content);
+      self.write = self.cursor.x.update(self.content.weighted_head());
       true
     } else {false}
   }
 
   pub fn right(&mut self, delta: usize) -> bool {
     if self.content.forward(delta) == 0 {
-      self.write = self.cursor.x.update(&self.content);
+      self.write = self.cursor.x.update(self.content.weighted_head());
       true
     } else {false}
   }
@@ -239,7 +239,7 @@ impl EditBox {
   pub fn delete(&mut self) -> bool {
     if self.content.delete() {
       self.write_unused_x = true;
-      self.cursor.x.update(&self.content);
+      self.cursor.x.update(self.content.weighted_head());
       self.write = true;
       true
     } else {false}
@@ -248,7 +248,7 @@ impl EditBox {
   pub fn backspace(&mut self) -> bool {
     if self.content.backspace() {
       self.write_unused_x = true;
-      self.cursor.x.update(&self.content);
+      self.cursor.x.update(self.content.weighted_head());
       self.write = true;
       true
     } else {false}
@@ -256,7 +256,7 @@ impl EditBox {
 
   pub fn insert(&mut self, c: char) -> bool {
     if self.content.insert(c) {
-      self.cursor.x.update(&self.content);
+      self.cursor.x.update(self.content.weighted_head());
       self.write = true;
       true
     } else {false}
