@@ -195,7 +195,7 @@ impl EditBox {
     Self {
       rect:           rect.clone(),
       style:          Style::default(),
-      write_unused_x: false,
+      write_unused_x: true,
       write:          true,
       cursor: pos, 
       content, 
@@ -238,7 +238,6 @@ impl EditBox {
 
   pub fn delete(&mut self) -> bool {
     if self.content.delete() {
-      self.write_unused_x = true;
       self.cursor.x.update(self.content.weighted_head());
       self.write = true;
       true
@@ -247,7 +246,6 @@ impl EditBox {
 
   pub fn backspace(&mut self) -> bool {
     if self.content.backspace() {
-      self.write_unused_x = true;
       self.cursor.x.update(self.content.weighted_head());
       self.write = true;
       true
@@ -316,10 +314,10 @@ impl Dialog {
 
   pub fn select(prompt: &str, input: Vec<String>, style: Style, rect: &Rect) -> Self {
     let ptext = StyledText::from(prompt).with_style(&style);
-    let pbox  = TextBox::new(vec![ptext], &rect.cropped_south(2)).write_unused(false);
+    let pbox  = TextBox::new(vec![ptext], &rect.cropped_south(2)).write_unused_y(false);
     let rtext = input.iter().map(|s| StyledText::from(s.as_str()).with_style(&style));
     let rbox  = TextBox::new(rtext.collect(), &rect.cropped_north(pbox.used_rect().h))
-      .write_unused(false);
+      .write_unused_y(false);
     Dialog {
       prompt:   pbox,
       response: Response::Select(rbox),
@@ -328,7 +326,7 @@ impl Dialog {
 
   pub fn edit(prompt: &str, style: Style, rect: &Rect) -> Self {
     let ptext = StyledText::from(prompt).with_style(&style);
-    let pbox  = TextBox::new(vec![ptext], &rect.cropped_south(2)).write_unused(false);
+    let pbox  = TextBox::new(vec![ptext], &rect.cropped_south(2)).write_unused_y(false);
     let rbox  = EditBox::new(&pbox.used_rect().bottom_row()).with_style(&style);
     Dialog {
       prompt:   pbox,
@@ -338,9 +336,9 @@ impl Dialog {
 
   pub fn ask(prompt: &str, input: &str, style: Style, rect: &Rect) -> Self {
     let ptext = StyledText::from(prompt).with_style(&style);
-    let pbox  = TextBox::new(vec![ptext], &rect.cropped_south(2)).write_unused(false);
+    let pbox  = TextBox::new(vec![ptext], &rect.cropped_south(2)).write_unused_y(false);
     let rtext = StyledText::from(input).with_style(&style);
-    let rbox  = TextBox::new(vec![rtext], &pbox.used_rect().bottom_row()).write_unused(false);
+    let rbox  = TextBox::new(vec![rtext], &pbox.used_rect().bottom_row()).write_unused_y(false);
     Dialog {
       prompt:   pbox,
       response: Response::Ask(rbox),
@@ -349,9 +347,9 @@ impl Dialog {
 
   pub fn ack(prompt: &str, input: &str, style: Style, rect: &Rect) -> Self {
     let ptext = StyledText::from(prompt).with_style(&style);
-    let pbox  = TextBox::new(vec![ptext], &rect.cropped_south(2)).write_unused(false);
+    let pbox  = TextBox::new(vec![ptext], &rect.cropped_south(2)).write_unused_y(false);
     let rtext = StyledText::from(input).with_style(&style);
-    let rbox  = TextBox::new(vec![rtext], &pbox.used_rect().bottom_row()).write_unused(false);
+    let rbox  = TextBox::new(vec![rtext], &pbox.used_rect().bottom_row()).write_unused_y(false);
     Dialog {
       prompt:   pbox,
       response: Response::Ack(rbox),
