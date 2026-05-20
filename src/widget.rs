@@ -145,7 +145,6 @@ impl TextBox {
     writer
       .queue(MoveTo(x, y))?
       .queue(SetAttribute(Attribute::Reset))?.queue(&self.style)?;
-
     for line in self.content.view_units(self.cursor.y_scroll(), self.rect.h.into()) {
       writer.queue(&self.content.source[line.idx].style)?;
       for c in line.view_weighted(self.cursor.x_scroll(), self.rect.w.into()) {
@@ -319,7 +318,8 @@ impl Dialog {
     let ptext = StyledText::from(prompt).with_style(&style);
     let pbox  = TextBox::new(vec![ptext], &rect.cropped_south(2)).write_unused(false);
     let rtext = input.iter().map(|s| StyledText::from(s.as_str()).with_style(&style));
-    let rbox  = TextBox::new(rtext.collect(), &rect.cropped_north(pbox.used_rect().h)).write_unused(false);
+    let rbox  = TextBox::new(rtext.collect(), &rect.cropped_north(pbox.used_rect().h))
+      .write_unused(false);
     Dialog {
       prompt:   pbox,
       response: Response::Select(rbox),

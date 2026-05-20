@@ -191,44 +191,38 @@ impl UnitCursorView {
     self.view_start     = new_view_start;
     self.view_size      = new_view_size;
     self.unit_head      = new_line_head;
-
     // go to beginning of line
     if new_line_head < usize::from(new_view_size) {
       self.unit_start = 0;
       self.view_head  = self.view_start + u16::try_from(self.unit_head).unwrap();
-
     // cursor_position must be lowered to fit within new bounds
     } else if cursor_position > new_view_size - 1 {
       self.view_head  = self.view_start + self.view_size - 1;
       self.unit_start = self.unit_head - usize::from(self.view_size - 1);
-
     // cursor_position can be preserved
     } else {
       self.view_head  = self.view_start + cursor_position;
       self.unit_start = self.unit_head.saturating_sub(usize::from(cursor_position));
     }
   }
-  pub fn update<C: UnitCursor>(&mut self, cursor: &C) -> bool {
-    let mut scroll    = false;
-    let new_head = cursor.head();
 
+  pub fn update<C: UnitCursor>(&mut self, cursor: &C) -> bool {
+    let mut scroll = false;
+    let new_head   = cursor.head();
     // forward
     if new_head > self.unit_head {
       let diff     = new_head - self.unit_head;
       let proposed = usize::from(self.view_head) + diff;
       let max      = usize::from(self.view_start + self.view_size) - 1;
-
       // scroll forward
       if proposed >= max {
         self.unit_start = self.unit_start + proposed - max;
         scroll          = true;
       }
-
     // backward
     } else if new_head < self.unit_head {
       let diff     = self.unit_head - new_head;
       let max_diff = usize::from(self.view_head.saturating_sub(self.view_start));
-
       // scroll backward
       if diff > max_diff {
         self.unit_start = self.unit_start.saturating_sub(diff - max_diff);
@@ -275,17 +269,14 @@ impl WeightedCursorView {
     self.view_start       = new_view_start;
     self.view_size        = new_view_size;
     self.weighted_head    = new_weighted_head;
-
     // go to beginning of line
     if new_weighted_head < usize::from(new_view_size) {
       self.weighted_start = 0;
       self.view_head      = self.view_start + u16::try_from(self.weighted_head).unwrap();
-
     // cursor_position must be lowered to fit within new bounds
     } else if cursor_position > new_view_size - 1 {
       self.view_head      = self.view_start + self.view_size - 1;
       self.weighted_start = self.weighted_head - usize::from(self.view_size - 1);
-
     // cursor_position can be preserved
     } else {
       self.view_head      = self.view_start + cursor_position;
@@ -295,22 +286,18 @@ impl WeightedCursorView {
 
   pub fn update<C: WeightedCursor>(&mut self, cursor: &C) -> bool {
     let new_weighted_head = cursor.weighted_head();
-
     // no move
     if self.weighted_head == new_weighted_head {
       false
-
     // move forward
     } else if self.weighted_head < new_weighted_head {
       let delta_size     = new_weighted_head - self.weighted_head;
       let max_view_delta = (self.view_start + self.view_size).saturating_sub(self.view_head);
-
       // no scroll
       if delta_size <= usize::from(max_view_delta) { 
         self.view_head     += u16::try_from(delta_size).unwrap();
         self.weighted_head  = new_weighted_head;
         false
-
       // scroll forward
       } else {
         self.weighted_start += delta_size - usize::from(max_view_delta);
@@ -318,22 +305,21 @@ impl WeightedCursorView {
         self.weighted_head   = new_weighted_head;
         true
       }
-
     // move backward
     } else { 
       let delta_size     = self.weighted_head - new_weighted_head;
       let max_view_delta = self.view_head.saturating_sub(self.view_start);
-
       // no scroll
       if delta_size <= usize::from(max_view_delta) {
         self.view_head     -= u16::try_from(delta_size).unwrap();
         self.weighted_head  = new_weighted_head;
         false
-
       // scroll backward
       } else { 
-        self.weighted_start = self.weighted_start.saturating_sub(delta_size - usize::from(max_view_delta));
-        self.view_head      = self.view_start + u16::try_from(new_weighted_head - self.weighted_start).unwrap();
+        self.weighted_start = self.weighted_start
+          .saturating_sub(delta_size - usize::from(max_view_delta));
+        self.view_head      = self.view_start 
+          + u16::try_from(new_weighted_head - self.weighted_start).unwrap();
         self.weighted_head  = new_weighted_head;
         true
       }
