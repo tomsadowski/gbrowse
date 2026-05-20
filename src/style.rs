@@ -3,7 +3,7 @@
 use crate::{
   common as c,
   user::UserTable,
-  rect::Rect,
+  view::Rect,
 };
 use crossterm::{
   Command,

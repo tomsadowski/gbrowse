@@ -2,7 +2,7 @@
 
 use crate::{
   cursor::{UnitCursor, UnitCursorMut},
-  rect::Rect,
+  view::Rect,
   widget::TextBox,
   protocol::GemDoc,
 };

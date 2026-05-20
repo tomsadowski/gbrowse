@@ -3,12 +3,11 @@
 use crate::{
   common as c,
   cursor::UnitCursor,
-  frame::Frame,
   user::User,
   keys::Action,
   tab::{Tab, TabList},
-  widget::{Response, Dialog},
-  rect::Rect,
+  widget::{Frame, Response, Dialog},
+  view::Rect,
   protocol::{Request, GemDoc, GemTag, Status, Scheme},
 };
 use crossterm::{

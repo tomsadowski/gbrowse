@@ -9,9 +9,8 @@
 mod app;
 mod common;
 mod cursor;
-mod frame;
 mod protocol;
-mod rect;
+mod view;
 mod tab;
 mod text;
 mod user;

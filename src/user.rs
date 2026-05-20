@@ -6,8 +6,8 @@ use crate::{
   style::StyleModTable,
   tab::Tab,
   widget::TextBox,
-  rect::Rect,
-  frame::Frame,
+  view::Rect,
+  widget::Frame,
   text::StyledText,
   protocol::{GemText, GemTag, GemDoc},
 };
