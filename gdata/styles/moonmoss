@@ -3,17 +3,17 @@
 screen_margin = {n = 1, s = 1, e = 4, w = 4}
 text_margin   = {n = 1, s = 1, e = 4, w = 4}
 
-border    = {fg = "505858", bg = "202425", corner = "round", bracket = "tort"}
-banner    = {fg = "808888"}
-info      = {fg = "c4c0a0", bg = "202425"}
-general   = {fg = "c4c0a0", bg = "202425"}
-list      = {fg = "c4c0a0"}
-preformat = {fg = "d0a8a8", wrap = false}
-quote     = {fg = "d0a8a8"}
-link      = {fg = "a8c8c4", underline = true}
-header1   = {fg = "c89060", bold = true, underline = true}
-header2   = {fg = "c89060", bold = true}
-header3   = {fg = "c89060"}
+border    = {fg = "#505858", bg = "#202425", corner = "round", bracket = "tort"}
+banner    = {fg = "#808888"}
+info      = {fg = "#c4c0a0", bg = "#202425"}
+general   = {fg = "#c4c0a0", bg = "#202425"}
+list      = {fg = "#c4c0a0"}
+preformat = {fg = "#d0a8a8", wrap = false}
+quote     = {fg = "#d0a8a8"}
+link      = {fg = "#a8c8c4", underline = true}
+header1   = {fg = "#c89060", bold = true, underline = true}
+header2   = {fg = "#c89060", bold = true}
+header3   = {fg = "#c89060"}
 #p.black.g    = "#202425"
 
 #p.dblue.g    = "#252a30"

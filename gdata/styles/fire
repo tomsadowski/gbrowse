@@ -3,14 +3,14 @@
 screen_margin = {n = 1, s = 1, e = 8, w = 8}
 text_margin   = {n = 1, s = 1, e = 4, w = 4}
 
-border    = {fg = "585c60", bg = "202326", corner = "round", bracket = "tort"}
-banner    = {fg = "e088f0"}
-general   = {fg = "e8e8e8", bg = "202326"}
-list      = {fg = "e8e8e8"}
-info      = {fg = "e8e8e8"}
-quote     = {fg = "e088f0"}
-preformat = {fg = "e088f0", wrap = false}
-link      = {fg = "80d0e0", underline = true}
-header1   = {fg = "e0b040", bold = true, underline = true}
-header2   = {fg = "ff6060", bold = true}
-header3   = {fg = "ff6060"}
+border    = {fg = "#585c60", bg = "#202326", corner = "round", bracket = "tort"}
+banner    = {fg = "#e088f0"}
+general   = {fg = "#e8e8e8", bg = "#202326"}
+list      = {fg = "#e8e8e8"}
+info      = {fg = "#e8e8e8"}
+quote     = {fg = "#e088f0"}
+preformat = {fg = "#e088f0", wrap = false}
+link      = {fg = "#80d0e0", underline = true}
+header1   = {fg = "#e0b040", bold = true, underline = true}
+header2   = {fg = "#ff6060", bold = true}
+header3   = {fg = "#ff6060"}
