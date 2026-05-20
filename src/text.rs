@@ -232,15 +232,12 @@ impl StyledTextPlane {
       text:   text.collect(), 
     }
   }
-
   pub fn get_source_idx(&self) -> usize {
     self.current().idx
   }
-
   pub fn get_source(&self) -> String {
     self.source[self.current().idx].text.clone()
   }
-
   pub fn get_idx(&self) -> usize {
     let x_head = self.current().head();
     self.text[..self.head()]
@@ -249,7 +246,6 @@ impl StyledTextPlane {
       .chain(std::iter::once(x_head))
       .sum()
   }
-  
   fn set_idx(&mut self, idx: usize) {
     self.start();
     // this guard responds to an error only encountered on windows
@@ -258,7 +254,6 @@ impl StyledTextPlane {
     }
     self.right(idx);
   }
-
   pub fn restyle(&mut self, source: Vec<StyledText>, width: u16) {
     self.source = source;
     let idx   = self.get_idx();
@@ -268,7 +263,6 @@ impl StyledTextPlane {
       .collect();
     self.set_idx(idx);
   }
-
   pub fn resize(&mut self, width: u16) {
     let idx   = self.get_idx();
     self.text = StyledText::print_vec(&self.source, usize::from(width))
@@ -277,21 +271,18 @@ impl StyledTextPlane {
       .collect();
     self.set_idx(idx);
   }
-
   pub fn up(&mut self, delta: usize) -> bool {
     if self.backward(delta) != delta {
       self.text[self.head].fit(self.pref_x);
       true
     } else {false}
   }
-
   pub fn down(&mut self, delta: usize) -> bool {
     if self.forward(delta) != delta {
       self.text[self.head].fit(self.pref_x);
       true
     } else {false}
   }
-
   pub fn left(&mut self, delta: usize) -> usize {
     if self.text.len() == 0 {return delta}
     let remainder = self.text[self.head].backward(delta);
@@ -305,7 +296,6 @@ impl StyledTextPlane {
       remainder
     }
   }
-
   pub fn right(&mut self, delta: usize) -> usize {
     if self.text.len() == 0 {return delta}
     let remainder = self.text[self.head].forward(delta);

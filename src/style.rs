@@ -24,7 +24,6 @@ pub fn parse_color(v: &Value) -> Result<Color, String> {
     }
     _ => Err(format!("could not parse color from value {}", v)),
   }
-
 }
 
 pub fn parse_color_name(s: &str) -> Result<Color, String> {
