@@ -6,7 +6,7 @@ use crate::{
   user::User,
   keys::Action,
   tab::{Tab, TabList},
-  widget::{Frame, Response, Dialog},
+  widget::{Frame, TextBox, Response, Dialog},
   view::Rect,
   protocol::{Request, GemDoc, GemTag, Status, Scheme},
 };
@@ -152,8 +152,12 @@ impl App {
       }
       _ => {}
     };
-    self.tabs.content = self.user.get_gem_textbox(&self.rect, &gemdoc);
-    self.tabs.gemdoc  = Some(gemdoc);
+    self.tabs.content = TextBox::new(
+        gemdoc.doc.iter().map(|gem| self.user.gem_to_styled(gem)).collect(),
+        &self.rect,
+      )
+      .with_style(&self.user.style.general.style);
+    self.tabs.gemdoc = Some(gemdoc);
   }
 
   pub fn try_join_request(&mut self) -> bool {
@@ -198,7 +202,13 @@ impl App {
     self.frame = self.user.get_frame(&self.screen);
     self.rect  = self.frame.inner_rect;
     for tab in self.tabs.tabs.iter_mut() {
-      self.user.update_tab_style(&self.rect, tab);
+      if let Some(gem) = &tab.gemdoc {
+        tab.content.restyle(
+            gem.doc.iter().map(|gem| self.user.gem_to_styled(gem)).collect(),
+            &self.rect,
+          )
+      }
+      tab.content.style = self.user.style.general.style.clone();
     }
     self.clear = true;
   }
@@ -315,7 +325,8 @@ impl App {
                   Err(e)      => self.ack(&format!("Problem: {}", &e)),
                 }
                 c::VIEW_SETTINGS => {
-                  self.select(Task::Default, "Current Settings", self.user.get_settings());
+                  let text = format!("{:#?}", self.user).lines().map(|s| s.into()).collect();
+                  self.select(Task::Default, "Current Settings", text);
                 }
                 _ => self.tab(),
               }

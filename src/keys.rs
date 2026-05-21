@@ -41,6 +41,30 @@ pub enum Action {
   No, 
   Cancel,
 }
+impl FromStr for Action {
+  type Err = String;
+  fn from_str(s: &str) -> Result<Self, Self::Err> {
+    match s {
+      "load_url"    => Ok(Self::LoadUrl),
+      "save_url"    => Ok(Self::SaveUrl),
+      "move_up"     => Ok(Self::MoveUp),
+      "menu"        => Ok(Self::Menu),
+      "move_down"   => Ok(Self::MoveDown),
+      "move_left"   => Ok(Self::MoveLeft),
+      "move_right"  => Ok(Self::MoveRight),
+      "cycle_left"  => Ok(Self::CycleLeft),
+      "cycle_right" => Ok(Self::CycleRight),
+      "delete_tab"  => Ok(Self::DelTab),
+      "new_tab"     => Ok(Self::NewTab),
+      "select"      => Ok(Self::Select),
+      "ack"         => Ok(Self::Ack),
+      "yes"         => Ok(Self::Yes),
+      "no"          => Ok(Self::No),
+      "cancel"      => Ok(Self::Cancel),
+      s             => Err(format!("Keys table does not contain field {}", s)),
+    }
+  }
+}
 impl Action {
   pub fn use_editbox(&self, editbox: &mut EditBox) {
     match self {
@@ -66,30 +90,7 @@ impl Action {
     }
   }
 }
-impl FromStr for Action {
-  type Err = String;
-  fn from_str(s: &str) -> Result<Self, Self::Err> {
-    match s {
-      "load_url"    => Ok(Self::LoadUrl),
-      "save_url"    => Ok(Self::SaveUrl),
-      "move_up"     => Ok(Self::MoveUp),
-      "menu"        => Ok(Self::Menu),
-      "move_down"   => Ok(Self::MoveDown),
-      "move_left"   => Ok(Self::MoveLeft),
-      "move_right"  => Ok(Self::MoveRight),
-      "cycle_left"  => Ok(Self::CycleLeft),
-      "cycle_right" => Ok(Self::CycleRight),
-      "delete_tab"  => Ok(Self::DelTab),
-      "new_tab"     => Ok(Self::NewTab),
-      "select"      => Ok(Self::Select),
-      "ack"         => Ok(Self::Ack),
-      "yes"         => Ok(Self::Yes),
-      "no"          => Ok(Self::No),
-      "cancel"      => Ok(Self::Cancel),
-      s             => Err(format!("Keys table does not contain field {}", s)),
-    }
-  }
-}
+
 #[derive(Clone, Debug)]
 pub struct KeysTable {
   pub up:          KeyCode,
@@ -137,6 +138,56 @@ impl Default for KeysTable {
       no:          KeyCode::Char('n'),
       cancel:      KeyCode::Esc,
     }
+  }
+}
+impl UserTable<Action> for KeysTable {
+  fn try_assign(&mut self, field: Action, value: Value) -> Result<(), String> {
+    let get_keycode = || -> Result<KeyCode, String> {
+      if let Value::String(s) = value {
+        match s.as_str() {
+          "esc" | "escape" => Ok(KeyCode::Esc),
+          "ent" | "enter"  => Ok(KeyCode::Enter),
+          "space"          => Ok(KeyCode::Char(' ')),
+          "left"           => Ok(KeyCode::Left),
+          "up"             => Ok(KeyCode::Up),
+          "down"           => Ok(KeyCode::Down),
+          "right"          => Ok(KeyCode::Right),
+          "pgdown"         => Ok(KeyCode::PageDown),
+          "pgup"           => Ok(KeyCode::PageUp),
+          "end"            => Ok(KeyCode::End),
+          "home"           => Ok(KeyCode::Home),
+          s => 
+            s.chars().next().map(|c| KeyCode::Char(c))
+              .ok_or("could not parse keycode from string".into()),
+        }
+      } else {
+        Err("could not parse keycode from value".into())
+      }
+    };
+    let value = get_keycode()?;
+    match field {
+      Action::LoadUrl    => self.load_url    = value,
+      Action::SaveUrl    => self.save_url    = value,
+      Action::Menu       => self.menu        = value,
+      Action::MoveUp     => self.up          = value,
+      Action::MoveDown   => self.down        = value,
+      Action::MoveLeft   => self.left        = value,
+      Action::MoveRight  => self.right       = value,
+      Action::CycleLeft  => self.cycle_left  = value,
+      Action::CycleRight => self.cycle_right = value,
+      Action::DelTab     => self.delete_tab  = value,
+      Action::NewTab     => self.new_tab     = value,
+      Action::Select     => self.select      = value,
+      Action::Yes        => self.yes         = value,
+      Action::No         => self.no          = value,
+      Action::Cancel     => self.cancel      = value,
+      Action::Top        => self.top         = value,
+      Action::Bottom     => self.bottom      = value,
+      Action::PageUp     => self.pgup        = value,
+      Action::PageDown   => self.pgdown      = value,
+      _ => {},
+    }
+    Ok(())
   }
 }
 impl KeysTable {
@@ -197,55 +248,5 @@ impl KeysTable {
       KeyCode::Char(c)   => Some(Action::Insert(*c)),
       _                  => None,
     }
-  }
-}
-impl UserTable<Action> for KeysTable {
-  fn try_assign(&mut self, field: Action, value: Value) -> Result<(), String> {
-    let get_keycode = || -> Result<KeyCode, String> {
-      if let Value::String(s) = value {
-        match s.as_str() {
-          "esc" | "escape" => Ok(KeyCode::Esc),
-          "ent" | "enter"  => Ok(KeyCode::Enter),
-          "space"          => Ok(KeyCode::Char(' ')),
-          "left"           => Ok(KeyCode::Left),
-          "up"             => Ok(KeyCode::Up),
-          "down"           => Ok(KeyCode::Down),
-          "right"          => Ok(KeyCode::Right),
-          "pgdown"         => Ok(KeyCode::PageDown),
-          "pgup"           => Ok(KeyCode::PageUp),
-          "end"            => Ok(KeyCode::End),
-          "home"           => Ok(KeyCode::Home),
-          s => 
-            s.chars().next().map(|c| KeyCode::Char(c))
-              .ok_or("could not parse keycode from string".into()),
-        }
-      } else {
-        Err("could not parse keycode from value".into())
-      }
-    };
-    let value = get_keycode()?;
-    match field {
-      Action::LoadUrl    => self.load_url    = value,
-      Action::SaveUrl    => self.save_url    = value,
-      Action::Menu       => self.menu        = value,
-      Action::MoveUp     => self.up          = value,
-      Action::MoveDown   => self.down        = value,
-      Action::MoveLeft   => self.left        = value,
-      Action::MoveRight  => self.right       = value,
-      Action::CycleLeft  => self.cycle_left  = value,
-      Action::CycleRight => self.cycle_right = value,
-      Action::DelTab     => self.delete_tab  = value,
-      Action::NewTab     => self.new_tab     = value,
-      Action::Select     => self.select      = value,
-      Action::Yes        => self.yes         = value,
-      Action::No         => self.no          = value,
-      Action::Cancel     => self.cancel      = value,
-      Action::Top        => self.top         = value,
-      Action::Bottom     => self.bottom      = value,
-      Action::PageUp     => self.pgup        = value,
-      Action::PageDown   => self.pgdown      = value,
-      _ => {},
-    }
-    Ok(())
   }
 }

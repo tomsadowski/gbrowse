@@ -158,10 +158,6 @@ impl User {
     Ok(())
   }
 
-  pub fn get_settings(&self) -> Vec<String> {  
-    format!("{:#?}", self).lines().map(|s| s.into()).collect()
-  }
-  
   pub fn get_frame(&self, screen: &Rect) -> Frame {
     Frame::new(
         &screen, 
@@ -171,30 +167,6 @@ impl User {
       )
       .with_banner_style(&self.style.banner.style)
       .with_margin_style(&self.style.general.style)
-  }
-
-  pub fn update_tab_style(&self, rect: &Rect, tab: &mut Tab) {  
-    if let Some(gem) = &tab.gemdoc {
-      tab.content.restyle(
-          gem.doc.iter().map(|gem| self.gem_to_styled(gem)).collect(),
-          rect,
-        )
-    }
-    tab.content.style = self.style.general.style.clone();
-  }
-
-  pub fn get_gem_textbox(&self, rect: &Rect, gem: &GemDoc) -> TextBox {
-    TextBox::new(
-        gem.doc.iter().map(|gem| self.gem_to_styled(gem)).collect(),
-        rect,
-      )
-      .with_style(&self.style.general.style)
-  }
-
-  pub fn get_info_styledtext(&self, msg: &str) -> StyledText {
-    StyledText::from(msg)
-      .with_style(&self.style.info.style)
-      .wrap(self.style.info.wrap)
   }
 
   pub fn gem_to_styled(&self, gemtext: &GemText) -> StyledText {

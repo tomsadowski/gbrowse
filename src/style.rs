@@ -85,31 +85,6 @@ pub fn parse_hex_color(s: &str) -> Result<Color, String> {
   Ok(Color::Rgb {r, g, b})
 }
 
-#[derive(Clone, Debug, Default)]
-pub struct Style {
-  pub underline: bool,
-  pub bold:      bool,
-  pub fg:        Option<Color>,
-  pub bg:        Option<Color>,
-}
-impl Command for Style {
-  fn write_ansi(&self, f: &mut impl fmt::Write) -> fmt::Result {
-    let mut contentstyle = ContentStyle::new();
-    contentstyle.foreground_color = self.fg;
-    contentstyle.background_color = self.bg;
-    let mut attributes = Attributes::none();
-    if self.bold {
-      attributes.set(Attribute::Bold);
-    }
-    if self.underline {
-      attributes.set(Attribute::Underlined);
-    }
-    contentstyle.attributes = attributes;
-    SetStyle(contentstyle).write_ansi(f)?;
-    Ok(())
-  }
-}
-
 #[derive(Debug)]
 pub enum StyleTextField {
   General,
@@ -131,9 +106,31 @@ pub enum StyleMarginField {
 }
 #[derive(Debug)]
 pub enum StyleModField {
-  Border,
-  Margin(StyleMarginField),
-  Text(StyleTextField),
+  Border, Margin(StyleMarginField), Text(StyleTextField),
+}
+#[derive(Debug)]
+enum MarginField {
+  North, South, East, West,
+}
+#[derive(Clone, Debug)]
+pub enum ColorField {
+  Fg, Bg
+}
+#[derive(Clone, Debug)]
+pub enum AttributeField {
+  Bold, Underline
+}
+#[derive(Clone, Debug)]
+pub enum StyleField {
+  Color(ColorField), Attribute(AttributeField)
+}
+#[derive(Clone, Debug)]
+enum TextField {
+  Wrap, Style(StyleField)
+}
+#[derive(Debug, Clone)]
+pub enum BorderField {
+  Style(StyleField), Corner, Bracket,
 }
 impl FromStr for StyleModField {
   type Err = String;
@@ -158,6 +155,97 @@ impl FromStr for StyleModField {
     }
   }
 }
+impl FromStr for MarginField {
+  type Err = String;
+  fn from_str(s: &str) -> Result<Self, Self::Err> {
+    match s {
+      "north" | "n" => Ok(Self::North),
+      "south" | "s" => Ok(Self::South),
+      "east"  | "e" => Ok(Self::East),
+      "west"  | "w" => Ok(Self::West),
+      s => Err(format!("Margin table does not contain field {}", s)),
+    }
+  }
+}
+impl FromStr for StyleField {
+  type Err = String;
+  fn from_str(s: &str) -> Result<Self, Self::Err> {
+    match s {
+      "fg"        => Ok(Self::Color(ColorField::Fg)),
+      "bg"        => Ok(Self::Color(ColorField::Bg)),
+      "bold"      => Ok(Self::Attribute(AttributeField::Bold)),
+      "underline" => Ok(Self::Attribute(AttributeField::Underline)),
+      s => Err(format!("Style table does not contain field {}", s)),
+    }
+  }
+}
+impl FromStr for TextField {
+  type Err = String;
+  fn from_str(s: &str) -> Result<Self, Self::Err> {
+    match s {
+      "wrap" => Ok(Self::Wrap),
+      s      => StyleField::from_str(s).map(|s| Self::Style(s))
+    }
+  }
+}
+impl FromStr for BorderField {
+  type Err = String;
+  fn from_str(s: &str) -> Result<Self, Self::Err> {
+    match s {
+      "corner"  => Ok(Self::Corner),
+      "bracket" => Ok(Self::Bracket),
+      s         => StyleField::from_str(s).map(|s| Self::Style(s))
+    }
+  }
+}
+
+#[derive(Clone, Debug, Default)]
+pub struct Style {
+  pub underline: bool,
+  pub bold:      bool,
+  pub fg:        Option<Color>,
+  pub bg:        Option<Color>,
+}
+impl Command for Style {
+  fn write_ansi(&self, f: &mut impl fmt::Write) -> fmt::Result {
+    let mut contentstyle = ContentStyle::new();
+    contentstyle.foreground_color = self.fg;
+    contentstyle.background_color = self.bg;
+    let mut attributes = Attributes::none();
+    if self.bold {
+      attributes.set(Attribute::Bold);
+    }
+    if self.underline {
+      attributes.set(Attribute::Underlined);
+    }
+    contentstyle.attributes = attributes;
+    SetStyle(contentstyle).write_ansi(f)?;
+    Ok(())
+  }
+}
+impl UserTable<StyleField> for Style {
+  fn try_assign(&mut self, field: StyleField, value: Value) -> Result<(), String> {
+    match (field, value) {
+      (StyleField::Color(f), v) => {
+        let v = parse_color(&v).map_err(|e| format!("{:?} : {}", v, e))?;
+        match f {
+          ColorField::Fg => self.fg = Some(v),
+          ColorField::Bg => self.bg = Some(v),
+        }
+      }
+      (StyleField::Attribute(f), Value::Boolean(v)) => {
+        match f {
+          AttributeField::Bold      => self.bold      = v,
+          AttributeField::Underline => self.underline = v,
+        }
+      }
+      (f, v) => 
+        return Err(format!("field {:?} value {:?} not valid here", f, v))
+    }
+    Ok(())
+  }
+}
+
 #[derive(Debug, Clone)]
 pub struct MarginSpec {
   pub north: u16,
@@ -177,6 +265,25 @@ impl MarginSpec {
       .crop_east(self.east).crop_west(self.west)
   }
 }
+impl UserTable<MarginField> for MarginSpec {
+  fn try_assign(&mut self, field: MarginField, value: Value) -> Result<(), String> {
+    match (field, value) {
+      (f, Value::Integer(v)) => {
+        let v = u16::try_from(v).map_err(|e| format!("{:?} : {}", v, e))?;
+        match f {
+          MarginField::North => self.north = v,
+          MarginField::South => self.south = v,
+          MarginField::East  => self.east  = v,
+          MarginField::West  => self.west  = v,
+        }
+      }
+      (f, v) => 
+        return Err(format!("margin must be a number, not {:?}", v))
+    }
+    Ok(())
+  }
+}
+
 #[derive(Debug, Clone)]
 pub struct BorderSpec {
   pub style: Style,
@@ -200,6 +307,84 @@ impl Default for BorderSpec {
     }
   }
 }
+impl UserTable<BorderField> for BorderSpec {
+  fn try_assign(&mut self, field: BorderField, value: Value) -> Result<(), String> {
+    match (field, value) {
+      (BorderField::Style(f), v) => self.style.try_assign(f, v)?,
+      (BorderField::Corner, Value::String(v)) => {
+        match v.as_str() {
+          "square" => {
+            self.a = c::A_SQR;
+            self.b = c::B_SQR;
+            self.c = c::C_SQR;
+            self.d = c::D_SQR;
+          }
+          "round"  => {
+            self.a = c::A_RND;
+            self.b = c::B_RND;
+            self.c = c::C_RND;
+            self.d = c::D_RND;
+          }
+          s => return Err(format!("Corner field does not contain {}", s)),
+        }
+      }
+      (BorderField::Bracket, Value::String(v)) => {
+        match v.as_str() {
+          "space" => {
+            self.open  = ' ';
+            self.close = ' ';
+          }
+          "tortoise" | "tort" | "t" => {
+            self.open  = c::OPEN_TORT;
+            self.close = c::CLOSE_TORT;
+          }
+          "integral" | "int"  | "i" | 
+          "j"        | "J"          => {
+            self.open  = c::OPEN_INT;
+            self.close = c::CLOSE_INT;
+          }
+          "square"   | "sqr"        => {
+            self.open  = c::OPEN_SQR;
+            self.close = c::CLOSE_SQR;
+          }
+          "E"        | "e"          => {
+            self.open  = c::OPEN_E;
+            self.close = c::CLOSE_E;
+          }
+          s => return Err(format!("Bracket field does not contain {}", s)),
+        }
+      }
+      (f, v) => return Err(format!("field {:?} value {:?} not valid here", f, v))
+    }
+    Ok(())
+  }
+}
+
+#[derive(Clone, Debug)]
+pub struct TextTable {
+  pub style: Style,
+  pub wrap:  bool,
+}
+impl Default for TextTable {
+  fn default() -> Self {
+    Self {
+      style: Style::default(),
+      wrap:  true,
+    }
+  }
+}
+impl UserTable<TextField> for TextTable {
+  fn try_assign(&mut self, field: TextField, value: Value) -> Result<(), String> {
+    match (field, value) {
+      (TextField::Wrap, Value::Boolean(v)) => self.wrap = v,
+      (TextField::Style(f), v)             => self.style.try_assign(f, v)?,
+      (f, v) => 
+        return Err(format!("field {:?} value {:?} not valid here", f, v))
+    }
+    Ok(())
+  }
+}
+
 #[derive(Clone, Default, Debug)]
 pub struct StyleModTable {
   pub text_margin:     MarginSpec,
@@ -250,220 +435,6 @@ impl UserTable<StyleModField> for StyleModTable {
       }
       (f, v) => 
         return Err(format!("field {:?} value {:?} not valid here", f, v))
-    }
-    Ok(())
-  }
-}
-#[derive(Debug)]
-enum MarginField {
-  North, South, East, West,
-}
-impl FromStr for MarginField {
-  type Err = String;
-  fn from_str(s: &str) -> Result<Self, Self::Err> {
-    match s {
-      "north" | "n" => Ok(Self::North),
-      "south" | "s" => Ok(Self::South),
-      "east"  | "e" => Ok(Self::East),
-      "west"  | "w" => Ok(Self::West),
-      s => Err(format!("Margin table does not contain field {}", s)),
-    }
-  }
-}
-impl UserTable<MarginField> for MarginSpec {
-  fn try_assign(&mut self, field: MarginField, value: Value) -> Result<(), String> {
-    match (field, value) {
-      (f, Value::Integer(v)) => {
-        let v = u16::try_from(v).map_err(|e| format!("{:?} : {}", v, e))?;
-        match f {
-          MarginField::North => self.north = v,
-          MarginField::South => self.south = v,
-          MarginField::East  => self.east  = v,
-          MarginField::West  => self.west  = v,
-        }
-      }
-      (f, v) => 
-        return Err(format!("margin must be a number, not {:?}", v))
-    }
-    Ok(())
-  }
-}
-#[derive(Clone, Debug)]
-pub enum ColorField {
-  Fg, Bg
-}
-#[derive(Clone, Debug)]
-pub enum AttributeField {
-  Bold, Underline
-}
-#[derive(Clone, Debug)]
-pub enum StyleField {
-  Color(ColorField), Attribute(AttributeField)
-}
-impl FromStr for StyleField {
-  type Err = String;
-  fn from_str(s: &str) -> Result<Self, Self::Err> {
-    match s {
-      "fg"        => Ok(Self::Color(ColorField::Fg)),
-      "bg"        => Ok(Self::Color(ColorField::Bg)),
-      "bold"      => Ok(Self::Attribute(AttributeField::Bold)),
-      "underline" => Ok(Self::Attribute(AttributeField::Underline)),
-      s => Err(format!("Style table does not contain field {}", s)),
-    }
-  }
-}
-impl UserTable<StyleField> for Style {
-  fn try_assign(&mut self, field: StyleField, value: Value) -> Result<(), String> {
-    match (field, value) {
-      (StyleField::Color(f), v) => {
-        let v = parse_color(&v).map_err(|e| format!("{:?} : {}", v, e))?;
-        match f {
-          ColorField::Fg => self.fg = Some(v),
-          ColorField::Bg => self.bg = Some(v),
-        }
-      }
-      (StyleField::Attribute(f), Value::Boolean(v)) => {
-        match f {
-          AttributeField::Bold      => self.bold      = v,
-          AttributeField::Underline => self.underline = v,
-        }
-      }
-      (f, v) => 
-        return Err(format!("field {:?} value {:?} not valid here", f, v))
-    }
-    Ok(())
-  }
-}
-#[derive(Clone, Debug)]
-enum TextField {
-  Wrap, Style(StyleField)
-}
-impl FromStr for TextField {
-  type Err = String;
-  fn from_str(s: &str) -> Result<Self, Self::Err> {
-    match s {
-      "wrap" => Ok(Self::Wrap),
-      s      => StyleField::from_str(s).map(|s| Self::Style(s))
-    }
-  }
-}
-#[derive(Clone, Debug)]
-pub struct TextTable {
-  pub style: Style,
-  pub wrap:  bool,
-}
-impl Default for TextTable {
-  fn default() -> Self {
-    Self {
-      style: Style::default(),
-      wrap:  true,
-    }
-  }
-}
-impl UserTable<TextField> for TextTable {
-  fn try_assign(&mut self, field: TextField, value: Value) -> Result<(), String> {
-    match (field, value) {
-      (TextField::Wrap, Value::Boolean(v)) => self.wrap = v,
-      (TextField::Style(f), v)             => self.style.try_assign(f, v)?,
-      (f, v) => 
-        return Err(format!("field {:?} value {:?} not valid here", f, v))
-    }
-    Ok(())
-  }
-}
-#[derive(Debug, Clone)]
-pub enum CornerValue {
-  Square, Round
-}
-impl FromStr for CornerValue {
-  type Err = String;
-  fn from_str(s: &str) -> Result<Self, Self::Err> {
-    match s {
-      "square" => Ok(CornerValue::Square),
-      "round"  => Ok(CornerValue::Round),
-      s => Err(format!("Corner field does not contain {}", s)),
-    }
-  }
-}
-#[derive(Debug, Clone)]
-pub enum BracketValue {
-  Tortoise, E, Integral, Square, Space,
-}
-impl FromStr for BracketValue {
-  type Err = String;
-  fn from_str(s: &str) -> Result<Self, Self::Err> {
-    match s {
-      "space"                   => Ok(BracketValue::Space),
-      "tortoise" | "tort" | "t" => Ok(BracketValue::Tortoise),
-      "integral" | "int"  | "i" | 
-      "j"        | "J"          => Ok(BracketValue::Integral),
-      "square"   | "sqr"        => Ok(BracketValue::Square),
-      "E"        | "e"          => Ok(BracketValue::E),
-      s => Err(format!("Bracket field does not contain {}", s)),
-    }
-  }
-}
-#[derive(Debug, Clone)]
-pub enum BorderField {
-  Style(StyleField),
-  Corner,
-  Bracket,
-}
-impl FromStr for BorderField {
-  type Err = String;
-  fn from_str(s: &str) -> Result<Self, Self::Err> {
-    match s {
-      "corner"  => Ok(Self::Corner),
-      "bracket" => Ok(Self::Bracket),
-      s         => StyleField::from_str(s).map(|s| Self::Style(s))
-    }
-  }
-}
-impl UserTable<BorderField> for BorderSpec {
-  fn try_assign(&mut self, field: BorderField, value: Value) -> Result<(), String> {
-    match (field, value) {
-      (BorderField::Style(f), v) => self.style.try_assign(f, v)?,
-      (BorderField::Corner, Value::String(v)) => {
-        match CornerValue::from_str(&v)? {
-          CornerValue::Square => {
-            self.a = c::A_SQR;
-            self.b = c::B_SQR;
-            self.c = c::C_SQR;
-            self.d = c::D_SQR;
-          }
-          CornerValue::Round => {
-            self.a = c::A_RND;
-            self.b = c::B_RND;
-            self.c = c::C_RND;
-            self.d = c::D_RND;
-          }
-        }
-      }
-      (BorderField::Bracket, Value::String(v)) => {
-        match BracketValue::from_str(&v)? {
-          BracketValue::Space => {
-            self.open  = ' ';
-            self.close = ' ';
-          }
-          BracketValue::Tortoise => {
-            self.open  = c::OPEN_TORT;
-            self.close = c::CLOSE_TORT;
-          }
-          BracketValue::E => {
-            self.open  = c::OPEN_E;
-            self.close = c::CLOSE_E;
-          }
-          BracketValue::Square => {
-            self.open  = c::OPEN_SQR;
-            self.close = c::CLOSE_SQR;
-          }
-          BracketValue::Integral => {
-            self.open  = c::OPEN_INT;
-            self.close = c::CLOSE_INT;
-          }
-        }
-      }
-      (f, v) => return Err(format!("field {:?} value {:?} not valid here", f, v))
     }
     Ok(())
   }
