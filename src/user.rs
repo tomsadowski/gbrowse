@@ -5,9 +5,8 @@ use crate::{
   keys::KeysTable,
   style::StyleModTable,
   tab::Tab,
-  widget::TextBox,
+  widget::{Frame, TextBox},
   view::Rect,
-  widget::Frame,
   text::StyledText,
   protocol::{GemText, GemTag, GemDoc},
 };
@@ -88,13 +87,6 @@ pub struct User {
   pub style:          StyleModTable,
   pub keys:           KeysTable,
 } 
-impl FromStr for User {
-  type Err = String;
-  fn from_str(s: &str) -> Result<Self, Self::Err> {
-    let table = s.parse::<Table>().map_err(|e| e.to_string())?;
-    Self::default().read_table(table)
-  }
-}
 impl Default for User {
   fn default() -> Self {
     Self {
@@ -104,6 +96,13 @@ impl Default for User {
       style:          StyleModTable::default(),
       keys:           KeysTable::default(),
     }
+  }
+}
+impl FromStr for User {
+  type Err = String;
+  fn from_str(s: &str) -> Result<Self, Self::Err> {
+    let table = s.parse::<Table>().map_err(|e| e.to_string())?;
+    Self::default().read_table(table)
   }
 }
 impl UserTable<UserField> for User {
