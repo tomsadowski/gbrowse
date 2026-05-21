@@ -1,13 +1,12 @@
 // src/app.rs
 
 use crate::{
-  common as c,
   cursor::UnitCursor,
-  user::User,
+  user::{self, User},
   keys::Action,
+  view::Rect,
   tab::{Tab, TabList},
   widget::{Frame, TextBox, Response, Dialog},
-  view::Rect,
   protocol::{Request, GemDoc, GemTag, Status, Scheme},
 };
 use crossterm::{
@@ -17,6 +16,18 @@ use crossterm::{
 };
 use url::Url;
 use std::{fs, str::FromStr, io::{self, Write, Stdout}};
+
+
+pub const MANUAL:        &str = "User manual";
+pub const CHANGE_KEYS:   &str = "Change keys";
+pub const CHANGE_STYLE:  &str = "Change style";
+pub const VIEW_SETTINGS: &str = "View settings";
+pub const MENU: [&str; 4] = [
+  MANUAL, 
+  CHANGE_KEYS, 
+  CHANGE_STYLE,
+  VIEW_SETTINGS, 
+];
 
 #[derive(Clone, Debug)]
 pub enum Task {
@@ -139,16 +150,16 @@ impl App {
     self.tab_changed = true;
     match gemdoc.status.tag {
       Status::InputExpected | Status::InputExpectedSensitive => {
-        self.edit(Task::Reply, &gemdoc.status.txt);
+        self.edit(Task::Reply, &gemdoc.status.text);
       }
       Status::RedirectTemporary | Status::RedirectPermanent => {
-        self.tabs.url_str.push_str(&gemdoc.status.txt);
-        self.ask(Task::Redirect(gemdoc.status.txt.clone()), &gemdoc.status.txt);
+        self.tabs.url_str.push_str(&gemdoc.status.text);
+        self.ask(Task::Redirect(gemdoc.status.text.clone()), &gemdoc.status.text);
       }
       Status::CertRequiredClient |
       Status::CertRequiredTransient |
       Status::CertRequiredAuthorized => {
-        self.ack(&gemdoc.status.txt);
+        self.ack(&gemdoc.status.text);
       }
       _ => {}
     };
@@ -215,7 +226,7 @@ impl App {
 
   pub fn get_entries(&self, path: &str) -> Result<Vec<String>, String> {
     let mut vec: Vec<String> = vec![];
-    let mut results = fs::read_dir(format!("{}/{}", c::USER_DATA, path))
+    let mut results = fs::read_dir(format!("{}/{}", user::USER_DATA, path))
       .map_err(|e| e.to_string())?;
     for result in results {
       let s = result
@@ -286,7 +297,8 @@ impl App {
                 }
               }
               Task::ChangeKeys => {
-                let path = format!("{}/{}/{}", c::USER_DATA, c::USER_KEYS, textbox.get_source());
+                let path = format!("{}/{}/{}", 
+                  user::USER_DATA, user::USER_KEYS, textbox.get_source());
                 match fs::read_to_string(path) {
                   Ok(s)  => {
                     if let Err(e) = self.user.update_keys_from_str(&s) {
@@ -299,7 +311,8 @@ impl App {
                 }
               }
               Task::ChangeStyle => {
-                let path = format!("{}/{}/{}", c::USER_DATA, c::USER_STYLES, textbox.get_source());
+                let path = format!("{}/{}/{}", 
+                  user::USER_DATA, user::USER_STYLES, textbox.get_source());
                 match fs::read_to_string(path) {
                   Ok(s)  => {
                     if let Err(e) = self.user.update_style_from_str(&s) {
@@ -312,19 +325,19 @@ impl App {
                   Err(e) => self.ack(&format!("Problem: {}", &e)),
                 }
               }
-              Task::Menu => match c::MENU[textbox.get_source_idx()] {
-                c::MANUAL => {
+              Task::Menu => match MENU[textbox.get_source_idx()] {
+                MANUAL => {
                   self.ack("View manual");
                 }
-                c::CHANGE_KEYS => match self.get_entries(c::USER_KEYS) {
+                CHANGE_KEYS => match self.get_entries(user::USER_KEYS) {
                   Ok(entries) => self.select(Task::ChangeKeys, "Choose keys", entries),
                   Err(e)      => self.ack(&format!("Problem: {}", &e)),
                 }
-                c::CHANGE_STYLE => match self.get_entries(c::USER_STYLES) {
+                CHANGE_STYLE => match self.get_entries(user::USER_STYLES) {
                   Ok(entries) => self.select(Task::ChangeStyle, "Choose style", entries),
                   Err(e)      => self.ack(&format!("Problem: {}", &e)),
                 }
-                c::VIEW_SETTINGS => {
+                VIEW_SETTINGS => {
                   let text = format!("{:#?}", self.user).lines().map(|s| s.into()).collect();
                   self.select(Task::Default, "Current Settings", text);
                 }
@@ -361,7 +374,7 @@ impl App {
           }
           Action::Menu => {
             self.select(Task::Menu, "Choose: ", 
-              c::MENU.iter().map(|s| s.to_string()).collect());
+              MENU.iter().map(|s| s.to_string()).collect());
           }
           Action::SaveUrl => {
             let url_str = self.tabs.url_str.clone();

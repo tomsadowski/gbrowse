@@ -7,7 +7,6 @@
 #![allow(unused_variables)]
 
 mod app;
-mod common;
 mod cursor;
 mod protocol;
 mod view;
@@ -18,7 +17,7 @@ mod keys;
 mod style;
 mod widget;
 
-use crate::{common as c, app::App};
+use crate::app::App;
 use crossterm::{QueueableCommand, terminal, event, cursor::{SetCursorStyle}};
 use std::{env, time::Duration, io::{self, Write, stdout}};
 
@@ -29,8 +28,8 @@ fn main() -> io::Result<()> {
     let args   = env::args().collect::<Vec<String>>();
     let (w, h) = terminal::size()?;
     let init = match args.get(1) {
-      Some(init) => format!("{}/{}", c::USER_DATA, init),
-      None       => format!("{}/{}", c::USER_DATA, c::USER_INIT),
+      Some(init) => format!("{}/{}", user::USER_DATA, init),
+      None       => format!("{}/{}", user::USER_DATA, user::USER_INIT),
     };
     App::init(&init, w, h)
   };

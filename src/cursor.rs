@@ -2,8 +2,12 @@
 
 use crate::view::Rect;
 use unicode_width::UnicodeWidthChar;
-use crossterm::{QueueableCommand, cursor::{self, MoveTo}};
-use std::{iter::Take, slice, io::{self, Write}};
+use crossterm::QueueableCommand;
+use crossterm::cursor::{self, MoveTo};
+use std::slice;
+use std::iter::Take;
+use std::io::{self, Write};
+
 
 pub trait UnitCursor {
   type Unit;
@@ -11,7 +15,6 @@ pub trait UnitCursor {
   fn head(&self)         -> usize;
   fn head_mut(&mut self) -> &mut usize;
   fn max_head(&self)     -> usize;
-
   fn current(&self) -> &Self::Unit {
     &self.units()[self.head()]
   }
@@ -80,7 +83,6 @@ pub trait UnitCursor {
 
 pub trait UnitCursorMut: UnitCursor {
   fn units_mut(&mut self) -> &mut Vec<Self::Unit>;
-
   fn delete(&mut self) -> bool {
     let head = self.head();
     if head < self.units().len() {

@@ -56,7 +56,7 @@ impl GemDoc {
     let doc = match status.tag {
       Status::Success => GemText::parse_doc(&content, url),
       _ => {
-        let msg = format!("status: {:?}, text: {}", status.tag, status.txt);
+        let msg = format!("status: {:?}, text: {}", status.tag, status.text);
         vec![GemText::new(GemTag::Text, &msg)]
       }
     };
@@ -66,14 +66,13 @@ impl GemDoc {
 
 #[derive(Clone, PartialEq, Debug)]
 pub struct GemText {
-  pub tag: GemTag,
-  pub txt: String,
+  pub tag:  GemTag,
+  pub text: String,
 }
 impl GemText {
-  pub fn new(tag: GemTag, txt: &str) -> Self {
-    Self {tag, txt: String::from(txt)}
+  pub fn new(tag: GemTag, text: &str) -> Self {
+    Self {tag, text: String::from(text)}
   }
-
   pub fn parse_doc(text_str: &str, source: &Url) -> Vec<Self> {
     let mut vec       = vec![];
     let mut preformat = false;
@@ -88,7 +87,6 @@ impl GemText {
     }
     vec
   }
-
   pub fn parse_formatted(line: &str, source: &Url) -> Self {
     // look for 3 character symbols
     if let Some(("###", text)) = line.split_at_checked(3) {
@@ -144,15 +142,15 @@ pub enum GemTag {
 } 
 #[derive(Debug, Clone)]
 pub struct StatusText {
-  pub tag: Status, 
-  pub txt: String,
+  pub tag:  Status, 
+  pub text: String,
 }
 impl StatusText {
   pub fn parse(line: &str) -> Self {
     let line = line.trim();
     let (code_str, msg) = split_whitespace_once(line).unwrap_or((line, line));
     let tag = Status::from(code_str);
-    Self {tag, txt: msg.into()}
+    Self {tag, text: msg.into()}
   }
 }
 
@@ -219,6 +217,7 @@ pub enum Scheme {
   Gemini, 
   Gopher, 
   Http, 
+  Https, 
   Unknown
 }
 impl From<&Url> for Scheme {
@@ -227,7 +226,7 @@ impl From<&Url> for Scheme {
       "gemini" => Scheme::Gemini,
       "gopher" => Scheme::Gopher,
       "http"   => Scheme::Http,
-      "https"  => Scheme::Http,
+      "https"  => Scheme::Https,
       _        => Scheme::Unknown,
     }
   }

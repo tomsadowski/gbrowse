@@ -104,13 +104,11 @@ pub struct KeysTable {
   pub cycle_left:  KeyCode,
   pub cycle_right: KeyCode,
   pub select:      KeyCode,
-
   pub menu:        KeyCode,
   pub load_url:    KeyCode,
   pub save_url:    KeyCode,
   pub delete_tab:  KeyCode,
   pub new_tab:     KeyCode,
-
   pub yes:         KeyCode, 
   pub no:          KeyCode,
   pub cancel:      KeyCode,
@@ -191,14 +189,6 @@ impl UserTable<Action> for KeysTable {
   }
 }
 impl KeysTable {
-  pub fn get_dialog_action(&self, dialog: &Dialog, kc: &KeyCode) -> Option<Action> {
-    match dialog.response {
-      Response::Ack(_)    => self.get_ack_dialog_action(kc),
-      Response::Ask(_)    => self.get_ask_dialog_action(kc),
-      Response::Edit(_)   => self.get_edit_dialog_action(kc),
-      Response::Select(_) => self.get_select_dialog_action(kc),
-    }
-  }
   pub fn get_tab_action(&self, kc: &KeyCode) -> Option<Action> {
     if        &self.load_url    == kc {Some(Action::LoadUrl)
     } else if &self.save_url    == kc {Some(Action::SaveUrl)
@@ -221,6 +211,25 @@ impl KeysTable {
     } else if &self.pgdown      == kc {Some(Action::PageDown)
     } else {None}
   }
+  pub fn get_edit_box_action(&self, kc: &KeyCode) -> Option<Action> {
+    match kc {
+      KeyCode::Left      => Some(Action::MoveLeft),
+      KeyCode::Right     => Some(Action::MoveRight),
+      KeyCode::Backspace => Some(Action::Backspace),
+      KeyCode::Delete    => Some(Action::Delete),
+      KeyCode::Enter     => Some(Action::Enter),
+      KeyCode::Char(c)   => Some(Action::Insert(*c)),
+      _                  => None,
+    }
+  }
+  pub fn get_dialog_action(&self, dialog: &Dialog, kc: &KeyCode) -> Option<Action> {
+    match dialog.response {
+      Response::Ack(_)    => self.get_ack_dialog_action(kc),
+      Response::Ask(_)    => self.get_ask_dialog_action(kc),
+      Response::Edit(_)   => self.get_edit_dialog_action(kc),
+      Response::Select(_) => self.get_select_dialog_action(kc),
+    }
+  }
   pub fn get_ack_dialog_action(&self, kc: &KeyCode) -> Option<Action> {
     Some(Action::Ack)
   }
@@ -237,16 +246,5 @@ impl KeysTable {
   pub fn get_edit_dialog_action(&self, kc: &KeyCode) -> Option<Action> {
     if &self.cancel == kc {Some(Action::Cancel)
     } else                {self.get_edit_box_action(kc)}
-  }
-  pub fn get_edit_box_action(&self, kc: &KeyCode) -> Option<Action> {
-    match kc {
-      KeyCode::Left      => Some(Action::MoveLeft),
-      KeyCode::Right     => Some(Action::MoveRight),
-      KeyCode::Backspace => Some(Action::Backspace),
-      KeyCode::Delete    => Some(Action::Delete),
-      KeyCode::Enter     => Some(Action::Enter),
-      KeyCode::Char(c)   => Some(Action::Insert(*c)),
-      _                  => None,
-    }
   }
 }

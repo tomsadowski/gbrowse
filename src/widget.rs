@@ -1,7 +1,6 @@
 // src/widget.rs
 
 use crate::{
-  common as c,
   cursor::{UnitCursor, UnitCursorMut, WeightedCursor},
   view::{Rect, CursorView},
   style::{Style, MarginSpec, BorderSpec},
@@ -79,13 +78,13 @@ impl Frame {
       .queue(MoveTo(dx, dy))?.queue(Print(self.border_spec.d))?;
     for x in self.border_rect.cropped_x(1).x_range() {
       writer
-        .queue(MoveTo(x, ay))?.queue(Print(c::X_LINE))?
-        .queue(MoveTo(x, cy))?.queue(Print(c::X_LINE))?;
+        .queue(MoveTo(x, ay))?.queue(Print(self.border_spec.x))?
+        .queue(MoveTo(x, cy))?.queue(Print(self.border_spec.x))?;
     }
     for y in self.border_rect.cropped_y(1).y_range() {
       writer
-        .queue(MoveTo(ax, y))?.queue(Print(c::Y_LINE))?
-        .queue(MoveTo(bx, y))?.queue(Print(c::Y_LINE))?;
+        .queue(MoveTo(ax, y))?.queue(Print(self.border_spec.y))?
+        .queue(MoveTo(bx, y))?.queue(Print(self.border_spec.y))?;
     }
     // margin
     writer.queue(SetAttribute(Attribute::Reset))?.queue(&self.margin_style)?;
@@ -130,7 +129,7 @@ impl Frame {
       .queue(cursor::MoveLeft(2))?.queue(Print(self.border_spec.open))?;
     x -= 2;
     for _ in self.inner_rect.x..x {
-      writer.queue(cursor::MoveLeft(2))?.queue(Print(c::X_LINE))?;
+      writer.queue(cursor::MoveLeft(2))?.queue(Print(self.border_spec.x))?;
     }
     writer.queue(SetAttribute(Attribute::Reset))?;
     Ok(())
@@ -154,7 +153,7 @@ impl Frame {
       .queue(Print(' '))?.queue(Print(self.border_spec.close))?;
     x += 2;
     for _ in x..self.inner_rect.x_end() {
-      writer.queue(Print(c::X_LINE))?;
+      writer.queue(Print(self.border_spec.x))?;
     }
     writer.queue(SetAttribute(Attribute::Reset))?;
     Ok(())

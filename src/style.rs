@@ -1,17 +1,43 @@
 // src/style.rs
 
-use crate::{
-  common as c,
-  user::UserTable,
-  view::Rect,
-};
-use crossterm::{
-  Command,
-  style::{SetStyle, ContentStyle, Attribute, Attributes, Color},
-};
+use crate::user::UserTable;
+use crate::view::Rect;
+use crossterm::Command;
+use crossterm::style::{SetStyle, ContentStyle, Attribute, Attributes, Color};
 use toml::Value;
-use std::{fmt, str::FromStr};
+use std::str::FromStr;
+use std::fmt;
 
+// corners 
+// square
+pub const A_SQR: char = '\u{250C}';
+pub const B_SQR: char = '\u{2510}';
+pub const C_SQR: char = '\u{2514}';
+pub const D_SQR: char = '\u{2518}';
+// round
+pub const A_RND: char = '\u{256D}';
+pub const B_RND: char = '\u{256E}';
+pub const C_RND: char = '\u{2570}';
+pub const D_RND: char = '\u{256F}';
+// lines
+pub const X_LINE: char = '\u{2500}';
+pub const Y_LINE: char = '\u{2502}';
+// brackets
+// tortoise shell square bracket (hot)
+pub const OPEN_TORT:  char = '\u{2997}';
+pub const CLOSE_TORT: char = '\u{2998}';
+// super square bracket (hot)
+pub const OPEN_SQR:  char = '\u{27E6}';
+pub const CLOSE_SQR: char = '\u{27E7}';
+// brack with quill (pretty good)
+pub const OPEN_E:  char = '\u{2045}';
+pub const CLOSE_E: char = '\u{2046}';
+// integrals (not bad)
+pub const OPEN_INT:  char = '\u{2320}';
+pub const CLOSE_INT: char = '\u{2321}';
+// ceiling / floor (not bad)
+pub const OPEN_L:  char = '\u{2308}';
+pub const CLOSE_L: char = '\u{230B}';
 
 pub fn parse_color(v: &Value) -> Result<Color, String> {
   match v {
@@ -85,6 +111,14 @@ pub fn parse_hex_color(s: &str) -> Result<Color, String> {
   Ok(Color::Rgb {r, g, b})
 }
 
+#[derive(Clone, Debug)]
+pub enum ColorField {
+  Fg, Bg
+}
+#[derive(Clone, Debug)]
+pub enum AttributeField {
+  Bold, Underline
+}
 #[derive(Debug)]
 pub enum StyleTextField {
   General,
@@ -107,30 +141,6 @@ pub enum StyleMarginField {
 #[derive(Debug)]
 pub enum StyleModField {
   Border, Margin(StyleMarginField), Text(StyleTextField),
-}
-#[derive(Debug)]
-enum MarginField {
-  North, South, East, West,
-}
-#[derive(Clone, Debug)]
-pub enum ColorField {
-  Fg, Bg
-}
-#[derive(Clone, Debug)]
-pub enum AttributeField {
-  Bold, Underline
-}
-#[derive(Clone, Debug)]
-pub enum StyleField {
-  Color(ColorField), Attribute(AttributeField)
-}
-#[derive(Clone, Debug)]
-enum TextField {
-  Wrap, Style(StyleField)
-}
-#[derive(Debug, Clone)]
-pub enum BorderField {
-  Style(StyleField), Corner, Bracket,
 }
 impl FromStr for StyleModField {
   type Err = String;
@@ -155,6 +165,10 @@ impl FromStr for StyleModField {
     }
   }
 }
+#[derive(Debug)]
+enum MarginField {
+  North, South, East, West,
+}
 impl FromStr for MarginField {
   type Err = String;
   fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -166,6 +180,10 @@ impl FromStr for MarginField {
       s => Err(format!("Margin table does not contain field {}", s)),
     }
   }
+}
+#[derive(Clone, Debug)]
+pub enum StyleField {
+  Color(ColorField), Attribute(AttributeField)
 }
 impl FromStr for StyleField {
   type Err = String;
@@ -179,6 +197,10 @@ impl FromStr for StyleField {
     }
   }
 }
+#[derive(Clone, Debug)]
+enum TextField {
+  Wrap, Style(StyleField)
+}
 impl FromStr for TextField {
   type Err = String;
   fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -187,6 +209,10 @@ impl FromStr for TextField {
       s      => StyleField::from_str(s).map(|s| Self::Style(s))
     }
   }
+}
+#[derive(Debug, Clone)]
+pub enum BorderField {
+  Style(StyleField), Corner, Bracket,
 }
 impl FromStr for BorderField {
   type Err = String;
@@ -258,13 +284,6 @@ impl Default for MarginSpec {
     Self {north: 0, south: 0, east: 0, west: 0}
   }
 }
-impl MarginSpec {
-  pub fn get_rect(&self, screen: &Rect) -> Rect {
-    screen.clone()
-      .crop_north(self.north).crop_south(self.south)
-      .crop_east(self.east).crop_west(self.west)
-  }
-}
 impl UserTable<MarginField> for MarginSpec {
   fn try_assign(&mut self, field: MarginField, value: Value) -> Result<(), String> {
     match (field, value) {
@@ -283,10 +302,19 @@ impl UserTable<MarginField> for MarginSpec {
     Ok(())
   }
 }
+impl MarginSpec {
+  pub fn get_rect(&self, screen: &Rect) -> Rect {
+    screen.clone()
+      .crop_north(self.north).crop_south(self.south)
+      .crop_east(self.east).crop_west(self.west)
+  }
+}
 
 #[derive(Debug, Clone)]
 pub struct BorderSpec {
   pub style: Style,
+  pub x:     char,
+  pub y:     char,
   pub a:     char,
   pub b:     char,
   pub c:     char,
@@ -298,12 +326,14 @@ impl Default for BorderSpec {
   fn default() -> Self {
     Self {
       style: Style::default(),
-      a:     c::A_SQR,
-      b:     c::B_SQR,
-      c:     c::C_SQR,
-      d:     c::D_SQR,
-      open:  c::OPEN_SQR,
-      close: c::CLOSE_SQR,
+      x:     X_LINE,
+      y:     Y_LINE,
+      a:     A_SQR,
+      b:     B_SQR,
+      c:     C_SQR,
+      d:     D_SQR,
+      open:  OPEN_SQR,
+      close: CLOSE_SQR,
     }
   }
 }
@@ -314,16 +344,16 @@ impl UserTable<BorderField> for BorderSpec {
       (BorderField::Corner, Value::String(v)) => {
         match v.as_str() {
           "square" => {
-            self.a = c::A_SQR;
-            self.b = c::B_SQR;
-            self.c = c::C_SQR;
-            self.d = c::D_SQR;
+            self.a = A_SQR;
+            self.b = B_SQR;
+            self.c = C_SQR;
+            self.d = D_SQR;
           }
-          "round"  => {
-            self.a = c::A_RND;
-            self.b = c::B_RND;
-            self.c = c::C_RND;
-            self.d = c::D_RND;
+          "round" => {
+            self.a = A_RND;
+            self.b = B_RND;
+            self.c = C_RND;
+            self.d = D_RND;
           }
           s => return Err(format!("Corner field does not contain {}", s)),
         }
@@ -335,21 +365,21 @@ impl UserTable<BorderField> for BorderSpec {
             self.close = ' ';
           }
           "tortoise" | "tort" | "t" => {
-            self.open  = c::OPEN_TORT;
-            self.close = c::CLOSE_TORT;
+            self.open  = OPEN_TORT;
+            self.close = CLOSE_TORT;
           }
           "integral" | "int"  | "i" | 
-          "j"        | "J"          => {
-            self.open  = c::OPEN_INT;
-            self.close = c::CLOSE_INT;
+          "j"        | "J" => {
+            self.open  = OPEN_INT;
+            self.close = CLOSE_INT;
           }
-          "square"   | "sqr"        => {
-            self.open  = c::OPEN_SQR;
-            self.close = c::CLOSE_SQR;
+          "square" | "sqr" => {
+            self.open  = OPEN_SQR;
+            self.close = CLOSE_SQR;
           }
-          "E"        | "e"          => {
-            self.open  = c::OPEN_E;
-            self.close = c::CLOSE_E;
+          "E" | "e" => {
+            self.open  = OPEN_E;
+            self.close = CLOSE_E;
           }
           s => return Err(format!("Bracket field does not contain {}", s)),
         }

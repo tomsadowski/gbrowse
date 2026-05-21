@@ -1,7 +1,6 @@
 // src/user.rs
 
 use crate::{
-  common as c,
   keys::KeysTable,
   style::StyleModTable,
   tab::Tab,
@@ -14,6 +13,12 @@ use toml::{Table, Value};
 use std::{fs, str::FromStr};
 
 
+pub const USER_DATA:   &str = "gdata";
+pub const USER_INIT:   &str = "init";
+pub const USER_URLS:   &str = "urls";
+pub const USER_STYLES: &str = "styles";
+pub const USER_KEYS:   &str = "keys";
+
 pub trait UserTable<F>: Sized where F: FromStr<Err = String> {
   fn try_assign(&mut self, field: F, value: Value) -> Result<(), String>;
 
@@ -24,7 +29,6 @@ pub trait UserTable<F>: Sized where F: FromStr<Err = String> {
     }
     Ok(self)
   }
-
   fn read_table_in_place(&mut self, table: Table) -> Result<(), String> {
     for (key, value) in table.into_iter() {
       let field = F::from_str(&key)?;
@@ -92,7 +96,7 @@ impl Default for User {
     Self {
       timeout:        10,
       init_url:       "gemini://geminiprotocol.net/".into(),
-      save_file:      format!("{}/{}", c::USER_DATA, c::USER_URLS),
+      save_file:      format!("{}/{}", USER_DATA, USER_URLS),
       style:          StyleModTable::default(),
       keys:           KeysTable::default(),
     }
@@ -112,21 +116,21 @@ impl UserTable<UserField> for User {
         self.init_url = v.into();
       }
       (UserField::SaveFile, Value::String(v)) => {
-        self.save_file = format!("{}/{}", c::USER_DATA, v);
+        self.save_file = format!("{}/{}", USER_DATA, v);
       }
       (UserField::Timeout, Value::Integer(v)) => {
         self.timeout = u64::try_from(v).map_err(|e| e.to_string())?;
       }
       // read style from another file
       (UserField::Style, Value::String(modname)) => {
-        let path   = format!("{}/{}/{}", c::USER_DATA, c::USER_STYLES, modname);
+        let path   = format!("{}/{}/{}", USER_DATA, USER_STYLES, modname);
         let text   = fs::read_to_string(path).map_err(|e| e.to_string())?;
         let table  = text.parse::<Table>().map_err(|e| e.to_string())?;
         self.style.read_table_in_place(table)?;
       }
       // read keys from another file
       (UserField::Keys, Value::String(modname)) => {
-        let path  = format!("{}/{}/{}", c::USER_DATA, c::USER_KEYS, modname);
+        let path  = format!("{}/{}/{}", USER_DATA, USER_KEYS, modname);
         let text  = fs::read_to_string(path).map_err(|e| e.to_string())?;
         let table = text.parse::<Table>().map_err(|e| e.to_string())?;
         self.keys.read_table_in_place(table)?;
@@ -172,39 +176,39 @@ impl User {
   pub fn gem_to_styled(&self, gemtext: &GemText) -> StyledText {
     match gemtext.tag {
       GemTag::HeadingOne => 
-        StyledText::from(gemtext.txt.as_str())
+        StyledText::from(gemtext.text.as_str())
           .with_style(&self.style.header1.style)
           .wrap(self.style.header1.wrap),
       GemTag::HeadingTwo => 
-        StyledText::from(gemtext.txt.as_str())
+        StyledText::from(gemtext.text.as_str())
           .with_style(&self.style.header2.style)
           .wrap(self.style.header2.wrap),
       GemTag::HeadingThree => 
-        StyledText::from(gemtext.txt.as_str())
+        StyledText::from(gemtext.text.as_str())
           .with_style(&self.style.header3.style)
           .wrap(self.style.header3.wrap),
       GemTag::Text => 
-        StyledText::from(gemtext.txt.as_str())
+        StyledText::from(gemtext.text.as_str())
           .with_style(&self.style.text.style)
           .wrap(self.style.text.wrap),
       GemTag::PreFormat => 
-        StyledText::from(gemtext.txt.as_str())
+        StyledText::from(gemtext.text.as_str())
           .with_style(&self.style.preformat.style)
           .wrap(self.style.preformat.wrap),
       GemTag::Link(_, _) => 
-        StyledText::from(gemtext.txt.as_str())
+        StyledText::from(gemtext.text.as_str())
           .with_style(&self.style.link.style)
           .wrap(self.style.link.wrap),
       GemTag::BadLink(_) => 
-        StyledText::from(gemtext.txt.as_str())
+        StyledText::from(gemtext.text.as_str())
           .with_style(&self.style.error.style)
           .wrap(self.style.error.wrap),
       GemTag::ListItem => 
-        StyledText::from(gemtext.txt.as_str())
+        StyledText::from(gemtext.text.as_str())
           .with_style(&self.style.list.style)
           .wrap(self.style.list.wrap),
       GemTag::Quote => 
-        StyledText::from(gemtext.txt.as_str())
+        StyledText::from(gemtext.text.as_str())
           .with_style(&self.style.quote.style)
           .wrap(self.style.quote.wrap),
     }
