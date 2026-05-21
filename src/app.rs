@@ -153,7 +153,7 @@ impl App {
         self.edit(Task::Reply, &gemdoc.status.text);
       }
       Status::RedirectTemporary | Status::RedirectPermanent => {
-        self.tabs.url_str.push_str(&gemdoc.status.text);
+        self.tabs.url_str = gemdoc.status.text.clone();
         self.ask(Task::Redirect(gemdoc.status.text.clone()), &gemdoc.status.text);
       }
       Status::CertRequiredClient |
@@ -496,19 +496,7 @@ impl App {
       if self.new_dlg {
         self.tabs.clear(stdout)?;
       }
-      dialog.prompt.write(stdout)?;
-      match &dialog.response {
-        Response::Ack(r) | Response::Ask(r) => 
-          r.write(stdout)?,
-        Response::Edit(r) => {
-          r.write(stdout)?;
-          r.cursor.write(stdout)?;
-        }
-        Response::Select(r) => {
-          r.write(stdout)?;
-          r.cursor.write(stdout)?;
-        }
-      }
+      dialog.write(stdout)?;
     } else {
       self.tabs.write(stdout)?;
       self.tabs.cursor.write(stdout)?;

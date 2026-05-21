@@ -544,4 +544,20 @@ impl Dialog {
       response: Response::Ack(response_box),
     }
   }
+  pub fn write<W: Write>(&self, writer: &mut W) -> io::Result<()> {
+    self.prompt.write(writer)?;
+    match &self.response {
+      Response::Ack(r) | Response::Ask(r) => 
+        r.write(writer)?,
+      Response::Edit(r) => {
+        r.write(writer)?;
+        r.cursor.write(writer)?;
+      }
+      Response::Select(r) => {
+        r.write(writer)?;
+        r.cursor.write(writer)?;
+      }
+    }
+    Ok(())
+  }
 }
