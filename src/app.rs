@@ -206,20 +206,6 @@ impl App {
     }
     self.clear = true;
   }
-  pub fn get_entries(&self, path: &str) -> Result<Vec<String>, String> {
-    let mut vec: Vec<String> = vec![];
-    let mut results = fs::read_dir(format!("{}/{}", user::USER_DATA, path))
-      .map_err(|e| e.to_string())?;
-    for result in results {
-      let s = result
-        .map_err(|e| e.to_string())?
-        .file_name()
-        .into_string()
-        .map_err(|_| "Could not convert OsString to String".to_string())?;
-      vec.push(s);
-    }
-    Ok(vec)
-  }
   pub fn update(&mut self, message: &Message) {
     self.clear       = false;
     self.tab_changed = false;
@@ -251,8 +237,7 @@ impl App {
             }
           }
           (Response::Select(textbox), Action::Select, Task::ChangeKeys) => {
-            let path = format!("{}/{}/{}", user::USER_DATA, user::USER_KEYS, textbox.get_source());
-            match fs::read_to_string(path) {
+            match fs::read_to_string(user::get_keys_file(&textbox.get_source())) {
               Ok(s) => if let Err(e) = self.user.update_keys_from_str(&s) {
                 self.focus_ack_dlg(&format!("Problem: {}", &e));
               } else {
@@ -262,8 +247,7 @@ impl App {
             }
           }
           (Response::Select(textbox), Action::Select, Task::ChangeStyle) => {
-            let path = format!("{}/{}/{}", user::USER_DATA, user::USER_STYLES, textbox.get_source());
-            match fs::read_to_string(path) {
+            match fs::read_to_string(user::get_styles_file(&textbox.get_source())) {
               Ok(s) => if let Err(e) = self.user.update_style_from_str(&s) {
                 self.focus_ack_dlg(&format!("Problem: {}", &e));
                 self.push_style();
@@ -279,11 +263,11 @@ impl App {
               MANUAL => {
                 self.focus_ack_dlg("View manual");
               }
-              CHANGE_KEYS => match self.get_entries(user::USER_KEYS) {
+              CHANGE_KEYS => match user::get_entries(user::KEYS_PATH) {
                 Ok(e)  => self.focus_select_dlg(Task::ChangeKeys, "Choose keys", e),
                 Err(e) => self.focus_ack_dlg(&format!("Problem: {}", &e)),
               }
-              CHANGE_STYLE => match self.get_entries(user::USER_STYLES) {
+              CHANGE_STYLE => match user::get_entries(user::STYLES_PATH) {
                 Ok(e)  => self.focus_select_dlg(Task::ChangeStyle, "Choose style", e),
                 Err(e) => self.focus_ack_dlg(&format!("Problem: {}", &e)),
               }

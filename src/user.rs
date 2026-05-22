@@ -18,6 +18,29 @@ pub const USER_INIT:   &str = "init";
 pub const USER_URLS:   &str = "urls";
 pub const USER_STYLES: &str = "styles";
 pub const USER_KEYS:   &str = "keys";
+pub const STYLES_PATH: &str = "gdata/styles";
+pub const KEYS_PATH:   &str = "gdata/keys";
+
+pub fn get_entries(path: &str) -> Result<Vec<String>, String> {
+  let mut vec: Vec<String> = vec![];
+  let mut results = fs::read_dir(path)
+    .map_err(|e| e.to_string())?;
+  for result in results {
+    let s = result
+      .map_err(|e| e.to_string())?
+      .file_name()
+      .into_string()
+      .map_err(|_| "Could not convert OsString to String".to_string())?;
+    vec.push(s);
+  }
+  Ok(vec)
+}
+pub fn get_keys_file(name: &str) -> String {
+  format!("{}/{}", KEYS_PATH, name)
+}
+pub fn get_styles_file(name: &str) -> String {
+  format!("{}/{}", STYLES_PATH, name)
+}
 
 pub trait UserTable<F>: Sized where F: FromStr<Err = String> {
   fn try_assign(&mut self, field: F, value: Value) -> Result<(), String>;
