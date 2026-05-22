@@ -3,7 +3,8 @@
 use crate::{
   cursor::UnitCursor,
   user::UserTable,
-  widget::{Dialog, Response, EditBox, TextBox},
+  widget::{EditBox, TextBox},
+  dialog::{Dialog, Response},
 };
 use crossterm::event::KeyCode;
 use toml::Value;
@@ -62,31 +63,6 @@ impl FromStr for Action {
       "no"          => Ok(Self::No),
       "cancel"      => Ok(Self::Cancel),
       s             => Err(format!("Keys table does not contain field {}", s)),
-    }
-  }
-}
-impl Action {
-  pub fn use_editbox(&self, editbox: &mut EditBox) {
-    match self {
-      Action::Backspace => {editbox.backspace();}
-      Action::Delete    => {editbox.delete();}
-      Action::Insert(c) => {editbox.insert(*c);}
-      Action::MoveLeft  => {editbox.left(1);}
-      Action::MoveRight => {editbox.right(1);}
-      _ => {}
-    }
-  }
-  pub fn use_textbox(&self, textbox: &mut TextBox) {
-    match self {
-      Action::PageDown  => {textbox.down(usize::from(textbox.rect.h));}
-      Action::PageUp    => {textbox.up(usize::from(textbox.rect.h));}
-      Action::Bottom    => {textbox.down(textbox.content.units().len());}
-      Action::Top       => {textbox.up(textbox.content.units().len());}
-      Action::MoveDown  => {textbox.down(1);}
-      Action::MoveUp    => {textbox.up(1);}
-      Action::MoveLeft  => {textbox.left(1);}
-      Action::MoveRight => {textbox.right(1);}
-      _ => {}
     }
   }
 }

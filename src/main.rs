@@ -8,6 +8,7 @@
 
 mod app;
 mod cursor;
+mod dialog;
 mod protocol;
 mod view;
 mod tab;

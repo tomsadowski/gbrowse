@@ -6,7 +6,8 @@ use crate::{
   keys::Action,
   view::Rect,
   tab::{Tab, TabList},
-  widget::{Frame, TextBox, Response, Dialog},
+  widget::{Frame, TextBox},
+  dialog::{Response, Dialog},
   protocol::{Request, GemDoc, GemTag, Status, Scheme},
 };
 use crossterm::{
@@ -101,17 +102,17 @@ impl App {
       clear:       true,
       quit:        false,
     };
-    app.tab();
+    app.focus_tabs();
     app.try_spawn_request(&app.user.init_url.clone());
     app
   }
 
-  pub fn tab(&mut self) {
+  pub fn focus_tabs(&mut self) {
     self.focus = Focus::Tab;
     self.guide = format!("Press {} for menu", self.user.keys.menu);
   }
 
-  fn ack(&mut self, prompt: &str) {
+  fn focus_ack_dialog(&mut self, prompt: &str) {
     let style    = self.user.style.info.style.clone();
     let help     = &format!("Press any key to acknowledge");
     let dialog   = Dialog::ack(prompt, help, style, &self.rect);
@@ -120,7 +121,7 @@ impl App {
     self.new_dlg = true;
   }
 
-  fn ask(&mut self, task: Task, prompt: &str) {
+  fn focus_ask_dialog(&mut self, task: Task, prompt: &str) {
     let style    = self.user.style.info.style.clone();
     let help     = &format!("{} yes {} no", self.user.keys.yes, self.user.keys.no);
     let dialog   = Dialog::ask(prompt, help, style, &self.rect);
@@ -129,7 +130,7 @@ impl App {
     self.new_dlg = true;
   }
 
-  fn edit(&mut self, task: Task, prompt: &str) {
+  fn focus_edit_dialog(&mut self, task: Task, prompt: &str) {
     let style    = self.user.style.info.style.clone();
     let dialog   = Dialog::edit(prompt, style, &self.rect);
     self.focus   = Focus::Dialog(task, dialog);
@@ -137,7 +138,7 @@ impl App {
     self.new_dlg = true;
   }
 
-  fn select(&mut self, task: Task, prompt: &str, options: Vec<String>) {
+  fn focus_select_dialog(&mut self, task: Task, prompt: &str, options: Vec<String>) {
     let style    = self.user.style.info.style.clone();
     let dialog   = Dialog::select(prompt, options, style, &self.rect);
     self.focus   = Focus::Dialog(task, dialog);
@@ -150,16 +151,16 @@ impl App {
     self.tab_changed = true;
     match gemdoc.status.tag {
       Status::InputExpected | Status::InputExpectedSensitive => {
-        self.edit(Task::Reply, &gemdoc.status.text);
+        self.focus_edit_dialog(Task::Reply, &gemdoc.status.text);
       }
       Status::RedirectTemporary | Status::RedirectPermanent => {
         self.tabs.url_str = gemdoc.status.text.clone();
-        self.ask(Task::Redirect(gemdoc.status.text.clone()), &gemdoc.status.text);
+        self.focus_ask_dialog(Task::Redirect(gemdoc.status.text.clone()), &gemdoc.status.text);
       }
       Status::CertRequiredClient |
       Status::CertRequiredTransient |
       Status::CertRequiredAuthorized => {
-        self.ack(&gemdoc.status.text);
+        self.focus_ack_dialog(&gemdoc.status.text);
       }
       _ => {}
     };
@@ -180,7 +181,7 @@ impl App {
           .map(|(r, c)| GemDoc::new(&request.url, r, c))
           .flatten();
         match result {
-          Err(e)     => self.ack(&e),
+          Err(e)     => self.focus_ack_dialog(&e),
           Ok(gemdoc) => {
             let url = request.url.clone();
             self.set_gemdoc(&url, gemdoc);
@@ -195,13 +196,13 @@ impl App {
   pub fn try_spawn_request(&mut self, url_str: &str) {
     match Url::parse(url_str) {
       Err(e)  => {
-        self.ack(&format!("URL parse error: {}", &e)); 
+        self.focus_ack_dialog(&format!("URL parse error: {}", &e)); 
         self.request = None;
       }
       Ok(url) => {
         match &mut self.request {
           Some(_) =>
-            self.ack("still processing previous request"),
+            self.focus_ack_dialog("still processing previous request"),
           None => 
             self.request = Some(Request::new(&url, self.user.timeout)),
         }
@@ -260,40 +261,40 @@ impl App {
       }
       Message::Action(action) => match &mut self.focus {
         Focus::Dialog(task, dialog) => match &mut dialog.response {
-          Response::Ack(_) => self.tab(), 
+          Response::Ack(_) => self.focus_tabs(), 
           Response::Ask(_) => match action {
-            Action::Cancel | Action::No => self.tab(),
+            Action::Cancel | Action::No => self.focus_tabs(),
             Action::Yes => match task {
               Task::Go(url) => {
                 let url = url.clone();
-                self.tab();
+                self.focus_tabs();
                 self.try_spawn_request(&url);
               }
               Task::Redirect(url_str) => {
                 let text = url_str.trim().replace(" ", "%20");
-                self.tab();
+                self.focus_tabs();
                 self.try_spawn_request(&format!("{}?{}", self.tabs.url_str, text));
               }
               Task::DelTab => {
                 self.tabs.delete();
                 self.tab_changed = true;
-                self.tab();
+                self.focus_tabs();
               }
-              _ => self.tab(),
+              _ => self.focus_tabs(),
             }
             _ => {}
           } 
           Response::Select(textbox) => match action {
-            Action::Cancel => self.tab(),
+            Action::Cancel => self.focus_tabs(),
             Action::Select => match task {
-              Task::Default => self.tab(),
+              Task::Default => self.focus_tabs(),
               Task::NewTab => {
                 if self.urls.len() > 0 {
                   let url_str = &self.urls[textbox.get_source_idx()].clone();
-                  self.tab();
+                  self.focus_tabs();
                   self.try_spawn_request(url_str);
                 } else {
-                  self.tab();
+                  self.focus_tabs();
                 }
               }
               Task::ChangeKeys => {
@@ -302,12 +303,12 @@ impl App {
                 match fs::read_to_string(path) {
                   Ok(s)  => {
                     if let Err(e) = self.user.update_keys_from_str(&s) {
-                      self.ack(&format!("Problem: {}", &e));
+                      self.focus_ack_dialog(&format!("Problem: {}", &e));
                     } else {
-                      self.tab();
+                      self.focus_tabs();
                     }
                   }
-                  Err(e) => self.ack(&format!("Problem: {}", &e)),
+                  Err(e) => self.focus_ack_dialog(&format!("Problem: {}", &e)),
                 }
               }
               Task::ChangeStyle => {
@@ -316,64 +317,64 @@ impl App {
                 match fs::read_to_string(path) {
                   Ok(s)  => {
                     if let Err(e) = self.user.update_style_from_str(&s) {
-                      self.ack(&format!("Problem: {}", &e));
+                      self.focus_ack_dialog(&format!("Problem: {}", &e));
                     } else {
-                      self.tab();
+                      self.focus_tabs();
                     }
                     self.push_style();
                   }
-                  Err(e) => self.ack(&format!("Problem: {}", &e)),
+                  Err(e) => self.focus_ack_dialog(&format!("Problem: {}", &e)),
                 }
               }
               Task::Menu => match MENU[textbox.get_source_idx()] {
                 MANUAL => {
-                  self.ack("View manual");
+                  self.focus_ack_dialog("View manual");
                 }
                 CHANGE_KEYS => match self.get_entries(user::USER_KEYS) {
-                  Ok(entries) => self.select(Task::ChangeKeys, "Choose keys", entries),
-                  Err(e)      => self.ack(&format!("Problem: {}", &e)),
+                  Ok(entries) => self.focus_select_dialog(Task::ChangeKeys, "Choose keys", entries),
+                  Err(e)      => self.focus_ack_dialog(&format!("Problem: {}", &e)),
                 }
                 CHANGE_STYLE => match self.get_entries(user::USER_STYLES) {
-                  Ok(entries) => self.select(Task::ChangeStyle, "Choose style", entries),
-                  Err(e)      => self.ack(&format!("Problem: {}", &e)),
+                  Ok(entries) => self.focus_select_dialog(Task::ChangeStyle, "Choose style", entries),
+                  Err(e)      => self.focus_ack_dialog(&format!("Problem: {}", &e)),
                 }
                 VIEW_SETTINGS => {
                   let text = format!("{:#?}", self.user).lines().map(|s| s.into()).collect();
-                  self.select(Task::Default, "Current Settings", text);
+                  self.focus_select_dialog(Task::Default, "Current Settings", text);
                 }
-                _ => self.tab(),
+                _ => self.focus_tabs(),
               }
               _ => {},
             }
-            action => action.use_textbox(textbox),
+            action => textbox.update(action),
           }
           Response::Edit(editbox) => match action {
-            Action::Cancel => self.tab(),
+            Action::Cancel => self.focus_tabs(),
             Action::Enter => match task {
               Task::Reply => {
                 let text = editbox.content.to_string();
                 let text = text.trim().replace(" ", "%20");
-                self.tab();
+                self.focus_tabs();
                 self.tab_changed = true;
                 self.try_spawn_request(&format!("{}?{}", self.tabs.url_str, text));
               }
               Task::NewTab => {
                 let text = editbox.content.to_string();
-                self.tab();
+                self.focus_tabs();
                 self.tab_changed = true;
                 self.try_spawn_request(&text);
               }
               _ => {},
             }
-            action => action.use_editbox(editbox),
+            action => editbox.update(action),
           }
         }
         Focus::Tab => match action {
           Action::LoadUrl => {
-            self.select(Task::NewTab, "Choose URL: ", self.urls.clone());
+            self.focus_select_dialog(Task::NewTab, "Choose URL: ", self.urls.clone());
           }
           Action::Menu => {
-            self.select(Task::Menu, "Choose: ", 
+            self.focus_select_dialog(Task::Menu, "Choose: ", 
               MENU.iter().map(|s| s.to_string()).collect());
           }
           Action::SaveUrl => {
@@ -386,17 +387,17 @@ impl App {
                 .write(true).truncate(true).open(&self.user.save_file) 
               {
                 Err(e) => {
-                  self.ack(&format!("could not create save file: {}", &e)); 
+                  self.focus_ack_dialog(&format!("could not create save file: {}", &e)); 
                 }
                 Ok(mut f) => {
                   for url in self.urls.iter() {
                     f.write(&format!("{}\n", url).as_bytes());
                   }
-                  self.ack(&format!("Saved URL: {}", url_str)); 
+                  self.focus_ack_dialog(&format!("Saved URL: {}", url_str)); 
                 }
               }
             } else {
-              self.ack(&format!("URL {} already saved", url_str)); 
+              self.focus_ack_dialog(&format!("URL {} already saved", url_str)); 
             }
           }
           Action::Select => {
@@ -404,22 +405,22 @@ impl App {
               match gemdoc.doc[self.tabs.get_source_idx()].tag.clone() {
                 GemTag::Link(Scheme::Gemini, url) => {
                   let prompt = &format!("go to {}?", url);
-                  self.ask(Task::Go(url.into()), prompt);
+                  self.focus_ask_dialog(Task::Go(url.into()), prompt);
                 }
                 GemTag::Link(_, url) => {
-                  self.ack(&format!("Protocol {} not yet supported", url));
+                  self.focus_ack_dialog(&format!("Protocol {} not yet supported", url));
                 }
                 gemtext => {
-                  self.ack(&format!("you've selected {:?}", gemtext));
+                  self.focus_ack_dialog(&format!("you've selected {:?}", gemtext));
                 }
               }
             }
           }
           Action::NewTab => {
-            self.edit(Task::NewTab, "enter path: ");
+            self.focus_edit_dialog(Task::NewTab, "enter path: ");
           }
           Action::DelTab => {
-            self.ask(Task::DelTab, "Delete current tab?");
+            self.focus_ask_dialog(Task::DelTab, "Delete current tab?");
           }
           Action::CycleLeft => {
             if self.tabs.units().len() > 1 {
@@ -433,7 +434,7 @@ impl App {
               self.tab_changed = true;
             }
           }
-          action => action.use_textbox(&mut self.tabs),
+          action => self.tabs.update(action),
         }
       }
       _ => {}
@@ -442,37 +443,21 @@ impl App {
 
   pub fn get_update(&self, event: Event) -> Option<Message> {
     match event {
-      Event::Key(KeyEvent {
-        modifiers: KeyModifiers::CONTROL, code: KeyCode::Char('c'), ..
-      }) =>
-        Some(Message::Quit),
       Event::Resize(w, h) => 
         Some(Message::Resize(w, h)),
       Event::Key(KeyEvent {
-        code: kc, kind: KeyEventKind::Press, ..
+        modifiers: KeyModifiers::CONTROL, code: KeyCode::Char('c'), ..
+      }) => 
+        Some(Message::Quit),
+      Event::Key(KeyEvent {
+          code: kc, kind: KeyEventKind::Press, ..
       }) => match &self.focus {
         Focus::Tab => 
-          self.user.keys
-            .get_tab_action(&kc)
+          self.user.keys.get_tab_action(&kc)
             .map(|a| Message::Action(a)),
-        Focus::Dialog(task, dialog) => match &dialog.response {
-          Response::Ack(_) => 
-            self.user.keys
-              .get_ack_dialog_action(&kc)
-              .map(|a| Message::Action(a)),
-          Response::Ask(_) => 
-            self.user.keys
-              .get_ask_dialog_action(&kc)
-              .map(|a| Message::Action(a)),
-          Response::Edit(_) => 
-            self.user.keys
-              .get_edit_dialog_action(&kc)
-              .map(|a| Message::Action(a)),
-          Response::Select(_) => 
-            self.user.keys
-              .get_select_dialog_action(&kc)
-              .map(|a| Message::Action(a)),
-        }
+        Focus::Dialog(task, dialog) => 
+          self.user.keys.get_dialog_action(dialog, &kc)
+            .map(|a| Message::Action(a))
       }
       _ => None,
     }
