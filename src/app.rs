@@ -210,165 +210,168 @@ impl App {
     self.tab_changed = false;
     self.new_dlg     = false;
     self.tabs.reset_state();
-    match message {
-      Msg::Quit => {
+    match (message, &mut self.focus) {
+      (Msg::Quit, _) => {
         self.quit = true;
       }
-      Msg::Resize(w, h) => {
+      (Msg::Resize(w, h), focus) => {
         self.screen = Rect::new(*w, *h);
         self.frame.resize(&self.screen);
         self.rect = self.frame.inner_rect.clone();
-        if let Focus::Dlg(_, dialog) = &mut self.focus {
+        if let Focus::Dlg(_, dialog) = focus {
           dialog.resize(&self.rect);
         }
         self.tabs.resize(&self.rect);
         self.clear = true;
       }
-      Msg::Action(action) => match &mut self.focus {
-        Focus::Dlg(task, dlg) => match (&mut dlg.response, action, task) {
-          (Response::Select(textbox), Action::Select, Task::NewTab) => {
-            if self.urls.len() > 0 {
-              let url_str = &self.urls[textbox.get_source_idx()].clone();
-              self.focus_tabs();
-              self.try_spawn_request(url_str);
-            } else {
-              self.focus_tabs();
-            }
-          }
-          (Response::Select(textbox), Action::Select, Task::ChangeKeys) => {
-            match fs::read_to_string(user::get_keys_file(&textbox.get_source())) {
-              Ok(s) => if let Err(e) = self.user.keys.update_from_str(&s) {
-                self.focus_ack_dlg(&format!("Problem: {}", &e));
-              } else {
-                self.focus_tabs();
-              }
-              Err(e) => self.focus_ack_dlg(&format!("Problem: {}", &e)),
-            }
-          }
-          (Response::Select(textbox), Action::Select, Task::ChangeStyle) => {
-            match fs::read_to_string(user::get_styles_file(&textbox.get_source())) {
-              Ok(s) => if let Err(e) = self.user.style.update_from_str(&s) {
-                self.focus_ack_dlg(&format!("Problem: {}", &e));
-                self.push_style();
-              } else {
-                self.focus_tabs();
-                self.push_style();
-              }
-              Err(e) => self.focus_ack_dlg(&format!("Problem: {}", &e)),
-            }
-          }
-          (Response::Select(textbox), Action::Select, Task::Menu) => {
-            match MENU[textbox.get_source_idx()] {
-              MANUAL => {
-                self.focus_ack_dlg("View manual");
-              }
-              CHANGE_KEYS => match user::get_entries(user::KEYS_PATH) {
-                Ok(e)  => self.focus_select_dlg(Task::ChangeKeys, "Choose keys", e),
-                Err(e) => self.focus_ack_dlg(&format!("Problem: {}", &e)),
-              }
-              CHANGE_STYLE => match user::get_entries(user::STYLES_PATH) {
-                Ok(e)  => self.focus_select_dlg(Task::ChangeStyle, "Choose style", e),
-                Err(e) => self.focus_ack_dlg(&format!("Problem: {}", &e)),
-              }
-              VIEW_SETTINGS => {
-                let text = format!("{:#?}", self.user).lines().map(|s| s.into()).collect();
-                self.focus_select_dlg(Task::Default, "Current Settings", text);
-              }
-              _ => self.focus_tabs(),
-            }
-          }
-          (Response::Edit(editbox), Action::Enter, Task::Reply) => {
-            let text = editbox.content.to_string();
-            let text = text.trim().replace(" ", "%20");
+      (Msg::Action(action), Focus::Dlg(task, dlg)) 
+        => match (&mut dlg.response, action, task) 
+      {
+        (Response::Select(textbox), Action::Select, Task::NewTab) => {
+          if self.urls.len() > 0 {
+            let url_str = &self.urls[textbox.get_source_idx()].clone();
             self.focus_tabs();
-            self.tab_changed = true;
-            self.try_spawn_request(&format!("{}?{}", self.tabs.url_str, text));
-          }
-          (Response::Edit(editbox), Action::Enter, Task::NewTab) => {
-            let text = editbox.content.to_string();
-            self.focus_tabs();
-            self.tab_changed = true;
-            self.try_spawn_request(&text);
-          }
-          (_, Action::Yes, Task::Go(url)) => {
-            let url = url.clone();
-            self.focus_tabs();
-            self.try_spawn_request(&url);
-          }
-          (_, Action::Yes, Task::Redirect(url_str)) => {
-            let text = url_str.trim().replace(" ", "%20");
-            self.focus_tabs();
-            self.try_spawn_request(&format!("{}?{}", self.tabs.url_str, text));
-          }
-          (_, Action::Yes, Task::DelTab) => {
-            self.tabs.delete();
-            self.tab_changed = true;
+            self.try_spawn_request(url_str);
+          } else {
             self.focus_tabs();
           }
-          (Response::Ack(_), _, _) |
-          (_,   Action::Select, _) |
-          (_,       Action::No, _) |
-          (_,   Action::Cancel, _)               => self.focus_tabs(),
-          (Response::Select(textbox), action, _) => textbox.update(action),
-          (Response::Edit(editbox),   action, _) => editbox.update(action),
-          (_, _, _)                              => self.focus_tabs(),
         }
-        Focus::Tab => match action {
-          Action::SaveUrl => {
-            let url_str = self.tabs.url_str.clone();
-            // only add url_str if new
-            if self.urls.iter().any(|url| **url == url_str) {
-              self.focus_ack_dlg(&format!("URL {} already saved", url_str)); 
+        (Response::Select(textbox), Action::Select, Task::ChangeKeys) => {
+          match fs::read_to_string(user::get_keys_file(&textbox.get_source())) {
+            Ok(s) => if let Err(e) = self.user.keys.update_from_str(&s) {
+              self.focus_ack_dlg(&format!("Problem: {}", &e));
             } else {
-              self.urls.push(url_str.clone());
-              // write to save file
-              match fs::OpenOptions::new().write(true).truncate(true).open(&self.user.save_file) {
-                Err(e) => self.focus_ack_dlg(&format!("could not create save file: {}", &e)),
-                Ok(mut f) => {
-                  for url in self.urls.iter() {
-                    f.write(&format!("{}\n", url).as_bytes());
-                  }
-                  self.focus_ack_dlg(&format!("Saved URL: {}", url_str)); 
+              self.focus_tabs();
+            }
+            Err(e) => self.focus_ack_dlg(&format!("Problem: {}", &e)),
+          }
+        }
+        (Response::Select(textbox), Action::Select, Task::ChangeStyle) => {
+          match fs::read_to_string(user::get_styles_file(&textbox.get_source())) {
+            Ok(s) => if let Err(e) = self.user.style.update_from_str(&s) {
+              self.focus_ack_dlg(&format!("Problem: {}", &e));
+              self.push_style();
+            } else {
+              self.focus_tabs();
+              self.push_style();
+            }
+            Err(e) => self.focus_ack_dlg(&format!("Problem: {}", &e)),
+          }
+        }
+        (Response::Select(textbox), Action::Select, Task::Menu) => {
+          match MENU[textbox.get_source_idx()] {
+            MANUAL => {
+              self.focus_ack_dlg("View manual");
+            }
+            CHANGE_KEYS => match user::get_entries(user::KEYS_PATH) {
+              Ok(e)  => self.focus_select_dlg(Task::ChangeKeys, "Choose keys", e),
+              Err(e) => self.focus_ack_dlg(&format!("Problem: {}", &e)),
+            }
+            CHANGE_STYLE => match user::get_entries(user::STYLES_PATH) {
+              Ok(e)  => self.focus_select_dlg(Task::ChangeStyle, "Choose style", e),
+              Err(e) => self.focus_ack_dlg(&format!("Problem: {}", &e)),
+            }
+            VIEW_SETTINGS => {
+              let text = format!("{:#?}", self.user).lines().map(|s| s.into()).collect();
+              self.focus_select_dlg(Task::Default, "Current Settings", text);
+            }
+            _ => self.focus_tabs(),
+          }
+        }
+        (Response::Edit(editbox), Action::Enter, Task::Reply) => {
+          let text = editbox.content.to_string();
+          let text = text.trim().replace(" ", "%20");
+          self.focus_tabs();
+          self.tab_changed = true;
+          self.try_spawn_request(&format!("{}?{}", self.tabs.url_str, text));
+        }
+        (Response::Edit(editbox), Action::Enter, Task::NewTab) => {
+          let text = editbox.content.to_string();
+          self.focus_tabs();
+          self.tab_changed = true;
+          self.try_spawn_request(&text);
+        }
+        (_, Action::Yes, Task::Go(url)) => {
+          let url = url.clone();
+          self.focus_tabs();
+          self.try_spawn_request(&url);
+        }
+        (_, Action::Yes, Task::Redirect(url_str)) => {
+          let text = url_str.trim().replace(" ", "%20");
+          self.focus_tabs();
+          self.try_spawn_request(&format!("{}?{}", self.tabs.url_str, text));
+        }
+        (_, Action::Yes, Task::DelTab) => {
+          self.tabs.delete();
+          self.tab_changed = true;
+          self.focus_tabs();
+        }
+        (Response::Ack(_), _, _) |
+        (_,   Action::Select, _) |
+        (_,       Action::No, _) |
+        (_,   Action::Cancel, _)               => self.focus_tabs(),
+        (Response::Select(textbox), action, _) => textbox.update(action),
+        (Response::Edit(editbox),   action, _) => editbox.update(action),
+        (_, _, _)                              => self.focus_tabs(),
+      }
+      (Msg::Action(action), Focus::Tab) => match action {
+        Action::SaveUrl => {
+          let url_str = self.tabs.url_str.clone();
+          // only add url_str if new
+          if self.urls.iter().any(|url| **url == url_str) {
+            self.focus_ack_dlg(&format!("URL {} already saved", url_str)); 
+          } else {
+            self.urls.push(url_str.clone());
+            // write to save file
+            match fs::OpenOptions::new()
+              .write(true).truncate(true).open(&self.user.save_file) 
+            {
+              Err(e) => 
+                self.focus_ack_dlg(&format!("could not create save file: {}", &e)),
+              Ok(mut f) => {
+                for url in self.urls.iter() {
+                  f.write(&format!("{}\n", url).as_bytes());
                 }
+                self.focus_ack_dlg(&format!("Saved URL: {}", url_str)); 
               }
             }
           }
-          Action::Select => if let Some(gemdoc) = &self.tabs.gemdoc {
-            match gemdoc.doc[self.tabs.get_source_idx()].tag.clone() {
-              GemTag::Link(Scheme::Gemini, url) => {
-                let prompt = &format!("go to {}?", url);
-                self.focus_ask_dlg(Task::Go(url.into()), prompt);
-              }
-              GemTag::Link(_, url) => 
-                self.focus_ack_dlg(&format!("Protocol {} not yet supported", url)),
-              gemtext => 
-                self.focus_ack_dlg(&format!("you've selected {:?}", gemtext)),
-            }
-          }
-          Action::CycleLeft => {
-            if self.tabs.units().len() > 1 {
-              self.tabs.wrapping_backward(1);
-              self.tab_changed = true;
-            }
-          }
-          Action::CycleRight => {
-            if self.tabs.units().len() > 1 {
-              self.tabs.wrapping_forward(1);
-              self.tab_changed = true;
-            }
-          }
-          Action::LoadUrl => 
-            self.focus_select_dlg(Task::NewTab, "Choose URL: ", self.urls.clone()),
-          Action::Menu => 
-            self.focus_select_dlg(Task::Menu, "Choose: ", 
-              MENU.iter().map(|s| s.to_string()).collect()),
-          Action::NewTab => 
-            self.focus_edit_dlg(Task::NewTab, "enter path: "),
-          Action::DelTab => 
-            self.focus_ask_dlg(Task::DelTab, "Delete current tab?"),
-          action => 
-            self.tabs.update(action),
         }
+        Action::Select => if let Some(gemdoc) = &self.tabs.gemdoc {
+          match gemdoc.doc[self.tabs.get_source_idx()].tag.clone() {
+            GemTag::Link(Scheme::Gemini, url) => {
+              let prompt = &format!("go to {}?", url);
+              self.focus_ask_dlg(Task::Go(url.into()), prompt);
+            }
+            GemTag::Link(_, url) => 
+              self.focus_ack_dlg(&format!("Protocol {} not yet supported", url)),
+            gemtext => 
+              self.focus_ack_dlg(&format!("you've selected {:?}", gemtext)),
+          }
+        }
+        Action::CycleLeft => {
+          if self.tabs.units().len() > 1 {
+            self.tabs.wrapping_backward(1);
+            self.tab_changed = true;
+          }
+        }
+        Action::CycleRight => {
+          if self.tabs.units().len() > 1 {
+            self.tabs.wrapping_forward(1);
+            self.tab_changed = true;
+          }
+        }
+        Action::LoadUrl => 
+          self.focus_select_dlg(Task::NewTab, "Choose URL: ", self.urls.clone()),
+        Action::Menu => 
+          self.focus_select_dlg(Task::Menu, "Choose: ", 
+            MENU.iter().map(|s| s.to_string()).collect()),
+        Action::NewTab => 
+          self.focus_edit_dlg(Task::NewTab, "enter path: "),
+        Action::DelTab => 
+          self.focus_ask_dlg(Task::DelTab, "Delete current tab?"),
+        action => 
+          self.tabs.update(action),
       }
     }
   }
