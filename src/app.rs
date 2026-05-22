@@ -238,16 +238,17 @@ impl App {
         }
         (Response::Select(textbox), Action::Select, Task::ChangeKeys) => {
           match fs::read_to_string(user::get_keys_file(&textbox.get_source())) {
+            Err(e) => self.focus_ack_dlg(&format!("Problem: {}", &e)),
             Ok(s) => if let Err(e) = self.user.keys.update_from_str(&s) {
               self.focus_ack_dlg(&format!("Problem: {}", &e));
             } else {
               self.focus_tabs();
             }
-            Err(e) => self.focus_ack_dlg(&format!("Problem: {}", &e)),
           }
         }
         (Response::Select(textbox), Action::Select, Task::ChangeStyle) => {
           match fs::read_to_string(user::get_styles_file(&textbox.get_source())) {
+            Err(e) => self.focus_ack_dlg(&format!("Problem: {}", &e)),
             Ok(s) => if let Err(e) = self.user.style.update_from_str(&s) {
               self.focus_ack_dlg(&format!("Problem: {}", &e));
               self.push_style();
@@ -255,7 +256,6 @@ impl App {
               self.focus_tabs();
               self.push_style();
             }
-            Err(e) => self.focus_ack_dlg(&format!("Problem: {}", &e)),
           }
         }
         (Response::Select(textbox), Action::Select, Task::Menu) => {
