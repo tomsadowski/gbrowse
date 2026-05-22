@@ -314,30 +314,32 @@ impl App {
         (Response::Edit(editbox),   action, _) => editbox.update(action),
         (_, _, _)                              => self.focus_tabs(),
       }
-      (Msg::Action(action), Focus::Tab) => match action {
-        Action::SaveUrl => {
-          let url_str = self.tabs.url_str.clone();
-          // only add url_str if new
-          if self.urls.iter().any(|url| **url == url_str) {
-            self.focus_ack_dlg(&format!("URL {} already saved", url_str)); 
-          } else {
-            self.urls.push(url_str.clone());
-            // write to save file
-            match fs::OpenOptions::new()
-              .write(true).truncate(true).open(&self.user.save_file) 
-            {
-              Err(e) => 
-                self.focus_ack_dlg(&format!("could not create save file: {}", &e)),
-              Ok(mut f) => {
-                for url in self.urls.iter() {
-                  f.write(&format!("{}\n", url).as_bytes());
-                }
-                self.focus_ack_dlg(&format!("Saved URL: {}", url_str)); 
+      (Msg::Action(Action::SaveUrl), Focus::Tab) => {
+        let url_str = self.tabs.url_str.clone();
+        // only add url_str if new
+        if self.urls.iter().any(|url| **url == url_str) {
+          self.focus_ack_dlg(&format!("URL {} already saved", url_str)); 
+        } else {
+          self.urls.push(url_str.clone());
+          // write to save file
+          match fs::OpenOptions::new()
+            .write(true)
+            .truncate(true)
+            .open(&self.user.save_file) 
+          {
+            Err(e) => 
+              self.focus_ack_dlg(&format!("could not create save file: {}", &e)),
+            Ok(mut f) => {
+              for url in self.urls.iter() {
+                f.write(&format!("{}\n", url).as_bytes());
               }
+              self.focus_ack_dlg(&format!("Saved URL: {}", url_str)); 
             }
           }
         }
-        Action::Select => if let Some(gemdoc) = &self.tabs.gemdoc {
+      }
+      (Msg::Action(Action::Select), Focus::Tab) => 
+        if let Some(gemdoc) = &self.tabs.gemdoc {
           match gemdoc.doc[self.tabs.get_source_idx()].tag.clone() {
             GemTag::Link(Scheme::Gemini, url) => {
               let prompt = &format!("go to {}?", url);
@@ -349,29 +351,33 @@ impl App {
               self.focus_ack_dlg(&format!("you've selected {:?}", gemtext)),
           }
         }
-        Action::CycleLeft => {
-          if self.tabs.units().len() > 1 {
-            self.tabs.wrapping_backward(1);
-            self.tab_changed = true;
-          }
+      (Msg::Action(Action::CycleLeft), Focus::Tab) => {
+        if self.tabs.units().len() > 1 {
+          self.tabs.wrapping_backward(1);
+          self.tab_changed = true;
         }
-        Action::CycleRight => {
-          if self.tabs.units().len() > 1 {
-            self.tabs.wrapping_forward(1);
-            self.tab_changed = true;
-          }
+      }
+      (Msg::Action(Action::CycleRight), Focus::Tab) => {
+        if self.tabs.units().len() > 1 {
+          self.tabs.wrapping_forward(1);
+          self.tab_changed = true;
         }
-        Action::LoadUrl => 
-          self.focus_select_dlg(Task::NewTab, "Choose URL: ", self.urls.clone()),
-        Action::Menu => 
-          self.focus_select_dlg(Task::Menu, "Choose: ", 
-            MENU.iter().map(|s| s.to_string()).collect()),
-        Action::NewTab => 
-          self.focus_edit_dlg(Task::NewTab, "enter path: "),
-        Action::DelTab => 
-          self.focus_ask_dlg(Task::DelTab, "Delete current tab?"),
-        action => 
-          self.tabs.update(action),
+      }
+      (Msg::Action(Action::LoadUrl), Focus::Tab) => {
+        self.focus_select_dlg(Task::NewTab, "Choose URL: ", self.urls.clone());
+      }
+      (Msg::Action(Action::Menu), Focus::Tab) => {
+        self.focus_select_dlg(Task::Menu, "Choose: ", 
+          MENU.iter().map(|s| s.to_string()).collect());
+      }
+      (Msg::Action(Action::NewTab), Focus::Tab) => {
+        self.focus_edit_dlg(Task::NewTab, "enter path: ");
+      }
+      (Msg::Action(Action::DelTab), Focus::Tab) => {
+        self.focus_ask_dlg(Task::DelTab, "Delete current tab?");
+      }
+      (Msg::Action(action), Focus::Tab) => {
+        self.tabs.update(action);
       }
     }
   }
