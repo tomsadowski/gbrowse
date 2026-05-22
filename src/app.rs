@@ -2,7 +2,7 @@
 
 use crate::{
   cursor::UnitCursor,
-  user::{self, User},
+  user::{self, User, UserTable},
   keys::Action,
   view::Rect,
   tab::{Tab, TabList},
@@ -46,9 +46,8 @@ pub enum Task {
 }
 
 #[derive(Clone, Debug)]
-pub enum Message {
+pub enum Msg {
   Quit,
-  Default, 
   Action(Action),
   Resize(u16, u16),
 }
@@ -206,16 +205,16 @@ impl App {
     }
     self.clear = true;
   }
-  pub fn update(&mut self, message: &Message) {
+  pub fn update(&mut self, message: &Msg) {
     self.clear       = false;
     self.tab_changed = false;
     self.new_dlg     = false;
     self.tabs.reset_state();
     match message {
-      Message::Quit => {
+      Msg::Quit => {
         self.quit = true;
       }
-      Message::Resize(w, h) => {
+      Msg::Resize(w, h) => {
         self.screen = Rect::new(*w, *h);
         self.frame.resize(&self.screen);
         self.rect = self.frame.inner_rect.clone();
@@ -225,8 +224,8 @@ impl App {
         self.tabs.resize(&self.rect);
         self.clear = true;
       }
-      Message::Action(action) => match &mut self.focus {
-        Focus::Dlg(task, dialog) => match (&mut dialog.response, action, task) {
+      Msg::Action(action) => match &mut self.focus {
+        Focus::Dlg(task, dlg) => match (&mut dlg.response, action, task) {
           (Response::Select(textbox), Action::Select, Task::NewTab) => {
             if self.urls.len() > 0 {
               let url_str = &self.urls[textbox.get_source_idx()].clone();
@@ -238,7 +237,7 @@ impl App {
           }
           (Response::Select(textbox), Action::Select, Task::ChangeKeys) => {
             match fs::read_to_string(user::get_keys_file(&textbox.get_source())) {
-              Ok(s) => if let Err(e) = self.user.update_keys_from_str(&s) {
+              Ok(s) => if let Err(e) = self.user.keys.update_from_str(&s) {
                 self.focus_ack_dlg(&format!("Problem: {}", &e));
               } else {
                 self.focus_tabs();
@@ -248,7 +247,7 @@ impl App {
           }
           (Response::Select(textbox), Action::Select, Task::ChangeStyle) => {
             match fs::read_to_string(user::get_styles_file(&textbox.get_source())) {
-              Ok(s) => if let Err(e) = self.user.update_style_from_str(&s) {
+              Ok(s) => if let Err(e) = self.user.style.update_from_str(&s) {
                 self.focus_ack_dlg(&format!("Problem: {}", &e));
                 self.push_style();
               } else {
@@ -307,6 +306,7 @@ impl App {
             self.focus_tabs();
           }
           (Response::Ack(_), _, _) |
+          (_,   Action::Select, _) |
           (_,       Action::No, _) |
           (_,   Action::Cancel, _)               => self.focus_tabs(),
           (Response::Select(textbox), action, _) => textbox.update(action),
@@ -370,24 +370,23 @@ impl App {
             self.tabs.update(action),
         }
       }
-      _ => {}
     }
   }
-  pub fn get_update(&self, event: Event) -> Option<Message> {
+  pub fn get_update(&self, event: Event) -> Option<Msg> {
     match event {
       Event::Key(KeyEvent {
         modifiers: KeyModifiers::CONTROL, code: KeyCode::Char('c'), ..
       }) => 
-        Some(Message::Quit),
+        Some(Msg::Quit),
       Event::Resize(w, h) => 
-        Some(Message::Resize(w, h)),
+        Some(Msg::Resize(w, h)),
       Event::Key(KeyEvent {
         code: kc, kind: KeyEventKind::Press, ..
       }) => match &self.focus {
         Focus::Tab => 
-          self.user.keys.get_tab_action(&kc).map(|a| Message::Action(a)),
+          self.user.keys.get_tab_action(&kc).map(|a| Msg::Action(a)),
         Focus::Dlg(_, dlg) => 
-          self.user.keys.get_dlg_action(dlg, &kc).map(|a| Message::Action(a))
+          self.user.keys.get_dlg_action(dlg, &kc).map(|a| Msg::Action(a))
       }
       _ => None,
     }
