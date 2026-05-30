@@ -1,12 +1,21 @@
 // src/style.rs
 
-use crate::user::UserTable;
-use crate::view::Rect;
-use crossterm::Command;
-use crossterm::style::{SetStyle, ContentStyle, Attribute, Attributes, Color};
+use crate::{
+  user::UserTable,
+  view::Rect,
+};
+use crossterm::{
+  Command,
+  style::{
+    SetStyle, ContentStyle, Attribute, Attributes, Color
+  },
+};
 use toml::Value;
-use std::str::FromStr;
-use std::fmt;
+use std::{
+  fmt,
+  str::FromStr,
+  ops::Deref,
+};
 
 // corners 
 // square
@@ -225,7 +234,7 @@ impl FromStr for BorderField {
   }
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Copy, Clone, Debug, Default)]
 pub struct Style {
   pub underline: bool,
   pub bold:      bool,
@@ -250,10 +259,13 @@ impl Command for Style {
   }
 }
 impl UserTable<StyleField> for Style {
-  fn try_assign(&mut self, field: StyleField, value: Value) -> Result<(), String> {
+  fn try_assign(&mut self, field: StyleField, value: Value) 
+    -> Result<(), String> 
+  {
     match (field, value) {
       (StyleField::Color(f), v) => {
-        let v = parse_color(&v).map_err(|e| format!("{:?} : {}", v, e))?;
+        let v = parse_color(&v)
+          .map_err(|e| format!("{:?} : {}", v, e))?;
         match f {
           ColorField::Fg => self.fg = Some(v),
           ColorField::Bg => self.bg = Some(v),
@@ -266,7 +278,8 @@ impl UserTable<StyleField> for Style {
         }
       }
       (f, v) => 
-        return Err(format!("field {:?} value {:?} not valid here", f, v))
+        return Err(
+          format!("field {:?} value {:?} not valid here", f, v))
     }
     Ok(())
   }
@@ -285,10 +298,13 @@ impl Default for MarginSpec {
   }
 }
 impl UserTable<MarginField> for MarginSpec {
-  fn try_assign(&mut self, field: MarginField, value: Value) -> Result<(), String> {
+  fn try_assign(&mut self, field: MarginField, value: Value) 
+    -> Result<(), String> 
+  {
     match (field, value) {
       (f, Value::Integer(v)) => {
-        let v = u16::try_from(v).map_err(|e| format!("{:?} : {}", v, e))?;
+        let v = u16::try_from(v)
+          .map_err(|e| format!("{:?} : {}", v, e))?;
         match f {
           MarginField::North => self.north = v,
           MarginField::South => self.south = v,
@@ -303,10 +319,12 @@ impl UserTable<MarginField> for MarginSpec {
   }
 }
 impl MarginSpec {
-  pub fn get_rect(&self, screen: &Rect) -> Rect {
+  pub fn get_rect(&self, screen: Rect) -> Rect {
     screen.clone()
-      .crop_north(self.north).crop_south(self.south)
-      .crop_east(self.east).crop_west(self.west)
+      .crop_north(self.north)
+      .crop_south(self.south)
+      .crop_east(self.east)
+      .crop_west(self.west)
   }
 }
 
@@ -338,9 +356,13 @@ impl Default for BorderSpec {
   }
 }
 impl UserTable<BorderField> for BorderSpec {
-  fn try_assign(&mut self, field: BorderField, value: Value) -> Result<(), String> {
+  fn try_assign(&mut self, field: BorderField, value: Value) 
+    -> Result<(), String> 
+  {
     match (field, value) {
-      (BorderField::Style(f), v) => self.style.try_assign(f, v)?,
+      (BorderField::Style(f), v) => {
+        self.style.try_assign(f, v)?;
+      }
       (BorderField::Corner, Value::String(v)) => {
         match v.as_str() {
           "square" => {
@@ -355,7 +377,8 @@ impl UserTable<BorderField> for BorderSpec {
             self.c = C_RND;
             self.d = D_RND;
           }
-          s => return Err(format!("Corner field does not contain {}", s)),
+          s => 
+            return Err(format!("Corner field does not contain {}", s)),
         }
       }
       (BorderField::Bracket, Value::String(v)) => {
@@ -368,8 +391,11 @@ impl UserTable<BorderField> for BorderSpec {
             self.open  = OPEN_TORT;
             self.close = CLOSE_TORT;
           }
-          "integral" | "int"  | "i" | 
-          "j"        | "J" => {
+          "integral" | 
+          "int"  | 
+          "i" | 
+          "j" | 
+          "J" => {
             self.open  = OPEN_INT;
             self.close = CLOSE_INT;
           }
@@ -381,21 +407,31 @@ impl UserTable<BorderField> for BorderSpec {
             self.open  = OPEN_E;
             self.close = CLOSE_E;
           }
-          s => return Err(format!("Bracket field does not contain {}", s)),
+          s => 
+            return Err(
+              format!("Bracket field does not contain {}", s)),
         }
       }
-      (f, v) => return Err(format!("field {:?} value {:?} not valid here", f, v))
+      (f, v) => 
+        return Err(
+          format!("field {:?} value {:?} not valid here", f, v))
     }
     Ok(())
   }
 }
 
-#[derive(Clone, Debug)]
-pub struct TextTable {
+#[derive(Copy, Clone, Debug)]
+pub struct TextStyle {
   pub style: Style,
   pub wrap:  bool,
 }
-impl Default for TextTable {
+impl Deref for TextStyle {
+  type Target = Style;
+  fn deref(&self) -> &Self::Target {
+    &self.style
+  }
+}
+impl Default for TextStyle {
   fn default() -> Self {
     Self {
       style: Style::default(),
@@ -403,13 +439,20 @@ impl Default for TextTable {
     }
   }
 }
-impl UserTable<TextField> for TextTable {
-  fn try_assign(&mut self, field: TextField, value: Value) -> Result<(), String> {
+impl UserTable<TextField> for TextStyle {
+  fn try_assign(&mut self, field: TextField, value: Value) 
+    -> Result<(), String> 
+  {
     match (field, value) {
-      (TextField::Wrap, Value::Boolean(v)) => self.wrap = v,
-      (TextField::Style(f), v)             => self.style.try_assign(f, v)?,
+      (TextField::Wrap, Value::Boolean(v)) => {
+        self.wrap = v;
+      }
+      (TextField::Style(f), v) => {
+        self.style.try_assign(f, v)?;
+      }
       (f, v) => 
-        return Err(format!("field {:?} value {:?} not valid here", f, v))
+        return Err(
+          format!("field {:?} value {:?} not valid here", f, v))
     }
     Ok(())
   }
@@ -420,27 +463,29 @@ pub struct StyleModTable {
   pub text_margin:     MarginSpec,
   pub screen_margin:   MarginSpec,
   pub border:          BorderSpec,
-  pub general:         TextTable,
-  pub banner:          TextTable,
-  pub info:            TextTable,
-  pub text:            TextTable,
-  pub header3:         TextTable,
-  pub header2:         TextTable,
-  pub header1:         TextTable,
-  pub preformat:       TextTable,
-  pub link:            TextTable,
-  pub error:           TextTable,
-  pub quote:           TextTable,
-  pub list:            TextTable,
+  pub general:         TextStyle,
+  pub banner:          TextStyle,
+  pub info:            TextStyle,
+  pub text:            TextStyle,
+  pub header3:         TextStyle,
+  pub header2:         TextStyle,
+  pub header1:         TextStyle,
+  pub preformat:       TextStyle,
+  pub link:            TextStyle,
+  pub error:           TextStyle,
+  pub quote:           TextStyle,
+  pub list:            TextStyle,
 } 
 impl UserTable<StyleModField> for StyleModTable {
-  fn try_assign(&mut self, field: StyleModField, value: Value) -> Result<(), String> {
+  fn try_assign(&mut self, field: StyleModField, value: Value) 
+    -> Result<(), String> 
+  {
     match (field, value) {
       (StyleModField::Border, Value::Table(v)) => {
         self.border = BorderSpec::default().read_table(v)?;
       }
       (StyleModField::Text(f), Value::Table(v)) => {
-        let v = TextTable::default().read_table(v)?;
+        let v = TextStyle::default().read_table(v)?;
         match f {
           StyleTextField::General   => self.general   = v,
           StyleTextField::Banner    => self.banner    = v,

@@ -1,8 +1,12 @@
 // src/view.rs
 
 use std::ops::Range;
-use crossterm::{QueueableCommand, cursor::{self, MoveTo}};
+use crossterm::{
+  QueueableCommand, 
+  cursor::{self, MoveTo}
+};
 use crate::cursor::{UnitCursor, UnitCursorMut, WeightedCursor};
+
 
 #[derive(Clone, Default, Copy)]
 pub struct Rect {
@@ -135,39 +139,48 @@ pub struct CursorView {
 impl CursorView {
   pub fn new(view_start: u16, view_size: u16) -> Self {
     Self {
-      start: 0, 
-      head:  0, 
-      view_head:      view_start, 
+      start:     0, 
+      head:      0, 
+      view_head: view_start, 
       view_start, 
       view_size
     }
   }
+
   pub fn scroll(&self) -> usize {
     self.start
   }
+
   pub fn cursor(&self) -> u16 {
     self.view_head
   }
+
   // preserve cursor position if it still fits in the new bounds
-  pub fn resize(&mut self, new_head: usize, new_view_start: u16, new_view_size: u16) {
+  pub fn resize(
+    &mut self, 
+    new_head: usize, 
+    new_view_start: u16, 
+    new_view_size: u16
+  ) {
     let cursor_position   = self.view_head - self.view_start;
     self.view_start       = new_view_start;
     self.view_size        = new_view_size;
-    self.head    = new_head;
+    self.head             = new_head;
     // go to beginning of line
     if new_head < usize::from(new_view_size) {
-      self.start = 0;
-      self.view_head      = self.view_start + u16::try_from(self.head).unwrap();
+      self.start     = 0;
+      self.view_head = self.view_start + u16::try_from(self.head).unwrap();
     // cursor_position must be lowered to fit within new bounds
     } else if cursor_position > new_view_size - 1 {
-      self.view_head      = self.view_start + self.view_size - 1;
-      self.start = self.head - usize::from(self.view_size - 1);
+      self.view_head = self.view_start + self.view_size - 1;
+      self.start     = self.head - usize::from(self.view_size - 1);
     // cursor_position can be preserved
     } else {
-      self.view_head      = self.view_start + cursor_position;
-      self.start = self.head.saturating_sub(usize::from(cursor_position));
+      self.view_head = self.view_start + cursor_position;
+      self.start     = self.head.saturating_sub(usize::from(cursor_position));
     }
   }
+
   pub fn update(&mut self, new_head: usize) -> bool {
     // no move
     if self.head == new_head {

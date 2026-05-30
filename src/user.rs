@@ -23,8 +23,7 @@ pub const KEYS_PATH:   &str = "gdata/keys";
 
 pub fn get_entries(path: &str) -> Result<Vec<String>, String> {
   let mut vec: Vec<String> = vec![];
-  let mut results = fs::read_dir(path)
-    .map_err(|e| e.to_string())?;
+  let mut results = fs::read_dir(path).map_err(|e| e.to_string())?;
   for result in results {
     let s = result
       .map_err(|e| e.to_string())?
@@ -35,15 +34,21 @@ pub fn get_entries(path: &str) -> Result<Vec<String>, String> {
   }
   Ok(vec)
 }
+
 pub fn get_keys_file(name: &str) -> String {
   format!("{}/{}", KEYS_PATH, name)
 }
+
 pub fn get_styles_file(name: &str) -> String {
   format!("{}/{}", STYLES_PATH, name)
 }
 
-pub trait UserTable<F>: Sized where F: FromStr<Err = String> {
+pub trait UserTable<F>: Sized 
+where 
+  F: FromStr<Err = String> 
+{
   fn try_assign(&mut self, field: F, value: Value) -> Result<(), String>;
+
   fn read_table(mut self, table: Table) -> Result<Self, String> {
     for (key, value) in table.into_iter() {
       let field = F::from_str(&key)?;
@@ -51,6 +56,7 @@ pub trait UserTable<F>: Sized where F: FromStr<Err = String> {
     }
     Ok(self)
   }
+
   fn update_from_table(&mut self, table: Table) -> Result<(), String> {
     for (key, value) in table.into_iter() {
       let field = F::from_str(&key)?;
@@ -58,6 +64,7 @@ pub trait UserTable<F>: Sized where F: FromStr<Err = String> {
     }
     Ok(())
   }
+
   fn update_from_str(&mut self, s: &str) -> Result<(), String> {  
     let table = s.parse::<Table>().map_err(|e| e.to_string())?;
     self.update_from_table(table)?;
@@ -137,7 +144,9 @@ impl FromStr for User {
   }
 }
 impl UserTable<UserField> for User {
-  fn try_assign(&mut self, field: UserField, value: Value) -> Result<(), String> {
+  fn try_assign(&mut self, field: UserField, value: Value) 
+    -> Result<(), String> 
+  {
     match (field, value) {
       (UserField::InitUrl, Value::String(v)) => {
         self.init_url = v.into();
@@ -177,54 +186,29 @@ impl UserTable<UserField> for User {
   }
 }
 impl User {
-  pub fn get_frame(&self, screen: &Rect) -> Frame {
+  pub fn get_frame(&self, screen: Rect) -> Frame {
     Frame::new(
-        &screen, 
+        screen, 
         self.style.border.clone(),
         self.style.screen_margin.clone(),
         self.style.text_margin.clone()
       )
-      .with_banner_style(&self.style.banner.style)
-      .with_margin_style(&self.style.general.style)
+      .with_banner_style(*self.style.banner)
+      .with_margin_style(*self.style.general)
   }
-  pub fn gem_to_styled(&self, gemtext: &GemText) -> StyledText {
-    match gemtext.tag {
-      GemTag::HeadingOne => 
-        StyledText::from(gemtext.text.as_str())
-          .with_style(&self.style.header1.style)
-          .wrap(self.style.header1.wrap),
-      GemTag::HeadingTwo => 
-        StyledText::from(gemtext.text.as_str())
-          .with_style(&self.style.header2.style)
-          .wrap(self.style.header2.wrap),
-      GemTag::HeadingThree => 
-        StyledText::from(gemtext.text.as_str())
-          .with_style(&self.style.header3.style)
-          .wrap(self.style.header3.wrap),
-      GemTag::Text => 
-        StyledText::from(gemtext.text.as_str())
-          .with_style(&self.style.text.style)
-          .wrap(self.style.text.wrap),
-      GemTag::PreFormat => 
-        StyledText::from(gemtext.text.as_str())
-          .with_style(&self.style.preformat.style)
-          .wrap(self.style.preformat.wrap),
-      GemTag::Link(_, _) => 
-        StyledText::from(gemtext.text.as_str())
-          .with_style(&self.style.link.style)
-          .wrap(self.style.link.wrap),
-      GemTag::BadLink(_) => 
-        StyledText::from(gemtext.text.as_str())
-          .with_style(&self.style.error.style)
-          .wrap(self.style.error.wrap),
-      GemTag::ListItem => 
-        StyledText::from(gemtext.text.as_str())
-          .with_style(&self.style.list.style)
-          .wrap(self.style.list.wrap),
-      GemTag::Quote => 
-        StyledText::from(gemtext.text.as_str())
-          .with_style(&self.style.quote.style)
-          .wrap(self.style.quote.wrap),
-    }
+
+  pub fn get_styled_gemtext(&self, gemtext: &GemText) -> StyledText {
+    let mut text: StyledText = match gemtext.tag {
+      GemTag::HeadingOne   => self.style.header1.into(),
+      GemTag::HeadingTwo   => self.style.header2.into(),
+      GemTag::HeadingThree => self.style.header3.into(),
+      GemTag::Text         => self.style.text.into(),
+      GemTag::PreFormat    => self.style.preformat.into(),
+      GemTag::Link(_, _)   => self.style.link.into(),
+      GemTag::BadLink(_)   => self.style.error.into(),
+      GemTag::ListItem     => self.style.list.into(),
+      GemTag::Quote        => self.style.quote.into(),
+    };
+    text.with_text(&gemtext.to_string())
   }
 }

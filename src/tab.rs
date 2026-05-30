@@ -45,9 +45,14 @@ impl DerefMut for TabList {
   }
 }
 impl TabList {
+  pub fn new(tab: Tab) -> Self {
+    Self {tabs: vec![tab], head: 0}
+  }
+
   pub fn banner_text(&self) -> String {
     format!("{}/{} - {}", self.head + 1, self.tabs.len(), self.url_str)
   }
+
   // maybe return bool
   pub fn add(&mut self, url_str: &str) {
     // search for tab with same url_str
@@ -58,7 +63,7 @@ impl TabList {
       self.head = idx;
     // or make a new tab
     } else {
-      let new_tab = Tab::init(&self.rect, &url_str);
+      let new_tab = Tab::init(self.rect, &url_str);
       if self.head + 1 == self.tabs.len() {
         self.tabs.push(new_tab);
         self.head += 1;
@@ -70,16 +75,15 @@ impl TabList {
     }
     self.reset_state();
   }
+
   pub fn delete(&mut self) {
     if self.tabs.len() > 1 {
       self.tabs.remove(self.head);
       self.wrapping_backward(1);
     }
   }
-  pub fn new(tab: Tab) -> Self {
-    Self {tabs: vec![tab], head: 0}
-  }
-  pub fn resize(&mut self, rect: &Rect) {
+
+  pub fn resize(&mut self, rect: Rect) {
     for tab in self.tabs.iter_mut() {
       tab.resize(rect);
     }
@@ -103,9 +107,9 @@ impl DerefMut for Tab {
   }
 }
 impl Tab {
-  pub fn init(rect: &Rect, url_str: &str) -> Self {
+  pub fn init(rect: Rect, url_str: &str) -> Self {
     let mut content = TextBox::default();
-    content.rect    = rect.clone();
+    content.rect    = rect;
     Self {
       content, 
       gemdoc:  None,

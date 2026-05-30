@@ -20,7 +20,7 @@ impl Request {
   pub fn new(url: &Url, timeout: u64) -> Self {
     let (tx, rx)  = mpsc::channel::<Result<(String, String), String>>();
     let url_clone = url.clone();
-    let handle    = thread::spawn(
+    let handle = thread::spawn(
       move || {
         let result = get_data(&url_clone, timeout);
         tx.send(result).unwrap();
@@ -36,7 +36,9 @@ pub fn split_whitespace_once(line: &str) -> Option<(&str, &str)> {
     .map(|i| (line[..i].trim(), line[i..].trim()))
 }
 
-pub fn join_if_relative(base: &Url, url_str: &str) -> Result<Url, ParseError> {
+pub fn join_if_relative(base: &Url, url_str: &str) 
+  -> Result<Url, ParseError> 
+{
   Url::parse(url_str).or_else(|e|
     if let ParseError::RelativeUrlWithoutBase = e {
       base.join(url_str)
@@ -51,12 +53,20 @@ pub struct GemDoc {
   pub doc:    Vec<GemText>,
 }
 impl GemDoc {
-  pub fn new(url: &Url, response: String, content: String) -> Result<Self, String> {
+  pub fn new(url: &Url, response: String, content: String) 
+    -> Result<Self, String> 
+  {
     let status = StatusText::parse(&response);
     let doc = match status.tag {
-      Status::Success => GemText::parse_doc(&content, url),
+      Status::Success => {
+        GemText::parse_doc(&content, url)
+      }
       _ => {
-        let msg = format!("status: {:?}, text: {}", status.tag, status.text);
+        let msg = format!(
+          "status: {:?}, text: {}", 
+          status.tag, 
+          status.text
+          );
         vec![GemText::new(GemTag::Text, &msg)]
       }
     };
@@ -69,10 +79,19 @@ pub struct GemText {
   pub tag:  GemTag,
   pub text: String,
 }
+impl ToString for GemText {
+  fn to_string(&self) -> String {
+    self.text.clone()
+  }
+}
 impl GemText {
   pub fn new(tag: GemTag, text: &str) -> Self {
-    Self {tag, text: String::from(text)}
+    Self {
+      tag, 
+      text: String::from(text)
+    }
   }
+
   pub fn parse_doc(text_str: &str, source: &Url) -> Vec<Self> {
     let mut vec       = vec![];
     let mut preformat = false;
@@ -87,6 +106,7 @@ impl GemText {
     }
     vec
   }
+
   pub fn parse_formatted(line: &str, source: &Url) -> Self {
     // look for 3 character symbols
     if let Some(("###", text)) = line.split_at_checked(3) {
@@ -148,9 +168,12 @@ pub struct StatusText {
 impl StatusText {
   pub fn parse(line: &str) -> Self {
     let line = line.trim();
-    let (code_str, msg) = split_whitespace_once(line).unwrap_or((line, line));
-    let tag = Status::from(code_str);
-    Self {tag, text: msg.into()}
+    let (code_str, msg) = 
+      split_whitespace_once(line).unwrap_or((line, line));
+    Self {
+      tag: Status::from(code_str), 
+      text: msg.into()
+    }
   }
 }
 

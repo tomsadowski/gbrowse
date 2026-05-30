@@ -28,15 +28,17 @@ pub struct Frame {
   pub inner_rect:         Rect,
 }
 impl Frame {
-  pub fn new(   screen:             &Rect, 
-                border_spec:        BorderSpec, 
-                screen_margin_spec: MarginSpec,
-                text_margin_spec:   MarginSpec
-                ) -> Self 
+  pub fn new(
+    screen:             Rect, 
+    border_spec:        BorderSpec, 
+    screen_margin_spec: MarginSpec,
+    text_margin_spec:   MarginSpec
+  ) -> Self 
   {
+    let outer_rect = 
+      screen_margin_spec.get_rect(screen).crop_x(1).crop_y(1);
+    let inner_rect  = text_margin_spec.get_rect(outer_rect);
     let border_rect = screen_margin_spec.get_rect(screen);
-    let outer_rect  = screen_margin_spec.get_rect(screen).crop_x(1).crop_y(1);
-    let inner_rect  = text_margin_spec.get_rect(&outer_rect);
     Self {
       margin_style: Style::default(),
       banner_style: Style::default(),
@@ -48,23 +50,27 @@ impl Frame {
       border_spec,
     }
   }
-  pub fn with_banner_style(mut self, style: &Style) -> Self {
-    self.banner_style = style.clone();
+  pub fn with_banner_style(mut self, style: Style) -> Self {
+    self.banner_style = style;
     self
   }
-  pub fn with_margin_style(mut self, style: &Style) -> Self {
-    self.margin_style = style.clone();
+  pub fn with_margin_style(mut self, style: Style) -> Self {
+    self.margin_style = style;
     self
   }
-  pub fn resize(&mut self, screen: &Rect) {
+
+  pub fn resize(&mut self, screen: Rect) {
+    self.outer_rect = 
+      self.screen_margin_spec.get_rect(screen).crop_x(1).crop_y(1);
+    self.inner_rect  = self.text_margin_spec.get_rect(self.outer_rect);
     self.border_rect = self.screen_margin_spec.get_rect(screen);
-    self.outer_rect  = self.screen_margin_spec.get_rect(screen).crop_x(1).crop_y(1);
-    self.inner_rect  = self.text_margin_spec.get_rect(&self.outer_rect);
   }
+
   pub fn write<W: Write>(&self, writer: &mut W) -> io::Result<()> {
     self.write_frame(writer)?;
     Ok(())
   }
+
   pub fn write_frame<W: Write>(&self, writer: &mut W) -> io::Result<()> {
     // border
     let (ax, ay) = self.border_rect.a();
@@ -72,7 +78,8 @@ impl Frame {
     let (cx, cy) = self.border_rect.c();
     let (dx, dy) = self.border_rect.d();
     writer
-      .queue(SetAttribute(Attribute::Reset))?.queue(&self.border_spec.style)?
+      .queue(SetAttribute(Attribute::Reset))?
+      .queue(&self.border_spec.style)?
       .queue(MoveTo(ax, ay))?.queue(Print(self.border_spec.a))?
       .queue(MoveTo(bx, by))?.queue(Print(self.border_spec.b))?
       .queue(MoveTo(cx, cy))?.queue(Print(self.border_spec.c))?
@@ -88,7 +95,9 @@ impl Frame {
         .queue(MoveTo(bx, y))?.queue(Print(self.border_spec.y))?;
     }
     // margin
-    writer.queue(SetAttribute(Attribute::Reset))?.queue(&self.margin_style)?;
+    writer
+      .queue(SetAttribute(Attribute::Reset))?
+      .queue(&self.margin_style)?;
     for x in self.outer_rect.x_range() {
       for y in self.outer_rect.north_range(&self.inner_rect) {
         writer.queue(MoveTo(x, y))?.queue(Print(' '))?;
@@ -108,8 +117,13 @@ impl Frame {
     writer.queue(SetAttribute(Attribute::Reset))?;
     Ok(())
   }
-  pub fn write_footer<W: Write>(&self, text: &str, style: &Style, writer: &mut W) 
-    -> io::Result<()> 
+
+  pub fn write_footer<W: Write>(
+    &self, 
+    text:   &str, 
+    style:  &Style, 
+    writer: &mut W
+  ) -> io::Result<()> 
   {
     let mut x = self.inner_rect.x_end().saturating_sub(1);
     let     y = self.border_rect.y_end().saturating_sub(1);
@@ -117,25 +131,35 @@ impl Frame {
       .queue(MoveTo(x, y))?
       .queue(&self.border_spec.style)?
       .queue(Print(self.border_spec.close))?
-      .queue(cursor::MoveLeft(2))?.queue(Print(' '))?
+      .queue(cursor::MoveLeft(2))?
+      .queue(Print(' '))?
       .queue(&self.banner_style)?;
     x -= 2;
-    for c in text.chars().rev().take(self.inner_rect.cropped_x(2).w.into()) {
+    for c in text.chars().rev()
+      .take(self.inner_rect.cropped_x(2).w.into()) 
+    {
       writer.queue(cursor::MoveLeft(2))?.queue(Print(c))?;
       x -= 1;
     }
     writer
-      .queue(cursor::MoveLeft(2))?.queue(Print(' '))?
+      .queue(cursor::MoveLeft(2))?
+      .queue(Print(' '))?
       .queue(&self.border_spec.style)?
-      .queue(cursor::MoveLeft(2))?.queue(Print(self.border_spec.open))?;
+      .queue(cursor::MoveLeft(2))?
+      .queue(Print(self.border_spec.open))?;
     x -= 2;
     for _ in self.inner_rect.x..x {
-      writer.queue(cursor::MoveLeft(2))?.queue(Print(self.border_spec.x))?;
+      writer
+        .queue(cursor::MoveLeft(2))?
+        .queue(Print(self.border_spec.x))?;
     }
     writer.queue(SetAttribute(Attribute::Reset))?;
     Ok(())
   }
-  pub fn write_banner<W: Write>(&self, text: &str, writer: &mut W) -> io::Result<()> {
+
+  pub fn write_banner<W: Write>(&self, text: &str, writer: &mut W) 
+    -> io::Result<()> 
+  {
     let mut x = self.inner_rect.x;
     let     y = self.border_rect.y;
     writer
@@ -151,7 +175,8 @@ impl Frame {
     }
     writer
       .queue(&self.border_spec.style)?
-      .queue(Print(' '))?.queue(Print(self.border_spec.close))?;
+      .queue(Print(' '))?
+      .queue(Print(self.border_spec.close))?;
     x += 2;
     for _ in x..self.inner_rect.x_end() {
       writer.queue(Print(self.border_spec.x))?;
@@ -160,6 +185,7 @@ impl Frame {
     Ok(())
   }
 }
+
 #[derive(Clone, Debug, Default)]
 pub struct ScreenCursor {
   pub x: CursorView,
@@ -184,19 +210,26 @@ impl ScreenCursor {
   pub fn y_scroll(&self) -> usize {
     self.y.start
   }
+
   pub fn resize<X, Y>(&mut self, plane: &Y, rect: &Rect) 
-  where Y: UnitCursor<Unit = X> , X: WeightedCursor 
+  where 
+    Y: UnitCursor<Unit = X> , 
+    X: WeightedCursor 
   {
     self.y.resize(plane.head(), rect.y, rect.h);
     self.x.resize(plane.current().weighted_head(), rect.x, rect.w);
   }
+
   pub fn update<X, Y>(&mut self, plane: &Y) -> bool 
-  where Y: UnitCursor<Unit = X> , X: WeightedCursor
+  where 
+    Y: UnitCursor<Unit = X> , 
+    X: WeightedCursor
   {
     let y = self.y.update(plane.head());
     let x = self.x.update(plane.current().weighted_head());
     x || y
   }
+
   pub fn write<W: Write>(&self, writer: &mut W) -> io::Result<()> {
     writer
       .queue(MoveTo(self.x.cursor(), self.y.cursor()))?
@@ -216,7 +249,7 @@ pub struct TextBox {
   pub write_unused_y: bool,
 }
 impl TextBox {
-  pub fn new(text: Vec<StyledText>, rect: &Rect) -> Self {
+  pub fn new(rect: Rect, text: Vec<StyledText>) -> Self {
     let content = StyledTextPlane::new(text, rect.w);
     let pos     = ScreenCursor::new(&rect);
     Self {
@@ -229,8 +262,8 @@ impl TextBox {
       content,
     }
   }
-  pub fn with_style(mut self, style: &Style) -> Self {
-    self.style = style.clone();
+  pub fn with_style(mut self, style: Style) -> Self {
+    self.style = style;
     self
   }
   pub fn write_unused_x(mut self, write: bool) -> Self {
@@ -246,12 +279,15 @@ impl TextBox {
     self.write_unused_y = write;
     self
   }
+
   pub fn get_source_idx(&self) -> usize {
     self.content.current().idx
   }
+
   pub fn get_source(&self) -> String {
     self.content.get_source()
   }
+
   pub fn used_rect(&self) -> Rect {
     if let Ok(h) = u16::try_from(self.content.units().len()) {
       self.rect.clone().cap_height(h)
@@ -259,88 +295,126 @@ impl TextBox {
       self.rect.clone()
     }
   }
+
   pub fn reset_state(&mut self) {
     self.write = true;
   }
-  pub fn restyle(&mut self, text: Vec<StyledText>, rect: &Rect) {
+
+  pub fn restyle(&mut self, rect: Rect, text: Vec<StyledText>) {
     self.rect = rect.clone();
     self.content.restyle(text, rect.w);
     self.cursor.resize(&self.content, &rect);
     self.reset_state();
   }
-  pub fn resize(&mut self, rect: &Rect) {
+
+  pub fn resize(&mut self, rect: Rect) {
     self.rect = rect.clone();
     self.content.resize(rect.w);
     self.cursor.resize(&self.content, &rect);
     self.reset_state();
   }
+
   pub fn left(&mut self, delta: usize) -> bool {
     if self.content.left(delta) == 0 {
       self.write = self.cursor.update(&self.content);
       true
     } else {false}
   }
+
   pub fn right(&mut self, delta: usize) -> bool {
     if self.content.right(delta) == 0 {
       self.write = self.cursor.update(&self.content);
       true
     } else {false}
   }
+
   pub fn down(&mut self, delta: usize) -> bool {
     if self.content.down(delta) {
       self.write = self.cursor.update(&self.content);
       true
     } else {false}
   }
+
   pub fn up(&mut self, delta: usize) -> bool {
     if self.content.up(delta) {
       self.write = self.cursor.update(&self.content);
       true
     } else {false}
   }
+
   pub fn update(&mut self, action: &Action) {
     match action {
-      Action::PageDown  => {self.down(usize::from(self.rect.h));}
-      Action::PageUp    => {self.up(usize::from(self.rect.h));}
-      Action::Bottom    => {self.down(self.content.units().len());}
-      Action::Top       => {self.up(self.content.units().len());}
-      Action::MoveDown  => {self.down(1);}
-      Action::MoveUp    => {self.up(1);}
-      Action::MoveLeft  => {self.left(1);}
-      Action::MoveRight => {self.right(1);}
+      Action::PageDown => {
+        self.down(usize::from(self.rect.h));
+      }
+      Action::PageUp => {
+        self.up(usize::from(self.rect.h));
+      }
+      Action::Bottom => {
+        self.down(self.content.units().len());
+      }
+      Action::Top => {
+        self.up(self.content.units().len());
+      }
+      Action::MoveDown => {
+        self.down(1);
+      }
+      Action::MoveUp => {
+        self.up(1);
+      }
+      Action::MoveLeft => {
+        self.left(1);
+      }
+      Action::MoveRight => {
+        self.right(1);
+      }
       _ => {}
     }
   }
+
   pub fn clear<W: Write>(&self, writer: &mut W) -> io::Result<()> {
-    writer.queue(SetAttribute(Attribute::Reset))?.queue(&self.style)?;
+    writer
+      .queue(SetAttribute(Attribute::Reset))?
+      .queue(&self.style)?;
     for y in self.rect.y_range() {
       for x in self.rect.x_range() {
-        writer.queue(MoveTo(x, y))?.queue(Print(' '))?;
+        writer
+          .queue(MoveTo(x, y))?
+          .queue(Print(' '))?;
       }
     }
     writer.queue(SetAttribute(Attribute::Reset))?;
     Ok(())
   }
+
   pub fn write<W: Write>(&self, writer: &mut W) -> io::Result<()> {
     if self.write {
       self.write_all(writer)?;
     }
     Ok(())
   }
+
   pub fn write_all<W: Write>(&self, writer: &mut W) -> io::Result<()> {
     let mut x = self.rect.x;
     let mut y = self.rect.y;
     writer
       .queue(MoveTo(x, y))?
-      .queue(SetAttribute(Attribute::Reset))?.queue(&self.style)?;
-    for line in self.content.view_units(self.cursor.y_scroll(), self.rect.h.into()) {
+      .queue(SetAttribute(Attribute::Reset))?
+      .queue(&self.style)?;
+    for line in self.content
+      .view_units(self.cursor.y_scroll(), self.rect.h.into()) 
+    {
       writer.queue(&self.content.source[line.idx].style)?;
-      for c in line.view_weighted(self.cursor.x_scroll(), self.rect.w.into()) {
+      for c in line
+        .view_weighted(self.cursor.x_scroll(), self.rect.w.into()) 
+      {
         writer.queue(Print(c))?;
         x += u16::try_from(c.width().unwrap_or(0)).unwrap();
       }
       if self.write_unused_x {
-        writer.queue(SetAttribute(Attribute::Reset))?.queue(&self.style)?;
+        writer
+          .queue(SetAttribute(Attribute::Reset))?
+          .queue(&self.style)?;
         for _ in x..self.rect.x_end() {
           writer.queue(Print(' '))?;
         }
@@ -350,7 +424,9 @@ impl TextBox {
       writer.queue(MoveTo(x, y))?;
     }
     if self.write_unused_y {
-      writer.queue(SetAttribute(Attribute::Reset))?.queue(&self.style)?;
+      writer
+        .queue(SetAttribute(Attribute::Reset))?
+        .queue(&self.style)?;
       for _ in y..self.rect.y_end() {
         for _ in self.rect.x_range() {
           writer.queue(Print(' '))?;
@@ -376,7 +452,7 @@ pub struct EditBox {
   pub write_unused_x: bool,
 }
 impl EditBox {
-  pub fn new(rect: &Rect) -> Self {
+  pub fn new(rect: Rect) -> Self {
     let content = EditLine::from("");
     let rect    = rect.top_row();
     let pos     = ScreenCursor::new(&rect);
@@ -389,34 +465,43 @@ impl EditBox {
       content, 
     }
   }
-  pub fn with_style(mut self, style: &Style) -> Self {
-    self.style = style.clone();
+  pub fn with_style(mut self, style: Style) -> Self {
+    self.style = style;
     self
   }
   pub fn write_unused_x(mut self, write: bool) -> Self {
     self.write_unused_x = write;
     self
   }
-  pub fn resize(&mut self, rect: &Rect) {
+
+  pub fn resize(&mut self, rect: Rect) {
     self.rect = rect.top_row();
-    self.cursor.x.resize(self.content.weighted_head(), self.rect.x, self.rect.w);
+    self.cursor.x.resize(
+      self.content.weighted_head(), 
+      self.rect.x, 
+      self.rect.w
+      );
     self.reset_state();
   }
+
   pub fn reset_state(&mut self) {
     self.write = true;
   }
+
   pub fn left(&mut self, delta: usize) -> bool {
     if self.content.backward(delta) == 0 {
       self.write = self.cursor.x.update(self.content.weighted_head());
       true
     } else {false}
   }
+
   pub fn right(&mut self, delta: usize) -> bool {
     if self.content.forward(delta) == 0 {
       self.write = self.cursor.x.update(self.content.weighted_head());
       true
     } else {false}
   }
+
   pub fn delete(&mut self) -> bool {
     if self.content.delete() {
       self.cursor.x.update(self.content.weighted_head());
@@ -424,6 +509,7 @@ impl EditBox {
       true
     } else {false}
   }
+
   pub fn backspace(&mut self) -> bool {
     if self.content.backspace() {
       self.cursor.x.update(self.content.weighted_head());
@@ -431,6 +517,7 @@ impl EditBox {
       true
     } else {false}
   }
+
   pub fn insert(&mut self, c: char) -> bool {
     if self.content.insert(c) {
       self.cursor.x.update(self.content.weighted_head());
@@ -438,30 +525,46 @@ impl EditBox {
       true
     } else {false}
   }
+
   pub fn update(&mut self, action: &Action) {
     match action {
-      Action::Backspace => {self.backspace();}
-      Action::Delete    => {self.delete();}
-      Action::Insert(c) => {self.insert(*c);}
-      Action::MoveLeft  => {self.left(1);}
-      Action::MoveRight => {self.right(1);}
+      Action::Backspace => {
+        self.backspace();
+      }
+      Action::Delete => {
+        self.delete();
+      }
+      Action::Insert(c) => {
+        self.insert(*c);
+      }
+      Action::MoveLeft  => {
+        self.left(1);
+      }
+      Action::MoveRight => {
+        self.right(1);
+      }
       _ => {}
     }
   }
+
   pub fn write<W: Write>(&self, writer: &mut W) -> io::Result<()> {
     if self.write {
       self.write_all(writer)?;
     }
     Ok(())
   }
+
   pub fn write_all<W: Write>(&self, writer: &mut W) -> io::Result<()> {
     let mut x = self.rect.x;
     let     y = self.rect.y;
     writer
       .queue(MoveTo(x, y))?
-      .queue(SetAttribute(Attribute::Reset))?.queue(&self.style)?;
+      .queue(SetAttribute(Attribute::Reset))?
+      .queue(&self.style)?;
     // render chars
-    for c in self.content.view_weighted(self.cursor.x_scroll(), self.rect.w.into()) {
+    for c in self.content
+      .view_weighted(self.cursor.x_scroll(), self.rect.w.into()) 
+    {
       writer.queue(Print(c))?;
       x += u16::try_from(c.width().unwrap_or(0)).unwrap();
     }

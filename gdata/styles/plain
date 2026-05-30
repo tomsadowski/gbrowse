@@ -1,17 +1,30 @@
 # plain
 
-screen_margin = {n = 1, s = 1, e = 8, w = 8}
-text_margin   = {n = 1, s = 1, e = 4, w = 4}
+[screen_margin]
+north = 1 
+south = 1 
+east  = 8 
+west  = 8
 
-border    = {corner = "round", bracket = "space"}
-banner    = {}
-general   = {}
-text      = {}
-list      = {}
-info      = {}
-quote     = {}
-preformat = {wrap = false}
-link      = {underline = true}
-header1   = {bold = true, underline = true}
-header2   = {bold = true}
-header3   = {}
+[text_margin]
+north = 1 
+south = 1 
+east  = 4 
+west  = 4
+
+[border]
+corner  = "round"
+bracket = "space"
+
+[preformat]
+wrap = false
+
+[link]
+underline = true
+
+[header1]
+bold      = true
+underline = true
+
+[header2]
+bold = true

@@ -62,7 +62,8 @@ impl FromStr for Action {
       "yes"         => Ok(Self::Yes),
       "no"          => Ok(Self::No),
       "cancel"      => Ok(Self::Cancel),
-      s             => Err(format!("Keys table does not contain field {}", s)),
+      s => 
+        Err(format!("Keys table does not contain field {}", s)),
     }
   }
 }
@@ -115,7 +116,9 @@ impl Default for KeysTable {
   }
 }
 impl UserTable<Action> for KeysTable {
-  fn try_assign(&mut self, field: Action, value: Value) -> Result<(), String> {
+  fn try_assign(&mut self, field: Action, value: Value) 
+    -> Result<(), String> 
+  {
     let get_keycode = || -> Result<KeyCode, String> {
       if let Value::String(s) = value {
         match s.as_str() {
@@ -130,9 +133,8 @@ impl UserTable<Action> for KeysTable {
           "pgup"           => Ok(KeyCode::PageUp),
           "end"            => Ok(KeyCode::End),
           "home"           => Ok(KeyCode::Home),
-          s => 
-            s.chars().next().map(|c| KeyCode::Char(c))
-              .ok_or("could not parse keycode from string".into()),
+          s => s.chars().next().map(KeyCode::Char)
+            .ok_or("could not parse keycode from string".into()),
         }
       } else {
         Err("could not parse keycode from value".into())
@@ -175,6 +177,7 @@ impl KeysTable {
     } else if &self.menu        == kc {Some(Action::Menu)
     } else                            {self.get_text_box_action(kc)}
   }
+
   pub fn get_text_box_action(&self, kc: &KeyCode) -> Option<Action> {
     if        &self.up          == kc {Some(Action::MoveUp)
     } else if &self.down        == kc {Some(Action::MoveDown)
@@ -187,6 +190,7 @@ impl KeysTable {
     } else if &self.pgdown      == kc {Some(Action::PageDown)
     } else {None}
   }
+
   pub fn get_edit_box_action(&self, kc: &KeyCode) -> Option<Action> {
     match kc {
       KeyCode::Left      => Some(Action::MoveLeft),
@@ -198,6 +202,7 @@ impl KeysTable {
       _                  => None,
     }
   }
+
   pub fn get_dlg_action(&self, dialog: &Dlg, kc: &KeyCode) -> Option<Action> {
     match dialog.response {
       Response::Ack(_)    => self.get_ack_dialog_action(kc),
@@ -206,19 +211,23 @@ impl KeysTable {
       Response::Select(_) => self.get_select_dialog_action(kc),
     }
   }
+
   pub fn get_ack_dialog_action(&self, kc: &KeyCode) -> Option<Action> {
     Some(Action::Ack)
   }
+
   pub fn get_ask_dialog_action(&self, kc: &KeyCode) -> Option<Action> {
     if        &self.cancel == kc {Some(Action::Cancel)
     } else if &self.yes    == kc {Some(Action::Yes)
     } else if &self.no     == kc {Some(Action::No)
     } else                       {None}
   }
+
   pub fn get_select_dialog_action(&self, kc: &KeyCode) -> Option<Action> {
     if &self.cancel == kc {Some(Action::Cancel)
     } else                {self.get_text_box_action(kc)}
   }
+
   pub fn get_edit_dialog_action(&self, kc: &KeyCode) -> Option<Action> {
     if &self.cancel == kc {Some(Action::Cancel)
     } else                {self.get_edit_box_action(kc)}

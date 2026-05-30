@@ -15,36 +15,46 @@ pub trait UnitCursor {
   fn head(&self)         -> usize;
   fn head_mut(&mut self) -> &mut usize;
   fn max_head(&self)     -> usize;
+
   fn current(&self) -> &Self::Unit {
     &self.units()[self.head()]
   }
+
   fn fit(&mut self, new_cursor: usize) {
     *self.head_mut() = self.max_head().min(new_cursor);
   }
+
   fn start(&mut self) {
     *self.head_mut() = 0;
   }
+
   fn end(&mut self) {
     *self.head_mut() = self.max_head();
   }
-  fn view_units(&self, start: usize, width: usize) -> Take<slice::Iter<'_, Self::Unit>> {
+
+  fn view_units(&self, start: usize, width: usize) 
+    -> Take<slice::Iter<'_, Self::Unit>> 
+  {
     if start >= self.units().len() {
       self.units().iter().take(0) 
     } else {
       self.units()[start..].iter().take(width) 
     }
   }
+
   fn peek_backward(&self, delta: usize) -> usize {
     if delta > self.head() {
       delta - self.head()
     } else {0}
   }
+
   fn peek_forward(&self, delta: usize) -> usize {
     let max_head = self.max_head();
     if self.head() + delta > max_head {
       self.head() + delta - max_head
     } else {0}
   }
+
   fn backward(&mut self, mut delta: usize) -> usize {
     if delta > self.head() {
       delta -= self.head();
@@ -55,6 +65,7 @@ pub trait UnitCursor {
       0
     }
   }
+
   fn forward(&mut self, mut delta: usize) -> usize {
     if self.head() + delta > self.max_head() {
       delta = self.head() + delta - self.max_head();
@@ -65,6 +76,7 @@ pub trait UnitCursor {
       0
     }
   }
+
   fn wrapping_backward(&mut self, delta: usize) {
     if delta > self.head() {
       self.end();
@@ -72,6 +84,7 @@ pub trait UnitCursor {
       *self.head_mut() -= delta;
     }
   }
+
   fn wrapping_forward(&mut self, delta: usize) {
     if self.head() + delta > self.max_head() {
       self.start();
@@ -83,6 +96,7 @@ pub trait UnitCursor {
 
 pub trait UnitCursorMut: UnitCursor {
   fn units_mut(&mut self) -> &mut Vec<Self::Unit>;
+
   fn delete(&mut self) -> bool {
     let head = self.head();
     if head < self.units().len() {
@@ -90,6 +104,7 @@ pub trait UnitCursorMut: UnitCursor {
       true
     } else {false}
   }
+
   fn backspace(&mut self) -> bool {
     if self.peek_backward(1) == 0 {
       self.backward(1);
@@ -98,6 +113,7 @@ pub trait UnitCursorMut: UnitCursor {
       true
     } else {false}
   }
+
   fn insert(&mut self, c: Self::Unit) -> bool {
     let head = self.head();
     if head + 1 == self.units().len() || self.units().len() == 0 {
@@ -115,16 +131,30 @@ pub trait UnitCursorMut: UnitCursor {
 pub trait WeightedCursor: UnitCursor {
   fn weighted_head(&self) -> usize;
   fn weighted_len(&self) -> usize;
-  fn view_weighted(&self, start: usize, width: usize) -> Take<slice::Iter<'_, Self::Unit>>;
+  fn view_weighted(&self, start: usize, width: usize) 
+    -> Take<slice::Iter<'_, Self::Unit>>;
 }
-impl<U> WeightedCursor for U where U: UnitCursor<Unit = char> {
+impl<U> WeightedCursor for U 
+where 
+  U: UnitCursor<Unit = char> 
+{
   fn weighted_head(&self) -> usize {
-    self.units()[..self.head()].iter().fold(0, |acc, u| acc + u.width().unwrap_or(0))
+    self
+      .units()[..self.head()]
+      .iter()
+      .fold(0, |acc, u| acc + u.width().unwrap_or(0))
   }
+
   fn weighted_len(&self) -> usize {
-    self.units().iter().fold(0, |acc, u| acc + u.width().unwrap_or(0))
+    self
+      .units()
+      .iter()
+      .fold(0, |acc, u| acc + u.width().unwrap_or(0))
   }
-  fn view_weighted(&self, start: usize, width: usize) -> Take<slice::Iter<'_, Self::Unit>> {
+
+  fn view_weighted(&self, start: usize, width: usize) 
+    -> Take<slice::Iter<'_, Self::Unit>> 
+  {
     if start >= self.units().len() {
       self.units().iter().take(0) 
     } else {
