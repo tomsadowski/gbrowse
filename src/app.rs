@@ -235,12 +235,10 @@ impl App {
         self.request = None;
       }
       Ok(url) => match &mut self.request {
-        Some(_) => 
-          self.focus_ack_dialog(
-            "still processing previous request"),
-        None => 
-          self.request = Some(
-            Request::new(&url, self.user.timeout)),
+        Some(_) => self.focus_ack_dialog(
+          "still processing previous request"),
+        None => self.request = Some(
+          Request::new(&url, self.user.timeout)),
       }
     }
   }
@@ -299,15 +297,12 @@ impl App {
             user::get_keys_file(&textbox.get_source())) 
           {
             Err(e) => 
-              self.focus_ack_dialog(
-                &format!("Problem: {}", &e)),
-            Ok(s) => 
-              if let Err(e) = self.user.keys.update_from_str(&s) {
-                self.focus_ack_dialog(
-                  &format!("Problem: {}", &e));
-              } else {
-                self.focus_tabs();
-              }
+              self.focus_ack_dialog(&format!("Problem: {}", &e)),
+            Ok(s) => if let Err(e) = self.user.keys.update_from_str(&s) {
+              self.focus_ack_dialog(&format!("Problem: {}", &e));
+            } else {
+              self.focus_tabs();
+            }
           }
         }
         (Response::Select(textbox), Action::Select, Task::ChangeStyle) => {
@@ -315,17 +310,14 @@ impl App {
             user::get_styles_file(&textbox.get_source())) 
           {
             Err(e) => 
-              self.focus_ack_dialog(
-                &format!("Problem: {}", &e)),
-            Ok(s) => 
-              if let Err(e) = self.user.style.update_from_str(&s) {
-                self.focus_ack_dialog(
-                  &format!("Problem: {}", &e));
-                self.push_style();
-              } else {
-                self.focus_tabs();
-                self.push_style();
-              }
+              self.focus_ack_dialog(&format!("Problem: {}", &e)),
+            Ok(s) => if let Err(e) = self.user.style.update_from_str(&s) {
+              self.focus_ack_dialog(&format!("Problem: {}", &e));
+              self.push_style();
+            } else {
+              self.focus_tabs();
+              self.push_style();
+            }
           }
         }
         (Response::Select(textbox), Action::Select, Task::Menu) => {
@@ -333,30 +325,28 @@ impl App {
             MANUAL => {
               self.focus_ack_dialog("View manual");
             }
-            CHANGE_KEYS => 
-              match user::get_entries(user::KEYS_PATH) {
-                Err(e) => 
-                  self.focus_ack_dialog(
-                    &format!("Problem: {}", &e)),
-                Ok(entry) => 
-                  self.focus_select_dialog(
-                    Task::ChangeKeys, 
-                    "Choose keys", 
-                    entry
-                    ),
-              }
-            CHANGE_STYLE => 
-              match user::get_entries(user::STYLES_PATH) {
-                Err(e) => 
-                  self.focus_ack_dialog(
-                    &format!("Problem: {}", &e)),
-                Ok(entry) => 
-                  self.focus_select_dialog(
-                    Task::ChangeStyle, 
-                    "Choose style", 
-                    entry
-                    ),
-              }
+            CHANGE_KEYS => match user::get_entries(user::KEYS_PATH) {
+              Err(e) => 
+                self.focus_ack_dialog(
+                  &format!("Problem: {}", &e)),
+              Ok(entry) => 
+                self.focus_select_dialog(
+                  Task::ChangeKeys, 
+                  "Choose keys", 
+                  entry
+                  ),
+            }
+            CHANGE_STYLE => match user::get_entries(user::STYLES_PATH) {
+              Err(e) => 
+                self.focus_ack_dialog(
+                  &format!("Problem: {}", &e)),
+              Ok(entry) => 
+                self.focus_select_dialog(
+                  Task::ChangeStyle, 
+                  "Choose style", 
+                  entry
+                  ),
+            }
             VIEW_SETTINGS => {
               let text = format!("{:#?}", self.user)
                 .lines()
@@ -436,9 +426,7 @@ impl App {
                 &format!("could not create save file: {}", &e)),
             Ok(mut f) => {
               for url in self.urls.iter() {
-                f.write(
-                  &format!("{}\n", url)
-                    .as_bytes());
+                f.write(&format!("{}\n", url).as_bytes());
               }
               self.focus_ack_dialog(
                 &format!("Saved URL: {}", url_str)); 
@@ -526,19 +514,18 @@ impl App {
       }
       Event::Key(
         KeyEvent {
-          code: kc, 
           kind: KeyEventKind::Press, 
+          code: kc, 
           ..
         }
-      ) => 
-        match &self.focus {
-          Focus::Dialog(_, dlg) => 
-            self.user.keys
-              .get_dlg_action(dlg, &kc).map(Msg::Action),
-          Focus::Tab => 
-            self.user.keys
-              .get_tab_action(&kc).map(Msg::Action),
-        }
+      ) => match &self.focus {
+        Focus::Dialog(_, dlg) => 
+          self.user.keys
+            .get_dlg_action(dlg, &kc).map(Msg::Action),
+        Focus::Tab => 
+          self.user.keys
+            .get_tab_action(&kc).map(Msg::Action),
+      }
       _ => None,
     }
   }
@@ -556,12 +543,7 @@ impl App {
       } else {text}
     };
     self.frame.write_banner(&banner_text, stdout)?;
-    self.frame
-      .write_footer(
-        &self.guide, 
-        &self.user.style.info.style, 
-        stdout
-        )?;
+    self.frame.write_footer(&self.guide, stdout)?;
     if let Focus::Dialog(_, dialog) = &self.focus {
       if self.new_dlg {
         self.tabs.clear(stdout)?;

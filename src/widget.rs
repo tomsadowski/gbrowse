@@ -18,40 +18,45 @@ use std::io::{self, Write};
 
 #[derive(Default)]
 pub struct Frame {
-  pub text_margin_spec:   MarginSpec,
-  pub screen_margin_spec: MarginSpec,
-  pub border_spec:        BorderSpec,
-  pub margin_style:       Style,
-  pub banner_style:       Style,
-  pub border_rect:        Rect,
-  pub outer_rect:         Rect,
-  pub inner_rect:         Rect,
+  pub text_margin:   MarginSpec,
+  pub screen_margin: MarginSpec,
+  pub border:        BorderSpec,
+  pub margin_style:  Style,
+  pub banner_style:  Style,
+  pub footer_style:  Style,
+  pub border_rect:   Rect,
+  pub outer_rect:    Rect,
+  pub inner_rect:    Rect,
 }
 impl Frame {
   pub fn new(
-    screen:             Rect, 
-    border_spec:        BorderSpec, 
-    screen_margin_spec: MarginSpec,
-    text_margin_spec:   MarginSpec
+    screen:        Rect, 
+    border:        BorderSpec, 
+    screen_margin: MarginSpec,
+    text_margin:   MarginSpec
   ) -> Self 
   {
-    let outer_rect = 
-      screen_margin_spec.get_rect(screen).crop_x(1).crop_y(1);
-    let inner_rect  = text_margin_spec.get_rect(outer_rect);
-    let border_rect = screen_margin_spec.get_rect(screen);
+    let outer_rect  = screen_margin.get_rect(screen).crop_x(1).crop_y(1);
+    let inner_rect  = text_margin.get_rect(outer_rect);
+    let border_rect = screen_margin.get_rect(screen);
     Self {
       margin_style: Style::default(),
       banner_style: Style::default(),
+      footer_style: Style::default(),
       border_rect,
       outer_rect,
       inner_rect,
-      screen_margin_spec,
-      text_margin_spec,
-      border_spec,
+      screen_margin,
+      text_margin,
+      border,
     }
   }
   pub fn with_banner_style(mut self, style: Style) -> Self {
     self.banner_style = style;
+    self
+  }
+  pub fn with_footer_style(mut self, style: Style) -> Self {
+    self.footer_style = style;
     self
   }
   pub fn with_margin_style(mut self, style: Style) -> Self {
@@ -60,10 +65,9 @@ impl Frame {
   }
 
   pub fn resize(&mut self, screen: Rect) {
-    self.outer_rect = 
-      self.screen_margin_spec.get_rect(screen).crop_x(1).crop_y(1);
-    self.inner_rect  = self.text_margin_spec.get_rect(self.outer_rect);
-    self.border_rect = self.screen_margin_spec.get_rect(screen);
+    self.outer_rect  = self.screen_margin.get_rect(screen).crop_x(1).crop_y(1);
+    self.inner_rect  = self.text_margin.get_rect(self.outer_rect);
+    self.border_rect = self.screen_margin.get_rect(screen);
   }
 
   pub fn write<W: Write>(&self, writer: &mut W) -> io::Result<()> {
@@ -79,20 +83,20 @@ impl Frame {
     let (dx, dy) = self.border_rect.d();
     writer
       .queue(SetAttribute(Attribute::Reset))?
-      .queue(&self.border_spec.style)?
-      .queue(MoveTo(ax, ay))?.queue(Print(self.border_spec.a))?
-      .queue(MoveTo(bx, by))?.queue(Print(self.border_spec.b))?
-      .queue(MoveTo(cx, cy))?.queue(Print(self.border_spec.c))?
-      .queue(MoveTo(dx, dy))?.queue(Print(self.border_spec.d))?;
+      .queue(&self.border.style)?
+      .queue(MoveTo(ax, ay))?.queue(Print(self.border.a))?
+      .queue(MoveTo(bx, by))?.queue(Print(self.border.b))?
+      .queue(MoveTo(cx, cy))?.queue(Print(self.border.c))?
+      .queue(MoveTo(dx, dy))?.queue(Print(self.border.d))?;
     for x in self.border_rect.cropped_x(1).x_range() {
       writer
-        .queue(MoveTo(x, ay))?.queue(Print(self.border_spec.x))?
-        .queue(MoveTo(x, cy))?.queue(Print(self.border_spec.x))?;
+        .queue(MoveTo(x, ay))?.queue(Print(self.border.x))?
+        .queue(MoveTo(x, cy))?.queue(Print(self.border.x))?;
     }
     for y in self.border_rect.cropped_y(1).y_range() {
       writer
-        .queue(MoveTo(ax, y))?.queue(Print(self.border_spec.y))?
-        .queue(MoveTo(bx, y))?.queue(Print(self.border_spec.y))?;
+        .queue(MoveTo(ax, y))?.queue(Print(self.border.y))?
+        .queue(MoveTo(bx, y))?.queue(Print(self.border.y))?;
     }
     // margin
     writer
@@ -118,22 +122,18 @@ impl Frame {
     Ok(())
   }
 
-  pub fn write_footer<W: Write>(
-    &self, 
-    text:   &str, 
-    style:  &Style, 
-    writer: &mut W
-  ) -> io::Result<()> 
+  pub fn write_footer<W: Write>(&self, text: &str, writer: &mut W) 
+    -> io::Result<()> 
   {
     let mut x = self.inner_rect.x_end().saturating_sub(1);
     let     y = self.border_rect.y_end().saturating_sub(1);
     writer
       .queue(MoveTo(x, y))?
-      .queue(&self.border_spec.style)?
-      .queue(Print(self.border_spec.close))?
+      .queue(&self.border.style)?
+      .queue(Print(self.border.close))?
       .queue(cursor::MoveLeft(2))?
       .queue(Print(' '))?
-      .queue(&self.banner_style)?;
+      .queue(&self.footer_style)?;
     x -= 2;
     for c in text.chars().rev()
       .take(self.inner_rect.cropped_x(2).w.into()) 
@@ -144,14 +144,14 @@ impl Frame {
     writer
       .queue(cursor::MoveLeft(2))?
       .queue(Print(' '))?
-      .queue(&self.border_spec.style)?
+      .queue(&self.border.style)?
       .queue(cursor::MoveLeft(2))?
-      .queue(Print(self.border_spec.open))?;
+      .queue(Print(self.border.open))?;
     x -= 2;
     for _ in self.inner_rect.x..x {
       writer
         .queue(cursor::MoveLeft(2))?
-        .queue(Print(self.border_spec.x))?;
+        .queue(Print(self.border.x))?;
     }
     writer.queue(SetAttribute(Attribute::Reset))?;
     Ok(())
@@ -164,8 +164,8 @@ impl Frame {
     let     y = self.border_rect.y;
     writer
       .queue(MoveTo(x, y))?
-      .queue(&self.border_spec.style)?
-      .queue(Print(self.border_spec.open))?
+      .queue(&self.border.style)?
+      .queue(Print(self.border.open))?
       .queue(Print(' '))?
       .queue(&self.banner_style)?;
     x += 2;
@@ -174,12 +174,12 @@ impl Frame {
       x += 1;
     }
     writer
-      .queue(&self.border_spec.style)?
+      .queue(&self.border.style)?
       .queue(Print(' '))?
-      .queue(Print(self.border_spec.close))?;
+      .queue(Print(self.border.close))?;
     x += 2;
     for _ in x..self.inner_rect.x_end() {
-      writer.queue(Print(self.border_spec.x))?;
+      writer.queue(Print(self.border.x))?;
     }
     writer.queue(SetAttribute(Attribute::Reset))?;
     Ok(())
@@ -198,15 +198,19 @@ impl ScreenCursor {
       y: CursorView::new(rect.y, rect.h),
     }
   }
+
   pub fn x_cursor(&self) -> u16 {
     self.x.view_head
   }
+
   pub fn y_cursor(&self) -> u16 {
     self.y.view_head
   }
+
   pub fn x_scroll(&self) -> usize {
     self.x.start
   }
+
   pub fn y_scroll(&self) -> usize {
     self.y.start
   }
@@ -250,16 +254,14 @@ pub struct TextBox {
 }
 impl TextBox {
   pub fn new(rect: Rect, text: Vec<StyledText>) -> Self {
-    let content = StyledTextPlane::new(text, rect.w);
-    let pos     = ScreenCursor::new(&rect);
     Self {
       write_unused_x: true,
       write_unused_y: true,
-      style:          Style::default(),
       write:          true,
-      rect:           rect.clone(),
-      cursor:         pos, 
-      content,
+      style:          Style::default(),
+      cursor:         ScreenCursor::new(&rect), 
+      content:        StyledTextPlane::new(text, rect.w),
+      rect,
     }
   }
   pub fn with_style(mut self, style: Style) -> Self {
@@ -275,9 +277,9 @@ impl TextBox {
     self
   }
   pub fn write_unused(mut self, write: bool) -> Self {
-    self.write_unused_x = write;
-    self.write_unused_y = write;
     self
+      .write_unused_x(write)
+      .write_unused_y(write)
   }
 
   pub fn get_source_idx(&self) -> usize {
@@ -344,30 +346,14 @@ impl TextBox {
 
   pub fn update(&mut self, action: &Action) {
     match action {
-      Action::PageDown => {
-        self.down(usize::from(self.rect.h));
-      }
-      Action::PageUp => {
-        self.up(usize::from(self.rect.h));
-      }
-      Action::Bottom => {
-        self.down(self.content.units().len());
-      }
-      Action::Top => {
-        self.up(self.content.units().len());
-      }
-      Action::MoveDown => {
-        self.down(1);
-      }
-      Action::MoveUp => {
-        self.up(1);
-      }
-      Action::MoveLeft => {
-        self.left(1);
-      }
-      Action::MoveRight => {
-        self.right(1);
-      }
+      Action::PageDown  => {self.down(usize::from(self.rect.h));}
+      Action::PageUp    => {self.up(usize::from(self.rect.h));}
+      Action::Bottom    => {self.down(self.content.units().len());}
+      Action::Top       => {self.up(self.content.units().len());}
+      Action::MoveDown  => {self.down(1);}
+      Action::MoveUp    => {self.up(1);}
+      Action::MoveLeft  => {self.left(1);}
+      Action::MoveRight => {self.right(1);}
       _ => {}
     }
   }
@@ -378,9 +364,7 @@ impl TextBox {
       .queue(&self.style)?;
     for y in self.rect.y_range() {
       for x in self.rect.x_range() {
-        writer
-          .queue(MoveTo(x, y))?
-          .queue(Print(' '))?;
+        writer.queue(MoveTo(x, y))?.queue(Print(' '))?;
       }
     }
     writer.queue(SetAttribute(Attribute::Reset))?;
@@ -453,16 +437,14 @@ pub struct EditBox {
 }
 impl EditBox {
   pub fn new(rect: Rect) -> Self {
-    let content = EditLine::from("");
-    let rect    = rect.top_row();
-    let pos     = ScreenCursor::new(&rect);
+    let rect = rect.top_row();
     Self {
-      rect:           rect.clone(),
-      style:          Style::default(),
       write_unused_x: true,
       write:          true,
-      cursor: pos, 
-      content, 
+      style:          Style::default(),
+      cursor:         ScreenCursor::new(&rect), 
+      content:        EditLine::from(""), 
+      rect,
     }
   }
   pub fn with_style(mut self, style: Style) -> Self {
@@ -528,21 +510,11 @@ impl EditBox {
 
   pub fn update(&mut self, action: &Action) {
     match action {
-      Action::Backspace => {
-        self.backspace();
-      }
-      Action::Delete => {
-        self.delete();
-      }
-      Action::Insert(c) => {
-        self.insert(*c);
-      }
-      Action::MoveLeft  => {
-        self.left(1);
-      }
-      Action::MoveRight => {
-        self.right(1);
-      }
+      Action::Backspace => {self.backspace();}
+      Action::Delete    => {self.delete();}
+      Action::Insert(c) => {self.insert(*c);}
+      Action::MoveLeft  => {self.left(1);}
+      Action::MoveRight => {self.right(1);}
       _ => {}
     }
   }

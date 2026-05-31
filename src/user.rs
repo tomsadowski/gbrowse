@@ -194,6 +194,7 @@ impl User {
         self.style.text_margin.clone()
       )
       .with_banner_style(*self.style.banner)
+      .with_footer_style(*self.style.banner)
       .with_margin_style(*self.style.general)
   }
 
