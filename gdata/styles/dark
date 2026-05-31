@@ -11,6 +11,6 @@ info      = {fg = "yellow"}
 quote     = {fg = "yellow"}
 preformat = {fg = "yellow", wrap = false}
 link      = {fg = "cyan", underline = true}
-header1   = {fg = "magenta", bold = true, underline = true}
-header2   = {fg = "magenta", bold = true}
-header3   = {fg = "magenta"}
+h1        = {fg = "magenta", bold = true, underline = true}
+h2        = {fg = "magenta", bold = true}
+h3        = {fg = "magenta"}

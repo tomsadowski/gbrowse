@@ -12,6 +12,6 @@ info      = {}
 quote     = {}
 preformat = {wrap = false}
 link      = {underline = true}
-header1   = {bold = true, underline = true}
-header2   = {bold = true}
-header3   = {}
+h1        = {bold = true, underline = true}
+h2        = {bold = true}
+h3        = {}

@@ -22,9 +22,9 @@ wrap = false
 [link]
 underline = true
 
-[header1]
+[h1]
 bold      = true
 underline = true
 
-[header2]
+[h2]
 bold = true

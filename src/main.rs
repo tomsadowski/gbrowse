@@ -54,7 +54,7 @@ fn main() -> io::Result<()> {
   app.write(&mut stdout)?;
   // break on control-c
   while !app.quit {
-    if app.try_join_request() {
+    if app.join_request() {
       app.write(&mut stdout)?;
     } 
     if event::poll(Duration::from_millis(16))? {

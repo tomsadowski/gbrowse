@@ -101,7 +101,7 @@ impl App {
       quit:        false,
     };
     app.focus_tabs();
-    app.try_spawn_request(&app.user.init_url.clone());
+    app.spawn_request(&app.user.init_url.clone());
     app
   }
 
@@ -206,15 +206,15 @@ impl App {
     self.tabs.gemdoc = Some(gemdoc);
   }
 
-  pub fn try_join_request(&mut self) -> bool {
+  pub fn join_request(&mut self) -> bool {
     if let Some(request) = &mut self.request {
       if request.handle.is_finished() {
-        let result = request.rx
+        match request.rx
           .recv()
           .unwrap()
           .map(|(r, c)| GemDoc::new(&request.url, r, c))
-          .flatten();
-        match result {
+          .flatten()
+        {
           Err(e) => 
             self.focus_ack_dlg(&e),
           Ok(gemdoc) => {
@@ -228,7 +228,7 @@ impl App {
     } else {false}
   }
 
-  pub fn try_spawn_request(&mut self, url_str: &str) {
+  pub fn spawn_request(&mut self, url_str: &str) {
     match Url::parse(url_str) {
       Err(e)  => {
         self.focus_ack_dlg(
@@ -286,18 +286,16 @@ impl App {
       (Msg::Action(action), Focus::Dlg(task, dlg)) 
         => match (&mut dlg.response, action, task) 
       {
-        (Response::Select(textbox), Action::Select, Task::NewTab) => 
-        {
+        (Response::Select(textbox), Action::Select, Task::NewTab) => {
           if self.urls.len() > 0 {
             let url_str = &self.urls[textbox.get_source_idx()].clone();
             self.focus_tabs();
-            self.try_spawn_request(url_str);
+            self.spawn_request(url_str);
           } else {
             self.focus_tabs();
           }
         }
-        (Response::Select(textbox), Action::Select, Task::ChangeKeys) => 
-        {
+        (Response::Select(textbox), Action::Select, Task::ChangeKeys) => {
           match fs::read_to_string(
             user::get_keys_file(&textbox.get_source())) 
           {
@@ -313,8 +311,7 @@ impl App {
               }
           }
         }
-        (Response::Select(textbox), Action::Select, Task::ChangeStyle) => 
-        {
+        (Response::Select(textbox), Action::Select, Task::ChangeStyle) => {
           match fs::read_to_string(
             user::get_styles_file(&textbox.get_source())) 
           {
@@ -332,8 +329,7 @@ impl App {
               }
           }
         }
-        (Response::Select(textbox), Action::Select, Task::Menu) => 
-        {
+        (Response::Select(textbox), Action::Select, Task::Menu) => {
           match MENU[textbox.get_source_idx()] {
             MANUAL => {
               self.focus_ack_dlg("View manual");
@@ -377,37 +373,32 @@ impl App {
               self.focus_tabs(),
           }
         }
-        (Response::Edit(editbox), Action::Enter, Task::Reply) => 
-        {
+        (Response::Edit(editbox), Action::Enter, Task::Reply) => {
           let text = editbox.content.to_string();
           let text = text.trim().replace(" ", "%20");
           self.focus_tabs();
           self.tab_changed = true;
-          self.try_spawn_request(
+          self.spawn_request(
             &format!("{}?{}", self.tabs.url_str, text));
         }
-        (Response::Edit(editbox), Action::Enter, Task::NewTab) => 
-        {
+        (Response::Edit(editbox), Action::Enter, Task::NewTab) => {
           let text = editbox.content.to_string();
           self.focus_tabs();
           self.tab_changed = true;
-          self.try_spawn_request(&text);
+          self.spawn_request(&text);
         }
-        (_, Action::Yes, Task::Go(url)) => 
-        {
+        (_, Action::Yes, Task::Go(url)) => {
           let url = url.clone();
           self.focus_tabs();
-          self.try_spawn_request(&url);
+          self.spawn_request(&url);
         }
-        (_, Action::Yes, Task::Redirect(url_str)) => 
-        {
+        (_, Action::Yes, Task::Redirect(url_str)) => {
           let text = url_str.trim().replace(" ", "%20");
           self.focus_tabs();
-          self.try_spawn_request(
+          self.spawn_request(
             &format!("{}?{}", self.tabs.url_str, text));
         }
-        (_, Action::Yes, Task::DelTab) => 
-        {
+        (_, Action::Yes, Task::DelTab) => {
           self.tabs.delete();
           self.tab_changed = true;
           self.focus_tabs();

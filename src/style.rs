@@ -134,9 +134,9 @@ pub enum StyleTextField {
   Banner,
   Info,
   Text,
-  Header3,
-  Header2,
-  Header1,
+  Heading3,
+  Heading2,
+  Heading1,
   Preformat,
   Link,
   Error,
@@ -155,21 +155,21 @@ impl FromStr for StyleModField {
   type Err = String;
   fn from_str(s: &str) -> Result<Self, Self::Err> {
     match s {
-      "border"        => Ok(Self::Border),
-      "text_margin"   => Ok(Self::Margin(StyleMarginField::Text)),
-      "screen_margin" => Ok(Self::Margin(StyleMarginField::Screen)),
-      "general"       => Ok(Self::Text(StyleTextField::General)),
-      "banner"        => Ok(Self::Text(StyleTextField::Banner)),
-      "info"          => Ok(Self::Text(StyleTextField::Info)),
-      "text"          => Ok(Self::Text(StyleTextField::Text)),
-      "header3"       => Ok(Self::Text(StyleTextField::Header3)),
-      "header2"       => Ok(Self::Text(StyleTextField::Header2)),
-      "header1"       => Ok(Self::Text(StyleTextField::Header1)),
-      "preformat"     => Ok(Self::Text(StyleTextField::Preformat)),
-      "link"          => Ok(Self::Text(StyleTextField::Link)),
-      "error"         => Ok(Self::Text(StyleTextField::Error)),
-      "quote"         => Ok(Self::Text(StyleTextField::Quote)),
-      "list"          => Ok(Self::Text(StyleTextField::List)),
+      "border"          => Ok(Self::Border),
+      "text_margin"     => Ok(Self::Margin(StyleMarginField::Text)),
+      "screen_margin"   => Ok(Self::Margin(StyleMarginField::Screen)),
+      "general"         => Ok(Self::Text(StyleTextField::General)),
+      "banner"          => Ok(Self::Text(StyleTextField::Banner)),
+      "info"            => Ok(Self::Text(StyleTextField::Info)),
+      "text"            => Ok(Self::Text(StyleTextField::Text)),
+      "heading3" | "h3" => Ok(Self::Text(StyleTextField::Heading3)),
+      "heading2" | "h2" => Ok(Self::Text(StyleTextField::Heading2)),
+      "heading1" | "h1" => Ok(Self::Text(StyleTextField::Heading1)),
+      "preformat"       => Ok(Self::Text(StyleTextField::Preformat)),
+      "link"            => Ok(Self::Text(StyleTextField::Link)),
+      "error"           => Ok(Self::Text(StyleTextField::Error)),
+      "quote"           => Ok(Self::Text(StyleTextField::Quote)),
+      "list"            => Ok(Self::Text(StyleTextField::List)),
       s => Err(format!("Style table does not contain field {}", s)),
     }
   }
@@ -294,7 +294,12 @@ pub struct MarginSpec {
 }
 impl Default for MarginSpec {
   fn default() -> Self {
-    Self {north: 0, south: 0, east: 0, west: 0}
+    Self {
+      north: 1, 
+      south: 1, 
+      east:  1, 
+      west:  1,
+    }
   }
 }
 impl UserTable<MarginField> for MarginSpec {
@@ -350,8 +355,8 @@ impl Default for BorderSpec {
       b:     B_SQR,
       c:     C_SQR,
       d:     D_SQR,
-      open:  OPEN_SQR,
-      close: CLOSE_SQR,
+      open:  ' ',
+      close: ' ',
     }
   }
 }
@@ -467,9 +472,9 @@ pub struct StyleModTable {
   pub banner:          TextStyle,
   pub info:            TextStyle,
   pub text:            TextStyle,
-  pub header3:         TextStyle,
-  pub header2:         TextStyle,
-  pub header1:         TextStyle,
+  pub heading3:         TextStyle,
+  pub heading2:         TextStyle,
+  pub heading1:         TextStyle,
   pub preformat:       TextStyle,
   pub link:            TextStyle,
   pub error:           TextStyle,
@@ -491,9 +496,9 @@ impl UserTable<StyleModField> for StyleModTable {
           StyleTextField::Banner    => self.banner    = v,
           StyleTextField::Info      => self.info      = v,
           StyleTextField::Text      => self.text      = v,
-          StyleTextField::Header3   => self.header3   = v,
-          StyleTextField::Header2   => self.header2   = v,
-          StyleTextField::Header1   => self.header1   = v,
+          StyleTextField::Heading3  => self.heading3  = v,
+          StyleTextField::Heading2  => self.heading2  = v,
+          StyleTextField::Heading1  => self.heading1  = v,
           StyleTextField::Preformat => self.preformat = v,
           StyleTextField::Link      => self.link      = v,
           StyleTextField::Error     => self.error     = v,

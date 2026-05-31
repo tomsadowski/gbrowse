@@ -11,22 +11,6 @@ list      = {fg = "#c4c0a0"}
 preformat = {fg = "#d0a8a8", wrap = false}
 quote     = {fg = "#d0a8a8"}
 link      = {fg = "#a8c8c4", underline = true}
-header1   = {fg = "#c89060", bold = true, underline = true}
-header2   = {fg = "#c89060", bold = true}
-header3   = {fg = "#c89060"}
-#p.black.g    = "#202425"
-
-#p.dblue.g    = "#252a30"
-#p.dyellow.g  = "#3c3a20"
-#p.dcyan.g    = "#203850"
-
-#p.dgrey.g    = "#506060"
-#p.grey.g     = "#808c8c"
-#p.dmagenta.g = "#a8a4c8"
-
-#p.white.g    = "#b2b09a"
-#p.yellow.g   = "#d8d4b0"
-
-#p.red.g      = "#d89468"
-#p.cyan.g     = "#a8c8c4"
-#p.magenta.g  = "#e0a0a0"
+h1        = {fg = "#c89060", bold = true, underline = true}
+h2        = {fg = "#c89060", bold = true}
+h3        = {fg = "#c89060"}

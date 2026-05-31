@@ -11,6 +11,6 @@ info      = {fg = "#e8e8e8"}
 quote     = {fg = "#e088f0"}
 preformat = {fg = "#e088f0", wrap = false}
 link      = {fg = "#80d0e0", underline = true}
-header1   = {fg = "#e0b040", bold = true, underline = true}
-header2   = {fg = "#ff6060", bold = true}
-header3   = {fg = "#ff6060"}
+h1        = {fg = "#e0b040", bold = true, underline = true}
+h2        = {fg = "#ff6060", bold = true}
+h3        = {fg = "#ff6060"}

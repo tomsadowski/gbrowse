@@ -199,9 +199,9 @@ impl User {
 
   pub fn get_styled_gemtext(&self, gemtext: &GemText) -> StyledText {
     let mut text: StyledText = match gemtext.tag {
-      GemTag::HeadingOne   => self.style.header1.into(),
-      GemTag::HeadingTwo   => self.style.header2.into(),
-      GemTag::HeadingThree => self.style.header3.into(),
+      GemTag::HeadingOne   => self.style.heading1.into(),
+      GemTag::HeadingTwo   => self.style.heading2.into(),
+      GemTag::HeadingThree => self.style.heading3.into(),
       GemTag::Text         => self.style.text.into(),
       GemTag::PreFormat    => self.style.preformat.into(),
       GemTag::Link(_, _)   => self.style.link.into(),
