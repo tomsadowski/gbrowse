@@ -23,11 +23,11 @@ pub enum Response {
   Edit(EditBox),
 }
 
-pub struct Dlg {
+pub struct Dialog {
   pub prompt:   TextBox,
   pub response: Response,
 } 
-impl Dlg {
+impl Dialog {
   pub fn resize(&mut self, rect: Rect) {
     self.prompt.resize(rect.cropped_south(2));
     match &mut self.response {
@@ -63,7 +63,7 @@ impl Dlg {
       )
       .write_unused_y(false)
       .with_style(style);
-    Dlg {
+    Dialog {
       prompt:   prompt_box,
       response: Response::Select(response_box),
     }
@@ -80,7 +80,7 @@ impl Dlg {
         prompt_box.used_rect().bottom_row()
       )
       .with_style(style);
-    Dlg {
+    Dialog {
       prompt:   prompt_box,
       response: Response::Edit(response_box),
     }
@@ -104,7 +104,7 @@ impl Dlg {
       )
       .write_unused_y(false)
       .with_style(style);
-    Dlg {
+    Dialog {
       prompt:   prompt_box,
       response: Response::Ask(response_box),
     }
@@ -129,7 +129,7 @@ impl Dlg {
       )
       .write_unused_y(false)
       .with_style(style);
-    Dlg {
+    Dialog {
       prompt:   prompt_box,
       response: Response::Ack(response_box),
     }
