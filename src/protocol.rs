@@ -1,11 +1,12 @@
 // src/network.rs
 
-use url::{Url, ParseError};
+use url::{Url, ParseError as UrlParseError};
 use native_tls::TlsConnector;
 use std::{
   thread,
   sync::mpsc,
   time::Duration, 
+  str::FromStr,
   io::{Write, Read},
   net::{TcpStream, ToSocketAddrs},
 };
@@ -37,10 +38,10 @@ pub fn split_whitespace_once(line: &str) -> Option<(&str, &str)> {
 }
 
 pub fn join_if_relative(base: &Url, url_str: &str) 
-  -> Result<Url, ParseError> 
+  -> Result<Url, UrlParseError> 
 {
   Url::parse(url_str).or_else(|e|
-    if let ParseError::RelativeUrlWithoutBase = e {
+    if let UrlParseError::RelativeUrlWithoutBase = e {
       base.join(url_str)
     } else {
       Err(e)
@@ -53,13 +54,13 @@ pub struct GemDoc {
   pub doc:    Vec<GemText>,
 }
 impl GemDoc {
-  pub fn new(url: &Url, response: String, content: String) 
+  pub fn new(response: String, content: String) 
     -> Result<Self, String> 
   {
     let status = StatusText::parse(&response);
     let doc = match status.tag {
       Status::Success => {
-        GemText::parse_doc(&content, url)
+        GemText::parse_doc(&content)
       }
       _ => {
         let msg = format!(
@@ -92,7 +93,7 @@ impl GemText {
     }
   }
 
-  pub fn parse_doc(text_str: &str, source: &Url) -> Vec<Self> {
+  pub fn parse_doc(text_str: &str) -> Vec<Self> {
     let mut vec       = vec![];
     let mut preformat = false;
     for line in text_str.lines() {
@@ -101,50 +102,42 @@ impl GemText {
       } else if preformat {
         vec.push(Self::new(GemTag::PreFormat, line.into()));
       } else {
-        vec.push(Self::parse_formatted(line, source));
+        vec.push(Self::parse_formatted(line));
       }
     }
     vec
   }
 
-  pub fn parse_formatted(line: &str, source: &Url) -> Self {
-    // look for 3 character symbols
-    if let Some(("###", text)) = line.split_at_checked(3) {
-      let text = text.trim();
-      return Self::new(GemTag::HeadingThree, text.into())
+  pub fn parse_formatted(line: &str) -> Self {
+    if let Some(("###", t)) = line.split_at_checked(3)
+      .map(|(s, t)| (s, t.trim())) 
+    {
+      Self::new(GemTag::HeadingThree, t.into())
+    } else if let Some(("=>", t)) = line.split_at_checked(2)
+      .map(|(s, t)| (s, t.trim())) 
+    {
+      let (u, t) = split_whitespace_once(t).unwrap_or((t, t));
+      let scheme = Scheme::from_str(u).unwrap_or(Scheme::Gemini);
+      Self::new(GemTag::Link(scheme, u.into()), t.into())
+    } else if let Some(("##", t)) = line.split_at_checked(2)
+      .map(|(s, t)| (s, t.trim())) 
+    {
+      Self::new(GemTag::HeadingTwo, t.into())
+    } else if let Some((">", t)) = line.split_at_checked(1)
+      .map(|(s, t)| (s, t.trim()))
+    {
+      Self::new(GemTag::Quote, t.into())
+    } else if let Some(("*", t)) = line.split_at_checked(1)
+      .map(|(s, t)| (s, t.trim()))
+    {
+      Self::new(GemTag::ListItem, &format!("- {}", t))
+    } else if let Some(("#", t)) = line.split_at_checked(1)
+      .map(|(s, t)| (s, t.trim()))
+    {
+      Self::new(GemTag::HeadingOne, t.into())
+    } else {
+      Self::new(GemTag::Text, line.into())
     }
-    // look for 2 character symbols
-    if let Some((symbol, text)) = line.split_at_checked(2) {
-      let text = text.trim();
-      if symbol == "=>" {
-        let (url_str, link_str) = 
-          split_whitespace_once(text).unwrap_or((text, text));
-        match join_if_relative(source, url_str) {
-          Ok(url) =>
-            return Self::new(
-              GemTag::Link(Scheme::from(&url), url), 
-              link_str.into()),
-          Err(s) => 
-            return Self::new(
-              GemTag::BadLink(s.to_string()), 
-              link_str.into())
-        }
-      } else if symbol == "##" {
-        return Self::new(GemTag::HeadingTwo, text.into())
-      }
-    }
-    // look for 1 character symbols
-    if let Some((symbol, text)) = line.split_at_checked(1) {
-      let text = text.trim();
-      if symbol == ">" {
-        return Self::new(GemTag::Quote, text.into())
-      } else if symbol == "*" {
-        return Self::new(GemTag::ListItem, &format!("- {}", text))
-      } else if symbol == "#" {
-        return Self::new(GemTag::HeadingOne, text.into())
-      }
-    }
-    return Self::new(GemTag::Text, line.into())
   }
 }
 
@@ -155,8 +148,7 @@ pub enum GemTag {
   HeadingThree,
   Text, 
   PreFormat,
-  Link(Scheme, Url),
-  BadLink(String),
+  Link(Scheme, String),
   ListItem,
   Quote,
 } 
@@ -241,16 +233,28 @@ pub enum Scheme {
   Gopher, 
   Http, 
   Https, 
-  Unknown
+  Unknown(String),
 }
-impl From<&Url> for Scheme {
-  fn from(url: &Url) -> Scheme {
-    match url.scheme() {
-      "gemini" => Scheme::Gemini,
-      "gopher" => Scheme::Gopher,
-      "http"   => Scheme::Http,
-      "https"  => Scheme::Https,
-      _        => Scheme::Unknown,
+impl FromStr for Scheme {
+  type Err = UrlParseError;
+  fn from_str(str: &str) -> Result<Self, Self::Err> {
+    match Url::parse(str)?.scheme() {
+      "gemini" => Ok(Scheme::Gemini),
+      "gopher" => Ok(Scheme::Gopher),
+      "http"   => Ok(Scheme::Http),
+      "https"  => Ok(Scheme::Https),
+      s        => Ok(Scheme::Unknown(s.into())),
+    }
+  }
+}
+impl ToString for Scheme {
+  fn to_string(&self) -> String {
+    match self {
+      Scheme::Gemini     => "gemini".into(),
+      Scheme::Gopher     => "gopher".into(),
+      Scheme::Http       => "http".into(),
+      Scheme::Https      => "https".into(),
+      Scheme::Unknown(s) => s.into(),
     }
   }
 }

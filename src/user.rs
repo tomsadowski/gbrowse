@@ -215,7 +215,6 @@ impl User {
       GemTag::Text         => self.style.text.into(),
       GemTag::PreFormat    => self.style.preformat.into(),
       GemTag::Link(_, _)   => self.style.link.into(),
-      GemTag::BadLink(_)   => self.style.error.into(),
       GemTag::ListItem     => self.style.list.into(),
       GemTag::Quote        => self.style.quote.into(),
     };

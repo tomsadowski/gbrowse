@@ -8,7 +8,7 @@ use crate::{
   tab::{Tab, TabList},
   widget::{Frame, TextBox},
   dialog::{Response, Dialog},
-  protocol::{Request, GemDoc, GemTag, Status, Scheme},
+  protocol::{join_if_relative, Request, GemDoc, GemTag, Status, Scheme},
 };
 use crossterm::{
   QueueableCommand, cursor,
@@ -77,7 +77,7 @@ impl App {
     let user_text = fs::read_to_string(path).unwrap_or_default();
     let user      = User::from_str(&user_text).unwrap_or_default();
     let frame     = user.get_frame(Rect::new(w, h));
-    let tab       = Tab::init(frame, &user.init_url);
+    let tab       = Tab::init(frame, &Url::parse(&user.init_url).unwrap());
     let mut app = Self {
       frame,
       user,
@@ -162,7 +162,7 @@ impl App {
       }
       Status::RedirectTemporary | 
       Status::RedirectPermanent => {
-        self.tabs.url_str = gemdoc.status.text.clone();
+        self.tabs.url = url.clone();
         self.focus_ask_dialog(
           Task::Redirect(gemdoc.status.text.clone()), 
           &gemdoc.status.text
@@ -174,7 +174,7 @@ impl App {
         self.focus_ack_dialog(&gemdoc.status.text);
       }
       _ => {
-        self.tabs.add(url.as_str());
+        self.tabs.add(url);
         self.tabs.content = TextBox::new(
             self.frame,
             gemdoc.doc
@@ -194,7 +194,7 @@ impl App {
       Some(request) => match request.handle.is_finished() {
         false => false,
         true  => match request.rx.recv().unwrap()
-          .map(|(r, c)| GemDoc::new(&request.url, r, c))
+          .map(|(r, c)| GemDoc::new(r, c))
           .flatten()
         {
           Err(e) => {
@@ -309,26 +309,20 @@ impl App {
               self.focus_ack_dialog("View manual");
             }
             CHANGE_KEYS => match user::get_entries(user::KEYS_PATH) {
-              Err(e) => 
-                self.focus_ack_dialog(
-                  &format!("Problem: {}", &e)),
-              Ok(entry) => 
-                self.focus_select_dialog(
-                  Task::ChangeKeys, 
-                  "Choose keys", 
-                  entry
-                  ),
+              Err(e) => self.focus_ack_dialog(
+                &format!("Problem: {}", &e)
+              ),
+              Ok(entry) => self.focus_select_dialog(
+                Task::ChangeKeys, "Choose keys", entry
+              ),
             }
             CHANGE_STYLE => match user::get_entries(user::STYLES_PATH) {
-              Err(e) => 
-                self.focus_ack_dialog(
-                  &format!("Problem: {}", &e)),
-              Ok(entry) => 
-                self.focus_select_dialog(
-                  Task::ChangeStyle, 
-                  "Choose style", 
-                  entry
-                  ),
+              Err(e) => self.focus_ack_dialog(
+                &format!("Problem: {}", &e)
+              ),
+              Ok(entry) => self.focus_select_dialog(
+                Task::ChangeStyle, "Choose style", entry
+              ),
             }
             VIEW_SETTINGS => {
               let text = format!("{:#?}", self.user)
@@ -336,13 +330,10 @@ impl App {
                 .map(|s| s.into())
                 .collect();
               self.focus_select_dialog(
-                Task::Default, 
-                "Current Settings", 
-                text
-                );
+                Task::Default, "Current Settings", text
+              );
             }
-            _ => 
-              self.focus_tabs(),
+            _ => self.focus_tabs(),
           }
         }
         (Response::Edit(editbox), Action::Enter, Task::Reply(url)) => {
@@ -367,7 +358,7 @@ impl App {
           let text = url_str.trim().replace(" ", "%20");
           self.focus_tabs();
           self.spawn_request(
-            &format!("{}?{}", self.tabs.url_str, text));
+            &format!("{}?{}", self.tabs.url, text));
         }
         (_, Action::Yes, Task::DelTab) => {
           self.tabs.delete();
@@ -391,7 +382,7 @@ impl App {
         }
       }
       (Msg::Action(Action::SaveUrl), Focus::Tab) => {
-        let url_str = self.tabs.url_str.clone();
+        let url_str = self.tabs.url.to_string();
         // only add url_str if new
         if self.user.urls.iter().any(|url| **url == url_str) {
           self.focus_ack_dialog(
@@ -404,9 +395,9 @@ impl App {
             .truncate(true)
             .open(&self.user.save_file) 
           {
-            Err(e) => 
-              self.focus_ack_dialog(
-                &format!("could not create save file: {}", &e)),
+            Err(e) => self.focus_ack_dialog(
+              &format!("could not create save file: {}", &e)
+            ),
             Ok(mut f) => {
               for url in self.user.urls.iter() {
                 f.write(&format!("{}\n", url).as_bytes());
@@ -419,20 +410,24 @@ impl App {
       }
       (Msg::Action(Action::Select), Focus::Tab) => 
         if let Some(gemdoc) = &self.tabs.gemdoc {
-          match gemdoc
-            .doc[self.tabs.get_source_idx()]
-            .tag.clone() 
-          {
+          match gemdoc.doc[self.tabs.get_source_idx()].tag.clone() {
             GemTag::Link(Scheme::Gemini, url) => {
-              let prompt = &format!("go to {}?", url);
-              self.focus_ask_dialog(Task::Go(url.into()), prompt);
+              match join_if_relative(&self.tabs.url, &url) {
+                Ok(url) => {
+                  let prompt = &format!("go to {}?", url);
+                  self.focus_ask_dialog(Task::Go(url.into()), prompt);
+                }
+                Err(e) => self.focus_ack_dialog(
+                  &format!("{} invalid. {}", url, e)
+                ),
+              }
             }
-            GemTag::Link(_, url) => 
-              self.focus_ack_dialog(
-                &format!("Protocol {} not yet supported", url)),
-            gemtext => 
-              self.focus_ack_dialog(
-                &format!("you've selected {:?}", gemtext)),
+            GemTag::Link(_, url) => self.focus_ack_dialog(
+              &format!("Protocol {} not yet supported", url)
+            ),
+            gemtext => self.focus_ack_dialog(
+              &format!("you've selected {:?}", gemtext)
+            ),
           }
         }
       (Msg::Action(Action::CycleLeft), Focus::Tab) => {

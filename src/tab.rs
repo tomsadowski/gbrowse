@@ -6,6 +6,7 @@ use crate::{
   widget::TextBox,
   protocol::GemDoc,
 };
+use url::Url;
 use std::ops::{Deref, DerefMut};
 
 
@@ -50,20 +51,20 @@ impl TabList {
   }
 
   pub fn banner_text(&self) -> String {
-    format!("{}/{} - {}", self.head + 1, self.tabs.len(), self.url_str)
+    format!("{}/{} - {}", self.head + 1, self.tabs.len(), self.url)
   }
 
   // maybe return bool
-  pub fn add(&mut self, url_str: &str) {
+  pub fn add(&mut self, url: &Url) {
     // search for tab with same url_str
     let search = self.tabs.iter_mut().enumerate()
-      .find(|(_, tab)| tab.url_str == url_str);
+      .find(|(_, tab)| tab.url == *url);
     // move head to location of tab with url_str
     if let Some((idx, _)) = search {
       self.head = idx;
     // or make a new tab
     } else {
-      let new_tab = Tab::init(self.rect, &url_str);
+      let new_tab = Tab::init(self.rect, url);
       if self.head + 1 == self.tabs.len() {
         self.tabs.push(new_tab);
         self.head += 1;
@@ -91,7 +92,7 @@ impl TabList {
 }
 
 pub struct Tab {
-  pub url_str: String,
+  pub url:     Url,
   pub gemdoc:  Option<GemDoc>,
   pub content: TextBox,
 } 
@@ -107,13 +108,13 @@ impl DerefMut for Tab {
   }
 }
 impl Tab {
-  pub fn init<V: ViewPort>(rect: V, url_str: &str) -> Self {
+  pub fn init<V: ViewPort>(rect: V, url: &Url) -> Self {
     let mut content = TextBox::default();
     content.rect    = rect.view_port();
     Self {
       content, 
       gemdoc:  None,
-      url_str: url_str.into(),
+      url: url.clone(),
     }
   }
 }
