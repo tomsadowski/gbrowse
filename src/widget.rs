@@ -2,8 +2,8 @@
 
 use crate::{
   cursor::{UnitCursor, UnitCursorMut, WeightedCursor},
-  view::{Rect, CursorView},
-  style::{Style, MarginSpec, BorderSpec},
+  view::{Rect, CursorView, ViewPort},
+  style::{Style, Margins, BorderStyle},
   text::{EditLine, StyledText, StyledTextPlane},
   keys::Action,
 };
@@ -16,25 +16,27 @@ use unicode_width::UnicodeWidthChar;
 use std::io::{self, Write};
 
 
-#[derive(Default)]
+#[derive(Copy, Default, Clone)]
 pub struct Frame {
-  pub text_margin:   MarginSpec,
-  pub screen_margin: MarginSpec,
-  pub border:        BorderSpec,
-  pub margin_style:  Style,
-  pub banner_style:  Style,
-  pub footer_style:  Style,
+  pub text_margin:   Margins,
+  pub screen_margin: Margins,
+  pub screen:        Rect,
   pub border_rect:   Rect,
   pub outer_rect:    Rect,
   pub inner_rect:    Rect,
+  pub border_style:  BorderStyle,
+  pub margin_style:  Style,
+  pub banner_style:  Style,
+  pub footer_style:  Style,
+}
+impl ViewPort for Frame {
+  fn view_port(&self) -> Rect {
+    self.inner_rect
+  }
 }
 impl Frame {
-  pub fn new(
-    screen:        Rect, 
-    border:        BorderSpec, 
-    screen_margin: MarginSpec,
-    text_margin:   MarginSpec
-  ) -> Self 
+  pub fn new(screen: Rect, screen_margin: Margins, text_margin: Margins) 
+    -> Self 
   {
     let outer_rect  = screen_margin.get_rect(screen).crop_x(1).crop_y(1);
     let inner_rect  = text_margin.get_rect(outer_rect);
@@ -43,28 +45,41 @@ impl Frame {
       margin_style: Style::default(),
       banner_style: Style::default(),
       footer_style: Style::default(),
+      border_style: BorderStyle::default(),
+      screen,
       border_rect,
       outer_rect,
       inner_rect,
       screen_margin,
       text_margin,
-      border,
     }
   }
-  pub fn with_banner_style(mut self, style: Style) -> Self {
-    self.banner_style = style;
+  pub fn with_banner_style<T>(mut self, style: T) -> Self 
+  where T: Into<Style> + Copy
+  {
+    self.banner_style = style.into();
     self
   }
-  pub fn with_footer_style(mut self, style: Style) -> Self {
-    self.footer_style = style;
+  pub fn with_footer_style<T>(mut self, style: T) -> Self 
+  where T: Into<Style> + Copy
+  {
+    self.footer_style = style.into();
     self
   }
-  pub fn with_margin_style(mut self, style: Style) -> Self {
-    self.margin_style = style;
+  pub fn with_margin_style<T>(mut self, style: T) -> Self 
+  where T: Into<Style> + Copy
+  {
+    self.margin_style = style.into();
+    self
+  }
+  pub fn with_border_style(mut self, style: BorderStyle) -> Self 
+  {
+    self.border_style = style;
     self
   }
 
   pub fn resize(&mut self, screen: Rect) {
+    self.screen      = screen;
     self.outer_rect  = self.screen_margin.get_rect(screen).crop_x(1).crop_y(1);
     self.inner_rect  = self.text_margin.get_rect(self.outer_rect);
     self.border_rect = self.screen_margin.get_rect(screen);
@@ -83,20 +98,20 @@ impl Frame {
     let (dx, dy) = self.border_rect.d();
     writer
       .queue(SetAttribute(Attribute::Reset))?
-      .queue(&self.border.style)?
-      .queue(MoveTo(ax, ay))?.queue(Print(self.border.a))?
-      .queue(MoveTo(bx, by))?.queue(Print(self.border.b))?
-      .queue(MoveTo(cx, cy))?.queue(Print(self.border.c))?
-      .queue(MoveTo(dx, dy))?.queue(Print(self.border.d))?;
+      .queue(&self.border_style.style)?
+      .queue(MoveTo(ax, ay))?.queue(Print(self.border_style.a))?
+      .queue(MoveTo(bx, by))?.queue(Print(self.border_style.b))?
+      .queue(MoveTo(cx, cy))?.queue(Print(self.border_style.c))?
+      .queue(MoveTo(dx, dy))?.queue(Print(self.border_style.d))?;
     for x in self.border_rect.cropped_x(1).x_range() {
       writer
-        .queue(MoveTo(x, ay))?.queue(Print(self.border.x))?
-        .queue(MoveTo(x, cy))?.queue(Print(self.border.x))?;
+        .queue(MoveTo(x, ay))?.queue(Print(self.border_style.x))?
+        .queue(MoveTo(x, cy))?.queue(Print(self.border_style.x))?;
     }
     for y in self.border_rect.cropped_y(1).y_range() {
       writer
-        .queue(MoveTo(ax, y))?.queue(Print(self.border.y))?
-        .queue(MoveTo(bx, y))?.queue(Print(self.border.y))?;
+        .queue(MoveTo(ax, y))?.queue(Print(self.border_style.y))?
+        .queue(MoveTo(bx, y))?.queue(Print(self.border_style.y))?;
     }
     // margin
     writer
@@ -129,8 +144,8 @@ impl Frame {
     let     y = self.border_rect.y_end().saturating_sub(1);
     writer
       .queue(MoveTo(x, y))?
-      .queue(&self.border.style)?
-      .queue(Print(self.border.close))?
+      .queue(&self.border_style.style)?
+      .queue(Print(self.border_style.close))?
       .queue(cursor::MoveLeft(2))?
       .queue(Print(' '))?
       .queue(&self.footer_style)?;
@@ -144,14 +159,14 @@ impl Frame {
     writer
       .queue(cursor::MoveLeft(2))?
       .queue(Print(' '))?
-      .queue(&self.border.style)?
+      .queue(&self.border_style.style)?
       .queue(cursor::MoveLeft(2))?
-      .queue(Print(self.border.open))?;
+      .queue(Print(self.border_style.open))?;
     x -= 2;
     for _ in self.inner_rect.x..x {
       writer
         .queue(cursor::MoveLeft(2))?
-        .queue(Print(self.border.x))?;
+        .queue(Print(self.border_style.x))?;
     }
     writer.queue(SetAttribute(Attribute::Reset))?;
     Ok(())
@@ -164,8 +179,8 @@ impl Frame {
     let     y = self.border_rect.y;
     writer
       .queue(MoveTo(x, y))?
-      .queue(&self.border.style)?
-      .queue(Print(self.border.open))?
+      .queue(&self.border_style.style)?
+      .queue(Print(self.border_style.open))?
       .queue(Print(' '))?
       .queue(&self.banner_style)?;
     x += 2;
@@ -174,19 +189,19 @@ impl Frame {
       x += 1;
     }
     writer
-      .queue(&self.border.style)?
+      .queue(&self.border_style.style)?
       .queue(Print(' '))?
-      .queue(Print(self.border.close))?;
+      .queue(Print(self.border_style.close))?;
     x += 2;
     for _ in x..self.inner_rect.x_end() {
-      writer.queue(Print(self.border.x))?;
+      writer.queue(Print(self.border_style.x))?;
     }
     writer.queue(SetAttribute(Attribute::Reset))?;
     Ok(())
   }
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Copy, Clone, Debug, Default)]
 pub struct ScreenCursor {
   pub x: CursorView,
   pub y: CursorView,
@@ -253,19 +268,21 @@ pub struct TextBox {
   pub write_unused_y: bool,
 }
 impl TextBox {
-  pub fn new(rect: Rect, text: Vec<StyledText>) -> Self {
+  pub fn new<V: ViewPort>(rect: V, text: Vec<StyledText>) -> Self {
     Self {
       write_unused_x: true,
       write_unused_y: true,
       write:          true,
       style:          Style::default(),
-      cursor:         ScreenCursor::new(&rect), 
-      content:        StyledTextPlane::new(text, rect.w),
-      rect,
+      cursor:         ScreenCursor::new(&rect.view_port()), 
+      content:        StyledTextPlane::new(text, rect.view_port().w),
+      rect: rect.view_port(),
     }
   }
-  pub fn with_style(mut self, style: Style) -> Self {
-    self.style = style;
+  pub fn with_style<T>(mut self, style: T) -> Self 
+  where T: Into<Style> + Copy
+  {
+    self.style = style.into();
     self
   }
   pub fn write_unused_x(mut self, write: bool) -> Self {
@@ -302,17 +319,17 @@ impl TextBox {
     self.write = true;
   }
 
-  pub fn restyle(&mut self, rect: Rect, text: Vec<StyledText>) {
-    self.rect = rect.clone();
-    self.content.restyle(text, rect.w);
-    self.cursor.resize(&self.content, &rect);
+  pub fn restyle<V: ViewPort>(&mut self, rect: V, text: Vec<StyledText>) {
+    self.rect = rect.view_port().clone();
+    self.content.restyle(text, self.rect.w);
+    self.cursor.resize(&self.content, &self.rect);
     self.reset_state();
   }
 
-  pub fn resize(&mut self, rect: Rect) {
-    self.rect = rect.clone();
-    self.content.resize(rect.w);
-    self.cursor.resize(&self.content, &rect);
+  pub fn resize<V: ViewPort>(&mut self, rect: V) {
+    self.rect = rect.view_port();
+    self.content.resize(self.rect.w);
+    self.cursor.resize(&self.content, &rect.view_port());
     self.reset_state();
   }
 
@@ -436,8 +453,8 @@ pub struct EditBox {
   pub write_unused_x: bool,
 }
 impl EditBox {
-  pub fn new(rect: Rect) -> Self {
-    let rect = rect.top_row();
+  pub fn new<V: ViewPort>(rect: V) -> Self {
+    let rect = rect.view_port().top_row();
     Self {
       write_unused_x: true,
       write:          true,
@@ -447,8 +464,10 @@ impl EditBox {
       rect,
     }
   }
-  pub fn with_style(mut self, style: Style) -> Self {
-    self.style = style;
+  pub fn with_style<T>(mut self, style: T) -> Self 
+  where T: Into<Style> + Copy
+  {
+    self.style = style.into();
     self
   }
   pub fn write_unused_x(mut self, write: bool) -> Self {
@@ -456,8 +475,8 @@ impl EditBox {
     self
   }
 
-  pub fn resize(&mut self, rect: Rect) {
-    self.rect = rect.top_row();
+  pub fn resize<V: ViewPort>(&mut self, rect: V) {
+    self.rect = rect.view_port().top_row();
     self.cursor.x.resize(
       self.content.weighted_head(), 
       self.rect.x, 

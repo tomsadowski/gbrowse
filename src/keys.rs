@@ -11,7 +11,7 @@ use toml::Value;
 use std::str::FromStr;
 
 
-#[derive(Clone, Debug)]
+#[derive(Copy, Clone, Debug)]
 pub enum Action {
   // editor
   Insert(char),
@@ -68,7 +68,7 @@ impl FromStr for Action {
   }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Copy, Clone, Debug)]
 pub struct KeysTable {
   pub up:          KeyCode,
   pub down:        KeyCode,

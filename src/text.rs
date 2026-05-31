@@ -134,8 +134,10 @@ impl StyledText {
     self.text = text.into();
     self
   }
-  pub fn with_style(mut self, style: Style) -> Self {
-    self.style = style;
+  pub fn with_style<T>(mut self, style: T) -> Self 
+  where T: Into<Style> + Copy
+  {
+    self.style = style.into();
     self
   }
   pub fn wrap(mut self, wrap: bool) -> Self {

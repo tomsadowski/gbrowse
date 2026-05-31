@@ -2,7 +2,7 @@
 
 use crate::{
   keys::KeysTable,
-  style::StyleModTable,
+  style::StyleTable,
   tab::Tab,
   widget::{Frame, TextBox},
   view::Rect,
@@ -13,26 +13,14 @@ use toml::{Table, Value};
 use std::{fs, str::FromStr};
 
 
-pub const USER_DATA:   &str = "gdata";
-pub const USER_INIT:   &str = "init";
-pub const USER_URLS:   &str = "urls";
-pub const USER_STYLES: &str = "styles";
-pub const USER_KEYS:   &str = "keys";
+pub const DATA_PATH:   &str = "gdata";
+pub const SAVE_FILE:   &str = "gdata/urls";
+pub const INIT_FILE:   &str = "gdata/init";
 pub const STYLES_PATH: &str = "gdata/styles";
 pub const KEYS_PATH:   &str = "gdata/keys";
 
-pub fn get_entries(path: &str) -> Result<Vec<String>, String> {
-  let mut vec: Vec<String> = vec![];
-  let mut results = fs::read_dir(path).map_err(|e| e.to_string())?;
-  for result in results {
-    let s = result
-      .map_err(|e| e.to_string())?
-      .file_name()
-      .into_string()
-      .map_err(|_| "Could not convert OsString to String".to_string())?;
-    vec.push(s);
-  }
-  Ok(vec)
+pub fn get_init_file(name: &str) -> String {
+  format!("{}/{}", DATA_PATH, name)
 }
 
 pub fn get_keys_file(name: &str) -> String {
@@ -41,6 +29,19 @@ pub fn get_keys_file(name: &str) -> String {
 
 pub fn get_styles_file(name: &str) -> String {
   format!("{}/{}", STYLES_PATH, name)
+}
+
+pub fn get_entries(path: &str) -> Result<Vec<String>, String> {
+  let mut vec = vec![];
+  for result in fs::read_dir(path).map_err(|e| e.to_string())? {
+    vec.push(result
+      .map_err(|e| e.to_string())?
+      .file_name()
+      .into_string()
+      .map_err(|_| "Could not convert OsString to String".to_string())?
+    );
+  }
+  Ok(vec)
 }
 
 pub trait UserTable<F>: Sized 
@@ -122,17 +123,23 @@ pub struct User {
   pub timeout:        u64,
   pub save_file:      String,
   pub init_url:       String,
-  pub style:          StyleModTable,
+  pub style:          StyleTable,
   pub keys:           KeysTable,
+  pub urls:           Vec<String>,
 } 
 impl Default for User {
   fn default() -> Self {
+    let urls: Vec<String> = match fs::read_to_string(&SAVE_FILE) {
+      Ok(s)  => s.lines().map(|s| String::from(s)).collect(),
+      Err(e) => vec![],
+    };
     Self {
       timeout:        10,
       init_url:       "gemini://geminiprotocol.net/".into(),
-      save_file:      format!("{}/{}", USER_DATA, USER_URLS),
-      style:          StyleModTable::default(),
+      save_file:      SAVE_FILE.into(),
+      style:          StyleTable::default(),
       keys:           KeysTable::default(),
+      urls,
     }
   }
 }
@@ -152,35 +159,37 @@ impl UserTable<UserField> for User {
         self.init_url = v.into();
       }
       (UserField::SaveFile, Value::String(v)) => {
-        self.save_file = format!("{}/{}", USER_DATA, v);
+        self.save_file = format!("{}/{}", DATA_PATH, v);
       }
       (UserField::Timeout, Value::Integer(v)) => {
         self.timeout = u64::try_from(v).map_err(|e| e.to_string())?;
       }
       // read style from another file
-      (UserField::Style, Value::String(modname)) => {
-        let path   = format!("{}/{}/{}", USER_DATA, USER_STYLES, modname);
-        let text   = fs::read_to_string(path).map_err(|e| e.to_string())?;
-        let table  = text.parse::<Table>().map_err(|e| e.to_string())?;
-        self.style.update_from_table(table)?;
-      }
-      // read keys from another file
-      (UserField::Keys, Value::String(modname)) => {
-        let path  = format!("{}/{}/{}", USER_DATA, USER_KEYS, modname);
-        let text  = fs::read_to_string(path).map_err(|e| e.to_string())?;
-        let table = text.parse::<Table>().map_err(|e| e.to_string())?;
-        self.keys.update_from_table(table)?;
+      (UserField::Style, Value::String(v)) => {
+        self.style.update_from_str(
+          &fs::read_to_string(
+            get_styles_file(&v)
+          ).map_err(|e| e.to_string())?
+        )?;
       }
       // read style from this file
       (UserField::Style, Value::Table(v)) => {
         self.style.update_from_table(v)?;
       }
+      // read keys from another file
+      (UserField::Keys, Value::String(v)) => {
+        self.keys.update_from_str(
+          &fs::read_to_string(
+            get_keys_file(&v)
+          ).map_err(|e| e.to_string())?
+        )?;
+      }
       // read keys from this file
       (UserField::Keys, Value::Table(v)) => {
         self.keys.update_from_table(v)?;
       }
-      (f, v) => 
-        return Err(format!("field {:?} value {:?} not valid here", f, v))
+      (f, v) => return Err(
+        format!("field {:?} value {:?} not valid here", f, v))
     }
     Ok(())
   }
@@ -189,13 +198,13 @@ impl User {
   pub fn get_frame(&self, screen: Rect) -> Frame {
     Frame::new(
         screen, 
-        self.style.border.clone(),
-        self.style.screen_margin.clone(),
-        self.style.text_margin.clone()
+        self.style.screen_margin,
+        self.style.text_margin
       )
-      .with_banner_style(*self.style.banner)
-      .with_footer_style(*self.style.banner)
-      .with_margin_style(*self.style.general)
+      .with_banner_style(self.style.banner)
+      .with_footer_style(self.style.banner)
+      .with_margin_style(self.style.general)
+      .with_border_style(self.style.border)
   }
 
   pub fn get_styled_gemtext(&self, gemtext: &GemText) -> StyledText {

@@ -3,15 +3,11 @@
 use crate::{
   cursor::{UnitCursor, UnitCursorMut, WeightedCursor},
   widget::{TextBox, EditBox},
-  view::{Rect, CursorView},
-  style::{Style, MarginSpec, BorderSpec},
+  view::{Rect, CursorView, ViewPort},
+  style::{Style, Margins, BorderStyle},
   text::{EditLine, StyledText, StyledTextPlane},
 };
-use crossterm::{
-  QueueableCommand, 
-  cursor::{self, MoveTo}, 
-  style::{Print, SetAttribute, Attribute},
-};
+use crossterm::QueueableCommand;
 use unicode_width::UnicodeWidthChar;
 use std::io::{self, Write};
 
@@ -28,118 +24,112 @@ pub struct Dialog {
   pub response: Response,
 } 
 impl Dialog {
-  pub fn resize(&mut self, rect: Rect) {
-    self.prompt.resize(rect.cropped_south(2));
-    match &mut self.response {
-      Response::Ack(r) | 
-      Response::Ask(r) => 
-        r.resize(self.prompt.used_rect().bottom_row()),
-      Response::Edit(r) => 
-        r.resize(self.prompt.used_rect().bottom_row()),
-      Response::Select(r) => 
-        r.resize(rect.cropped_north(self.prompt.used_rect().h)),
-    }
-  }
-
-  pub fn select(
-    rect:   Rect,
-    style:  Style, 
-    prompt: &str, 
-    input:  Vec<String>, 
-  ) -> Self 
+  pub fn ack<V, S>(view: V, style: S, prompt: &str, input: &str) -> Self
+  where 
+    V: ViewPort,
+    S: Into<Style> + Copy
   {
     let prompt_box = TextBox::new(
-        rect.cropped_south(2),
+        view.view_port().cropped_south(2),
         vec![StyledText::from(prompt).with_style(style)], 
-      )
-      .write_unused_y(false)
-      .with_style(style);
-    let response_box = TextBox::new(
-        rect.cropped_north(prompt_box.used_rect().h),
-        input
-          .iter()
-          .map(|s| StyledText::from(s.as_str()).with_style(style))
-          .collect(), 
-      )
-      .write_unused_y(false)
-      .with_style(style);
-    Dialog {
-      prompt:   prompt_box,
-      response: Response::Select(response_box),
-    }
-  }
-
-  pub fn edit(rect: Rect, style: Style, prompt: &str) -> Self {
-    let prompt_box = TextBox::new(
-        rect.cropped_south(2),
-        vec![StyledText::from(prompt).with_style(style)],
-      )
-      .write_unused_y(false)
-      .with_style(style);
-    let response_box  = EditBox::new(
-        prompt_box.used_rect().bottom_row()
-      )
-      .with_style(style);
-    Dialog {
-      prompt:   prompt_box,
-      response: Response::Edit(response_box),
-    }
-  }
-
-  pub fn ask(
-    rect:   Rect,
-    style:  Style, 
-    prompt: &str, 
-    input:  &str, 
-  ) -> Self {
-    let prompt_box = TextBox::new(
-        rect.cropped_south(2),
-        vec![StyledText::from(prompt).with_style(style)], 
-      )
-      .write_unused_y(false)
-      .with_style(style);
+      ).with_style(style).write_unused_y(false);
     let response_box = TextBox::new(
         prompt_box.used_rect().bottom_row(),
         vec![StyledText::from(input).with_style(style)], 
-      )
-      .write_unused_y(false)
-      .with_style(style);
-    Dialog {
-      prompt:   prompt_box,
-      response: Response::Ask(response_box),
-    }
-  }
-
-  pub fn ack(
-    rect:   Rect, 
-    style:  Style, 
-    prompt: &str, 
-    input:  &str
-  ) -> Self 
-  {
-    let prompt_box = TextBox::new(
-        rect.cropped_south(2),
-        vec![StyledText::from(prompt).with_style(style)], 
-      )
-      .write_unused_y(false)
-      .with_style(style);
-    let response_box = TextBox::new(
-        prompt_box.used_rect().bottom_row(),
-        vec![StyledText::from(input).with_style(style)], 
-      )
-      .write_unused_y(false)
-      .with_style(style);
+      ).with_style(style).write_unused_y(false);
     Dialog {
       prompt:   prompt_box,
       response: Response::Ack(response_box),
     }
   }
 
+  pub fn ask<V, S>(view: V, style: S, prompt: &str, input: &str) -> Self 
+  where 
+    V: ViewPort,
+    S: Into<Style> + Copy
+  {
+    let prompt_box = TextBox::new(
+        view.view_port().cropped_south(2),
+        vec![StyledText::from(prompt).with_style(style)], 
+      ).with_style(style).write_unused_y(false);
+    let response_box = TextBox::new(
+        prompt_box.used_rect().bottom_row(),
+        vec![StyledText::from(input).with_style(style)], 
+      ).with_style(style).write_unused_y(false);
+    Dialog {
+      prompt:   prompt_box,
+      response: Response::Ask(response_box),
+    }
+  }
+
+  pub fn select<V, S>(
+    view:   V,
+    style:  S, 
+    prompt: &str, 
+    input:  Vec<String>, 
+  ) -> Self 
+  where 
+    V: ViewPort,
+    S: Into<Style> + Copy
+  {
+    let prompt_box = TextBox::new(
+        view.view_port().cropped_south(2),
+        vec![StyledText::from(prompt).with_style(style)], 
+      ).with_style(style).write_unused_y(false);
+    let response_box = TextBox::new(
+        view.view_port().cropped_north(prompt_box.used_rect().h),
+        input
+          .iter()
+          .map(|s| StyledText::from(s.as_str()).with_style(style))
+          .collect(), 
+      ).with_style(style).write_unused_y(false);
+    Dialog {
+      prompt:   prompt_box,
+      response: Response::Select(response_box),
+    }
+  }
+
+  pub fn edit<V, S>(view: V, style: S, prompt: &str) -> Self 
+  where 
+    V: ViewPort,
+    S: Into<Style> + Copy
+  {
+    let prompt_box = TextBox::new(
+        view.view_port().cropped_south(2),
+        vec![StyledText::from(prompt).with_style(style)],
+      ).with_style(style).write_unused_y(false);
+    let response_box = EditBox::new(
+        prompt_box.used_rect().bottom_row()
+      ).with_style(style);
+    Dialog {
+      prompt:   prompt_box,
+      response: Response::Edit(response_box),
+    }
+  }
+
+  pub fn resize<V: ViewPort>(&mut self, rect: V) {
+    self.prompt.resize(rect.view_port().cropped_south(2));
+    match &mut self.response {
+      Response::Ack(r) | 
+      Response::Ask(r) => {
+        r.resize(self.prompt.used_rect().bottom_row());
+      }
+      Response::Edit(r) => {
+        r.resize(self.prompt.used_rect().bottom_row());
+      }
+      Response::Select(r) => {
+        r.resize(rect.view_port().cropped_north(self.prompt.used_rect().h));
+      }
+    }
+  }
+
   pub fn write<W: Write>(&self, writer: &mut W) -> io::Result<()> {
     self.prompt.write(writer)?;
     match &self.response {
-      Response::Ack(r) | Response::Ask(r) => 
-        r.write(writer)?,
+      Response::Ack(r) | 
+      Response::Ask(r) => { 
+        r.write(writer)?;
+      }
       Response::Edit(r) => {
         r.write(writer)?;
         r.cursor.write(writer)?;

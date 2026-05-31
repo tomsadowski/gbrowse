@@ -2,7 +2,7 @@
 
 use crate::{
   cursor::{UnitCursor, UnitCursorMut},
-  view::Rect,
+  view::{Rect, ViewPort},
   widget::TextBox,
   protocol::GemDoc,
 };
@@ -83,7 +83,7 @@ impl TabList {
     }
   }
 
-  pub fn resize(&mut self, rect: Rect) {
+  pub fn resize<V: ViewPort + Copy>(&mut self, rect: V) {
     for tab in self.tabs.iter_mut() {
       tab.resize(rect);
     }
@@ -107,9 +107,9 @@ impl DerefMut for Tab {
   }
 }
 impl Tab {
-  pub fn init(rect: Rect, url_str: &str) -> Self {
+  pub fn init<V: ViewPort>(rect: V, url_str: &str) -> Self {
     let mut content = TextBox::default();
-    content.rect    = rect;
+    content.rect    = rect.view_port();
     Self {
       content, 
       gemdoc:  None,

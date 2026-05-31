@@ -7,13 +7,21 @@ use crossterm::{
 };
 use crate::cursor::{UnitCursor, UnitCursorMut, WeightedCursor};
 
+pub trait ViewPort {
+  fn view_port(&self) -> Rect;
+}
 
-#[derive(Clone, Default, Copy)]
+#[derive(Copy, Clone, Default)]
 pub struct Rect {
   pub x: u16,
   pub y: u16,
   pub w: u16,
   pub h: u16,
+}
+impl ViewPort for Rect {
+  fn view_port(&self) -> Rect {
+    self.clone()
+  }
 }
 impl Rect {
   pub fn new(w: u16, h: u16) -> Self {
@@ -128,7 +136,7 @@ impl Rect {
   }
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Copy, Clone, Debug, Default)]
 pub struct CursorView {
   pub head:  usize,
   pub start: usize,

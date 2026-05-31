@@ -4,7 +4,7 @@ use crate::{
   cursor::UnitCursor,
   user::{self, User, UserTable},
   keys::Action,
-  view::Rect,
+  view::{Rect, ViewPort},
   tab::{Tab, TabList},
   widget::{Frame, TextBox},
   dialog::{Response, Dialog},
@@ -16,7 +16,11 @@ use crossterm::{
   event::{Event, KeyEvent, KeyEventKind, KeyCode, KeyModifiers},
 };
 use url::Url;
-use std::{fs, str::FromStr, io::{self, Write, Stdout}};
+use std::{
+  fs, 
+  str::FromStr, 
+  io::{self, Write, Stdout}
+};
 
 
 pub const MANUAL:        &str = "User manual";
@@ -57,18 +61,15 @@ pub enum Focus {
 }
 
 pub struct App {
-  pub init_path:   String,
-  pub frame:       Frame,
-  pub user:        User,
   pub urls:        Vec<String>,
-  pub screen:      Rect,
-  pub rect:        Rect,
+  pub user:        User,
+  pub frame:       Frame,
   pub tabs:        TabList,
   pub focus:       Focus,
-  pub new_dlg:     bool,
   pub request:     Option<Request>,
-  pub clear:       bool,
   pub guide:       String,
+  pub new_dlg:     bool,
+  pub clear:       bool,
   pub tab_changed: bool,
   pub quit:        bool,
 } 
@@ -76,22 +77,17 @@ impl App {
   pub fn init(path: &str, w: u16, h: u16) -> Self {
     let user_text = fs::read_to_string(path).unwrap_or("".into());
     let user      = User::from_str(&user_text).unwrap_or_default();
-    let screen    = Rect::new(w, h);
-    let frame     = user.get_frame(screen);
-    let rect      = frame.inner_rect.clone();
-    let tab       = Tab::init(rect, &user.init_url);
+    let frame     = user.get_frame(Rect::new(w, h));
+    let tab       = Tab::init(frame, &user.init_url);
     let urls: Vec<String> = match fs::read_to_string(&user.save_file) {
       Ok(s)  => s.lines().map(|s| String::from(s)).collect(),
       Err(e) => vec![],
     };
     let mut app = Self {
-      screen,
       frame,
       user,
-      rect,
       urls,
       guide:       "".into(),
-      init_path:   path.into(),
       tabs:        TabList::new(tab),
       request:     None,
       focus:       Focus::Tab,
@@ -112,8 +108,8 @@ impl App {
 
   fn focus_ack_dialog(&mut self, prompt: &str) {
     let dlg = Dialog::ack(
-      self.rect,
-      *self.user.style.info, 
+      self.frame,
+      self.user.style.info, 
       prompt, 
       &format!("Press any key to acknowledge"), 
       );
@@ -124,8 +120,8 @@ impl App {
 
   fn focus_ask_dialog(&mut self, task: Task, prompt: &str) {
     let dlg = Dialog::ask(
-      self.rect,
-      *self.user.style.info, 
+      self.frame,
+      self.user.style.info, 
       prompt, 
       &format!("{} yes {} no", self.user.keys.yes, self.user.keys.no),
       );
@@ -136,33 +132,27 @@ impl App {
   }
 
   fn focus_edit_dialog(&mut self, task: Task, prompt: &str) {
-    let dlg = Dialog::edit(
-      self.rect,
-      *self.user.style.info, 
-      prompt, 
+    self.focus = Focus::Dialog(
+      task, 
+      Dialog::edit(self.frame, self.user.style.info, prompt)
       );
-    self.focus = Focus::Dialog(task, dlg);
-    self.guide = 
-      format!("Press {} to cancel", self.user.keys.cancel);
+    self.guide = format!("Press {} to cancel", self.user.keys.cancel);
     self.new_dlg = true;
   }
 
   fn focus_select_dialog(
     &mut self, 
-    task:    Task, 
-    prompt:  &str, 
+    task: Task, 
+    prompt: &str, 
     options: Vec<String>
   ) {
     let dlg = Dialog::select(
-      self.rect,
-      *self.user.style.info, 
+      self.frame,
+      self.user.style.info, 
       prompt, 
       options, 
       );
-    self.guide = format!(
-      "Press {} to select", 
-      self.user.keys.select
-      );
+    self.guide = format!("Press {} to select", self.user.keys.select);
     self.focus = Focus::Dialog(task, dlg);
     self.new_dlg = true;
   }
@@ -192,13 +182,12 @@ impl App {
       _ => {
         self.tabs.add(url.as_str());
         self.tabs.content = TextBox::new(
-            self.rect,
+            self.frame,
             gemdoc.doc
               .iter()
               .map(|gem| self.user.get_styled_gemtext(gem))
               .collect(),
-          )
-          .with_style(*self.user.style.general);
+          ).with_style(self.user.style.general);
         self.tabs.gemdoc = Some(gemdoc);
         self.tab_changed = true;
       }
@@ -206,30 +195,33 @@ impl App {
   }
 
   pub fn join_request(&mut self) -> bool {
-    if let Some(request) = &mut self.request {
-      if request.handle.is_finished() {
-        match request.rx
-          .recv()
-          .unwrap()
+    match &mut self.request {
+      None          => false,
+      Some(request) => match request.handle.is_finished() {
+        false => false,
+        true  => match request.rx.recv().unwrap()
           .map(|(r, c)| GemDoc::new(&request.url, r, c))
           .flatten()
         {
-          Err(e) => 
-            self.focus_ack_dialog(&e),
+          Err(e) => {
+            self.focus_ack_dialog(&e);
+            self.request = None;
+            true
+          }
           Ok(gemdoc) => {
             let url = request.url.clone();
             self.set_gemdoc(&url, gemdoc);
+            self.request = None;
+            true
           }
         }
-        self.request = None;
-        true
-      } else {false}
-    } else {false}
+      }
+    }
   }
 
   pub fn spawn_request(&mut self, url_str: &str) {
     match Url::parse(url_str) {
-      Err(e)  => {
+      Err(e) => {
         self.focus_ack_dialog(
           &format!("URL parse error: {}", &e)); 
         self.request = None;
@@ -244,19 +236,18 @@ impl App {
   }
 
   pub fn push_style(&mut self) {
-    self.frame = self.user.get_frame(self.screen);
-    self.rect  = self.frame.inner_rect;
+    self.frame = self.user.get_frame(self.frame.screen);
     for tab in self.tabs.tabs.iter_mut() {
       if let Some(gem) = &tab.gemdoc {
         tab.content.restyle(
-          self.rect,
+          self.frame,
           gem.doc
             .iter()
             .map(|gem| self.user.get_styled_gemtext(gem))
             .collect(),
         )
       }
-      tab.content.style = *self.user.style.general;
+      tab.content.style = self.user.style.general.into();
     }
     self.clear = true;
   }
@@ -271,13 +262,11 @@ impl App {
         self.quit = true;
       }
       (Msg::Resize(w, h), focus) => {
-        self.screen = Rect::new(*w, *h);
-        self.frame.resize(self.screen);
-        self.rect = self.frame.inner_rect.clone();
+        self.frame.resize(Rect::new(*w, *h));
         if let Focus::Dialog(_, dialog) = focus {
-          dialog.resize(self.rect);
+          dialog.resize(self.frame);
         }
-        self.tabs.resize(self.rect);
+        self.tabs.resize(self.frame);
         self.clear = true;
       }
       (Msg::Action(action), Focus::Dialog(task, dlg)) 

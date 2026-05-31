@@ -15,6 +15,7 @@ use std::{
   fmt,
   str::FromStr,
   ops::Deref,
+  convert::AsRef,
 };
 
 // corners 
@@ -50,12 +51,10 @@ pub const CLOSE_L: char = '\u{230B}';
 
 pub fn parse_color(v: &Value) -> Result<Color, String> {
   match v {
-    Value::String(s) => {
-      if let Some('#') = s.chars().next() {
-        parse_hex_color(&s[1..])
-      } else {
-        parse_color_name(&s)
-      }
+    Value::String(s) => if let Some('#') = s.chars().next() {
+      parse_hex_color(&s[1..])
+    } else {
+      parse_color_name(&s)
     }
     _ => Err(format!("could not parse color from value {}", v)),
   }
@@ -148,10 +147,10 @@ pub enum StyleMarginField {
   Text, Screen,
 }
 #[derive(Debug)]
-pub enum StyleModField {
+pub enum StyleTableField {
   Border, Margin(StyleMarginField), Text(StyleTextField),
 }
-impl FromStr for StyleModField {
+impl FromStr for StyleTableField {
   type Err = String;
   fn from_str(s: &str) -> Result<Self, Self::Err> {
     match s {
@@ -241,6 +240,11 @@ pub struct Style {
   pub fg:        Option<Color>,
   pub bg:        Option<Color>,
 }
+impl From<TextStyle> for Style {
+  fn from(item: TextStyle) -> Self {
+    item.style
+  }
+}
 impl Command for Style {
   fn write_ansi(&self, f: &mut impl fmt::Write) -> fmt::Result {
     let mut contentstyle = ContentStyle::new();
@@ -285,14 +289,14 @@ impl UserTable<StyleField> for Style {
   }
 }
 
-#[derive(Debug, Clone)]
-pub struct MarginSpec {
+#[derive(Copy, Debug, Clone)]
+pub struct Margins {
   pub north: u16,
   pub south: u16,
   pub east:  u16,
   pub west:  u16,
 }
-impl Default for MarginSpec {
+impl Default for Margins {
   fn default() -> Self {
     Self {
       north: 1, 
@@ -302,7 +306,7 @@ impl Default for MarginSpec {
     }
   }
 }
-impl UserTable<MarginField> for MarginSpec {
+impl UserTable<MarginField> for Margins {
   fn try_assign(&mut self, field: MarginField, value: Value) 
     -> Result<(), String> 
   {
@@ -323,9 +327,9 @@ impl UserTable<MarginField> for MarginSpec {
     Ok(())
   }
 }
-impl MarginSpec {
+impl Margins {
   pub fn get_rect(&self, screen: Rect) -> Rect {
-    screen.clone()
+    screen
       .crop_north(self.north)
       .crop_south(self.south)
       .crop_east(self.east)
@@ -333,8 +337,8 @@ impl MarginSpec {
   }
 }
 
-#[derive(Debug, Clone)]
-pub struct BorderSpec {
+#[derive(Copy, Debug, Clone)]
+pub struct BorderStyle {
   pub style: Style,
   pub x:     char,
   pub y:     char,
@@ -345,7 +349,7 @@ pub struct BorderSpec {
   pub open:  char,
   pub close: char,
 }
-impl Default for BorderSpec {
+impl Default for BorderStyle {
   fn default() -> Self {
     Self {
       style: Style::default(),
@@ -360,7 +364,7 @@ impl Default for BorderSpec {
     }
   }
 }
-impl UserTable<BorderField> for BorderSpec {
+impl UserTable<BorderField> for BorderStyle {
   fn try_assign(&mut self, field: BorderField, value: Value) 
     -> Result<(), String> 
   {
@@ -430,12 +434,6 @@ pub struct TextStyle {
   pub style: Style,
   pub wrap:  bool,
 }
-impl Deref for TextStyle {
-  type Target = Style;
-  fn deref(&self) -> &Self::Target {
-    &self.style
-  }
-}
 impl Default for TextStyle {
   fn default() -> Self {
     Self {
@@ -464,32 +462,32 @@ impl UserTable<TextField> for TextStyle {
 }
 
 #[derive(Clone, Default, Debug)]
-pub struct StyleModTable {
-  pub text_margin:     MarginSpec,
-  pub screen_margin:   MarginSpec,
-  pub border:          BorderSpec,
+pub struct StyleTable {
+  pub text_margin:     Margins,
+  pub screen_margin:   Margins,
+  pub border:          BorderStyle,
   pub general:         TextStyle,
   pub banner:          TextStyle,
   pub info:            TextStyle,
   pub text:            TextStyle,
-  pub heading3:         TextStyle,
-  pub heading2:         TextStyle,
-  pub heading1:         TextStyle,
+  pub heading3:        TextStyle,
+  pub heading2:        TextStyle,
+  pub heading1:        TextStyle,
   pub preformat:       TextStyle,
   pub link:            TextStyle,
   pub error:           TextStyle,
   pub quote:           TextStyle,
   pub list:            TextStyle,
 } 
-impl UserTable<StyleModField> for StyleModTable {
-  fn try_assign(&mut self, field: StyleModField, value: Value) 
+impl UserTable<StyleTableField> for StyleTable {
+  fn try_assign(&mut self, field: StyleTableField, value: Value) 
     -> Result<(), String> 
   {
     match (field, value) {
-      (StyleModField::Border, Value::Table(v)) => {
-        self.border = BorderSpec::default().read_table(v)?;
+      (StyleTableField::Border, Value::Table(v)) => {
+        self.border = BorderStyle::default().read_table(v)?;
       }
-      (StyleModField::Text(f), Value::Table(v)) => {
+      (StyleTableField::Text(f), Value::Table(v)) => {
         let v = TextStyle::default().read_table(v)?;
         match f {
           StyleTextField::General   => self.general   = v,
@@ -506,8 +504,8 @@ impl UserTable<StyleModField> for StyleModTable {
           StyleTextField::List      => self.list      = v,
         }
       }
-      (StyleModField::Margin(f), Value::Table(v)) => {
-        let v = MarginSpec::default().read_table(v)?;
+      (StyleTableField::Margin(f), Value::Table(v)) => {
+        let v = Margins::default().read_table(v)?;
         match f {
           StyleMarginField::Text   => self.text_margin   = v,
           StyleMarginField::Screen => self.screen_margin = v,

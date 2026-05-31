@@ -18,38 +18,28 @@ mod keys;
 mod style;
 mod widget;
 
-use crate::app::App;
-use crossterm::{
-  QueueableCommand, terminal, event, 
-  cursor::{SetCursorStyle}
-};
-use std::{
-  env, 
-  time::Duration, 
-  io::{self, Write, stdout}
-};
+use crossterm::QueueableCommand;
+use std::io::Write;
 
 
-fn main() -> io::Result<()> {
+fn main() -> std::io::Result<()> {
   // initialize app
   let mut app = {
-    let args   = env::args().collect::<Vec<String>>();
-    let (w, h) = terminal::size()?;
+    let args = std::env::args().collect::<Vec<String>>();
     let init = match args.get(1) {
-      Some(init) => 
-        format!("{}/{}", user::USER_DATA, init),
-      None => 
-        format!("{}/{}", user::USER_DATA, user::USER_INIT),
+      None       => user::INIT_FILE.into(),
+      Some(init) => user::get_init_file(init),
     };
-    App::init(&init, w, h)
+    let (w, h) = crossterm::terminal::size()?;
+    app::App::init(&init, w, h)
   };
-  let mut stdout = stdout();
-  // register keystrokes 
-  terminal::enable_raw_mode()?;
+  let mut stdout = std::io::stdout();
+  // register all keystrokes 
+  crossterm::terminal::enable_raw_mode()?;
   // handle line wrapping manually
   stdout
-    .queue(terminal::EnterAlternateScreen)?
-    .queue(terminal::DisableLineWrap)?;
+    .queue(crossterm::terminal::EnterAlternateScreen)?
+    .queue(crossterm::terminal::DisableLineWrap)?;
   // initial display
   app.write(&mut stdout)?;
   // break on control-c
@@ -57,8 +47,8 @@ fn main() -> io::Result<()> {
     if app.join_request() {
       app.write(&mut stdout)?;
     } 
-    if event::poll(Duration::from_millis(16))? {
-      if let Some(message) = app.get_update(event::read()?) {
+    if crossterm::event::poll(std::time::Duration::from_millis(16))? {
+      if let Some(message) = app.get_update(crossterm::event::read()?) {
         app.update(&message);
         app.write(&mut stdout)?;
       } 
@@ -66,9 +56,9 @@ fn main() -> io::Result<()> {
   }
   // return terminal to normal state
   stdout
-    .queue(terminal::LeaveAlternateScreen)?
-    .queue(terminal::EnableLineWrap)?
-    .queue(SetCursorStyle::DefaultUserShape)?
+    .queue(crossterm::terminal::LeaveAlternateScreen)?
+    .queue(crossterm::terminal::EnableLineWrap)?
+    .queue(crossterm::cursor::SetCursorStyle::DefaultUserShape)?
     .flush()?;
-  terminal::disable_raw_mode()
+  crossterm::terminal::disable_raw_mode()
 }
