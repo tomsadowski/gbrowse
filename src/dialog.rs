@@ -62,12 +62,8 @@ impl Dialog {
     }
   }
 
-  pub fn select<V, S>(
-    view:   V,
-    style:  S, 
-    prompt: &str, 
-    input:  Vec<String>, 
-  ) -> Self 
+  pub fn select<V, S>(view: V, style: S, prompt: &str, input: Vec<String>) 
+    -> Self 
   where 
     V: ViewPort,
     S: Into<Style> + Copy
