@@ -61,7 +61,6 @@ pub enum Focus {
 }
 
 pub struct App {
-  pub urls:        Vec<String>,
   pub user:        User,
   pub frame:       Frame,
   pub tabs:        TabList,
@@ -75,18 +74,13 @@ pub struct App {
 } 
 impl App {
   pub fn init(path: &str, w: u16, h: u16) -> Self {
-    let user_text = fs::read_to_string(path).unwrap_or("".into());
+    let user_text = fs::read_to_string(path).unwrap_or_default();
     let user      = User::from_str(&user_text).unwrap_or_default();
     let frame     = user.get_frame(Rect::new(w, h));
     let tab       = Tab::init(frame, &user.init_url);
-    let urls: Vec<String> = match fs::read_to_string(&user.save_file) {
-      Ok(s)  => s.lines().map(|s| String::from(s)).collect(),
-      Err(e) => vec![],
-    };
     let mut app = Self {
       frame,
       user,
-      urls,
       guide:       "".into(),
       tabs:        TabList::new(tab),
       request:     None,
@@ -273,8 +267,8 @@ impl App {
         => match (&mut dlg.response, action, task) 
       {
         (Response::Select(textbox), Action::Select, Task::NewTab) => {
-          if self.urls.len() > 0 {
-            let url_str = &self.urls[textbox.get_source_idx()].clone();
+          if self.user.urls.len() > 0 {
+            let url_str = &self.user.urls[textbox.get_source_idx()].clone();
             self.focus_tabs();
             self.spawn_request(url_str);
           } else {
@@ -399,11 +393,11 @@ impl App {
       (Msg::Action(Action::SaveUrl), Focus::Tab) => {
         let url_str = self.tabs.url_str.clone();
         // only add url_str if new
-        if self.urls.iter().any(|url| **url == url_str) {
+        if self.user.urls.iter().any(|url| **url == url_str) {
           self.focus_ack_dialog(
             &format!("URL {} already saved", url_str));
         } else {
-          self.urls.push(url_str.clone());
+          self.user.urls.push(url_str.clone());
           // write to save file
           match fs::OpenOptions::new()
             .write(true)
@@ -414,7 +408,7 @@ impl App {
               self.focus_ack_dialog(
                 &format!("could not create save file: {}", &e)),
             Ok(mut f) => {
-              for url in self.urls.iter() {
+              for url in self.user.urls.iter() {
                 f.write(&format!("{}\n", url).as_bytes());
               }
               self.focus_ack_dialog(
@@ -431,10 +425,7 @@ impl App {
           {
             GemTag::Link(Scheme::Gemini, url) => {
               let prompt = &format!("go to {}?", url);
-              self.focus_ask_dialog(
-                Task::Go(url.into()), 
-                prompt
-                );
+              self.focus_ask_dialog(Task::Go(url.into()), prompt);
             }
             GemTag::Link(_, url) => 
               self.focus_ack_dialog(
@@ -460,26 +451,19 @@ impl App {
         self.focus_select_dialog(
           Task::NewTab, 
           "Choose URL: ", 
-          self.urls.clone());
+          self.user.urls.clone());
       }
       (Msg::Action(Action::Menu), Focus::Tab) => {
         self.focus_select_dialog(
           Task::Menu, 
           "Choose: ", 
-          MENU.iter().map(|s| s.to_string()).collect()
-          );
+          MENU.iter().map(|s| s.to_string()).collect());
       }
       (Msg::Action(Action::NewTab), Focus::Tab) => {
-        self.focus_edit_dialog(
-          Task::NewTab, 
-          "enter path: "
-          );
+        self.focus_edit_dialog(Task::NewTab, "enter path: ");
       }
       (Msg::Action(Action::DelTab), Focus::Tab) => {
-        self.focus_ask_dialog(
-          Task::DelTab, 
-          "Delete current tab?"
-          );
+        self.focus_ask_dialog(Task::DelTab, "Delete current tab?");
       }
       (Msg::Action(action), Focus::Tab) => {
         self.tabs.update(action);
@@ -509,11 +493,9 @@ impl App {
         }
       ) => match &self.focus {
         Focus::Dialog(_, dlg) => 
-          self.user.keys
-            .get_dlg_action(dlg, &kc).map(Msg::Action),
+          self.user.keys.get_dlg_action(dlg, &kc).map(Msg::Action),
         Focus::Tab => 
-          self.user.keys
-            .get_tab_action(&kc).map(Msg::Action),
+          self.user.keys.get_tab_action(&kc).map(Msg::Action),
       }
       _ => None,
     }
