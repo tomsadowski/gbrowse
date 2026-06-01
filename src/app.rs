@@ -246,6 +246,21 @@ impl App {
     self.clear = true;
   }
 
+  pub fn select_link(&mut self, url_str: &str) {
+    //GemTag::Link(_, url) => self.focus_ack_dialog(
+    //  &format!("Protocol {} not yet supported", url)
+    //),
+    match join_if_relative(&self.tabs.url, url_str) {
+      Ok(url) => {
+        let prompt = &format!("go to {}?", url);
+        self.focus_ask_dialog(Task::Go(url.into()), prompt);
+      }
+      Err(e) => self.focus_ack_dialog(
+        &format!("{} invalid. {}", url_str, e)
+      ),
+    }
+  }
+
   pub fn update(&mut self, message: &Msg) {
     self.clear       = false;
     self.tab_changed = false;
@@ -412,19 +427,8 @@ impl App {
         if let Some(gemdoc) = &self.tabs.gemdoc {
           match gemdoc.doc[self.tabs.get_source_idx()].tag.clone() {
             GemTag::Link(url) => {
-              match join_if_relative(&self.tabs.url, &url) {
-                Ok(url) => {
-                  let prompt = &format!("go to {}?", url);
-                  self.focus_ask_dialog(Task::Go(url.into()), prompt);
-                }
-                Err(e) => self.focus_ack_dialog(
-                  &format!("{} invalid. {}", url, e)
-                ),
-              }
+              self.select_link(&url);
             }
-          //GemTag::Link(_, url) => self.focus_ack_dialog(
-          //  &format!("Protocol {} not yet supported", url)
-          //),
             gemtext => self.focus_ack_dialog(
               &format!("you've selected {:?}", gemtext)
             ),
