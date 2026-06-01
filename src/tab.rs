@@ -7,7 +7,6 @@ use crate::{
   protocol::GemDoc,
 };
 use url::Url;
-use std::ops::{Deref, DerefMut};
 
 
 pub struct TabList {
@@ -34,13 +33,13 @@ impl UnitCursorMut for TabList {
     &mut self.tabs
   }
 }
-impl Deref for TabList {
+impl std::ops::Deref for TabList {
   type Target = Tab;
   fn deref(&self) -> &Self::Target {
     &self.tabs[self.head]
   }
 }
-impl DerefMut for TabList {
+impl std::ops::DerefMut for TabList {
   fn deref_mut(&mut self) -> &mut Self::Target {
     &mut self.tabs[self.head]
   }
@@ -96,13 +95,13 @@ pub struct Tab {
   pub gemdoc:  Option<GemDoc>,
   pub content: TextBox,
 } 
-impl Deref for Tab {
+impl std::ops::Deref for Tab {
   type Target = TextBox;
   fn deref(&self) -> &Self::Target {
     &self.content
   }
 }
-impl DerefMut for Tab {
+impl std::ops::DerefMut for Tab {
   fn deref_mut(&mut self) -> &mut Self::Target {
     &mut self.content
   }

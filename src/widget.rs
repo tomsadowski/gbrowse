@@ -72,8 +72,7 @@ impl Frame {
     self.margin_style = style.into();
     self
   }
-  pub fn with_border_style(mut self, style: BorderStyle) -> Self 
-  {
+  pub fn with_border_style(mut self, style: BorderStyle) -> Self {
     self.border_style = style;
     self
   }

@@ -6,29 +6,10 @@ use std::{
   thread,
   sync::mpsc,
   time::Duration, 
-  str::FromStr,
   io::{Write, Read},
   net::{TcpStream, ToSocketAddrs},
 };
 
-
-pub struct Request {
-  pub url:    Url,
-  pub rx:     mpsc::Receiver<Result<(String, String), String>>,
-  pub handle: thread::JoinHandle<()>,
-}
-impl Request {
-  pub fn new(url: &Url, timeout: u64) -> Self {
-    let (tx, rx)  = mpsc::channel::<Result<(String, String), String>>();
-    let url_clone = url.clone();
-    let handle = thread::spawn(
-      move || {
-        let result = get_data(&url_clone, timeout);
-        tx.send(result).unwrap();
-      });
-    Self {url: url.clone(), rx, handle}
-  }
-}
 
 pub fn split_whitespace_once(line: &str) -> Option<(&str, &str)> {
   line
@@ -47,126 +28,6 @@ pub fn join_if_relative(base: &Url, url_str: &str)
       Err(e)
     }
   )
-}
-
-pub struct GemDoc {
-  pub status: StatusText,
-  pub doc:    Vec<GemText>,
-}
-impl GemDoc {
-  pub fn new(response: String, content: String) 
-    -> Result<Self, String> 
-  {
-    let status = StatusText::parse(&response);
-    let doc = match status.tag {
-      Status::Success => {
-        GemText::parse_doc(&content)
-      }
-      _ => {
-        let msg = format!(
-          "status: {:?}, text: {}", 
-          status.tag, 
-          status.text
-          );
-        vec![GemText::new(GemTag::Text, &msg)]
-      }
-    };
-    Ok(Self {status, doc})
-  }
-}
-
-#[derive(Clone, PartialEq, Debug)]
-pub struct GemText {
-  pub tag:  GemTag,
-  pub text: String,
-}
-impl ToString for GemText {
-  fn to_string(&self) -> String {
-    self.text.clone()
-  }
-}
-impl GemText {
-  pub fn new(tag: GemTag, text: &str) -> Self {
-    Self {
-      tag, 
-      text: String::from(text)
-    }
-  }
-
-  pub fn parse_doc(text_str: &str) -> Vec<Self> {
-    let mut vec       = vec![];
-    let mut preformat = false;
-    for line in text_str.lines() {
-      if let Some(("```", _)) = line.split_at_checked(3) {
-        preformat = !preformat;
-      } else if preformat {
-        vec.push(Self::new(GemTag::PreFormat, line.into()));
-      } else {
-        vec.push(Self::parse_formatted(line));
-      }
-    }
-    vec
-  }
-
-  pub fn parse_formatted(line: &str) -> Self {
-    if let Some(("###", t)) = line.split_at_checked(3)
-      .map(|(s, t)| (s, t.trim())) 
-    {
-      Self::new(GemTag::HeadingThree, t.into())
-    } else if let Some(("=>", t)) = line.split_at_checked(2)
-      .map(|(s, t)| (s, t.trim())) 
-    {
-      let (u, t) = split_whitespace_once(t).unwrap_or((t, t));
-      let scheme = Scheme::from_str(u).unwrap_or(Scheme::Gemini);
-      Self::new(GemTag::Link(scheme, u.into()), t.into())
-    } else if let Some(("##", t)) = line.split_at_checked(2)
-      .map(|(s, t)| (s, t.trim())) 
-    {
-      Self::new(GemTag::HeadingTwo, t.into())
-    } else if let Some((">", t)) = line.split_at_checked(1)
-      .map(|(s, t)| (s, t.trim()))
-    {
-      Self::new(GemTag::Quote, t.into())
-    } else if let Some(("*", t)) = line.split_at_checked(1)
-      .map(|(s, t)| (s, t.trim()))
-    {
-      Self::new(GemTag::ListItem, &format!("- {}", t))
-    } else if let Some(("#", t)) = line.split_at_checked(1)
-      .map(|(s, t)| (s, t.trim()))
-    {
-      Self::new(GemTag::HeadingOne, t.into())
-    } else {
-      Self::new(GemTag::Text, line.into())
-    }
-  }
-}
-
-#[derive(Clone, PartialEq, Debug)]
-pub enum GemTag {
-  HeadingOne,
-  HeadingTwo,
-  HeadingThree,
-  Text, 
-  PreFormat,
-  Link(Scheme, String),
-  ListItem,
-  Quote,
-} 
-#[derive(Debug, Clone)]
-pub struct StatusText {
-  pub tag:  Status, 
-  pub text: String,
-}
-impl StatusText {
-  pub fn parse(line: &str) -> Self {
-    let line = line.trim();
-    let (code_str, msg) = 
-      split_whitespace_once(line).unwrap_or((line, line));
-    Self {
-      tag: Status::from(code_str), 
-      text: msg.into()
-    }
-  }
 }
 
 #[derive(Debug, Clone)]
@@ -226,6 +87,142 @@ impl From<&str> for Status {
     }
   }
 }
+#[derive(Debug, Clone)]
+pub struct StatusText {
+  pub tag:  Status, 
+  pub text: String,
+}
+impl StatusText {
+  pub fn parse(line: &str) -> Self {
+    let line = line.trim();
+    let (code_str, msg) = 
+      split_whitespace_once(line).unwrap_or((line, line));
+    Self {
+      tag: Status::from(code_str), 
+      text: msg.into()
+    }
+  }
+}
+
+#[derive(Clone, PartialEq, Debug)]
+pub enum GemTag {
+  HeadingOne,
+  HeadingTwo,
+  HeadingThree,
+  Text, 
+  PreFormat,
+  Link(String),
+  ListItem,
+  Quote,
+} 
+
+#[derive(Clone, PartialEq, Debug)]
+pub struct GemText {
+  pub tag:  GemTag,
+  pub text: String,
+}
+impl std::fmt::Display for GemText {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) 
+    -> Result<(), std::fmt::Error> 
+  {
+    write!(f, "{}", self.text)
+  }
+}
+impl From<(GemTag, String)> for GemText {
+  fn from(item: (GemTag, String)) -> Self {
+    Self {tag: item.0, text: item.1}
+  }
+}
+impl GemText {
+  pub fn text(s: String) -> Self {
+    Self {tag: GemTag::Text, text: s}
+  }
+  pub fn heading3(s: String) -> Self {
+    Self {tag: GemTag::HeadingThree, text: s}
+  }
+  pub fn heading2(s: String) -> Self {
+    Self {tag: GemTag::HeadingTwo, text: s}
+  }
+  pub fn heading1(s: String) -> Self {
+    Self {tag: GemTag::HeadingOne, text: s}
+  }
+  pub fn preformat(s: String) -> Self {
+    Self {tag: GemTag::PreFormat, text: s}
+  }
+  pub fn quote(s: String) -> Self {
+    Self {tag: GemTag::Quote, text: s}
+  }
+  pub fn list_item(s: String) -> Self {
+    Self {tag: GemTag::ListItem, text: s}
+  }
+
+  pub fn parse_line(line: &str) -> (GemTag, String) {
+    if let Some(("```", _)) = line.split_at_checked(3) {
+      (GemTag::PreFormat, "".into())
+    } else if let Some(("###", t)) = line.split_at_checked(3) {
+      (GemTag::HeadingThree, t.into())
+    } else if let Some(("##", t)) = line.split_at_checked(2) {
+      (GemTag::HeadingTwo, t.trim().into())
+    } else if let Some(("#", t)) = line.split_at_checked(1) {
+      (GemTag::HeadingOne, t.trim().into())
+    } else if let Some((">", t)) = line.split_at_checked(1) {
+      (GemTag::Quote, t.trim().into())
+    } else if let Some(("*", t)) = line.split_at_checked(1) {
+      (GemTag::ListItem, t.into())
+    } else if let Some(("=>", t)) = line.split_at_checked(2) {
+      let (u, t) = split_whitespace_once(t).unwrap_or((t, t));
+      (GemTag::Link(u.into()), t.trim().into())
+    } else {
+      (GemTag::Text, line.trim().into())
+    }
+  }
+}
+
+pub struct GemDoc {
+  pub status: StatusText,
+  pub doc:    Vec<GemText>,
+}
+impl GemDoc {
+  pub fn new(response: String, content: String) -> Result<Self, String> {
+    let status = StatusText::parse(&response);
+    let doc = match status.tag {
+      Status::Success => Self::parse_doc(&content),
+      _ => vec![GemText::text(format!("{:?}", status))],
+    };
+    Ok(Self {status, doc})
+  }
+
+  pub fn parse_doc(text_str: &str) -> Vec<GemText> {
+    let mut vec       = vec![];
+    let mut preformat = false;
+    for line in text_str.lines() {
+      match (&mut preformat, GemText::parse_line(line)) {
+        (_, (GemTag::PreFormat, _)) => preformat = !preformat,
+        (true,  (_, s)) => vec.push(GemText::preformat(s)),
+        (false, tuple)  => vec.push(tuple.into()),
+      }
+    }
+    vec
+  }
+}
+
+pub struct Request {
+  pub url:    Url,
+  pub rx:     mpsc::Receiver<Result<(String, String), String>>,
+  pub handle: thread::JoinHandle<()>,
+}
+impl Request {
+  pub fn new(url: &Url, timeout: u64) -> Self {
+    let (tx, rx)  = mpsc::channel::<Result<(String, String), String>>();
+    let url_clone = url.clone();
+    let handle = thread::spawn(
+      move || {
+        let result = get_data(&url_clone, timeout);
+        tx.send(result).unwrap();
+      });
+    Self {url: url.clone(), rx, handle}
+  }
+}
 
 #[derive(Clone, PartialEq, Debug)]
 pub enum Scheme {
@@ -235,7 +232,7 @@ pub enum Scheme {
   Https, 
   Unknown(String),
 }
-impl FromStr for Scheme {
+impl std::str::FromStr for Scheme {
   type Err = UrlParseError;
   fn from_str(str: &str) -> Result<Self, Self::Err> {
     match Url::parse(str)?.scheme() {

@@ -14,7 +14,6 @@ use toml::Value;
 use std::{
   fmt,
   str::FromStr,
-  ops::Deref,
   convert::AsRef,
 };
 

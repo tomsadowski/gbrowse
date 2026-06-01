@@ -8,7 +8,6 @@ use crate::{
 };
 use crossterm::event::KeyCode;
 use toml::Value;
-use std::str::FromStr;
 
 
 #[derive(Copy, Clone, Debug)]
@@ -42,7 +41,7 @@ pub enum Action {
   No, 
   Cancel,
 }
-impl FromStr for Action {
+impl std::str::FromStr for Action {
   type Err = String;
   fn from_str(s: &str) -> Result<Self, Self::Err> {
     match s {

@@ -5,7 +5,6 @@ use crate::{
   style::{Style, TextStyle},
 };
 use unicode_width::UnicodeWidthChar;
-use std::ops::{Deref, DerefMut};
 
 
 #[derive(Clone, Debug, Default)]

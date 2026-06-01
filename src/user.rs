@@ -10,7 +10,6 @@ use crate::{
   protocol::{GemText, GemTag, GemDoc},
 };
 use toml::{Table, Value};
-use std::{fs, str::FromStr};
 
 
 pub const DATA_PATH:   &str = "gdata";
@@ -33,7 +32,7 @@ pub fn get_styles_file(name: &str) -> String {
 
 pub fn get_entries(path: &str) -> Result<Vec<String>, String> {
   let mut vec = vec![];
-  for result in fs::read_dir(path).map_err(|e| e.to_string())? {
+  for result in std::fs::read_dir(path).map_err(|e| e.to_string())? {
     vec.push(result
       .map_err(|e| e.to_string())?
       .file_name()
@@ -46,7 +45,7 @@ pub fn get_entries(path: &str) -> Result<Vec<String>, String> {
 
 pub trait UserTable<F>: Sized 
 where 
-  F: FromStr<Err = String> 
+  F: std::str::FromStr<Err = String> 
 {
   fn try_assign(&mut self, field: F, value: Value) -> Result<(), String>;
 
@@ -81,7 +80,7 @@ enum UserField {
   Style, 
   Keys,
 }
-impl FromStr for UserField {
+impl std::str::FromStr for UserField {
   type Err = String;
   fn from_str(s: &str) -> Result<Self, Self::Err> {
     match s {
@@ -129,7 +128,7 @@ pub struct User {
 } 
 impl Default for User {
   fn default() -> Self {
-    let urls: Vec<String> = match fs::read_to_string(&SAVE_FILE) {
+    let urls: Vec<String> = match std::fs::read_to_string(&SAVE_FILE) {
       Ok(s)  => s.lines().map(|s| String::from(s)).collect(),
       Err(e) => vec![],
     };
@@ -143,7 +142,7 @@ impl Default for User {
     }
   }
 }
-impl FromStr for User {
+impl std::str::FromStr for User {
   type Err = String;
   fn from_str(s: &str) -> Result<Self, Self::Err> {
     let table = s.parse::<Table>().map_err(|e| e.to_string())?;
@@ -167,7 +166,7 @@ impl UserTable<UserField> for User {
       // read style from another file
       (UserField::Style, Value::String(v)) => {
         self.style.update_from_str(
-          &fs::read_to_string(
+          &std::fs::read_to_string(
             get_styles_file(&v)
           ).map_err(|e| e.to_string())?
         )?;
@@ -179,7 +178,7 @@ impl UserTable<UserField> for User {
       // read keys from another file
       (UserField::Keys, Value::String(v)) => {
         self.keys.update_from_str(
-          &fs::read_to_string(
+          &std::fs::read_to_string(
             get_keys_file(&v)
           ).map_err(|e| e.to_string())?
         )?;
@@ -214,7 +213,7 @@ impl User {
       GemTag::HeadingThree => self.style.heading3.into(),
       GemTag::Text         => self.style.text.into(),
       GemTag::PreFormat    => self.style.preformat.into(),
-      GemTag::Link(_, _)   => self.style.link.into(),
+      GemTag::Link(_)      => self.style.link.into(),
       GemTag::ListItem     => self.style.list.into(),
       GemTag::Quote        => self.style.quote.into(),
     };

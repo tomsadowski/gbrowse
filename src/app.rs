@@ -411,7 +411,7 @@ impl App {
       (Msg::Action(Action::Select), Focus::Tab) => 
         if let Some(gemdoc) = &self.tabs.gemdoc {
           match gemdoc.doc[self.tabs.get_source_idx()].tag.clone() {
-            GemTag::Link(Scheme::Gemini, url) => {
+            GemTag::Link(url) => {
               match join_if_relative(&self.tabs.url, &url) {
                 Ok(url) => {
                   let prompt = &format!("go to {}?", url);
@@ -422,9 +422,9 @@ impl App {
                 ),
               }
             }
-            GemTag::Link(_, url) => self.focus_ack_dialog(
-              &format!("Protocol {} not yet supported", url)
-            ),
+          //GemTag::Link(_, url) => self.focus_ack_dialog(
+          //  &format!("Protocol {} not yet supported", url)
+          //),
             gemtext => self.focus_ack_dialog(
               &format!("you've selected {:?}", gemtext)
             ),
