@@ -170,7 +170,7 @@ impl GemText {
     } else if let Some(("*", t)) = line.split_at_checked(1) {
       (GemTag::ListItem, t.into())
     } else if let Some(("=>", t)) = line.split_at_checked(2) {
-      let (u, t) = split_whitespace_once(t).unwrap_or((t, t));
+      let (u, t) = split_whitespace_once(t.trim()).unwrap_or((t, t));
       (GemTag::Link(u.into()), t.trim().into())
     } else {
       (GemTag::Text, line.trim().into())
@@ -221,38 +221,6 @@ impl Request {
         tx.send(result).unwrap();
       });
     Self {url: url.clone(), rx, handle}
-  }
-}
-
-#[derive(Clone, PartialEq, Debug)]
-pub enum Scheme {
-  Gemini, 
-  Gopher, 
-  Http, 
-  Https, 
-  Unknown(String),
-}
-impl std::str::FromStr for Scheme {
-  type Err = UrlParseError;
-  fn from_str(str: &str) -> Result<Self, Self::Err> {
-    match Url::parse(str)?.scheme() {
-      "gemini" => Ok(Scheme::Gemini),
-      "gopher" => Ok(Scheme::Gopher),
-      "http"   => Ok(Scheme::Http),
-      "https"  => Ok(Scheme::Https),
-      s        => Ok(Scheme::Unknown(s.into())),
-    }
-  }
-}
-impl ToString for Scheme {
-  fn to_string(&self) -> String {
-    match self {
-      Scheme::Gemini     => "gemini".into(),
-      Scheme::Gopher     => "gopher".into(),
-      Scheme::Http       => "http".into(),
-      Scheme::Https      => "https".into(),
-      Scheme::Unknown(s) => s.into(),
-    }
   }
 }
 

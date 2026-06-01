@@ -8,7 +8,7 @@ use crate::{
   tab::{Tab, TabList},
   widget::{Frame, TextBox},
   dialog::{Response, Dialog},
-  protocol::{self, Request, GemDoc, GemTag, Status, Scheme},
+  protocol::{self, Request, GemDoc, GemTag, Status},
 };
 use crossterm::{
   QueueableCommand, cursor,
@@ -17,9 +17,8 @@ use crossterm::{
 };
 use url::Url;
 use std::{
-  fs, 
   str::FromStr, 
-  io::{self, Write, Stdout}
+  io::{Write, Stdout}
 };
 
 
@@ -44,8 +43,8 @@ pub enum Task {
   ChangeStyle,
   ChangeKeys,
   Input(String),
+  ViewLink(String),
   Reply(Url),
-  Redirect(Url),
   Go(Url), 
 }
 
@@ -74,7 +73,7 @@ pub struct App {
 } 
 impl App {
   pub fn init(path: &str, w: u16, h: u16) -> Self {
-    let user_text = fs::read_to_string(path).unwrap_or_default();
+    let user_text = std::fs::read_to_string(path).unwrap_or_default();
     let user      = User::from_str(&user_text).unwrap_or_default();
     let frame     = user.get_frame(Rect::new(w, h));
     let tab       = Tab::init(frame, &Url::parse(&user.init_url).unwrap());
@@ -106,7 +105,7 @@ impl App {
       self.user.style.info, 
       prompt, 
       &format!("Press any key to acknowledge"), 
-      );
+    );
     self.focus = Focus::Dialog(Task::Default, dlg);
     self.guide = format!("Press any key to acknowledge");
     self.new_dlg = true;
@@ -118,7 +117,7 @@ impl App {
       self.user.style.info, 
       prompt, 
       &format!("{} yes {} no", self.user.keys.yes, self.user.keys.no),
-      );
+    );
     self.focus = Focus::Dialog(task, dlg);
     self.guide = 
       format!("{} yes {} no", self.user.keys.yes, self.user.keys.no);
@@ -129,7 +128,7 @@ impl App {
     self.focus = Focus::Dialog(
       task, 
       Dialog::edit(self.frame, self.user.style.info, prompt)
-      );
+    );
     self.guide = format!("Press {} to cancel", self.user.keys.cancel);
     self.new_dlg = true;
   }
@@ -145,7 +144,7 @@ impl App {
       self.user.style.info, 
       prompt, 
       options, 
-      );
+    );
     self.guide = format!("Press {} to select", self.user.keys.select);
     self.focus = Focus::Dialog(task, dlg);
     self.new_dlg = true;
@@ -158,16 +157,16 @@ impl App {
         self.focus_edit_dialog(
           Task::Reply(url.clone()), 
           &gemdoc.status.text
-          );
+        );
       }
       Status::RedirectTemporary | 
       Status::RedirectPermanent => match Url::parse(&gemdoc.status.text) {
-        Ok(url) => self.focus_ask_dialog(
-          Task::Redirect(url.clone()), 
-          &gemdoc.status.text
-        ),
         Err(e) => self.focus_ack_dialog(
           &format!("Redirects to invalid URL. {}", e)
+        ),
+        Ok(url) => self.focus_ask_dialog(
+          Task::Go(url.clone()), 
+          &gemdoc.status.text
         ),
       }
       Status::CertRequiredClient |
@@ -216,11 +215,19 @@ impl App {
   }
 
   pub fn spawn_request(&mut self, url: &Url) {
-    match &mut self.request {
-      Some(_) => self.focus_ack_dialog(
-        "still processing previous request"),
-      None => self.request = Some(
-        Request::new(&url, self.user.timeout)),
+    match (&mut self.request, url.scheme()) {
+      (None, "gemini") => self.request = Some(
+        Request::new(&url, self.user.timeout)
+      ),
+      (None, scheme) => self.focus_ack_dialog(
+        &format!("Protocol {} not yet supported", scheme)
+      ),
+      (Some(request), _) => {
+        let url = request.url.to_string();
+        self.focus_ack_dialog(
+          &format!("still processing request for {}", url)
+        );
+      }
     }
   }
 
@@ -243,18 +250,18 @@ impl App {
 
   pub fn select_link(&mut self, url_str: &str) {
     match protocol::join_if_relative(&self.tabs.url, url_str) {
+      Err(e) => self.focus_ack_dialog(
+        &format!("{} invalid. {}", url_str, e)
+      ),
       Ok(url) => match url.scheme() {
         "gemini" => {
           let prompt = &format!("go to {}?", url);
           self.focus_ask_dialog(Task::Go(url.into()), prompt);
         } 
-        _ => self.focus_ack_dialog(
-          &format!("Protocol {} not yet supported", url)
+        scheme => self.focus_ack_dialog(
+          &format!("Protocol {} not yet supported", scheme)
         ),
       }
-      Err(e) => self.focus_ack_dialog(
-        &format!("{} invalid. {}", url_str, e)
-      ),
     }
   }
 
@@ -287,12 +294,11 @@ impl App {
           }
         }
         (Response::Select(textbox), Action::Select, Task::ChangeKeys) => {
-          match fs::read_to_string(
+          match std::fs::read_to_string(
             user::get_keys_file(&textbox.get_source())) 
           {
-            Err(e) => 
-              self.focus_ack_dialog(&format!("Problem: {}", &e)),
-            Ok(s) => if let Err(e) = self.user.keys.update_from_str(&s) {
+            Err(e) => self.focus_ack_dialog(&format!("Problem: {}", &e)),
+            Ok(s)  => if let Err(e) = self.user.keys.update_from_str(&s) {
               self.focus_ack_dialog(&format!("Problem: {}", &e));
             } else {
               self.focus_tabs();
@@ -300,7 +306,7 @@ impl App {
           }
         }
         (Response::Select(textbox), Action::Select, Task::ChangeStyle) => {
-          match fs::read_to_string(
+          match std::fs::read_to_string(
             user::get_styles_file(&textbox.get_source())) 
           {
             Err(e) => 
@@ -350,34 +356,29 @@ impl App {
         (Response::Edit(editbox), Action::Enter, Task::Reply(url)) => {
           let text = editbox.content.to_string().trim().replace(" ", "%20");
           match url.clone().join(&format!("?{}", text)) {
+            Err(e) => self.focus_ack_dialog(
+              &format!("Invalid URL. {}", e)
+            ),
             Ok(url) => {
               self.focus_tabs();
               self.tab_changed = true;
               self.spawn_request(&url);
             }
-            Err(e) => self.focus_ack_dialog(
-              &format!("Invalid URL. {}", e)
-            ),
           }
         }
         (Response::Edit(editbox), Action::Enter, Task::NewTab) => {
           match Url::parse(&editbox.content.to_string()) {
+            Err(e) => self.focus_ack_dialog(
+              &format!("Invalid URL. {}", e)
+            ),
             Ok(url) => {
               self.focus_tabs();
               self.tab_changed = true;
               self.spawn_request(&url);
             }
-            Err(e) => self.focus_ack_dialog(
-              &format!("Invalid URL. {}", e)
-            ),
           }
         }
         (_, Action::Yes, Task::Go(url)) => {
-          let url = url.clone();
-          self.focus_tabs();
-          self.spawn_request(&url);
-        }
-        (_, Action::Yes, Task::Redirect(url)) => {
           let url = url.clone();
           self.focus_tabs();
           self.spawn_request(&url);
@@ -386,6 +387,10 @@ impl App {
           self.tabs.delete();
           self.tab_changed = true;
           self.focus_tabs();
+        }
+        (_, Action::Yes, Task::ViewLink(url_str)) => {
+          let url_str = url_str.clone();
+          self.select_link(&url_str);
         }
         (Response::Ack(_), _, _) |
         (_,   Action::Select, _) |
@@ -412,7 +417,7 @@ impl App {
         } else {
           self.user.urls.push(url_str.clone());
           // write to save file
-          match fs::OpenOptions::new()
+          match std::fs::OpenOptions::new()
             .write(true)
             .truncate(true)
             .open(&self.user.save_file) 
@@ -434,7 +439,10 @@ impl App {
         if let Some(gemdoc) = &self.tabs.gemdoc {
           match gemdoc.doc[self.tabs.get_source_idx()].tag.clone() {
             GemTag::Link(url) => {
-              self.select_link(&url);
+              self.focus_ask_dialog(
+                Task::ViewLink(url.clone()), 
+                &format!("Go to {}?", url)
+              );
             }
             gemtext => self.focus_ack_dialog(
               &format!("you've selected {:?}", gemtext)
@@ -507,7 +515,7 @@ impl App {
     }
   }
 
-  pub fn write(&self, stdout: &mut Stdout) -> io::Result<()> {
+  pub fn write(&self, stdout: &mut Stdout) -> std::io::Result<()> {
     stdout.queue(cursor::Hide)?;
     if self.clear {
       stdout.queue(Clear(ClearType::All))?;
