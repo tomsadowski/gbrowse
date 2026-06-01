@@ -8,7 +8,7 @@ use crate::{
   tab::{Tab, TabList},
   widget::{Frame, TextBox},
   dialog::{Response, Dialog},
-  protocol::{join_if_relative, Request, GemDoc, GemTag, Status, Scheme},
+  protocol::{self, Request, GemDoc, GemTag, Status, Scheme},
 };
 use crossterm::{
   QueueableCommand, cursor,
@@ -43,10 +43,10 @@ pub enum Task {
   Menu,
   ChangeStyle,
   ChangeKeys,
-  Reply(Url),
   Input(String),
-  Redirect(String),
-  Go(String), 
+  Reply(Url),
+  Redirect(Url),
+  Go(Url), 
 }
 
 #[derive(Clone, Debug)]
@@ -91,7 +91,7 @@ impl App {
       quit:        false,
     };
     app.focus_tabs();
-    app.spawn_request(&app.user.init_url.clone());
+    app.spawn_request(&app.tabs.url.clone());
     app
   }
 
@@ -161,12 +161,14 @@ impl App {
           );
       }
       Status::RedirectTemporary | 
-      Status::RedirectPermanent => {
-        self.tabs.url = url.clone();
-        self.focus_ask_dialog(
-          Task::Redirect(gemdoc.status.text.clone()), 
+      Status::RedirectPermanent => match Url::parse(&gemdoc.status.text) {
+        Ok(url) => self.focus_ask_dialog(
+          Task::Redirect(url.clone()), 
           &gemdoc.status.text
-          );
+        ),
+        Err(e) => self.focus_ack_dialog(
+          &format!("Redirects to invalid URL. {}", e)
+        ),
       }
       Status::CertRequiredClient |
       Status::CertRequiredTransient |
@@ -213,19 +215,12 @@ impl App {
     }
   }
 
-  pub fn spawn_request(&mut self, url_str: &str) {
-    match Url::parse(url_str) {
-      Err(e) => {
-        self.focus_ack_dialog(
-          &format!("URL parse error: {}", &e)); 
-        self.request = None;
-      }
-      Ok(url) => match &mut self.request {
-        Some(_) => self.focus_ack_dialog(
-          "still processing previous request"),
-        None => self.request = Some(
-          Request::new(&url, self.user.timeout)),
-      }
+  pub fn spawn_request(&mut self, url: &Url) {
+    match &mut self.request {
+      Some(_) => self.focus_ack_dialog(
+        "still processing previous request"),
+      None => self.request = Some(
+        Request::new(&url, self.user.timeout)),
     }
   }
 
@@ -247,13 +242,15 @@ impl App {
   }
 
   pub fn select_link(&mut self, url_str: &str) {
-    //GemTag::Link(_, url) => self.focus_ack_dialog(
-    //  &format!("Protocol {} not yet supported", url)
-    //),
-    match join_if_relative(&self.tabs.url, url_str) {
-      Ok(url) => {
-        let prompt = &format!("go to {}?", url);
-        self.focus_ask_dialog(Task::Go(url.into()), prompt);
+    match protocol::join_if_relative(&self.tabs.url, url_str) {
+      Ok(url) => match url.scheme() {
+        "gemini" => {
+          let prompt = &format!("go to {}?", url);
+          self.focus_ask_dialog(Task::Go(url.into()), prompt);
+        } 
+        _ => self.focus_ack_dialog(
+          &format!("Protocol {} not yet supported", url)
+        ),
       }
       Err(e) => self.focus_ack_dialog(
         &format!("{} invalid. {}", url_str, e)
@@ -284,8 +281,7 @@ impl App {
         (Response::Select(textbox), Action::Select, Task::NewTab) => {
           if self.user.urls.len() > 0 {
             let url_str = &self.user.urls[textbox.get_source_idx()].clone();
-            self.focus_tabs();
-            self.spawn_request(url_str);
+            self.select_link(url_str);
           } else {
             self.focus_tabs();
           }
@@ -353,27 +349,38 @@ impl App {
         }
         (Response::Edit(editbox), Action::Enter, Task::Reply(url)) => {
           let text = editbox.content.to_string().trim().replace(" ", "%20");
-          let url  = format!("{}?{}", url.as_str(), text);
-          self.focus_tabs();
-          self.tab_changed = true;
-          self.spawn_request(&url);
+          match url.clone().join(&format!("?{}", text)) {
+            Ok(url) => {
+              self.focus_tabs();
+              self.tab_changed = true;
+              self.spawn_request(&url);
+            }
+            Err(e) => self.focus_ack_dialog(
+              &format!("Invalid URL. {}", e)
+            ),
+          }
         }
         (Response::Edit(editbox), Action::Enter, Task::NewTab) => {
-          let text = editbox.content.to_string();
-          self.focus_tabs();
-          self.tab_changed = true;
-          self.spawn_request(&text);
+          match Url::parse(&editbox.content.to_string()) {
+            Ok(url) => {
+              self.focus_tabs();
+              self.tab_changed = true;
+              self.spawn_request(&url);
+            }
+            Err(e) => self.focus_ack_dialog(
+              &format!("Invalid URL. {}", e)
+            ),
+          }
         }
         (_, Action::Yes, Task::Go(url)) => {
           let url = url.clone();
           self.focus_tabs();
           self.spawn_request(&url);
         }
-        (_, Action::Yes, Task::Redirect(url_str)) => {
-          let text = url_str.trim().replace(" ", "%20");
+        (_, Action::Yes, Task::Redirect(url)) => {
+          let url = url.clone();
           self.focus_tabs();
-          self.spawn_request(
-            &format!("{}?{}", self.tabs.url, text));
+          self.spawn_request(&url);
         }
         (_, Action::Yes, Task::DelTab) => {
           self.tabs.delete();
