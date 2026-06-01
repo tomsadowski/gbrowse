@@ -10,6 +10,7 @@ use crate::{
   protocol::{GemText, GemTag, GemDoc},
 };
 use toml::{Table, Value};
+use std::io::Write;
 
 
 pub const DATA_PATH:   &str = "gdata";
@@ -194,6 +195,29 @@ impl UserTable<UserField> for User {
   }
 }
 impl User {
+  pub fn save_url(&mut self, url: &url::Url) -> Result<(), String> {
+    let url_str = url.to_string();
+    if self.urls.iter().any(|url| **url == url_str) {
+      Err(format!("URL {} already saved", url_str))
+    } else {
+      self.urls.push(url_str.clone());
+      // write to save file
+      match std::fs::OpenOptions::new()
+        .write(true)
+        .truncate(true)
+        .open(&self.save_file) 
+      {
+        Err(e) => Err(format!("could not create save file: {}", &e)),
+        Ok(mut f) => {
+          for url in self.urls.iter() {
+            f.write(&format!("{}\n", url).as_bytes());
+          }
+          Ok(())
+        }
+      }
+    }
+  }
+        // only add url_str if new
   pub fn get_frame(&self, screen: Rect) -> Frame {
     Frame::new(
         screen, 

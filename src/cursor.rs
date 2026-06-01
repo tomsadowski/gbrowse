@@ -2,11 +2,9 @@
 
 use crate::view::Rect;
 use unicode_width::UnicodeWidthChar;
-use crossterm::QueueableCommand;
-use crossterm::cursor::{self, MoveTo};
 use std::slice;
 use std::iter::Take;
-use std::io::{self, Write};
+use std::io::Write;
 
 
 pub trait UnitCursor {

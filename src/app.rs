@@ -43,7 +43,6 @@ pub enum Task {
   ChangeStyle,
   ChangeKeys,
   Input(String),
-  ViewLink(String),
   Reply(Url),
   Go(Url), 
 }
@@ -99,11 +98,11 @@ impl App {
     self.guide = format!("Press {} for menu", self.user.keys.menu);
   }
 
-  fn focus_ack_dialog(&mut self, prompt: &str) {
+  fn focus_ack_dialog(&mut self, prompt: String) {
     let dlg = Dialog::ack(
       self.frame,
       self.user.style.info, 
-      prompt, 
+      &prompt, 
       &format!("Press any key to acknowledge"), 
     );
     self.focus = Focus::Dialog(Task::Default, dlg);
@@ -161,9 +160,9 @@ impl App {
       }
       Status::RedirectTemporary | 
       Status::RedirectPermanent => match Url::parse(&gemdoc.status.text) {
-        Err(e) => self.focus_ack_dialog(
-          &format!("Redirects to invalid URL. {}", e)
-        ),
+        Err(e) => self.focus_ack_dialog(format!(
+          "Redirects to invalid URL. {}", e
+        )),
         Ok(url) => self.focus_ask_dialog(
           Task::Go(url.clone()), 
           &gemdoc.status.text
@@ -172,7 +171,7 @@ impl App {
       Status::CertRequiredClient |
       Status::CertRequiredTransient |
       Status::CertRequiredAuthorized => {
-        self.focus_ack_dialog(&gemdoc.status.text);
+        self.focus_ack_dialog(gemdoc.status.text);
       }
       _ => {
         self.tabs.add(url);
@@ -199,7 +198,7 @@ impl App {
           .flatten()
         {
           Err(e) => {
-            self.focus_ack_dialog(&e);
+            self.focus_ack_dialog(e);
             self.request = None;
             true
           }
@@ -220,12 +219,12 @@ impl App {
         Request::new(&url, self.user.timeout)
       ),
       (None, scheme) => self.focus_ack_dialog(
-        &format!("Protocol {} not yet supported", scheme)
+        format!("Protocol {} not yet supported", scheme)
       ),
       (Some(request), _) => {
         let url = request.url.to_string();
         self.focus_ack_dialog(
-          &format!("still processing request for {}", url)
+          format!("still processing request for {}", url)
         );
       }
     }
@@ -250,18 +249,12 @@ impl App {
 
   pub fn select_link(&mut self, url_str: &str) {
     match protocol::join_if_relative(&self.tabs.url, url_str) {
-      Err(e) => self.focus_ack_dialog(
-        &format!("{} invalid. {}", url_str, e)
-      ),
-      Ok(url) => match url.scheme() {
-        "gemini" => {
-          let prompt = &format!("go to {}?", url);
-          self.focus_ask_dialog(Task::Go(url.into()), prompt);
-        } 
-        scheme => self.focus_ack_dialog(
-          &format!("Protocol {} not yet supported", scheme)
-        ),
-      }
+      Err(e) => self.focus_ack_dialog(format!(
+        "{} -- Invalid URL. {}", url_str, e)),
+      Ok(url) => {
+        let prompt = &format!("{} -- Make request?", url);
+        self.focus_ask_dialog(Task::Go(url.into()), prompt);
+      } 
     }
   }
 
@@ -287,8 +280,8 @@ impl App {
       {
         (Response::Select(textbox), Action::Select, Task::NewTab) => {
           if self.user.urls.len() > 0 {
-            let url_str = &self.user.urls[textbox.get_source_idx()].clone();
-            self.select_link(url_str);
+            let link = &self.user.urls[textbox.get_source_idx()].clone();
+            self.select_link(link);
           } else {
             self.focus_tabs();
           }
@@ -297,9 +290,9 @@ impl App {
           match std::fs::read_to_string(
             user::get_keys_file(&textbox.get_source())) 
           {
-            Err(e) => self.focus_ack_dialog(&format!("Problem: {}", &e)),
+            Err(e) => self.focus_ack_dialog(format!("Problem: {}", &e)),
             Ok(s)  => if let Err(e) = self.user.keys.update_from_str(&s) {
-              self.focus_ack_dialog(&format!("Problem: {}", &e));
+              self.focus_ack_dialog(format!("Problem: {}", &e));
             } else {
               self.focus_tabs();
             }
@@ -309,10 +302,9 @@ impl App {
           match std::fs::read_to_string(
             user::get_styles_file(&textbox.get_source())) 
           {
-            Err(e) => 
-              self.focus_ack_dialog(&format!("Problem: {}", &e)),
-            Ok(s) => if let Err(e) = self.user.style.update_from_str(&s) {
-              self.focus_ack_dialog(&format!("Problem: {}", &e));
+            Err(e) => self.focus_ack_dialog(e.to_string()),
+            Ok(s)  => if let Err(e) = self.user.style.update_from_str(&s) {
+              self.focus_ack_dialog(e.to_string());
               self.push_style();
             } else {
               self.focus_tabs();
@@ -323,20 +315,16 @@ impl App {
         (Response::Select(textbox), Action::Select, Task::Menu) => {
           match MENU[textbox.get_source_idx()] {
             MANUAL => {
-              self.focus_ack_dialog("View manual");
+              self.focus_ack_dialog("View manual".into());
             }
             CHANGE_KEYS => match user::get_entries(user::KEYS_PATH) {
-              Err(e) => self.focus_ack_dialog(
-                &format!("Problem: {}", &e)
-              ),
+              Err(e)    => self.focus_ack_dialog(e),
               Ok(entry) => self.focus_select_dialog(
                 Task::ChangeKeys, "Choose keys", entry
               ),
             }
             CHANGE_STYLE => match user::get_entries(user::STYLES_PATH) {
-              Err(e) => self.focus_ack_dialog(
-                &format!("Problem: {}", &e)
-              ),
+              Err(e)    => self.focus_ack_dialog(e),
               Ok(entry) => self.focus_select_dialog(
                 Task::ChangeStyle, "Choose style", entry
               ),
@@ -357,8 +345,7 @@ impl App {
           let text = editbox.content.to_string().trim().replace(" ", "%20");
           match url.clone().join(&format!("?{}", text)) {
             Err(e) => self.focus_ack_dialog(
-              &format!("Invalid URL. {}", e)
-            ),
+              format!("Invalid URL. {}", e)),
             Ok(url) => {
               self.focus_tabs();
               self.tab_changed = true;
@@ -368,9 +355,8 @@ impl App {
         }
         (Response::Edit(editbox), Action::Enter, Task::NewTab) => {
           match Url::parse(&editbox.content.to_string()) {
-            Err(e) => self.focus_ack_dialog(
-              &format!("Invalid URL. {}", e)
-            ),
+            Err(e) => self.focus_ack_dialog(format!(
+              "Invalid URL. {}", e)),
             Ok(url) => {
               self.focus_tabs();
               self.tab_changed = true;
@@ -387,10 +373,6 @@ impl App {
           self.tabs.delete();
           self.tab_changed = true;
           self.focus_tabs();
-        }
-        (_, Action::Yes, Task::ViewLink(url_str)) => {
-          let url_str = url_str.clone();
-          self.select_link(&url_str);
         }
         (Response::Ack(_), _, _) |
         (_,   Action::Select, _) |
@@ -409,43 +391,21 @@ impl App {
         }
       }
       (Msg::Action(Action::SaveUrl), Focus::Tab) => {
-        let url_str = self.tabs.url.to_string();
-        // only add url_str if new
-        if self.user.urls.iter().any(|url| **url == url_str) {
-          self.focus_ack_dialog(
-            &format!("URL {} already saved", url_str));
-        } else {
-          self.user.urls.push(url_str.clone());
-          // write to save file
-          match std::fs::OpenOptions::new()
-            .write(true)
-            .truncate(true)
-            .open(&self.user.save_file) 
-          {
-            Err(e) => self.focus_ack_dialog(
-              &format!("could not create save file: {}", &e)
-            ),
-            Ok(mut f) => {
-              for url in self.user.urls.iter() {
-                f.write(&format!("{}\n", url).as_bytes());
-              }
-              self.focus_ack_dialog(
-                &format!("Saved URL: {}", url_str)); 
-            }
-          }
+        match self.user.save_url(&self.tabs.url) {
+          Err(e) => self.focus_ack_dialog(e),
+          Ok(()) => self.focus_ack_dialog(format!(
+            "Saved URL: {}", self.tabs.url.to_string())),
         }
       }
       (Msg::Action(Action::Select), Focus::Tab) => 
         if let Some(gemdoc) = &self.tabs.gemdoc {
           match gemdoc.doc[self.tabs.get_source_idx()].tag.clone() {
-            GemTag::Link(url) => {
-              self.focus_ask_dialog(
-                Task::ViewLink(url.clone()), 
-                &format!("Go to {}?", url)
-              );
+            GemTag::Link(link) => {
+              let link = link.clone();
+              self.select_link(&link);
             }
-            gemtext => self.focus_ack_dialog(
-              &format!("you've selected {:?}", gemtext)
+            gemtext => self.focus_ack_dialog(format!(
+              "You've selected {:?}", gemtext)
             ),
           }
         }

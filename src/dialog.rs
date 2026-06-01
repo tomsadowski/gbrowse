@@ -9,7 +9,7 @@ use crate::{
 };
 use crossterm::QueueableCommand;
 use unicode_width::UnicodeWidthChar;
-use std::io::{self, Write};
+use std::io::Write;
 
 
 pub enum Response {
@@ -119,7 +119,7 @@ impl Dialog {
     }
   }
 
-  pub fn write<W: Write>(&self, writer: &mut W) -> io::Result<()> {
+  pub fn write<W: Write>(&self, writer: &mut W) -> std::io::Result<()> {
     self.prompt.write(writer)?;
     match &self.response {
       Response::Ack(r) | 

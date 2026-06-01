@@ -1,11 +1,12 @@
 // src/view.rs
 
-use std::ops::Range;
+use crate::cursor::{UnitCursor, UnitCursorMut, WeightedCursor};
 use crossterm::{
   QueueableCommand, 
-  cursor::{self, MoveTo}
+  cursor::MoveTo,
 };
-use crate::cursor::{UnitCursor, UnitCursorMut, WeightedCursor};
+use std::ops::Range;
+
 
 pub trait ViewPort {
   fn view_port(&self) -> Rect;

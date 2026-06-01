@@ -13,7 +13,7 @@ use crossterm::{
   style::{Print, SetAttribute, Attribute},
 };
 use unicode_width::UnicodeWidthChar;
-use std::io::{self, Write};
+use std::io::Write;
 
 
 #[derive(Copy, Default, Clone)]
@@ -84,12 +84,12 @@ impl Frame {
     self.border_rect = self.screen_margin.get_rect(screen);
   }
 
-  pub fn write<W: Write>(&self, writer: &mut W) -> io::Result<()> {
+  pub fn write<W: Write>(&self, writer: &mut W) -> std::io::Result<()> {
     self.write_frame(writer)?;
     Ok(())
   }
 
-  pub fn write_frame<W: Write>(&self, writer: &mut W) -> io::Result<()> {
+  pub fn write_frame<W: Write>(&self, writer: &mut W) -> std::io::Result<()> {
     // border
     let (ax, ay) = self.border_rect.a();
     let (bx, by) = self.border_rect.b();
@@ -137,7 +137,7 @@ impl Frame {
   }
 
   pub fn write_footer<W: Write>(&self, text: &str, writer: &mut W) 
-    -> io::Result<()> 
+    -> std::io::Result<()> 
   {
     let mut x = self.inner_rect.x_end().saturating_sub(1);
     let     y = self.border_rect.y_end().saturating_sub(1);
@@ -172,7 +172,7 @@ impl Frame {
   }
 
   pub fn write_banner<W: Write>(&self, text: &str, writer: &mut W) 
-    -> io::Result<()> 
+    -> std::io::Result<()> 
   {
     let mut x = self.inner_rect.x;
     let     y = self.border_rect.y;
@@ -248,7 +248,7 @@ impl ScreenCursor {
     x || y
   }
 
-  pub fn write<W: Write>(&self, writer: &mut W) -> io::Result<()> {
+  pub fn write<W: Write>(&self, writer: &mut W) -> std::io::Result<()> {
     writer
       .queue(MoveTo(self.x.cursor(), self.y.cursor()))?
       .queue(cursor::Show)?;
@@ -374,7 +374,7 @@ impl TextBox {
     }
   }
 
-  pub fn clear<W: Write>(&self, writer: &mut W) -> io::Result<()> {
+  pub fn clear<W: Write>(&self, writer: &mut W) -> std::io::Result<()> {
     writer
       .queue(SetAttribute(Attribute::Reset))?
       .queue(&self.style)?;
@@ -387,14 +387,14 @@ impl TextBox {
     Ok(())
   }
 
-  pub fn write<W: Write>(&self, writer: &mut W) -> io::Result<()> {
+  pub fn write<W: Write>(&self, writer: &mut W) -> std::io::Result<()> {
     if self.write {
       self.write_all(writer)?;
     }
     Ok(())
   }
 
-  pub fn write_all<W: Write>(&self, writer: &mut W) -> io::Result<()> {
+  pub fn write_all<W: Write>(&self, writer: &mut W) -> std::io::Result<()> {
     let mut x = self.rect.x;
     let mut y = self.rect.y;
     writer
@@ -537,14 +537,14 @@ impl EditBox {
     }
   }
 
-  pub fn write<W: Write>(&self, writer: &mut W) -> io::Result<()> {
+  pub fn write<W: Write>(&self, writer: &mut W) -> std::io::Result<()> {
     if self.write {
       self.write_all(writer)?;
     }
     Ok(())
   }
 
-  pub fn write_all<W: Write>(&self, writer: &mut W) -> io::Result<()> {
+  pub fn write_all<W: Write>(&self, writer: &mut W) -> std::io::Result<()> {
     let mut x = self.rect.x;
     let     y = self.rect.y;
     writer

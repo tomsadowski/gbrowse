@@ -6,16 +6,10 @@ use crate::{
 };
 use crossterm::{
   Command,
-  style::{
-    SetStyle, ContentStyle, Attribute, Attributes, Color
-  },
+  style::{SetStyle, ContentStyle, Attribute, Attributes, Color},
 };
 use toml::Value;
-use std::{
-  fmt,
-  str::FromStr,
-  convert::AsRef,
-};
+use std::str::FromStr;
 
 // corners 
 // square
@@ -245,7 +239,7 @@ impl From<TextStyle> for Style {
   }
 }
 impl Command for Style {
-  fn write_ansi(&self, f: &mut impl fmt::Write) -> fmt::Result {
+  fn write_ansi(&self, f: &mut impl std::fmt::Write) -> std::fmt::Result {
     let mut contentstyle = ContentStyle::new();
     contentstyle.foreground_color = self.fg;
     contentstyle.background_color = self.bg;

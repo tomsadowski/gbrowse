@@ -1,7 +1,6 @@
 // src/network.rs
 
-use url::{Url, ParseError as UrlParseError};
-use native_tls::TlsConnector;
+use url::Url;
 use std::{
   thread,
   sync::mpsc,
@@ -19,10 +18,10 @@ pub fn split_whitespace_once(line: &str) -> Option<(&str, &str)> {
 }
 
 pub fn join_if_relative(base: &Url, url_str: &str) 
-  -> Result<Url, UrlParseError> 
+  -> Result<Url, url::ParseError> 
 {
   Url::parse(url_str).or_else(|e|
-    if let UrlParseError::RelativeUrlWithoutBase = e {
+    if let url::ParseError::RelativeUrlWithoutBase = e {
       base.join(url_str)
     } else {
       Err(e)
@@ -229,7 +228,7 @@ pub fn get_data(url: &Url, timeout: u64) -> Result<(String, String), String> {
   let host = url.host_str().unwrap_or("");
   let urlf = format!("{}:1965", host);
   // get connector
-  let connector = TlsConnector::builder()
+  let connector = native_tls::TlsConnector::builder()
     .danger_accept_invalid_hostnames(true)
     .danger_accept_invalid_certs(true)
     .build()

@@ -6,7 +6,6 @@ use crate::{
   widget::TextBox,
   protocol::GemDoc,
 };
-use url::Url;
 
 
 pub struct TabList {
@@ -54,7 +53,7 @@ impl TabList {
   }
 
   // maybe return bool
-  pub fn add(&mut self, url: &Url) {
+  pub fn add(&mut self, url: &url::Url) {
     // search for tab with same url_str
     let search = self.tabs.iter_mut().enumerate()
       .find(|(_, tab)| tab.url == *url);
@@ -91,7 +90,7 @@ impl TabList {
 }
 
 pub struct Tab {
-  pub url:     Url,
+  pub url:     url::Url,
   pub gemdoc:  Option<GemDoc>,
   pub content: TextBox,
 } 
@@ -107,7 +106,7 @@ impl std::ops::DerefMut for Tab {
   }
 }
 impl Tab {
-  pub fn init<V: ViewPort>(rect: V, url: &Url) -> Self {
+  pub fn init<V: ViewPort>(rect: V, url: &url::Url) -> Self {
     let mut content = TextBox::default();
     content.rect    = rect.view_port();
     Self {
