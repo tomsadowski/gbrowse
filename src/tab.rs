@@ -72,8 +72,8 @@ impl TabList {
         self.head += 1;
         self.tabs.insert(self.head, new_tab);
       }
-      self.reset_state();
     }
+    self.reset_state();
   }
 
   pub fn delete(&mut self) {
