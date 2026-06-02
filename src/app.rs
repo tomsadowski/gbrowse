@@ -191,26 +191,24 @@ impl App {
   }
 
   pub fn join_request(&mut self) -> bool {
-    match &mut self.request {
-      None          => false,
-      Some(request) => match request.handle.is_finished() {
-        false => false,
-        true  => match request.rx.recv().unwrap()
-          .map(|(r, c)| GemDoc::new(r, c))
-          .flatten()
-        {
-          Err(e) => {
-            self.focus_ack_dialog(e);
-            self.request = None;
-            true
-          }
-          Ok(gemdoc) => {
-            let url = request.url.clone();
-            self.set_gemdoc(&url, gemdoc);
-            self.request = None;
-            true
-          }
-        }
+    let Some(request) = &mut self.request else {
+      return false
+    };
+    if !request.handle.is_finished() {
+      return false
+    }
+    match request.rx.recv().unwrap() {
+      Err(e) => {
+        self.focus_ack_dialog(e);
+        self.request = None;
+        true
+      }
+      Ok((r, c)) => {
+        let gemdoc = GemDoc::new(r, c).unwrap();
+        let url = request.url.clone();
+        self.set_gemdoc(&url, gemdoc);
+        self.request = None;
+        true
       }
     }
   }
