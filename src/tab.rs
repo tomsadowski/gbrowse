@@ -62,17 +62,18 @@ impl TabList {
       .find(|(_, tab)| tab.url == *url)
     {
       self.head = idx;
+    } else {
+      let new_tab = Tab::init(self.rect, url);
+      if self.head + 1 == self.tabs.len() {
+        self.tabs.push(new_tab);
+        self.head += 1;
+      }
+      else {
+        self.head += 1;
+        self.tabs.insert(self.head, new_tab);
+      }
+      self.reset_state();
     }
-    let new_tab = Tab::init(self.rect, url);
-    if self.head + 1 == self.tabs.len() {
-      self.tabs.push(new_tab);
-      self.head += 1;
-    }
-    else {
-      self.head += 1;
-      self.tabs.insert(self.head, new_tab);
-    }
-    self.reset_state();
   }
 
   pub fn delete(&mut self) {
