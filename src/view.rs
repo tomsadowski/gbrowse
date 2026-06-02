@@ -1,6 +1,8 @@
 // src/view.rs
 
-use crate::cursor::{UnitCursor, UnitCursorMut, WeightedCursor};
+use crate::{
+  cursor::{UnitCursor, UnitCursorMut, WeightedCursor},
+};
 use crossterm::{
   QueueableCommand, 
   cursor::MoveTo,

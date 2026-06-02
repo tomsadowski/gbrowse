@@ -4,7 +4,7 @@ use crate::{
   cursor::{UnitCursor, UnitCursorMut},
   view::{Rect, ViewPort},
   widget::TextBox,
-  protocol::GemDoc,
+  gemdoc::GemDoc,
 };
 
 

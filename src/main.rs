@@ -9,7 +9,8 @@
 mod app;
 mod cursor;
 mod dialog;
-mod protocol;
+mod network;
+mod gemdoc;
 mod view;
 mod tab;
 mod text;
@@ -17,6 +18,7 @@ mod user;
 mod keys;
 mod style;
 mod widget;
+mod util;
 
 use crossterm::QueueableCommand;
 use std::io::Write;

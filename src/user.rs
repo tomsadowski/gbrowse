@@ -7,7 +7,7 @@ use crate::{
   widget::{Frame, TextBox},
   view::Rect,
   text::StyledText,
-  protocol::{GemText, GemTag, GemDoc},
+  gemdoc::{GemText, GemTag, GemDoc},
 };
 use toml::{Table, Value};
 use std::io::Write;
@@ -29,19 +29,6 @@ pub fn get_keys_file(name: &str) -> String {
 
 pub fn get_styles_file(name: &str) -> String {
   format!("{}/{}", STYLES_PATH, name)
-}
-
-pub fn get_entries(path: &str) -> Result<Vec<String>, String> {
-  let mut vec = vec![];
-  for result in std::fs::read_dir(path).map_err(|e| e.to_string())? {
-    vec.push(result
-      .map_err(|e| e.to_string())?
-      .file_name()
-      .into_string()
-      .map_err(|_| "Could not convert OsString to String".to_string())?
-    );
-  }
-  Ok(vec)
 }
 
 pub trait UserTable<F>: Sized 

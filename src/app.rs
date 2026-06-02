@@ -8,7 +8,9 @@ use crate::{
   tab::{Tab, TabList},
   widget::{Frame, TextBox},
   dialog::{Response, Dialog},
-  protocol::{self, Request, GemDoc, GemTag, Status},
+  gemdoc::{GemDoc, GemTag, Status},
+  network::Request,
+  util,
 };
 use crossterm::{
   QueueableCommand, cursor,
@@ -248,7 +250,7 @@ impl App {
   }
 
   pub fn select_link(&mut self, url_str: &str) {
-    match protocol::join_if_relative(&self.tabs.url, url_str) {
+    match util::join_if_relative(&self.tabs.url, url_str) {
       Err(e) => self.focus_ack_dialog(format!(
         "{} -- Invalid URL. {}", url_str, e)),
       Ok(url) => {
@@ -317,13 +319,13 @@ impl App {
             MANUAL => {
               self.focus_ack_dialog("View manual".into());
             }
-            CHANGE_KEYS => match user::get_entries(user::KEYS_PATH) {
+            CHANGE_KEYS => match util::get_entries(user::KEYS_PATH) {
               Err(e)    => self.focus_ack_dialog(e),
               Ok(entry) => self.focus_select_dialog(
                 Task::ChangeKeys, "Choose keys", entry
               ),
             }
-            CHANGE_STYLE => match user::get_entries(user::STYLES_PATH) {
+            CHANGE_STYLE => match util::get_entries(user::STYLES_PATH) {
               Err(e)    => self.focus_ack_dialog(e),
               Ok(entry) => self.focus_select_dialog(
                 Task::ChangeStyle, "Choose style", entry
