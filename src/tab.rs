@@ -4,7 +4,7 @@ use crate::{
   cursor::{UnitCursor, UnitCursorMut},
   view::{Rect, ViewPort},
   widget::TextBox,
-  gemdoc::GemDoc,
+  gemdoc::GemText,
 };
 
 
@@ -55,22 +55,22 @@ impl TabList {
   // maybe return bool
   pub fn add(&mut self, url: &url::Url) {
     // search for tab with same url_str
-    let search = self.tabs.iter_mut().enumerate()
-      .find(|(_, tab)| tab.url == *url);
     // move head to location of tab with url_str
-    if let Some((idx, _)) = search {
+    if let Some((idx, _)) = self.tabs
+      .iter_mut()
+      .enumerate()
+      .find(|(_, tab)| tab.url == *url)
+    {
       self.head = idx;
-    // or make a new tab
-    } else {
-      let new_tab = Tab::init(self.rect, url);
-      if self.head + 1 == self.tabs.len() {
-        self.tabs.push(new_tab);
-        self.head += 1;
-      }
-      else {
-        self.head += 1;
-        self.tabs.insert(self.head, new_tab);
-      }
+    }
+    let new_tab = Tab::init(self.rect, url);
+    if self.head + 1 == self.tabs.len() {
+      self.tabs.push(new_tab);
+      self.head += 1;
+    }
+    else {
+      self.head += 1;
+      self.tabs.insert(self.head, new_tab);
     }
     self.reset_state();
   }
@@ -91,7 +91,7 @@ impl TabList {
 
 pub struct Tab {
   pub url:     url::Url,
-  pub gemdoc:  Option<GemDoc>,
+  pub source:  Vec<GemText>,
   pub content: TextBox,
 } 
 impl std::ops::Deref for Tab {
@@ -110,9 +110,9 @@ impl Tab {
     let mut content = TextBox::default();
     content.rect    = rect.view_port();
     Self {
+      url:    url.clone(),
+      source: vec![],
       content, 
-      gemdoc:  None,
-      url: url.clone(),
     }
   }
 }

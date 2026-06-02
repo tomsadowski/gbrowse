@@ -27,37 +27,35 @@ pub enum Status {
   FutureCertRejected,      
   ExpiredCertRejected,     
   Unknown(u8),
-  Junk(String),
 }
-impl From<&str> for Status {
-  fn from(item: &str) -> Status {
-    match item.parse::<u8>().map_err(|e| e.to_string()) {
-      Ok(u) => match u {
-        10 | 12..=19 => Status::InputExpected,
-        11 =>           Status::InputExpectedSensitive,
-        20..=29 =>      Status::Success,
-        30 | 32..=39 => Status::RedirectTemporary,
-        31 =>           Status::RedirectPermanent,
-        41 =>           Status::FailServerUnavailable,
-        40 | 45..=49 => Status::FailTemporary,
-        42 =>           Status::FailCGIError,
-        43 =>           Status::FailProxyError,
-        44 =>           Status::FailSlowDown,
-        50 | 54..=58 => Status::FailPermanent,
-        51 =>           Status::FailNotFound,
-        52 =>           Status::FailGone,
-        53 =>           Status::FailProxyRequestRefused,
-        59 =>           Status::FailBadRequest,
-        60 | 66..=69 => Status::CertRequiredClient,
-        61 =>           Status::CertRequiredTransient,
-        62 =>           Status::CertRequiredAuthorized,
-        63 =>           Status::CertNotAccepted,
-        64 =>           Status::FutureCertRejected,
-        65 =>           Status::ExpiredCertRejected,
-        u =>            Status::Unknown(u),
-      } 
-      Err(e) => Status::Junk(e)
-    }
+impl TryFrom<&str> for Status {
+  type Error = String;
+  fn try_from(item: &str) -> Result<Self, Self::Error> {
+    let status = match item.parse::<u8>().map_err(|e| e.to_string())? {
+      10 | 12..=19 => Status::InputExpected,
+      11 =>           Status::InputExpectedSensitive,
+      20..=29 =>      Status::Success,
+      30 | 32..=39 => Status::RedirectTemporary,
+      31 =>           Status::RedirectPermanent,
+      41 =>           Status::FailServerUnavailable,
+      40 | 45..=49 => Status::FailTemporary,
+      42 =>           Status::FailCGIError,
+      43 =>           Status::FailProxyError,
+      44 =>           Status::FailSlowDown,
+      50 | 54..=58 => Status::FailPermanent,
+      51 =>           Status::FailNotFound,
+      52 =>           Status::FailGone,
+      53 =>           Status::FailProxyRequestRefused,
+      59 =>           Status::FailBadRequest,
+      60 | 66..=69 => Status::CertRequiredClient,
+      61 =>           Status::CertRequiredTransient,
+      62 =>           Status::CertRequiredAuthorized,
+      63 =>           Status::CertNotAccepted,
+      64 =>           Status::FutureCertRejected,
+      65 =>           Status::ExpiredCertRejected,
+      u =>            Status::Unknown(u),
+    };
+    Ok(status)
   }
 }
 
@@ -66,15 +64,14 @@ pub struct StatusText {
   pub tag:  Status, 
   pub text: String,
 }
-impl StatusText {
-  pub fn parse(line: &str) -> Self {
-    let line = line.trim();
+impl TryFrom<&str> for StatusText {
+  type Error = String;
+  fn try_from(item: &str) -> Result<Self, Self::Error> {
+    let line = item.trim();
     let (code_str, msg) = 
       util::split_whitespace_once(line).unwrap_or((line, line));
-    Self {
-      tag: Status::from(code_str), 
-      text: msg.into()
-    }
+    let tag = Status::try_from(code_str)?;
+    Ok(Self {tag, text: msg.into()})
   }
 }
 
@@ -152,30 +149,15 @@ impl GemText {
   }
 }
 
-pub struct GemDoc {
-  pub status: StatusText,
-  pub doc:    Vec<GemText>,
-}
-impl GemDoc {
-  pub fn new(response: String, content: String) -> Result<Self, String> {
-    let status = StatusText::parse(&response);
-    let doc = match status.tag {
-      Status::Success => Self::parse_doc(&content),
-      _ => vec![GemText::text(format!("{:?}", status))],
-    };
-    Ok(Self {status, doc})
-  }
-
-  pub fn parse_doc(text_str: &str) -> Vec<GemText> {
-    let mut vec       = vec![];
-    let mut preformat = false;
-    for line in text_str.lines() {
-      match (&mut preformat, GemText::parse_line(line)) {
-        (_, (GemTag::PreFormat, _)) => preformat = !preformat,
-        (true,  (_, s)) => vec.push(GemText::preformat(s)),
-        (false, tuple)  => vec.push(tuple.into()),
-      }
+pub fn parse_doc(text_str: &str) -> Vec<GemText> {
+  let mut vec       = vec![];
+  let mut preformat = false;
+  for line in text_str.lines() {
+    match (&mut preformat, GemText::parse_line(line)) {
+      (_, (GemTag::PreFormat, _)) => preformat = !preformat,
+      (true,  (_, s)) => vec.push(GemText::preformat(s)),
+      (false, tuple)  => vec.push(tuple.into()),
     }
-    vec
   }
+  vec
 }

@@ -7,7 +7,7 @@ use crate::{
   widget::{Frame, TextBox},
   view::Rect,
   text::StyledText,
-  gemdoc::{GemText, GemTag, GemDoc},
+  gemdoc::{GemText, GemTag},
 };
 use toml::{Table, Value};
 use std::io::Write;

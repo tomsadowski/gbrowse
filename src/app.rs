@@ -8,7 +8,7 @@ use crate::{
   tab::{Tab, TabList},
   widget::{Frame, TextBox},
   dialog::{Response, Dialog},
-  gemdoc::{GemDoc, GemTag, Status},
+  gemdoc::{self, GemTag, GemText, Status, StatusText},
   network::Request,
   util,
 };
@@ -151,40 +151,47 @@ impl App {
     self.new_dlg = true;
   }
 
-  fn set_gemdoc(&mut self, url: &Url, gemdoc: GemDoc) {
-    match gemdoc.status.tag {
+  fn join_gemdoc(&mut self, url: &Url, response: String, content: String) {
+    let Ok(status) = StatusText::try_from(response.as_str()) else {
+      self.focus_ack_dialog(format!(
+        "Response {} is not valid for gemini protocol", response
+      ));
+      return
+    };
+    match status.tag {
       Status::InputExpected | 
       Status::InputExpectedSensitive => {
         self.focus_edit_dialog(
           Task::Reply(url.clone()), 
-          &gemdoc.status.text
+          &status.text
         );
       }
       Status::RedirectTemporary | 
-      Status::RedirectPermanent => match Url::parse(&gemdoc.status.text) {
+      Status::RedirectPermanent => match Url::parse(&status.text) {
         Err(e) => self.focus_ack_dialog(format!(
           "Redirects to invalid URL. {}", e
         )),
         Ok(url) => self.focus_ask_dialog(
           Task::Go(url.clone()), 
-          &gemdoc.status.text
+          &status.text
         ),
       }
       Status::CertRequiredClient |
       Status::CertRequiredTransient |
       Status::CertRequiredAuthorized => {
-        self.focus_ack_dialog(gemdoc.status.text);
+        self.focus_ack_dialog(status.text);
       }
       _ => {
         self.tabs.add(url);
+        let doc = gemdoc::parse_doc(&content);
         self.tabs.content = TextBox::new(
             self.frame,
-            gemdoc.doc
+            doc
               .iter()
               .map(|gem| self.user.get_styled_gemtext(gem))
               .collect(),
           ).with_style(self.user.style.general);
-        self.tabs.gemdoc = Some(gemdoc);
+        self.tabs.source = doc;
         self.tab_changed = true;
       }
     };
@@ -204,9 +211,8 @@ impl App {
         true
       }
       Ok((r, c)) => {
-        let gemdoc = GemDoc::new(r, c).unwrap();
         let url = request.url.clone();
-        self.set_gemdoc(&url, gemdoc);
+        self.join_gemdoc(&url, r, c);
         self.request = None;
         true
       }
@@ -233,15 +239,14 @@ impl App {
   pub fn push_style(&mut self) {
     self.frame = self.user.get_frame(self.frame.screen);
     for tab in self.tabs.tabs.iter_mut() {
-      if let Some(gem) = &tab.gemdoc {
-        tab.content.restyle(
-          self.frame,
-          gem.doc
-            .iter()
-            .map(|gem| self.user.get_styled_gemtext(gem))
-            .collect(),
-        )
-      }
+      let source = &tab.source;
+      tab.content.restyle(
+        self.frame,
+        source
+          .iter()
+          .map(|gem| self.user.get_styled_gemtext(gem))
+          .collect(),
+      );
       tab.content.style = self.user.style.general.into();
     }
     self.clear = true;
@@ -397,18 +402,17 @@ impl App {
             "Saved URL: {}", self.tabs.url.to_string())),
         }
       }
-      (Msg::Action(Action::Select), Focus::Tab) => 
-        if let Some(gemdoc) = &self.tabs.gemdoc {
-          match gemdoc.doc[self.tabs.get_source_idx()].tag.clone() {
-            GemTag::Link(link) => {
-              let link = link.clone();
-              self.select_link(&link);
-            }
-            gemtext => self.focus_ack_dialog(format!(
-              "You've selected {:?}", gemtext)
-            ),
+      (Msg::Action(Action::Select), Focus::Tab) => {
+        match self.tabs.source[self.tabs.get_source_idx()].tag.clone() {
+          GemTag::Link(link) => {
+            let link = link.clone();
+            self.select_link(&link);
           }
+          gemtext => self.focus_ack_dialog(format!(
+            "You've selected {:?}", gemtext)
+          ),
         }
+      }
       (Msg::Action(Action::CycleLeft), Focus::Tab) => {
         if self.tabs.units().len() > 1 {
           self.tabs.wrapping_backward(1);
