@@ -18,6 +18,10 @@ pub trait UnitCursor {
     &self.units()[self.head()]
   }
 
+  fn get(&self) -> Option<&Self::Unit> {
+    self.units().get(self.head())
+  }
+
   fn fit(&mut self, new_cursor: usize) {
     *self.head_mut() = self.max_head().min(new_cursor);
   }
@@ -98,6 +102,11 @@ pub trait UnitCursorMut: UnitCursor {
   fn current_mut(&mut self) -> &mut Self::Unit {
     let head = self.head();
     &mut self.units_mut()[head]
+  }
+
+  fn get_mut(&mut self) -> Option<&mut Self::Unit> {
+    let head = self.head();
+    self.units_mut().get_mut(head)
   }
 
   fn delete(&mut self) -> bool {
