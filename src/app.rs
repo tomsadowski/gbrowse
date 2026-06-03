@@ -183,12 +183,11 @@ impl App {
       }
       _ => {
         self.tabs.add(url);
-        let doc = gemdoc::parse_doc(&content);
-        self.tabs.content = TextBox::new(
-            self.frame, &doc,
-            |g| self.user.get_styled_gemtext(g),
-          ).with_style(self.user.style.general);
-        self.tabs.source = doc;
+        self.tabs.set_source(
+          gemdoc::parse_doc(&content),
+          |g| self.user.get_styled_gemtext(g),
+        );
+        self.tabs.style = self.user.style.general.into();
         self.tab_changed = true;
       }
     };

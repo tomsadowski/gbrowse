@@ -5,6 +5,7 @@ use crate::{
   view::{Rect, ViewPort},
   widget::TextBox,
   gemdoc::GemText,
+  text::StyledText,
 };
 
 
@@ -107,13 +108,21 @@ impl std::ops::DerefMut for Tab {
   }
 }
 impl Tab {
-  pub fn init<V: ViewPort>(rect: V, url: &url::Url) -> Self {
-    let mut content = TextBox::default();
-    content.view    = rect.view_port();
+  pub fn init<V: ViewPort>(view: V, url: &url::Url) -> Self {
     Self {
-      url:    url.clone(),
-      source: vec![],
-      content, 
+      url:     url.clone(),
+      source:  vec![],
+      content: TextBox::from(view), 
     }
+  }
+  pub fn set_source<F>(
+    &mut self, 
+    source: Vec<GemText>, 
+    func:   F,
+  ) 
+  where F: Fn(&GemText) -> StyledText,
+  {
+    self.source = source;
+    self.content.set_input(&self.source, func);
   }
 }

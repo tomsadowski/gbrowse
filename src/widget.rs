@@ -266,6 +266,21 @@ pub struct TextBox {
   pub write_unused_x: bool,
   pub write_unused_y: bool,
 }
+impl<V> From<V> for TextBox 
+where V: ViewPort,
+{
+  fn from(view: V) -> Self {
+    Self {
+      write_unused_x: true,
+      write_unused_y: true,
+      write:          true,
+      style:          Style::default(),
+      cursor:         ScreenCursor::new(&view.view_port()), 
+      content:        StyledTextPlane::default(),
+      view:           view.view_port(),
+    }
+  }
+}
 impl TextBox {
   pub fn new<V, I, F>(view: V, input: &Vec<I>, func: F) -> Self 
   where 
@@ -279,8 +294,21 @@ impl TextBox {
       style:          Style::default(),
       cursor:         ScreenCursor::new(&view.view_port()), 
       content:        StyledTextPlane::new(&view, input, func),
-      view: view.view_port(),
+      view:           view.view_port(),
     }
+  }
+  pub fn with_input<I, F>(mut self, input: &Vec<I>, func: F) -> Self 
+  where 
+    F: Fn(&I) -> StyledText,
+  {
+    self.content = StyledTextPlane::new(&self.view, input, func);
+    self
+  }
+  pub fn set_input<I, F>(&mut self, input: &Vec<I>, func: F)
+  where 
+    F: Fn(&I) -> StyledText,
+  {
+    self.content = StyledTextPlane::new(&self.view, input, func);
   }
   pub fn with_style<T>(mut self, style: T) -> Self 
   where T: Into<Style> + Copy
