@@ -267,15 +267,19 @@ pub struct TextBox {
   pub write_unused_y: bool,
 }
 impl TextBox {
-  pub fn new<V: ViewPort>(rect: V, text: Vec<StyledText>) -> Self {
+  pub fn new<V, F, T>(view: V, func: F, text: &Vec<T>) -> Self 
+  where 
+    V: ViewPort,
+    F: Fn(&T) -> StyledText,
+  {
     Self {
       write_unused_x: true,
       write_unused_y: true,
       write:          true,
       style:          Style::default(),
-      cursor:         ScreenCursor::new(&rect.view_port()), 
-      content:        StyledTextPlane::new(text, rect.view_port().w),
-      rect: rect.view_port(),
+      cursor:         ScreenCursor::new(&view.view_port()), 
+      content:        StyledTextPlane::new(&view, func, text),
+      rect: view.view_port(),
     }
   }
   pub fn with_style<T>(mut self, style: T) -> Self 

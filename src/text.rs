@@ -1,6 +1,7 @@
 // src/text.rs
 
 use crate::{
+  view::ViewPort,
   cursor::{UnitCursor, UnitCursorMut},
   style::{Style, TextStyle},
 };
@@ -223,11 +224,17 @@ impl UnitCursor for StyledTextPlane {
   }
 }
 impl StyledTextPlane {
-  pub fn new(source: Vec<StyledText>, width: u16) -> Self {
+  pub fn new<V, F, T>(view: &V, func: F, input: &Vec<T>) -> Self 
+  where 
+    V: ViewPort,
+    F: Fn(&T) -> StyledText,
+  {
+    let source: Vec<_> = input.iter().map(|i| func(i)).collect();
+    let text = StyledText::get_textlines(&source, view.view_port().w.into());
     Self {
       head:   0, 
       pref_x: 0, 
-      text:   StyledText::get_textlines(&source, width.into()), 
+      text, 
       source,
     }
   }

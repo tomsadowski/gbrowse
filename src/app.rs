@@ -186,10 +186,8 @@ impl App {
         let doc = gemdoc::parse_doc(&content);
         self.tabs.content = TextBox::new(
             self.frame,
-            doc
-              .iter()
-              .map(|gem| self.user.get_styled_gemtext(gem))
-              .collect(),
+            |g| self.user.get_styled_gemtext(g),
+            &doc
           ).with_style(self.user.style.general);
         self.tabs.source = doc;
         self.tab_changed = true;

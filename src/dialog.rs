@@ -31,11 +31,13 @@ impl Dialog {
   {
     let prompt_box = TextBox::new(
         view.view_port().cropped_south(2),
-        vec![StyledText::from(prompt).with_style(style)], 
+        |p| StyledText::from(*p).with_style(style),
+        &vec![prompt], 
       ).with_style(style).write_unused_y(false);
     let response_box = TextBox::new(
         prompt_box.used_rect().bottom_row(),
-        vec![StyledText::from(input).with_style(style)], 
+        |i| StyledText::from(*i).with_style(style),
+        &vec![input], 
       ).with_style(style).write_unused_y(false);
     Dialog {
       prompt:   prompt_box,
@@ -50,11 +52,13 @@ impl Dialog {
   {
     let prompt_box = TextBox::new(
         view.view_port().cropped_south(2),
-        vec![StyledText::from(prompt).with_style(style)], 
+        |p| StyledText::from(*p).with_style(style),
+        &vec![prompt], 
       ).with_style(style).write_unused_y(false);
     let response_box = TextBox::new(
         prompt_box.used_rect().bottom_row(),
-        vec![StyledText::from(input).with_style(style)], 
+        |i| StyledText::from(*i).with_style(style),
+        &vec![input], 
       ).with_style(style).write_unused_y(false);
     Dialog {
       prompt:   prompt_box,
@@ -70,14 +74,13 @@ impl Dialog {
   {
     let prompt_box = TextBox::new(
         view.view_port().cropped_south(2),
-        vec![StyledText::from(prompt).with_style(style)], 
+        |p| StyledText::from(*p).with_style(style),
+        &vec![prompt], 
       ).with_style(style).write_unused_y(false);
     let response_box = TextBox::new(
         view.view_port().cropped_north(prompt_box.used_rect().h),
-        input
-          .iter()
-          .map(|s| StyledText::from(s.as_str()).with_style(style))
-          .collect(), 
+        |s| StyledText::from(s.as_str()).with_style(style),
+        &input,
       ).with_style(style).write_unused_y(false);
     Dialog {
       prompt:   prompt_box,
@@ -92,7 +95,8 @@ impl Dialog {
   {
     let prompt_box = TextBox::new(
         view.view_port().cropped_south(2),
-        vec![StyledText::from(prompt).with_style(style)],
+        |p| StyledText::from(*p).with_style(style),
+        &vec![prompt], 
       ).with_style(style).write_unused_y(false);
     let response_box = EditBox::new(
         prompt_box.used_rect().bottom_row()
