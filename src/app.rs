@@ -35,7 +35,7 @@ pub const MENU: [&str; 4] = [
   VIEW_SETTINGS, 
 ];
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub enum Task {
   Default, 
   NewTab,

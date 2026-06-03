@@ -204,13 +204,11 @@ impl User {
       }
     }
   }
-        // only add url_str if new
+
   pub fn get_frame(&self, screen: Rect) -> Frame {
-    Frame::new(
-        screen, 
-        self.style.screen_margin,
-        self.style.text_margin
-      )
+    Frame::from(screen)
+      .with_screen_margin(self.style.screen_margin)
+      .with_text_margin(self.style.text_margin)
       .with_banner_style(self.style.banner)
       .with_footer_style(self.style.banner)
       .with_margin_style(self.style.general)

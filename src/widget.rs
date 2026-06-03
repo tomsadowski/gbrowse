@@ -34,13 +34,13 @@ impl ViewPort for Frame {
     self.inner_rect
   }
 }
-impl Frame {
-  pub fn new(screen: Rect, screen_margin: Margins, text_margin: Margins) 
-    -> Self 
-  {
-    let outer_rect  = screen_margin.get_rect(screen).crop_x(1).crop_y(1);
-    let inner_rect  = text_margin.get_rect(outer_rect);
-    let border_rect = screen_margin.get_rect(screen);
+impl From<Rect> for Frame {
+  fn from(screen: Rect) -> Self {
+    let screen_margin = Margins::default();
+    let text_margin   = Margins::default();
+    let border_rect   = screen_margin.get_rect(screen);
+    let outer_rect    = border_rect.clone().crop_x(1).crop_y(1);
+    let inner_rect    = text_margin.get_rect(outer_rect);
     Self {
       margin_style: Style::default(),
       banner_style: Style::default(),
@@ -53,6 +53,20 @@ impl Frame {
       screen_margin,
       text_margin,
     }
+  }
+}
+impl Frame {
+  pub fn with_screen_margin(mut self, screen_margin: Margins) -> Self {
+    self.screen_margin = screen_margin;
+    self.border_rect = self.screen_margin.get_rect(self.screen);
+    self.outer_rect  = self.border_rect.clone().crop_x(1).crop_y(1);
+    self.inner_rect  = self.text_margin.get_rect(self.outer_rect);
+    self
+  }
+  pub fn with_text_margin(mut self, screen_margin: Margins) -> Self {
+    self.text_margin = screen_margin;
+    self.inner_rect  = self.text_margin.get_rect(self.outer_rect);
+    self
   }
   pub fn with_banner_style<T>(mut self, style: T) -> Self 
   where T: Into<Style> + Copy
@@ -79,9 +93,9 @@ impl Frame {
 
   pub fn resize(&mut self, screen: Rect) {
     self.screen      = screen;
-    self.outer_rect  = self.screen_margin.get_rect(screen).crop_x(1).crop_y(1);
-    self.inner_rect  = self.text_margin.get_rect(self.outer_rect);
     self.border_rect = self.screen_margin.get_rect(screen);
+    self.outer_rect  = self.border_rect.clone().crop_x(1).crop_y(1);
+    self.inner_rect  = self.text_margin.get_rect(self.outer_rect);
   }
 
   pub fn write<W: Write>(&self, writer: &mut W) -> std::io::Result<()> {

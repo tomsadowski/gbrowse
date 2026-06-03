@@ -2,7 +2,7 @@
 
 use crate::{
   user::UserTable,
-  view::Rect,
+  view::{Rect, ViewPort},
 };
 use crossterm::{
   Command,
@@ -321,8 +321,8 @@ impl UserTable<MarginField> for Margins {
   }
 }
 impl Margins {
-  pub fn get_rect(&self, screen: Rect) -> Rect {
-    screen
+  pub fn get_rect<V: ViewPort>(&self, view: V) -> Rect {
+    view.view_port()
       .crop_north(self.north)
       .crop_south(self.south)
       .crop_east(self.east)
