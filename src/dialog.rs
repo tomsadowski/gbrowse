@@ -31,13 +31,13 @@ impl Dialog {
   {
     let prompt_box = TextBox::new(
         view.view_port().cropped_south(2),
-        |p| StyledText::from(*p).with_style(style),
         &vec![prompt], 
+        |p| StyledText::from(*p).with_style(style),
       ).with_style(style).write_unused_y(false);
     let response_box = TextBox::new(
         prompt_box.used_rect().bottom_row(),
-        |i| StyledText::from(*i).with_style(style),
         &vec![input], 
+        |i| StyledText::from(*i).with_style(style),
       ).with_style(style).write_unused_y(false);
     Dialog {
       prompt:   prompt_box,
@@ -52,13 +52,13 @@ impl Dialog {
   {
     let prompt_box = TextBox::new(
         view.view_port().cropped_south(2),
-        |p| StyledText::from(*p).with_style(style),
         &vec![prompt], 
+        |p| StyledText::from(*p).with_style(style),
       ).with_style(style).write_unused_y(false);
     let response_box = TextBox::new(
         prompt_box.used_rect().bottom_row(),
-        |i| StyledText::from(*i).with_style(style),
         &vec![input], 
+        |i| StyledText::from(*i).with_style(style),
       ).with_style(style).write_unused_y(false);
     Dialog {
       prompt:   prompt_box,
@@ -74,13 +74,13 @@ impl Dialog {
   {
     let prompt_box = TextBox::new(
         view.view_port().cropped_south(2),
-        |p| StyledText::from(*p).with_style(style),
         &vec![prompt], 
+        |p| StyledText::from(*p).with_style(style),
       ).with_style(style).write_unused_y(false);
     let response_box = TextBox::new(
         view.view_port().cropped_north(prompt_box.used_rect().h),
-        |s| StyledText::from(s.as_str()).with_style(style),
         &input,
+        |s| StyledText::from(s.as_str()).with_style(style),
       ).with_style(style).write_unused_y(false);
     Dialog {
       prompt:   prompt_box,
@@ -95,8 +95,8 @@ impl Dialog {
   {
     let prompt_box = TextBox::new(
         view.view_port().cropped_south(2),
-        |p| StyledText::from(*p).with_style(style),
         &vec![prompt], 
+        |p| StyledText::from(*p).with_style(style),
       ).with_style(style).write_unused_y(false);
     let response_box = EditBox::new(
         prompt_box.used_rect().bottom_row()

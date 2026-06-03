@@ -258,7 +258,7 @@ impl ScreenCursor {
 
 #[derive(Default)]
 pub struct TextBox {
-  pub rect:           Rect,
+  pub view:           Rect,
   pub style:          Style,
   pub content:        StyledTextPlane,
   pub cursor:         ScreenCursor,
@@ -267,10 +267,10 @@ pub struct TextBox {
   pub write_unused_y: bool,
 }
 impl TextBox {
-  pub fn new<V, F, T>(view: V, func: F, text: &Vec<T>) -> Self 
+  pub fn new<V, I, F>(view: V, input: &Vec<I>, func: F) -> Self 
   where 
     V: ViewPort,
-    F: Fn(&T) -> StyledText,
+    F: Fn(&I) -> StyledText,
   {
     Self {
       write_unused_x: true,
@@ -278,8 +278,8 @@ impl TextBox {
       write:          true,
       style:          Style::default(),
       cursor:         ScreenCursor::new(&view.view_port()), 
-      content:        StyledTextPlane::new(&view, func, text),
-      rect: view.view_port(),
+      content:        StyledTextPlane::new(&view, input, func),
+      view: view.view_port(),
     }
   }
   pub fn with_style<T>(mut self, style: T) -> Self 
@@ -312,9 +312,9 @@ impl TextBox {
 
   pub fn used_rect(&self) -> Rect {
     if let Ok(h) = u16::try_from(self.content.units().len()) {
-      self.rect.clone().cap_height(h)
+      self.view.clone().cap_height(h)
     } else {
-      self.rect.clone()
+      self.view.clone()
     }
   }
 
@@ -322,17 +322,21 @@ impl TextBox {
     self.write = true;
   }
 
-  pub fn restyle<V: ViewPort>(&mut self, rect: V, text: Vec<StyledText>) {
-    self.rect = rect.view_port().clone();
-    self.content.restyle(text, self.rect.w);
-    self.cursor.resize(&self.content, &self.rect);
+  pub fn restyle<V, I, F>(&mut self, view: V, input: &Vec<I>, func: F)
+  where 
+    V: ViewPort,
+    F: Fn(&I) -> StyledText,
+  {
+    self.view = view.view_port();
+    self.content.restyle(view, input, func);
+    self.cursor.resize(&self.content, &self.view);
     self.reset_state();
   }
 
-  pub fn resize<V: ViewPort>(&mut self, rect: V) {
-    self.rect = rect.view_port();
-    self.content.resize(self.rect.w);
-    self.cursor.resize(&self.content, &rect.view_port());
+  pub fn resize<V: ViewPort>(&mut self, view: V) {
+    self.view = view.view_port();
+    self.content.resize(self.view.w);
+    self.cursor.resize(&self.content, &self.view);
     self.reset_state();
   }
 
@@ -366,8 +370,8 @@ impl TextBox {
 
   pub fn update(&mut self, action: &Action) {
     match action {
-      Action::PageDown  => {self.down(usize::from(self.rect.h));}
-      Action::PageUp    => {self.up(usize::from(self.rect.h));}
+      Action::PageDown  => {self.down(usize::from(self.view.h));}
+      Action::PageUp    => {self.up(usize::from(self.view.h));}
       Action::Bottom    => {self.down(self.content.units().len());}
       Action::Top       => {self.up(self.content.units().len());}
       Action::MoveDown  => {self.down(1);}
@@ -382,8 +386,8 @@ impl TextBox {
     writer
       .queue(SetAttribute(Attribute::Reset))?
       .queue(&self.style)?;
-    for y in self.rect.y_range() {
-      for x in self.rect.x_range() {
+    for y in self.view.y_range() {
+      for x in self.view.x_range() {
         writer.queue(MoveTo(x, y))?.queue(Print(' '))?;
       }
     }
@@ -399,18 +403,18 @@ impl TextBox {
   }
 
   pub fn write_all<W: Write>(&self, writer: &mut W) -> std::io::Result<()> {
-    let mut x = self.rect.x;
-    let mut y = self.rect.y;
+    let mut x = self.view.x;
+    let mut y = self.view.y;
     writer
       .queue(MoveTo(x, y))?
       .queue(SetAttribute(Attribute::Reset))?
       .queue(&self.style)?;
     for line in self.content
-      .view_units(self.cursor.y_scroll(), self.rect.h.into()) 
+      .view_units(self.cursor.y_scroll(), self.view.h.into()) 
     {
       writer.queue(&self.content.source[line.idx].style)?;
       for c in line
-        .view_weighted(self.cursor.x_scroll(), self.rect.w.into()) 
+        .view_weighted(self.cursor.x_scroll(), self.view.w.into()) 
       {
         writer.queue(Print(c))?;
         x += u16::try_from(c.width().unwrap_or(0)).unwrap();
@@ -419,11 +423,11 @@ impl TextBox {
         writer
           .queue(SetAttribute(Attribute::Reset))?
           .queue(&self.style)?;
-        for _ in x..self.rect.x_end() {
+        for _ in x..self.view.x_end() {
           writer.queue(Print(' '))?;
         }
       }
-      x = self.rect.x;
+      x = self.view.x;
       y += 1;
       writer.queue(MoveTo(x, y))?;
     }
@@ -431,11 +435,11 @@ impl TextBox {
       writer
         .queue(SetAttribute(Attribute::Reset))?
         .queue(&self.style)?;
-      for _ in y..self.rect.y_end() {
-        for _ in self.rect.x_range() {
+      for _ in y..self.view.y_end() {
+        for _ in self.view.x_range() {
           writer.queue(Print(' '))?;
         }
-        x = self.rect.x;
+        x = self.view.x;
         y += 1;
         writer.queue(MoveTo(x, y))?;
       }

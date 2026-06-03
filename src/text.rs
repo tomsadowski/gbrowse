@@ -224,10 +224,10 @@ impl UnitCursor for StyledTextPlane {
   }
 }
 impl StyledTextPlane {
-  pub fn new<V, F, T>(view: &V, func: F, input: &Vec<T>) -> Self 
+  pub fn new<V, I, F>(view: &V, input: &Vec<I>, func: F) -> Self 
   where 
     V: ViewPort,
-    F: Fn(&T) -> StyledText,
+    F: Fn(&I) -> StyledText,
   {
     let source: Vec<_> = input.iter().map(|i| func(i)).collect();
     let text = StyledText::get_textlines(&source, view.view_port().w.into());
@@ -265,10 +265,17 @@ impl StyledTextPlane {
     self.right(idx);
   }
 
-  pub fn restyle(&mut self, source: Vec<StyledText>, width: u16) {
-    self.source = source;
+  pub fn restyle<V, I, F>(&mut self, view: V, input: &Vec<I>, func: F) 
+  where 
+    V: ViewPort,
+    F: Fn(&I) -> StyledText,
+  {
+    self.source = input.iter().map(|i| func(i)).collect();
     let idx   = self.get_idx();
-    self.text = StyledText::get_textlines(&self.source, width.into());
+    self.text = StyledText::get_textlines(
+      &self.source, 
+      view.view_port().w.into()
+    );
     self.set_idx(idx);
   }
 

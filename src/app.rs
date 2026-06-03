@@ -185,9 +185,8 @@ impl App {
         self.tabs.add(url);
         let doc = gemdoc::parse_doc(&content);
         self.tabs.content = TextBox::new(
-            self.frame,
+            self.frame, &doc,
             |g| self.user.get_styled_gemtext(g),
-            &doc
           ).with_style(self.user.style.general);
         self.tabs.source = doc;
         self.tab_changed = true;
@@ -240,10 +239,8 @@ impl App {
       let source = &tab.source;
       tab.content.restyle(
         self.frame,
-        source
-          .iter()
-          .map(|gem| self.user.get_styled_gemtext(gem))
-          .collect(),
+        source,
+        |gem| self.user.get_styled_gemtext(gem),
       );
       tab.content.style = self.user.style.general.into();
     }

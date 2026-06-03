@@ -63,7 +63,7 @@ impl TabList {
     {
       self.head = idx;
     } else {
-      let new_tab = Tab::init(self.rect, url);
+      let new_tab = Tab::init(self.view, url);
       if self.head + 1 == self.tabs.len() {
         self.tabs.push(new_tab);
         self.head += 1;
@@ -109,7 +109,7 @@ impl std::ops::DerefMut for Tab {
 impl Tab {
   pub fn init<V: ViewPort>(rect: V, url: &url::Url) -> Self {
     let mut content = TextBox::default();
-    content.rect    = rect.view_port();
+    content.view    = rect.view_port();
     Self {
       url:    url.clone(),
       source: vec![],
