@@ -1,7 +1,7 @@
 // src/app.rs
 
 use crate::{
-  cursor::UnitCursor,
+  cursor::{UnitCursor, UnitCursorMut},
   user::{self, User, UserTable},
   keys::Action,
   view::{Rect, ViewPort},
@@ -91,7 +91,7 @@ impl App {
       quit:        false,
     };
     app.focus_tabs();
-    app.spawn_request(&app.tabs.url.clone());
+    app.spawn_request(&app.tabs.current().url.clone());
     app
   }
 
@@ -183,11 +183,11 @@ impl App {
       }
       _ => {
         self.tabs.add(url);
-        self.tabs.set_source(
+        self.tabs.current_mut().set_source(
           gemdoc::parse_doc(&content),
           |g| self.user.get_styled_gemtext(g),
         );
-        self.tabs.style = self.user.style.general.into();
+        self.tabs.current_mut().content.style = self.user.style.general.into();
         self.tab_changed = true;
       }
     };
@@ -247,7 +247,7 @@ impl App {
   }
 
   pub fn select_link(&mut self, url_str: &str) {
-    match util::join_if_relative(&self.tabs.url, url_str) {
+    match util::join_if_relative(&self.tabs.current().url, url_str) {
       Err(e) => self.focus_ack_dialog(format!(
         "{} -- Invalid URL. {}", url_str, e)),
       Ok(url) => {
@@ -261,7 +261,7 @@ impl App {
     self.clear       = false;
     self.tab_changed = false;
     self.new_dlg     = false;
-    self.tabs.reset_state();
+    self.tabs.current_mut().content.reset_state();
     match (message, &mut self.focus) {
       (Msg::Quit, _) => {
         self.quit = true;
@@ -390,14 +390,17 @@ impl App {
         }
       }
       (Msg::Action(Action::SaveUrl), Focus::Tab) => {
-        match self.user.save_url(&self.tabs.url) {
+        match self.user.save_url(&self.tabs.current().url) {
           Err(e) => self.focus_ack_dialog(e),
           Ok(()) => self.focus_ack_dialog(format!(
-            "Saved URL: {}", self.tabs.url.to_string())),
+            "Saved URL: {}", self.tabs.current().url.to_string())),
         }
       }
       (Msg::Action(Action::Select), Focus::Tab) => {
-        match self.tabs.source[self.tabs.get_source_idx()].tag.clone() {
+        match self.tabs.current()
+          .source[self.tabs.current().content.get_source_idx()]
+          .tag.clone() 
+        {
           GemTag::Link(link) => {
             let link = link.clone();
             self.select_link(&link);
@@ -438,7 +441,7 @@ impl App {
         self.focus_ask_dialog(Task::DelTab, "Delete current tab?");
       }
       (Msg::Action(action), Focus::Tab) => {
-        self.tabs.update(action);
+        self.tabs.current_mut().content.update(action);
       }
     }
   }
@@ -489,12 +492,12 @@ impl App {
     self.frame.write_footer(&self.guide, stdout)?;
     if let Focus::Dialog(_, dialog) = &self.focus {
       if self.new_dlg {
-        self.tabs.clear(stdout)?;
+        self.tabs.current().content.clear(stdout)?;
       }
       dialog.write(stdout)?;
     } else {
-      self.tabs.write(stdout)?;
-      self.tabs.cursor.write(stdout)?;
+      self.tabs.current().content.write(stdout)?;
+      self.tabs.current().content.cursor.write(stdout)?;
     }
     stdout.flush()
   }

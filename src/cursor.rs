@@ -95,6 +95,11 @@ pub trait UnitCursor {
 pub trait UnitCursorMut: UnitCursor {
   fn units_mut(&mut self) -> &mut Vec<Self::Unit>;
 
+  fn current_mut(&mut self) -> &mut Self::Unit {
+    let head = self.head();
+    &mut self.units_mut()[head]
+  }
+
   fn delete(&mut self) -> bool {
     let head = self.head();
     if head < self.units().len() {

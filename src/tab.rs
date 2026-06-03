@@ -33,24 +33,13 @@ impl UnitCursorMut for TabList {
     &mut self.tabs
   }
 }
-impl std::ops::Deref for TabList {
-  type Target = Tab;
-  fn deref(&self) -> &Self::Target {
-    &self.tabs[self.head]
-  }
-}
-impl std::ops::DerefMut for TabList {
-  fn deref_mut(&mut self) -> &mut Self::Target {
-    &mut self.tabs[self.head]
-  }
-}
 impl TabList {
   pub fn new(tab: Tab) -> Self {
     Self {tabs: vec![tab], head: 0}
   }
 
   pub fn banner_text(&self) -> String {
-    format!("{}/{} - {}", self.head + 1, self.tabs.len(), self.url)
+    format!("{}/{} - {}", self.head + 1, self.tabs.len(), self.current().url)
   }
 
   // maybe return bool
@@ -64,7 +53,7 @@ impl TabList {
     {
       self.head = idx;
     } else {
-      let new_tab = Tab::init(self.view, url);
+      let new_tab = Tab::init(self.current().content.view, url);
       if self.head + 1 == self.tabs.len() {
         self.tabs.push(new_tab);
         self.head += 1;
@@ -74,7 +63,7 @@ impl TabList {
         self.tabs.insert(self.head, new_tab);
       }
     }
-    self.reset_state();
+    self.current_mut().content.reset_state();
   }
 
   pub fn delete(&mut self) {
@@ -86,7 +75,7 @@ impl TabList {
 
   pub fn resize<V: ViewPort + Copy>(&mut self, rect: V) {
     for tab in self.tabs.iter_mut() {
-      tab.resize(rect);
+      tab.content.resize(rect);
     }
   }
 }
@@ -96,17 +85,6 @@ pub struct Tab {
   pub source:  Vec<GemText>,
   pub content: TextBox,
 } 
-impl std::ops::Deref for Tab {
-  type Target = TextBox;
-  fn deref(&self) -> &Self::Target {
-    &self.content
-  }
-}
-impl std::ops::DerefMut for Tab {
-  fn deref_mut(&mut self) -> &mut Self::Target {
-    &mut self.content
-  }
-}
 impl Tab {
   pub fn init<V: ViewPort>(view: V, url: &url::Url) -> Self {
     Self {
