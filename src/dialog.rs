@@ -106,7 +106,7 @@ impl Dialog {
     }
   }
 
-  pub fn edit<V, S>(view: V, style: S, prompt: &str) -> Self 
+  pub fn edit<V, S>(view: V, style: S, prompt: &str, text: &str) -> Self 
   where 
     V: ViewPort,
     S: Into<Style> + Copy
@@ -119,9 +119,10 @@ impl Dialog {
       )
       .with_style(style)
       .write_unused_y(false);
-    let response_box = EditBox::new(
+    let response_box = EditBox::from(
         prompt_box.used_rect().bottom_row()
       )
+      .with_text(text)
       .with_style(style);
     Dialog {
       prompt:   prompt_box,

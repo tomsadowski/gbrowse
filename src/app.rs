@@ -94,7 +94,7 @@ impl App {
       Err(e) => {
         app.focus_edit_dialog(
           Task::Init(app.user.init_url.clone()), 
-          &format!("Try again: {}", e)
+          &format!("Try again: {}", e), &app.user.init_url.clone(),
         );
       }
       Ok(url) => {
@@ -136,10 +136,10 @@ impl App {
     self.new_dlg = true;
   }
 
-  fn focus_edit_dialog(&mut self, task: Task, prompt: &str) {
+  fn focus_edit_dialog(&mut self, task: Task, prompt: &str, text: &str) {
     self.focus = Focus::Dialog(
       task, 
-      Dialog::edit(self.frame, self.user.style.info, prompt)
+      Dialog::edit(self.frame, self.user.style.info, prompt, text)
     );
     self.guide = format!("Press {} to cancel", self.user.keys.cancel);
     self.new_dlg = true;
@@ -174,7 +174,7 @@ impl App {
       Status::InputExpectedSensitive => {
         self.focus_edit_dialog(
           Task::Reply(url.clone()), 
-          &status.text
+          &status.text, ""
         );
       }
       Status::RedirectTemporary | 
@@ -354,8 +354,8 @@ impl App {
           let url_str = editbox.content.to_string();
           match Url::parse(&url_str) {
             Err(e) => self.focus_edit_dialog(
-              Task::Init(url_str),
-              &format!("Invalid URL. {}", e)),
+              Task::Init(url_str.clone()),
+              &format!("Invalid URL. {}", e), &url_str),
             Ok(url) => {
               self.focus_tabs();
               self.tab_changed = true;
@@ -395,7 +395,7 @@ impl App {
         (_, Action::No,     Task::Init(url_str)) => {
           let url_str = url_str.clone();
           self.focus_edit_dialog(
-            Task::Init(url_str), &format!("Enter URL: "));
+            Task::Init(url_str.clone()), &format!("Enter URL: "), &url_str);
         }
         (_, Action::Yes, Task::Init(_)) => {
           self.quit = true;
@@ -472,7 +472,7 @@ impl App {
           MENU.iter().map(|s| s.to_string()).collect());
       }
       (Msg::Action(Action::NewTab), Focus::Tab) => {
-        self.focus_edit_dialog(Task::NewTab, "enter path: ");
+        self.focus_edit_dialog(Task::NewTab, "enter path: ", "");
       }
       (Msg::Action(Action::DelTab), Focus::Tab) => {
         self.focus_ask_dialog(Task::DelTab, "Delete current tab?");

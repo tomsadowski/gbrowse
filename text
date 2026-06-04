@@ -219,16 +219,14 @@ pub struct ScreenCursor {
   pub x: CursorView,
   pub y: CursorView,
 }
-impl<V: ViewPort> From<&V> for ScreenCursor {
-  fn from(view: &V) -> Self {
-    let view = view.view_port();
+impl ScreenCursor {
+  pub fn new(rect: &Rect) -> Self {
     Self {
-      x: CursorView::new(view.x, view.w),
-      y: CursorView::new(view.y, view.h),
+      x: CursorView::new(rect.x, rect.w),
+      y: CursorView::new(rect.y, rect.h),
     }
   }
-}
-impl ScreenCursor {
+
   pub fn x_cursor(&self) -> u16 {
     self.x.view_head
   }
@@ -282,14 +280,16 @@ pub struct TextBox {
   pub write_unused_x: bool,
   pub write_unused_y: bool,
 }
-impl<V: ViewPort> From<V> for TextBox {
+impl<V> From<V> for TextBox 
+where V: ViewPort,
+{
   fn from(view: V) -> Self {
     Self {
       write_unused_x: true,
       write_unused_y: true,
       write:          true,
       style:          Style::default(),
-      cursor:         ScreenCursor::from(&view), 
+      cursor:         ScreenCursor::new(&view.view_port()), 
       content:        StyledTextPlane::default(),
       view:           view.view_port(),
     }
@@ -306,7 +306,7 @@ impl TextBox {
       write_unused_y: true,
       write:          true,
       style:          Style::default(),
-      cursor:         ScreenCursor::from(&view), 
+      cursor:         ScreenCursor::new(&view.view_port()), 
       content:        StyledTextPlane::new(&view, input, func),
       view:           view.view_port(),
     }
@@ -501,23 +501,17 @@ pub struct EditBox {
   pub cursor:         ScreenCursor,
   pub write_unused_x: bool,
 }
-impl<V: ViewPort> From<V> for EditBox {
-  fn from(view: V) -> Self {
-    let view = view.view_port().top_row();
+impl EditBox {
+  pub fn new<V: ViewPort>(rect: V, init: &str) -> Self {
+    let rect = rect.view_port().top_row();
     Self {
       write_unused_x: true,
       write:          true,
       style:          Style::default(),
-      cursor:         ScreenCursor::from(&view), 
-      content:        EditLine::default(), 
-      rect: view,
+      cursor:         ScreenCursor::new(&rect), 
+      content:        EditLine::from(init), 
+      rect,
     }
-  }
-}
-impl EditBox {
-  pub fn with_text(mut self, text: &str) -> Self {
-    self.content = EditLine::from(text);
-    self
   }
   pub fn with_style<T>(mut self, style: T) -> Self 
   where T: Into<Style> + Copy
