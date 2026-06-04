@@ -9,19 +9,21 @@ use crate::{
 };
 
 
-pub struct TabList {
+pub struct TabManager {
+  pub view: Rect,
   pub head: usize,
   pub tabs: Vec<Tab>,
 } 
-impl Default for TabList {
-  fn default() -> Self {
+impl<V: ViewPort> From<V> for TabManager {
+  fn from(view: V) -> Self {
     Self {
+      view: view.view_port(),
       head: 0,
       tabs: vec![],
     }
   }
 }
-impl UnitCursor for TabList {
+impl UnitCursor for TabManager {
   type Unit = Tab;
   fn units(&self) -> &Vec<Tab> {
     &self.tabs
@@ -36,18 +38,25 @@ impl UnitCursor for TabList {
     self.tabs.len().saturating_sub(1)
   }
 }
-impl UnitCursorMut for TabList {
+impl UnitCursorMut for TabManager {
   fn units_mut(&mut self) -> &mut Vec<Tab> {
     &mut self.tabs
   }
 }
-impl TabList {
-  pub fn new(tab: Tab) -> Self {
-    Self {tabs: vec![tab], head: 0}
+impl TabManager {
+  pub fn banner_text(&self) -> String {
+    match self.current_checked() {
+      None => 
+        format!("0/0 - No URL"),
+      Some(tab) => 
+        format!("{}/{} - {}", self.head + 1, self.tabs.len(), tab.url),
+    }
   }
 
-  pub fn banner_text(&self) -> String {
-    format!("{}/{} - {}", self.head + 1, self.tabs.len(), self.current().url)
+  pub fn reset_state(&mut self) {
+    if let Some(tab) = self.current_mut_checked() {
+      tab.content.reset_state();
+    }
   }
 
   // maybe return bool
@@ -61,8 +70,10 @@ impl TabList {
     {
       self.head = idx;
     } else {
-      let new_tab = Tab::init(self.current().content.view, url);
-      if self.head + 1 == self.tabs.len() {
+      let new_tab = Tab::init(self.view, url);
+      if self.tabs.len() == 0 {
+        self.tabs.push(new_tab);
+      } else if self.head + 1 == self.tabs.len() {
         self.tabs.push(new_tab);
         self.head += 1;
       }

@@ -5,7 +5,7 @@ use crate::{
   user::{self, User, UserTable},
   keys::Action,
   view::{Rect, ViewPort},
-  tab::{Tab, TabList},
+  tab::{Tab, TabManager},
   widget::{Frame, TextBox},
   dialog::{Response, Dialog},
   gemdoc::{self, GemTag, GemText, Status, StatusText},
@@ -63,7 +63,7 @@ pub enum Focus {
 pub struct App {
   pub user:        User,
   pub frame:       Frame,
-  pub tabs:        TabList,
+  pub tabs:        TabManager,
   pub focus:       Focus,
   pub request:     Option<Request>,
   pub guide:       String,
@@ -77,18 +77,17 @@ impl App {
     let user_text = std::fs::read_to_string(path).unwrap_or_default();
     let user      = User::from_str(&user_text).unwrap_or_default();
     let frame     = user.get_frame(Rect::new(w, h));
-    let tab       = Tab::init(frame, &Url::parse(&user.init_url).unwrap());
     let mut app = Self {
-      frame,
-      user,
       guide:       "".into(),
-      tabs:        TabList::default(),
+      tabs:        TabManager::from(frame),
       request:     None,
       focus:       Focus::Tab,
       new_dlg:     false,
       tab_changed: true,
       clear:       true,
       quit:        false,
+      frame,
+      user,
     };
     match Url::parse(&app.user.init_url) {
       Err(e) => {
@@ -271,7 +270,7 @@ impl App {
     self.clear       = false;
     self.tab_changed = false;
     self.new_dlg     = false;
-    self.tabs.current_mut().content.reset_state();
+    self.tabs.reset_state();
     match (message, &mut self.focus) {
       (Msg::Quit, _) => {
         self.quit = true;
