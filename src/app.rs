@@ -405,9 +405,14 @@ impl App {
           self.spawn_request(&url);
         }
         (_, Action::Yes, Task::DelTab) => {
-          self.tabs.delete();
-          self.tab_changed = true;
-          self.focus_tabs();
+          if self.tabs.delete() == 0 {
+            let url_str = self.user.init_url.clone();
+            self.focus_edit_dialog(
+              Task::Init(url_str.clone()), &format!("Enter URL: "), &url_str);
+          } else {
+            self.tab_changed = true;
+            self.focus_tabs();
+          }
         }
         (Response::Ack(_), _, _) |
         (_,   Action::Select, _) |
@@ -528,12 +533,11 @@ impl App {
     self.frame.write_footer(&self.guide, stdout)?;
     if let Focus::Dialog(_, dialog) = &self.focus {
       if self.new_dlg {
-        self.tabs.current().content.clear(stdout)?;
+        TextBox::from(self.frame).empty(stdout)?;
       }
       dialog.write(stdout)?;
     } else {
-      self.tabs.current().content.write(stdout)?;
-      self.tabs.current().content.cursor.write(stdout)?;
+      self.tabs.write(stdout)?;
     }
     stdout.flush()
   }

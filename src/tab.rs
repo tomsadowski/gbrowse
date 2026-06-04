@@ -7,6 +7,7 @@ use crate::{
   gemdoc::GemText,
   text::StyledText,
 };
+use std::io::Write;
 
 
 pub struct TabManager {
@@ -88,7 +89,9 @@ impl TabManager {
   pub fn delete(&mut self) -> usize {
     if self.tabs.len() > 0 {
       self.tabs.remove(self.head);
-      self.wrapping_backward(1);
+      if self.tabs.len() > 0 {
+        self.wrapping_backward(1);
+      }
     }
     self.tabs.len()
   }
@@ -97,6 +100,19 @@ impl TabManager {
     for tab in self.tabs.iter_mut() {
       tab.content.resize(rect);
     }
+  }
+
+  pub fn write<W: Write>(&self, writer: &mut W) -> std::io::Result<()> {
+    match self.current_checked() {
+      None => {
+        TextBox::from(self.view).empty(writer)?;
+      }
+      Some(tab) => {
+        tab.content.write(writer)?;
+        tab.content.cursor.write(writer)?;
+      }
+    }
+    Ok(())
   }
 }
 

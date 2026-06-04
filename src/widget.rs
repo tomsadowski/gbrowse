@@ -424,7 +424,7 @@ impl TextBox {
     }
   }
 
-  pub fn clear<W: Write>(&self, writer: &mut W) -> std::io::Result<()> {
+  pub fn empty<W: Write>(&self, writer: &mut W) -> std::io::Result<()> {
     writer
       .queue(SetAttribute(Attribute::Reset))?
       .queue(&self.style)?;
