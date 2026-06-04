@@ -13,6 +13,14 @@ pub struct TabList {
   pub head: usize,
   pub tabs: Vec<Tab>,
 } 
+impl Default for TabList {
+  fn default() -> Self {
+    Self {
+      head: 0,
+      tabs: vec![],
+    }
+  }
+}
 impl UnitCursor for TabList {
   type Unit = Tab;
   fn units(&self) -> &Vec<Tab> {
@@ -66,11 +74,12 @@ impl TabList {
     self.current_mut().content.reset_state();
   }
 
-  pub fn delete(&mut self) {
-    if self.tabs.len() > 1 {
+  pub fn delete(&mut self) -> usize {
+    if self.tabs.len() > 0 {
       self.tabs.remove(self.head);
       self.wrapping_backward(1);
     }
+    self.tabs.len()
   }
 
   pub fn resize<V: ViewPort + Copy>(&mut self, rect: V) {

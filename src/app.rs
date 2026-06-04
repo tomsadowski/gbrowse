@@ -44,7 +44,7 @@ pub enum Task {
   Menu,
   ChangeStyle,
   ChangeKeys,
-  Input(String),
+  Init(String),
   Reply(Url),
   Go(Url), 
 }
@@ -82,7 +82,7 @@ impl App {
       frame,
       user,
       guide:       "".into(),
-      tabs:        TabList::new(tab),
+      tabs:        TabList::default(),
       request:     None,
       focus:       Focus::Tab,
       new_dlg:     false,
@@ -90,8 +90,19 @@ impl App {
       clear:       true,
       quit:        false,
     };
-    app.focus_tabs();
-    app.spawn_request(&app.tabs.current().url.clone());
+    match Url::parse(&app.user.init_url) {
+      Err(e) => {
+        app.focus_edit_dialog(
+          Task::Init(app.user.init_url.clone()), 
+          &format!("Try again: {}", e)
+        );
+      }
+      Ok(url) => {
+        app.tabs.add(&url);
+        app.focus_tabs();
+        app.spawn_request(&url);
+      }
+    }
     app
   }
 
@@ -184,8 +195,7 @@ impl App {
       _ => {
         self.tabs.add(url);
         self.tabs.current_mut().set_source(
-          gemdoc::parse_doc(&content),
-          |g| self.user.get_styled_gemtext(g),
+          gemdoc::parse_doc(&content), |g| self.user.get_styled_gemtext(g),
         );
         self.tabs.current_mut().content.style = self.user.style.general.into();
         self.tab_changed = true;
@@ -340,6 +350,24 @@ impl App {
             _ => self.focus_tabs(),
           }
         }
+        (Response::Edit(editbox), Action::Enter, Task::Init(_)) => {
+          let url_str = editbox.content.to_string();
+          match Url::parse(&url_str) {
+            Err(e) => self.focus_edit_dialog(
+              Task::Init(url_str),
+              &format!("Invalid URL. {}", e)),
+            Ok(url) => {
+              self.focus_tabs();
+              self.tab_changed = true;
+              self.spawn_request(&url);
+            }
+          }
+        }
+        (Response::Edit(editbox), Action::Cancel, Task::Init(url_str)) => {
+          let url_str = url_str.clone();
+          self.focus_ask_dialog(
+            Task::Init(url_str), "Exit application?".into())
+        }
         (Response::Edit(editbox), Action::Enter, Task::Reply(url)) => {
           let text = editbox.content.to_string().trim().replace(" ", "%20");
           match url.clone().join(&format!("?{}", text)) {
@@ -362,6 +390,15 @@ impl App {
               self.spawn_request(&url);
             }
           }
+        }
+        (_, Action::Cancel, Task::Init(url_str)) |
+        (_, Action::No,     Task::Init(url_str)) => {
+          let url_str = url_str.clone();
+          self.focus_edit_dialog(
+            Task::Init(url_str), &format!("Enter URL: "));
+        }
+        (_, Action::Yes, Task::Init(_)) => {
+          self.quit = true;
         }
         (_, Action::Yes, Task::Go(url)) => {
           let url = url.clone();
