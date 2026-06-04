@@ -90,12 +90,10 @@ impl App {
       user,
     };
     match Url::parse(&app.user.init_url) {
-      Err(e) => {
-        app.focus_edit_dialog(
-          Task::Init(app.user.init_url.clone()), 
-          &format!("Try again: {}", e), &app.user.init_url.clone(),
-        );
-      }
+      Err(e) => app.focus_edit_dialog(
+        Task::Init(app.user.init_url.clone()), 
+        &format!("Try again: {}", e), &app.user.init_url.clone(),
+      ),
       Ok(url) => {
         app.tabs.add(&url);
         app.focus_tabs();

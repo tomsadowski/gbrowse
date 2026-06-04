@@ -96,9 +96,10 @@ impl TabManager {
     self.tabs.len()
   }
 
-  pub fn resize<V: ViewPort + Copy>(&mut self, rect: V) {
+  pub fn resize<V: ViewPort + Copy>(&mut self, view: V) {
+    self.view = view.view_port();
     for tab in self.tabs.iter_mut() {
-      tab.content.resize(rect);
+      tab.content.resize(self.view);
     }
   }
 
