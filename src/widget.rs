@@ -519,6 +519,7 @@ impl<V: ViewPort> From<V> for EditBox {
 impl EditBox {
   pub fn with_text(mut self, text: &str) -> Self {
     self.content = EditLine::from(text);
+    self.cursor.x.update(self.content.weighted_head());
     self
   }
   pub fn with_style<T>(mut self, style: T) -> Self 

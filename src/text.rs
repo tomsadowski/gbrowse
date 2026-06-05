@@ -64,10 +64,12 @@ pub struct EditLine {
 }
 impl From<&str> for EditLine {
   fn from(item: &str) -> Self {
-    Self {
+    let mut editline = Self {
       head: 0, 
       text: item.chars().collect()
-    }
+    };
+    editline.end();
+    editline
   }
 }
 impl ToString for EditLine {
