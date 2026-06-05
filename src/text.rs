@@ -248,12 +248,14 @@ impl StyledTextPlane {
   }
 
   pub fn get_idx(&self) -> usize {
-    let x_head = self.current().head();
-    self.text[..self.head()]
-      .iter()
-      .map(|line| line.units().len().max(1))
-      .chain(std::iter::once(x_head))
-      .sum()
+    match self.current_checked().map(|u| u.head()) {
+      None         => 0,
+      Some(x_head) => self.text[..self.head()]
+        .iter()
+        .map(|line| line.units().len().max(1))
+        .chain(std::iter::once(x_head))
+        .sum(),
+    }
   }
 
   fn set_idx(&mut self, idx: usize) {

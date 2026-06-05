@@ -251,7 +251,11 @@ impl ScreenCursor {
     X: WeightedCursor 
   {
     self.y.resize(plane.head(), rect.y, rect.h);
-    self.x.resize(plane.current().weighted_head(), rect.x, rect.w);
+    self.x.resize(
+      plane.current_checked().map(|c| c.weighted_head()).unwrap_or(0), 
+      rect.x, 
+      rect.w
+    );
   }
 
   pub fn update<X, Y>(&mut self, plane: &Y) -> bool 
@@ -260,7 +264,9 @@ impl ScreenCursor {
     X: WeightedCursor
   {
     let y = self.y.update(plane.head());
-    let x = self.x.update(plane.current().weighted_head());
+    let x = self.x.update(
+      plane.current_checked().map(|c| c.weighted_head()).unwrap_or(0)
+    );
     x || y
   }
 

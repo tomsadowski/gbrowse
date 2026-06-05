@@ -124,30 +124,29 @@ pub trait UnitCursorMut: UnitCursor {
     self.length()
   }
 
-  // maybe return bool
-  fn insert_or_move<F>(&mut self, func: F, unit: Self::Unit) 
+  fn insert_or_move<F>(&mut self, func: F, unit: Self::Unit) -> bool
   where F: Fn(&Self::Unit) -> bool,
   {
-    // search for tab with same url_str
-    // move head to location of tab with url_str
     if let Some((idx, _)) = self.units_mut()
       .iter_mut()
       .enumerate()
       .find(|(_, u)| func(u))
     {
       *self.head_mut() = idx;
-    } else {
-      if self.length() == 0 {
-        self.units_mut().push(unit);
-      } else if self.head() + 1 == self.length() {
-        self.units_mut().push(unit);
-        *self.head_mut() += 1;
-      }
-      else {
-        *self.head_mut() += 1;
-        let head = self.head();
-        self.units_mut().insert(head, unit);
-      }
+      false
+    } else if self.length() == 0 {
+      self.units_mut().push(unit);
+      true
+    } else if self.head() + 1 == self.length() {
+      self.units_mut().push(unit);
+      *self.head_mut() += 1;
+      true
+    }
+    else {
+      *self.head_mut() += 1;
+      let head = self.head();
+      self.units_mut().insert(head, unit);
+      true
     }
   }
 
