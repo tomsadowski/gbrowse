@@ -14,6 +14,10 @@ pub trait UnitCursor {
   fn head_mut(&mut self) -> &mut usize;
   fn max_head(&self)     -> usize;
 
+  fn length(&self) -> usize {
+    self.units().len()
+  }
+
   fn current(&self) -> &Self::Unit {
     &self.units()[self.head()]
   }
@@ -37,7 +41,7 @@ pub trait UnitCursor {
   fn view_units(&self, start: usize, width: usize) 
     -> Take<slice::Iter<'_, Self::Unit>> 
   {
-    if start >= self.units().len() {
+    if start >= self.length() {
       self.units().iter().take(0) 
     } else {
       self.units()[start..].iter().take(width) 
@@ -109,9 +113,47 @@ pub trait UnitCursorMut: UnitCursor {
     self.units_mut().get_mut(head)
   }
 
+  fn remove(&mut self) -> usize {
+    let head = self.head();
+    if head < self.length() {
+      self.units_mut().remove(head);
+      if self.units().len() > 0 {
+        self.wrapping_backward(1);
+      }
+    }
+    self.length()
+  }
+
+  // maybe return bool
+  fn insert_or_move<F>(&mut self, func: F, unit: Self::Unit) 
+  where F: Fn(&Self::Unit) -> bool,
+  {
+    // search for tab with same url_str
+    // move head to location of tab with url_str
+    if let Some((idx, _)) = self.units_mut()
+      .iter_mut()
+      .enumerate()
+      .find(|(_, u)| func(u))
+    {
+      *self.head_mut() = idx;
+    } else {
+      if self.length() == 0 {
+        self.units_mut().push(unit);
+      } else if self.head() + 1 == self.length() {
+        self.units_mut().push(unit);
+        *self.head_mut() += 1;
+      }
+      else {
+        *self.head_mut() += 1;
+        let head = self.head();
+        self.units_mut().insert(head, unit);
+      }
+    }
+  }
+
   fn delete(&mut self) -> bool {
     let head = self.head();
-    if head < self.units().len() {
+    if head < self.length() {
       self.units_mut().remove(head);
       true
     } else {false}
@@ -128,7 +170,7 @@ pub trait UnitCursorMut: UnitCursor {
 
   fn insert(&mut self, c: Self::Unit) -> bool {
     let head = self.head();
-    if head + 1 == self.units().len() || self.units().len() == 0 {
+    if head + 1 == self.length() || self.length() == 0 {
       self.units_mut().push(c);
       self.forward(1);
       true
@@ -167,7 +209,7 @@ where
   fn view_weighted(&self, start: usize, width: usize) 
     -> Take<slice::Iter<'_, Self::Unit>> 
   {
-    if start >= self.units().len() {
+    if start >= self.length() {
       self.units().iter().take(0) 
     } else {
       let text           = &self.units()[start..];

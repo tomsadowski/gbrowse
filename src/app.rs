@@ -407,7 +407,7 @@ impl App {
           self.spawn_request(&url);
         }
         (_, Action::Yes, Task::DelTab) => {
-          if self.tabs.delete() == 0 {
+          if self.tabs.remove() == 0 {
             let url_str = self.user.init_url.clone();
             self.focus_edit_dialog(
               Task::Init(url_str.clone()), &format!("Enter URL: "), &url_str);

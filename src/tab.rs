@@ -41,43 +41,38 @@ impl Tab {
       Tab::Gopher(UrlTab {url, ..}) => Some(url),
     }
   }
-
   pub fn heading(&self) -> Option<&str> {
     match self {
       Tab::Text(heading, _) => Some(heading),
       _                     => None,
     }
   }
-
   pub fn gem_tab(&self) ->  Option<&UrlTab<GemText>> {
     match self {
       Tab::Gem(tab) => Some(tab),
       _             => None,
     }
   }
-
   pub fn gopher_tab(&self) ->  Option<&UrlTab<String>> {
     match self {
       Tab::Gopher(tab) => Some(tab),
       _                => None,
     }
   }
-
   pub fn text_tab(&self) ->  Option<(&str, &TextBox)> {
     match self {
       Tab::Text(heading, textbox) => Some((heading, textbox)),
       _                           => None,
     }
   }
-
   pub fn gem_source(&self) ->  Option<&Vec<GemText>> {
     self.gem_tab().map(|tab| &tab.source)
   }
-
   pub fn current_gem_source(&self) ->  Option<&GemText> {
-    self.gem_tab().map(|tab| &tab.source[tab.textbox.get_source_idx()])
+    self
+      .gem_tab()
+      .map(|tab| &tab.source[tab.textbox.get_source_idx()])
   }
-
   pub fn textbox(&self) -> &TextBox {
     match self {
       Tab::Text(_, textbox) |
@@ -85,17 +80,12 @@ impl Tab {
       Tab::Gopher(UrlTab {textbox, ..}) => textbox,
     }
   }
-
   pub fn textbox_mut(&mut self) -> &mut TextBox {
     match self {
       Tab::Text(_, textbox) |
       Tab::Gem(   UrlTab {textbox, ..}) | 
       Tab::Gopher(UrlTab {textbox, ..}) => textbox,
     }
-  }
-
-  pub fn reset_state(&mut self) {
-    self.textbox_mut().reset_state()
   }
 }
 
@@ -110,6 +100,7 @@ impl<V: ViewPort> From<V> for TabManager {
       view: view.view_port(),
       head: 0,
       tabs: vec![Tab::Text("".into(), TextBox::from(view))],
+      //tabs: vec![],
     }
   }
 }
@@ -135,45 +126,31 @@ impl UnitCursorMut for TabManager {
 }
 impl TabManager {
   pub fn banner_text(&self) -> String {
-    match self.current() {
-      Tab::Text(heading, _) => 
-        format!("{}/{} - {}", self.head + 1, self.tabs.len(), heading),
-      Tab::Gem(   UrlTab {url, ..}) | 
-      Tab::Gopher(UrlTab {url, ..}) => 
-        format!("{}/{} - {}", self.head + 1, self.tabs.len(), url),
+    match self.current_checked()
+      .map(|tab| match tab {
+        Tab::Gem(   UrlTab {url, ..}) | 
+        Tab::Gopher(UrlTab {url, ..}) => url.to_string(),
+        Tab::Text(heading, _)         => heading.to_string(),
+      }) 
+    {
+      None    => format!("Empty"),
+      Some(s) => format!("{}/{} - {}", self.head + 1, self.tabs.len(), s),
     }
   }
 
   pub fn reset_state(&mut self) {
-    self.current_mut().textbox_mut().reset_state()
+    if let Some(tab) = self.current_mut_checked() {
+      tab.textbox_mut().reset_state()
+    }
   }
 
   // maybe return bool
   pub fn add_gem<F>(&mut self, url: &url::Url, source: Vec<GemText>, func: F) 
   where F: Fn(&GemText) -> StyledText,
   {
-    // search for tab with same url_str
-    // move head to location of tab with url_str
-    if let Some((idx, _)) = self.tabs
-      .iter_mut()
-      .enumerate()
-      .find(|(_, tab)| tab.url() == Some(url))
-    {
-      self.head = idx;
-    } else {
-      let new_tab = UrlTab::new(url, self.view, source, func);
-      if self.tabs.len() == 0 {
-        self.tabs.push(Tab::Gem(new_tab));
-      } else if self.head + 1 == self.tabs.len() {
-        self.tabs.push(Tab::Gem(new_tab));
-        self.head += 1;
-      }
-      else {
-        self.head += 1;
-        self.tabs.insert(self.head, Tab::Gem(new_tab));
-      }
-    }
-    self.current_mut().textbox_mut().reset_state();
+    let new_tab = Tab::Gem(UrlTab::new(url, self.view, source, func));
+    self.insert_or_move(|tab| tab.url() == Some(url), new_tab);
+    self.reset_state();
   }
 
   pub fn push_gem_style<F>(&mut self, func: F, style: Style)
@@ -188,15 +165,6 @@ impl TabManager {
     }
   }
 
-
-  pub fn delete(&mut self) -> usize {
-    if self.tabs.len() > 1 {
-      self.tabs.remove(self.head);
-      self.wrapping_backward(1);
-    }
-    self.tabs.len()
-  }
-
   pub fn resize<V: ViewPort + Copy>(&mut self, view: V) {
     self.view = view.view_port();
     for tab in self.tabs.iter_mut() {
@@ -205,8 +173,12 @@ impl TabManager {
   }
 
   pub fn write<W: Write>(&self, writer: &mut W) -> std::io::Result<()> {
-    self.current().textbox().write(writer)?;
-    self.current().textbox().cursor.write(writer)?;
+    if let Some(tab) = self.current_checked() {
+      tab.textbox().write(writer)?;
+      tab.textbox().cursor.write(writer)?;
+    } else {
+      TextBox::from(self.view).empty(writer)?;
+    }
     Ok(())
   }
 }
