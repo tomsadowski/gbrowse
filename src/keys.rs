@@ -4,7 +4,7 @@ use crate::{
   cursor::UnitCursor,
   user::UserTable,
   widget::{EditBox, TextBox},
-  dialog::{Dialog, Response},
+  dialog::{Dialog, Input},
 };
 use crossterm::event::KeyCode;
 use toml::Value;
@@ -203,11 +203,11 @@ impl KeysTable {
   }
 
   pub fn get_dlg_action(&self, dialog: &Dialog, kc: &KeyCode) -> Option<Action> {
-    match dialog.response {
-      Response::Ack(_)    => self.get_ack_dialog_action(kc),
-      Response::Ask(_)    => self.get_ask_dialog_action(kc),
-      Response::Edit(_)   => self.get_edit_dialog_action(kc),
-      Response::Select(_) => self.get_select_dialog_action(kc),
+    match dialog.input {
+      Input::Ack(_)    => self.get_ack_dialog_action(kc),
+      Input::Ask(_)    => self.get_ask_dialog_action(kc),
+      Input::Edit(_)   => self.get_edit_dialog_action(kc),
+      Input::Select(_) => self.get_select_dialog_action(kc),
     }
   }
 

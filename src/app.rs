@@ -5,9 +5,9 @@ use crate::{
   user::{self, User, UserTable},
   keys::Action,
   view::{Rect, ViewPort},
-  tab::{Tab, TabManager},
+  tab::{Tab, TabManager, TabType, SourceType},
   widget::{Frame, TextBox},
-  dialog::{Response, Dialog},
+  dialog::{Input, Dialog},
   gemdoc::{self, GemTag, GemText, Status, StatusText},
   network::Request,
   util,
@@ -95,7 +95,6 @@ impl App {
         &format!("Try again: {}", e), &app.user.init_url.clone(),
       ),
       Ok(url) => {
-        app.tabs.add(&url);
         app.focus_tabs();
         app.spawn_request(&url);
       }
@@ -190,11 +189,13 @@ impl App {
         self.focus_ack_dialog(status.text);
       }
       _ => {
-        self.tabs.add(url);
-        self.tabs.current_mut().set_source(
-          gemdoc::parse_doc(&content), |g| self.user.get_styled_gemtext(g),
+        self.tabs.add_gem(
+          url, 
+          gemdoc::parse_doc(&content), 
+          |g| self.user.get_styled_gemtext(g),
         );
-        self.tabs.current_mut().content.style = self.user.style.general.into();
+        self.tabs.current_mut().textbox_mut().style = 
+          self.user.style.general.into();
         self.tab_changed = true;
       }
     };
@@ -243,12 +244,12 @@ impl App {
     self.frame = self.user.get_frame(self.frame.screen);
     for tab in self.tabs.tabs.iter_mut() {
       let source = &tab.source;
-      tab.content.restyle(
+      tab.textbox_mut().restyle(
         self.frame,
         source,
         |gem| self.user.get_styled_gemtext(gem),
       );
-      tab.content.style = self.user.style.general.into();
+      tab.textbox_mut().style = self.user.style.general.into();
     }
     self.clear = true;
   }
@@ -282,9 +283,9 @@ impl App {
         self.clear = true;
       }
       (Msg::Action(action), Focus::Dialog(task, dlg)) 
-        => match (&mut dlg.response, action, task) 
+        => match (&mut dlg.input, action, task) 
       {
-        (Response::Select(textbox), Action::Select, Task::NewTab) => {
+        (Input::Select(textbox), Action::Select, Task::NewTab) => {
           if self.user.urls.len() > 0 {
             let link = &self.user.urls[textbox.get_source_idx()].clone();
             self.select_link(link);
@@ -292,7 +293,7 @@ impl App {
             self.focus_tabs();
           }
         }
-        (Response::Select(textbox), Action::Select, Task::ChangeKeys) => {
+        (Input::Select(textbox), Action::Select, Task::ChangeKeys) => {
           match std::fs::read_to_string(
             user::get_keys_file(&textbox.get_source())) 
           {
@@ -304,7 +305,7 @@ impl App {
             }
           }
         }
-        (Response::Select(textbox), Action::Select, Task::ChangeStyle) => {
+        (Input::Select(textbox), Action::Select, Task::ChangeStyle) => {
           match std::fs::read_to_string(
             user::get_styles_file(&textbox.get_source())) 
           {
@@ -318,7 +319,7 @@ impl App {
             }
           }
         }
-        (Response::Select(textbox), Action::Select, Task::Menu) => {
+        (Input::Select(textbox), Action::Select, Task::Menu) => {
           match MENU[textbox.get_source_idx()] {
             MANUAL => {
               self.focus_ack_dialog("View manual".into());
@@ -347,7 +348,7 @@ impl App {
             _ => self.focus_tabs(),
           }
         }
-        (Response::Edit(editbox), Action::Enter, Task::Init(_)) => {
+        (Input::Edit(editbox), Action::Enter, Task::Init(_)) => {
           let url_str = editbox.content.to_string();
           match Url::parse(&url_str) {
             Err(e) => self.focus_edit_dialog(
@@ -360,12 +361,12 @@ impl App {
             }
           }
         }
-        (Response::Edit(editbox), Action::Cancel, Task::Init(url_str)) => {
+        (Input::Edit(editbox), Action::Cancel, Task::Init(url_str)) => {
           let url_str = url_str.clone();
           self.focus_ask_dialog(
             Task::Init(url_str), "Exit application?".into())
         }
-        (Response::Edit(editbox), Action::Enter, Task::Reply(url)) => {
+        (Input::Edit(editbox), Action::Enter, Task::Reply(url)) => {
           let text = editbox.content.to_string().trim().replace(" ", "%20");
           match url.clone().join(&format!("?{}", text)) {
             Err(e) => self.focus_ack_dialog(
@@ -377,7 +378,7 @@ impl App {
             }
           }
         }
-        (Response::Edit(editbox), Action::Enter, Task::NewTab) => {
+        (Input::Edit(editbox), Action::Enter, Task::NewTab) => {
           match Url::parse(&editbox.content.to_string()) {
             Err(e) => self.focus_ack_dialog(format!(
               "Invalid URL. {}", e)),
@@ -412,16 +413,16 @@ impl App {
             self.focus_tabs();
           }
         }
-        (Response::Ack(_), _, _) |
+        (Input::Ack(_), _, _) |
         (_,   Action::Select, _) |
         (_,       Action::No, _) |
         (_,   Action::Cancel, _) => {
           self.focus_tabs();
         }
-        (Response::Select(textbox), action, _) => {
+        (Input::Select(textbox), action, _) => {
           textbox.update(action);
         }
-        (Response::Edit(editbox),   action, _) => {
+        (Input::Edit(editbox),   action, _) => {
           editbox.update(action);
         }
         (_, _, _) => {
@@ -436,16 +437,17 @@ impl App {
         }
       }
       (Msg::Action(Action::Select), Focus::Tab) => {
-        match self.tabs.current()
-          .source[self.tabs.current().content.get_source_idx()]
-          .tag.clone() 
+        match self.tabs.current().current_source()
         {
-          GemTag::Link(link) => {
+          SourceType::Gem(GemText {tag: GemTag::Link(link), ..}) => {
             let link = link.clone();
             self.select_link(&link);
           }
-          gemtext => self.focus_ack_dialog(format!(
-            "You've selected {:?}", gemtext)
+        //gemtext => self.focus_ack_dialog(format!(
+        //  "You've selected {:?}", gemtext)
+        //),
+          _ => self.focus_ack_dialog(format!(
+            "You've selected something yet to be fathomable")
           ),
         }
       }
@@ -480,7 +482,7 @@ impl App {
         self.focus_ask_dialog(Task::DelTab, "Delete current tab?");
       }
       (Msg::Action(action), Focus::Tab) => {
-        self.tabs.current_mut().content.update(action);
+        self.tabs.current_mut().textbox_mut().update(action);
       }
     }
   }
