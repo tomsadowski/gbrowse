@@ -79,7 +79,7 @@ impl App {
     let frame     = user.get_frame(Rect::new(w, h));
     let mut app = Self {
       guide:       "".into(),
-      tabs:        TabManager::from(frame),
+      tabs:        TabManager::from(frame).with_style(user.style.general),
       request:     None,
       focus:       Focus::Tab,
       new_dlg:     false,
@@ -194,8 +194,6 @@ impl App {
           gemdoc::parse_doc(&content), 
           |g| self.user.get_styled_gemtext(g),
         );
-        self.tabs.current_mut().textbox_mut().style = 
-          self.user.style.general.into();
         self.tab_changed = true;
       }
     };
@@ -251,11 +249,10 @@ impl App {
   pub fn push_style(&mut self) {
     self.frame = self.user.get_frame(self.frame.screen);
     self.push_size();
+    self.tabs.push_style(self.user.style.general);
     self.tabs.push_gem_style(
-      |gem| self.user.get_styled_gemtext(gem),
-      self.user.style.general.into()
+      |gem| self.user.get_styled_gemtext(gem)
     );
-    self.clear = true;
   }
 
   pub fn select_link(&mut self, url_str: &str) {

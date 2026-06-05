@@ -90,20 +90,11 @@ impl Tab {
 }
 
 pub struct TabManager {
-  pub view: Rect,
-  pub head: usize,
-  pub tabs: Vec<Tab>,
+  pub view:  Rect,
+  pub style: Style,
+  pub head:  usize,
+  pub tabs:  Vec<Tab>,
 } 
-impl<V: ViewPort> From<V> for TabManager {
-  fn from(view: V) -> Self {
-    Self {
-      view: view.view_port(),
-      head: 0,
-      tabs: vec![Tab::Text("".into(), TextBox::from(view))],
-      //tabs: vec![],
-    }
-  }
-}
 impl UnitCursor for TabManager {
   type Unit = Tab;
   fn units(&self) -> &Vec<Tab> {
@@ -124,17 +115,52 @@ impl UnitCursorMut for TabManager {
     &mut self.tabs
   }
 }
+impl<V: ViewPort> From<V> for TabManager {
+  fn from(view: V) -> Self {
+    Self {
+      view:  view.view_port(),
+      style: Style::default(),
+      head:  0,
+      tabs:  vec![],
+    }
+  }
+}
 impl TabManager {
-  pub fn banner_text(&self) -> String {
-    match self.current_checked()
-      .map(|tab| match tab {
-        Tab::Gem(   UrlTab {url, ..}) | 
-        Tab::Gopher(UrlTab {url, ..}) => url.to_string(),
-        Tab::Text(heading, _)         => heading.to_string(),
-      }) 
-    {
-      None    => format!("Empty"),
-      Some(s) => format!("{}/{} - {}", self.head + 1, self.tabs.len(), s),
+  pub fn with_style<T>(mut self, style: T) -> Self 
+  where T: Into<Style> + Copy
+  {
+    self.style = style.into();
+    for tab in self.tabs.iter_mut() {
+      tab.textbox_mut().style = self.style;
+    }
+    self
+  }
+
+  pub fn push_style<T>(&mut self, style: T)
+  where T: Into<Style> + Copy
+  {
+    self.style = style.into();
+    for tab in self.tabs.iter_mut() {
+      tab.textbox_mut().style = self.style;
+    }
+  }
+
+  pub fn push_gem_style<F>(&mut self, func: F)
+  where F: Fn(&GemText) -> StyledText,
+  {
+    for tab in self.tabs.iter_mut() {
+      if let Tab::Gem(gem_tab) = tab {
+        let source = &gem_tab.source;
+        gem_tab.textbox.restyle(source, |gem| func(gem));
+        gem_tab.textbox.style = self.style;
+      }
+    }
+  }
+
+  pub fn resize<V: ViewPort + Copy>(&mut self, view: V) {
+    self.view = view.view_port();
+    for tab in self.tabs.iter_mut() {
+      tab.textbox_mut().resize(self.view);
     }
   }
 
@@ -153,22 +179,16 @@ impl TabManager {
     self.reset_state();
   }
 
-  pub fn push_gem_style<F>(&mut self, func: F, style: Style)
-  where F: Fn(&GemText) -> StyledText,
-  {
-    for tab in self.tabs.iter_mut() {
-      if let Tab::Gem(gem_tab) = tab {
-        let source = &gem_tab.source;
-        gem_tab.textbox.restyle(source, |gem| func(gem));
-        gem_tab.textbox.style = style;
-      }
-    }
-  }
-
-  pub fn resize<V: ViewPort + Copy>(&mut self, view: V) {
-    self.view = view.view_port();
-    for tab in self.tabs.iter_mut() {
-      tab.textbox_mut().resize(self.view);
+  pub fn banner_text(&self) -> String {
+    match self.current_checked()
+      .map(|tab| match tab {
+        Tab::Gem(   UrlTab {url, ..}) | 
+        Tab::Gopher(UrlTab {url, ..}) => url.to_string(),
+        Tab::Text(heading, _)         => heading.to_string(),
+      }) 
+    {
+      None    => format!("Empty"),
+      Some(s) => format!("{}/{} - {}", self.head + 1, self.tabs.len(), s),
     }
   }
 
