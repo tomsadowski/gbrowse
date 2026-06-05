@@ -5,7 +5,7 @@ use crate::{
   user::{self, User, UserTable},
   keys::Action,
   view::{Rect, ViewPort},
-  tab::{Tab, TabManager, TabType, SourceType},
+  tab::{Tab, UrlTab, TabManager},
   widget::{Frame, TextBox},
   dialog::{Input, Dialog},
   gemdoc::{self, GemTag, GemText, Status, StatusText},
@@ -240,25 +240,32 @@ impl App {
     }
   }
 
+  pub fn push_size(&mut self) {
+    if let Focus::Dialog(_, dialog) = &mut self.focus {
+      dialog.resize(self.frame);
+    }
+    self.tabs.resize(self.frame);
+    self.clear = true;
+  }
+
   pub fn push_style(&mut self) {
     self.frame = self.user.get_frame(self.frame.screen);
-    for tab in self.tabs.tabs.iter_mut() {
-      let source = &tab.source;
-      tab.textbox_mut().restyle(
-        self.frame,
-        source,
-        |gem| self.user.get_styled_gemtext(gem),
-      );
-      tab.textbox_mut().style = self.user.style.general.into();
-    }
+    self.push_size();
+    self.tabs.push_gem_style(
+      |gem| self.user.get_styled_gemtext(gem),
+      self.user.style.general.into()
+    );
     self.clear = true;
   }
 
   pub fn select_link(&mut self, url_str: &str) {
-    match util::join_if_relative(&self.tabs.current().url, url_str) {
-      Err(e) => self.focus_ack_dialog(format!(
+    match self.tabs.current().url()
+      .map(|url| util::join_if_relative(&url, url_str)) 
+    {
+      None => {},
+      Some(Err(e)) => self.focus_ack_dialog(format!(
         "{} -- Invalid URL. {}", url_str, e)),
-      Ok(url) => {
+      Some(Ok(url)) => {
         let prompt = &format!("{} -- Make request?", url);
         self.focus_ask_dialog(Task::Go(url.into()), prompt);
       } 
@@ -276,11 +283,7 @@ impl App {
       }
       (Msg::Resize(w, h), focus) => {
         self.frame.resize(Rect::new(*w, *h));
-        if let Focus::Dialog(_, dialog) = focus {
-          dialog.resize(self.frame);
-        }
-        self.tabs.resize(self.frame);
-        self.clear = true;
+        self.push_size();
       }
       (Msg::Action(action), Focus::Dialog(task, dlg)) 
         => match (&mut dlg.input, action, task) 
@@ -430,24 +433,33 @@ impl App {
         }
       }
       (Msg::Action(Action::SaveUrl), Focus::Tab) => {
-        match self.user.save_url(&self.tabs.current().url) {
-          Err(e) => self.focus_ack_dialog(e),
-          Ok(()) => self.focus_ack_dialog(format!(
-            "Saved URL: {}", self.tabs.current().url.to_string())),
+        if let Some(url) = self.tabs
+          .current_checked()
+          .map(|tab| tab.url())
+          .flatten()
+        {
+          match self.user.save_url(url) {
+            Err(e) => self.focus_ack_dialog(e),
+            Ok(()) => self.focus_ack_dialog(format!(
+              "Saved URL: {}", url.to_string())),
+          }
         }
       }
       (Msg::Action(Action::Select), Focus::Tab) => {
-        match self.tabs.current().current_source()
+        match self.tabs
+          .current_checked()
+          .map(|tab| tab.current_gem_source().map(|g| g.tag.clone()))
+          .flatten()
         {
-          SourceType::Gem(GemText {tag: GemTag::Link(link), ..}) => {
+          None => self.focus_ack_dialog(format!(
+            "You've selected nothing")
+          ),
+          Some(GemTag::Link(link)) => {
             let link = link.clone();
             self.select_link(&link);
           }
-        //gemtext => self.focus_ack_dialog(format!(
-        //  "You've selected {:?}", gemtext)
-        //),
-          _ => self.focus_ack_dialog(format!(
-            "You've selected something yet to be fathomable")
+          Some(gemtag) => self.focus_ack_dialog(format!(
+            "You've selected {:?}", gemtag)
           ),
         }
       }

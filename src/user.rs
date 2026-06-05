@@ -3,7 +3,7 @@
 use crate::{
   keys::KeysTable,
   style::StyleTable,
-  tab::Tab,
+  tab::UrlTab,
   widget::{Frame, TextBox},
   view::Rect,
   text::StyledText,

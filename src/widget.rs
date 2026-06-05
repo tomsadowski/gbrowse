@@ -364,14 +364,10 @@ impl TextBox {
     self.write = true;
   }
 
-  pub fn restyle<V, I, F>(&mut self, view: V, input: &Vec<I>, func: F)
-  where 
-    V: ViewPort,
-    F: Fn(&I) -> StyledText,
+  pub fn restyle<I, F>(&mut self, input: &Vec<I>, func: F)
+  where F: Fn(&I) -> StyledText,
   {
-    self.view = view.view_port();
-    self.content.restyle(view, input, func);
-    self.cursor.resize(&self.content, &self.view);
+    self.content.restyle(self.view, input, func);
     self.reset_state();
   }
 
