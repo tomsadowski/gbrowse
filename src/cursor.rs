@@ -117,7 +117,7 @@ pub trait UnitCursorMut: UnitCursor {
     let head = self.head();
     if head < self.length() {
       self.units_mut().remove(head);
-      if self.units().len() > 0 {
+      if 0 < self.length() {
         self.wrapping_backward(1);
       }
     }
@@ -184,41 +184,36 @@ pub trait UnitCursorMut: UnitCursor {
 pub trait WeightedCursor: UnitCursor {
   fn weighted_head(&self) -> usize;
   fn weighted_len(&self) -> usize;
-  fn view_weighted(&self, start: usize, width: usize) 
-    -> Take<slice::Iter<'_, Self::Unit>>;
+  fn view_weighted(&self, start: usize, width: usize) -> Vec<&Self::Unit>;
 }
 impl<U> WeightedCursor for U 
-where 
-  U: UnitCursor<Unit = char> 
+where U: UnitCursor<Unit = char> 
 {
   fn weighted_head(&self) -> usize {
     self
-      .units()[..self.head()]
+      .units()
       .iter()
-      .fold(0, |acc, u| acc + u.width().unwrap_or(0))
+      .take(self.head())
+      .map(|u| u.width().unwrap_or(0))
+      .sum()
   }
 
   fn weighted_len(&self) -> usize {
     self
       .units()
       .iter()
-      .fold(0, |acc, u| acc + u.width().unwrap_or(0))
+      .map(|u| u.width().unwrap_or(0))
+      .sum()
   }
 
-  fn view_weighted(&self, start: usize, width: usize) 
-    -> Take<slice::Iter<'_, Self::Unit>> 
-  {
-    if start >= self.length() {
-      self.units().iter().take(0) 
-    } else {
-      let text           = &self.units()[start..];
-      let mut acc_width  = 0;
-      let mut unit_count = 0;
-      while acc_width < width && unit_count < text.len() {
-        acc_width  += &text[unit_count].width().unwrap_or(0);
-        unit_count += 1;
-      }
-      text.iter().take(unit_count)
+  fn view_weighted(&self, start: usize, width: usize) -> Vec<&Self::Unit> {
+    let mut text      = self.units().iter().skip(start);
+    let mut acc_width = 0;
+    let mut result    = vec![];
+    while let Some(c) = text.next() && acc_width < width {
+      acc_width += &c.width().unwrap_or(0);
+      result.push(c);
     }
+    result
   }
 }

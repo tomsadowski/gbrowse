@@ -32,8 +32,7 @@ pub fn get_styles_file(name: &str) -> String {
 }
 
 pub trait UserTable<F>: Sized 
-where 
-  F: std::str::FromStr<Err = String> 
+where F: std::str::FromStr<Err = String> 
 {
   fn try_assign(&mut self, field: F, value: Value) -> Result<(), String>;
 
@@ -72,13 +71,13 @@ impl std::str::FromStr for UserField {
   type Err = String;
   fn from_str(s: &str) -> Result<Self, Self::Err> {
     match s {
-      "init_url" => Ok(Self::InitUrl),
-      "timeout"  => Ok(Self::Timeout),
-      "style"    => Ok(Self::Style),
-      "keys"     => Ok(Self::Keys),
-      "gsave" | "save_file" 
-                 => Ok(Self::SaveFile),
-      s          => Err(format!("No field {} in User table", s)),
+      "init_url"  => Ok(Self::InitUrl),
+      "timeout"   => Ok(Self::Timeout),
+      "style"     => Ok(Self::Style),
+      "keys"      => Ok(Self::Keys),
+      "gsave" | 
+      "save_file" => Ok(Self::SaveFile),
+      s           => Err(format!("No field {} in User table", s)),
     }
   }
 }

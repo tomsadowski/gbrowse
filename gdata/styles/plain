@@ -16,6 +16,9 @@ west  = 4
 corner  = "round"
 bracket = "space"
 
+[text]
+wrap = false
+
 [preformat]
 wrap = false
 

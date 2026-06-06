@@ -41,38 +41,45 @@ impl Tab {
       Tab::Gopher(UrlTab {url, ..}) => Some(url),
     }
   }
+
   pub fn heading(&self) -> Option<&str> {
     match self {
       Tab::Text(heading, _) => Some(heading),
       _                     => None,
     }
   }
+
   pub fn gem_tab(&self) ->  Option<&UrlTab<GemText>> {
     match self {
       Tab::Gem(tab) => Some(tab),
       _             => None,
     }
   }
+
   pub fn gopher_tab(&self) ->  Option<&UrlTab<String>> {
     match self {
       Tab::Gopher(tab) => Some(tab),
       _                => None,
     }
   }
+
   pub fn text_tab(&self) ->  Option<(&str, &TextBox)> {
     match self {
       Tab::Text(heading, textbox) => Some((heading, textbox)),
       _                           => None,
     }
   }
+
   pub fn gem_source(&self) ->  Option<&Vec<GemText>> {
     self.gem_tab().map(|tab| &tab.source)
   }
+
   pub fn current_gem_source(&self) ->  Option<&GemText> {
     self
       .gem_tab()
       .map(|tab| &tab.source[tab.textbox.get_source_idx()])
   }
+
   pub fn textbox(&self) -> &TextBox {
     match self {
       Tab::Text(_, textbox) |
@@ -80,6 +87,7 @@ impl Tab {
       Tab::Gopher(UrlTab {textbox, ..}) => textbox,
     }
   }
+
   pub fn textbox_mut(&mut self) -> &mut TextBox {
     match self {
       Tab::Text(_, textbox) |

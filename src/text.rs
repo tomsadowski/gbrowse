@@ -4,6 +4,7 @@ use crate::{
   view::ViewPort,
   cursor::{UnitCursor, UnitCursorMut},
   style::{Style, TextStyle},
+  util,
 };
 use unicode_width::UnicodeWidthChar;
 
@@ -142,42 +143,9 @@ impl StyledText {
     self.style = style.into();
     self
   }
-  pub fn wrap(mut self, wrap: bool) -> Self {
+  pub fn with_wrap(mut self, wrap: bool) -> Self {
     self.wrap = wrap;
     self
-  }
-
-  pub fn wrap_text(text: Vec<char>, width: usize) -> Vec<Vec<char>> {
-    let mut vec: Vec<Vec<char>> = vec![];
-    let mut start = usize::MIN;
-    while start < text.len() {
-      let text          = &text[start..];
-      let mut w         = 0;
-      let mut max_width = 0;
-      while w < width && max_width < text.len() {
-        w         += &text[max_width].width().unwrap_or(0);
-        max_width += 1;
-      }
-      let line: Vec<char> = {
-        if text.len() <= max_width {
-          text.to_vec()
-        } else {
-          // search for first whitespace from right
-          let s: Vec<&char> = text[..max_width]
-            .iter().rev().skip_while(|c| !c.is_whitespace()).collect();
-          // no space found, return whole slice
-          if s.len() == 0 {
-            text[..max_width].iter().copied().collect()
-          // space found, return up to that space
-          } else {
-            s.into_iter().rev().copied().collect()
-          }
-        }
-      };
-      start += line.len();
-      vec.push(line);
-    }
-    vec
   }
 
   // get owned chars
@@ -186,7 +154,7 @@ impl StyledText {
     if text.len() == 0 {
       vec![vec![' ']]
     } else if self.wrap {
-      Self::wrap_text(text, width)
+      util::wrap_text(text, width)
     } else {
       vec![text]
     }
@@ -225,36 +193,46 @@ impl UnitCursor for StyledTextPlane {
     self.text.len().saturating_sub(1)
   }
 }
+impl UnitCursorMut for StyledTextPlane {
+  fn units_mut(&mut self) -> &mut Vec<Self::Unit> {
+    &mut self.text
+  }
+}
 impl StyledTextPlane {
   pub fn new<V, I, F>(view: &V, input: &Vec<I>, func: F) -> Self 
   where 
     V: ViewPort,
     F: Fn(&I) -> StyledText,
   {
-    let source: Vec<_> = input.iter().map(|i| func(i)).collect();
-    let text = StyledText::get_textlines(&source, view.view_port().w.into());
+    let source = input.iter().map(|i| func(i)).collect();
     Self {
       head:   0, 
       pref_x: 0, 
-      text, 
+      text: StyledText::get_textlines(&source, view.view_port().w.into()), 
       source,
     }
   }
 
   pub fn get_source_idx(&self) -> usize {
-    self.current().idx
+    self
+      .current_checked()
+      .map(|t| t.idx)
+      .unwrap_or(0)
   }
 
   pub fn get_source(&self) -> String {
-    self.source[self.current().idx].text.clone()
+    self.source
+      .get(self.get_source_idx())
+      .map(|t| t.text.clone())
+      .unwrap_or("empty".into())
   }
 
-  pub fn get_idx(&self) -> usize {
+  fn get_idx(&self) -> usize {
     match self.current_checked().map(|u| u.head()) {
       None         => 0,
       Some(x_head) => self.text[..self.head()]
         .iter()
-        .map(|line| line.units().len().max(1))
+        .map(|line| line.length().max(1))
         .chain(std::iter::once(x_head))
         .sum(),
     }
@@ -262,10 +240,7 @@ impl StyledTextPlane {
 
   fn set_idx(&mut self, idx: usize) {
     self.start();
-    // this guard addresses an error only encountered on windows
-    if self.text.len() > 0 {
-      self.text[self.head].start();
-    }
+    self.current_mut_checked().map(|t| t.start());
     self.right(idx);
   }
 

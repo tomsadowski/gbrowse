@@ -63,29 +63,34 @@ impl Frame {
     self.inner_rect  = self.text_margin.get_rect(self.outer_rect);
     self
   }
+
   pub fn with_text_margin(mut self, screen_margin: Margins) -> Self {
     self.text_margin = screen_margin;
     self.inner_rect  = self.text_margin.get_rect(self.outer_rect);
     self
   }
+
   pub fn with_banner_style<T>(mut self, style: T) -> Self 
   where T: Into<Style> + Copy
   {
     self.banner_style = style.into();
     self
   }
+
   pub fn with_footer_style<T>(mut self, style: T) -> Self 
   where T: Into<Style> + Copy
   {
     self.footer_style = style.into();
     self
   }
+
   pub fn with_margin_style<T>(mut self, style: T) -> Self 
   where T: Into<Style> + Copy
   {
     self.margin_style = style.into();
     self
   }
+
   pub fn with_border_style(mut self, style: BorderStyle) -> Self {
     self.border_style = style;
     self
@@ -317,6 +322,7 @@ impl TextBox {
       view:           view.view_port(),
     }
   }
+
   pub fn with_input<I, F>(mut self, input: &Vec<I>, func: F) -> Self 
   where 
     F: Fn(&I) -> StyledText,
@@ -324,26 +330,31 @@ impl TextBox {
     self.content = StyledTextPlane::new(&self.view, input, func);
     self
   }
+
   pub fn set_input<I, F>(&mut self, input: &Vec<I>, func: F)
   where 
     F: Fn(&I) -> StyledText,
   {
     self.content = StyledTextPlane::new(&self.view, input, func);
   }
+
   pub fn with_style<T>(mut self, style: T) -> Self 
   where T: Into<Style> + Copy
   {
     self.style = style.into();
     self
   }
+
   pub fn write_unused_x(mut self, write: bool) -> Self {
     self.write_unused_x = write;
     self
   }
+
   pub fn write_unused_y(mut self, write: bool) -> Self {
     self.write_unused_y = write;
     self
   }
+
   pub fn write_unused(mut self, write: bool) -> Self {
     self
       .write_unused_x(write)
@@ -351,7 +362,7 @@ impl TextBox {
   }
 
   pub fn get_source_idx(&self) -> usize {
-    self.content.current().idx
+    self.content.get_source_idx()
   }
 
   pub fn get_source(&self) -> String {
@@ -493,7 +504,6 @@ impl TextBox {
   }
 }
 
-// coordinate Page and PlaneView
 #[derive(Default)]
 pub struct EditBox {
   pub style:          Style,
@@ -522,12 +532,14 @@ impl EditBox {
     self.cursor.x.update(self.content.weighted_head());
     self
   }
+
   pub fn with_style<T>(mut self, style: T) -> Self 
   where T: Into<Style> + Copy
   {
     self.style = style.into();
     self
   }
+
   pub fn write_unused_x(mut self, write: bool) -> Self {
     self.write_unused_x = write;
     self
