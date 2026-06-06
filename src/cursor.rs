@@ -22,7 +22,7 @@ pub trait UnitCursor {
     &self.units()[self.head()]
   }
 
-  fn current_checked(&self) -> Option<&Self::Unit> {
+  fn get(&self) -> Option<&Self::Unit> {
     self.units().get(self.head())
   }
 
@@ -108,7 +108,7 @@ pub trait UnitCursorMut: UnitCursor {
     &mut self.units_mut()[head]
   }
 
-  fn current_mut_checked(&mut self) -> Option<&mut Self::Unit> {
+  fn get_mut(&mut self) -> Option<&mut Self::Unit> {
     let head = self.head();
     self.units_mut().get_mut(head)
   }

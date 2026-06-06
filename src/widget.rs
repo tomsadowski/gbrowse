@@ -257,7 +257,7 @@ impl ScreenCursor {
   {
     self.y.resize(plane.head(), rect.y, rect.h);
     self.x.resize(
-      plane.current_checked().map(|c| c.weighted_head()).unwrap_or(0), 
+      plane.get().map(|c| c.weighted_head()).unwrap_or(0), 
       rect.x, 
       rect.w
     );
@@ -270,7 +270,7 @@ impl ScreenCursor {
   {
     let y = self.y.update(plane.head());
     let x = self.x.update(
-      plane.current_checked().map(|c| c.weighted_head()).unwrap_or(0)
+      plane.get().map(|c| c.weighted_head()).unwrap_or(0)
     );
     x || y
   }
@@ -361,8 +361,8 @@ impl TextBox {
       .write_unused_y(write)
   }
 
-  pub fn get_source_idx(&self) -> usize {
-    self.content.get_source_idx()
+  pub fn get_source_index(&self) -> usize {
+    self.content.get_source_index()
   }
 
   pub fn get_source(&self) -> String {
@@ -467,7 +467,7 @@ impl TextBox {
     for line in self.content
       .view_units(self.cursor.y_scroll(), self.view.h.into()) 
     {
-      writer.queue(&self.content.source[line.idx].style)?;
+      writer.queue(&self.content.source[line.index].style)?;
       for c in line
         .view_weighted(self.cursor.x_scroll(), self.view.w.into()) 
       {

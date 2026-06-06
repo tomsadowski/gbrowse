@@ -287,7 +287,7 @@ impl App {
       {
         (Input::Select(textbox), Action::Select, Task::NewTab) => {
           if self.user.urls.len() > 0 {
-            let link = &self.user.urls[textbox.get_source_idx()].clone();
+            let link = &self.user.urls[textbox.get_source_index()].clone();
             self.select_link(link);
           } else {
             self.focus_tabs();
@@ -320,7 +320,7 @@ impl App {
           }
         }
         (Input::Select(textbox), Action::Select, Task::Menu) => {
-          match MENU[textbox.get_source_idx()] {
+          match MENU[textbox.get_source_index()] {
             MANUAL => {
               self.focus_ack_dialog("View manual".into());
             }
@@ -431,7 +431,7 @@ impl App {
       }
       (Msg::Action(Action::SaveUrl), Focus::Tab) => {
         if let Some(url) = self.tabs
-          .current_checked()
+          .get()
           .map(|tab| tab.url())
           .flatten()
         {
@@ -444,7 +444,7 @@ impl App {
       }
       (Msg::Action(Action::Select), Focus::Tab) => {
         match self.tabs
-          .current_checked()
+          .get()
           .map(|tab| tab.current_gem_source().map(|g| g.tag.clone()))
           .flatten()
         {
@@ -491,7 +491,9 @@ impl App {
         self.focus_ask_dialog(Task::DelTab, "Delete current tab?");
       }
       (Msg::Action(action), Focus::Tab) => {
-        self.tabs.current_mut().textbox_mut().update(action);
+        self.tabs.textbox_mut().map(|textbox| 
+          textbox.update(action)
+        );
       }
     }
   }

@@ -11,14 +11,14 @@ use unicode_width::UnicodeWidthChar;
 
 #[derive(Clone, Debug, Default)]
 pub struct TextLine {
-  pub idx:  usize,
-  pub head: usize,
-  pub text: Vec<char>,
+  pub index:  usize,
+  pub head:   usize,
+  pub text:   Vec<char>,
 }
 impl From<&str> for TextLine {
   fn from(item: &str) -> Self {
     Self {
-      idx:  0,
+      index:  0,
       head: 0, 
       text: item.chars().collect()
     }
@@ -27,7 +27,7 @@ impl From<&str> for TextLine {
 impl From<Vec<char>> for TextLine {
   fn from(item: Vec<char>) -> Self {
     Self {
-      idx:  0,
+      index:  0,
       head: 0, 
       text: item
     }
@@ -37,7 +37,7 @@ impl From<(usize, Vec<char>)> for TextLine {
   fn from(item: (usize, Vec<char>)) -> Self {
     Self {
       head: 0, 
-      idx:  item.0,
+      index:  item.0,
       text: item.1
     }
   }
@@ -213,22 +213,22 @@ impl StyledTextPlane {
     }
   }
 
-  pub fn get_source_idx(&self) -> usize {
+  pub fn get_source_index(&self) -> usize {
     self
-      .current_checked()
-      .map(|t| t.idx)
+      .get()
+      .map(|t| t.index)
       .unwrap_or(0)
   }
 
   pub fn get_source(&self) -> String {
     self.source
-      .get(self.get_source_idx())
+      .get(self.get_source_index())
       .map(|t| t.text.clone())
       .unwrap_or("empty".into())
   }
 
-  fn get_idx(&self) -> usize {
-    match self.current_checked().map(|u| u.head()) {
+  fn get_index(&self) -> usize {
+    match self.get().map(|u| u.head()) {
       None         => 0,
       Some(x_head) => self.text[..self.head()]
         .iter()
@@ -238,9 +238,9 @@ impl StyledTextPlane {
     }
   }
 
-  fn set_idx(&mut self, idx: usize) {
+  fn set_index(&mut self, idx: usize) {
     self.start();
-    self.current_mut_checked().map(|t| t.start());
+    self.get_mut().map(|t| t.start());
     self.right(idx);
   }
 
@@ -250,18 +250,18 @@ impl StyledTextPlane {
     F: Fn(&I) -> StyledText,
   {
     self.source = input.iter().map(|i| func(i)).collect();
-    let idx   = self.get_idx();
+    let idx   = self.get_source_index();
     self.text = StyledText::get_textlines(
       &self.source, 
       view.view_port().w.into()
     );
-    self.set_idx(idx);
+    self.set_index(idx);
   }
 
   pub fn resize(&mut self, width: u16) {
-    let idx   = self.get_idx();
+    let idx   = self.get_source_index();
     self.text = StyledText::get_textlines(&self.source, width.into());
-    self.set_idx(idx);
+    self.set_index(idx);
   }
 
   pub fn up(&mut self, delta: usize) -> bool {
