@@ -40,7 +40,15 @@ pub enum Tab {
   Gopher(UrlTab<String>),
 }
 impl Tab {
-  pub fn url(&self) -> Option<&url::Url> {
+  pub fn get_heading(&self) -> &str {
+    match self {
+      Tab::Gem(   UrlTab {url, ..}) | 
+      Tab::Gopher(UrlTab {url, ..}) => url.as_str(),
+      Tab::Text(heading, _)         => heading,
+    }
+  }
+
+  pub fn get_url(&self) -> Option<&url::Url> {
     match self {
       Tab::Gem(   UrlTab {url, ..}) | 
       Tab::Gopher(UrlTab {url, ..}) => Some(url),
@@ -48,39 +56,33 @@ impl Tab {
     }
   }
 
-  pub fn heading(&self) -> Option<&str> {
-    if let Tab::Text(heading, _) = self {
-      Some(heading) 
-    } else {None}
-  }
-
-  pub fn gem_tab(&self) ->  Option<&UrlTab<GemText>> {
+  pub fn get_gem_tab(&self) ->  Option<&UrlTab<GemText>> {
     if let Tab::Gem(tab) = self {
       Some(tab)
     } else {None}
   }
 
-  pub fn gopher_tab(&self) ->  Option<&UrlTab<String>> {
+  pub fn get_gopher_tab(&self) ->  Option<&UrlTab<String>> {
     if let Tab::Gopher(tab) = self {
       Some(tab)
     } else {None}
   }
 
-  pub fn text_tab(&self) ->  Option<(&str, &TextBox)> {
+  pub fn get_text_tab(&self) ->  Option<(&str, &TextBox)> {
     if let Tab::Text(heading, textbox) = self {
       Some((heading, textbox))
     } else {None}
   }
 
-  pub fn gem_source(&self) ->  Option<&Vec<GemText>> {
-    self.gem_tab().map(|gem_tab| &gem_tab.source)
+  pub fn get_gem_source(&self) ->  Option<&Vec<GemText>> {
+    self.get_gem_tab().map(|gem_tab| &gem_tab.source)
   }
 
-  pub fn current_gem_source(&self) -> Option<&GemText> {
-    self.gem_tab().and_then(|gem_tab| gem_tab.get_source())
+  pub fn get_current_gem_source(&self) -> Option<&GemText> {
+    self.get_gem_tab().and_then(|gem_tab| gem_tab.get_source())
   }
 
-  pub fn textbox(&self) -> &TextBox {
+  pub fn get_textbox(&self) -> &TextBox {
     match self {
       Tab::Text(_, textbox) |
       Tab::Gem(   UrlTab {textbox, ..}) | 
@@ -88,7 +90,7 @@ impl Tab {
     }
   }
 
-  pub fn textbox_mut(&mut self) -> &mut TextBox {
+  pub fn get_textbox_mut(&mut self) -> &mut TextBox {
     match self {
       Tab::Text(_, textbox) |
       Tab::Gem(   UrlTab {textbox, ..}) | 
@@ -105,16 +107,16 @@ pub struct TabManager {
 } 
 impl UnitCursor for TabManager {
   type Unit = Tab;
-  fn units(&self) -> &Vec<Tab> {
+  fn get_units(&self) -> &Vec<Tab> {
     &self.tabs
   }
-  fn head_mut(&mut self) -> &mut usize {
+  fn get_head_mut(&mut self) -> &mut usize {
     &mut self.head
   }
-  fn head(&self) -> usize {
+  fn get_head(&self) -> usize {
     self.head
   }
-  fn max_head(&self) -> usize {
+  fn get_max_head(&self) -> usize {
     self.tabs.len().saturating_sub(1)
   }
 }
@@ -126,7 +128,7 @@ impl UnitCursorMut for TabManager {
 impl<V: ViewPort> From<V> for TabManager {
   fn from(view: V) -> Self {
     Self {
-      view:  view.view_port(),
+      view:  view.get_view_port(),
       style: Style::default(),
       head:  0,
       tabs:  vec![],
@@ -139,7 +141,7 @@ impl TabManager {
   {
     self.style = style.into();
     self.tabs.iter_mut().map(|tab|
-      tab.textbox_mut().style = self.style
+      tab.get_textbox_mut().style = self.style
     );
     self
   }
@@ -149,7 +151,7 @@ impl TabManager {
   {
     self.style = style.into();
     self.tabs.iter_mut().map(|tab|
-      tab.textbox_mut().style = self.style
+      tab.get_textbox_mut().style = self.style
     );
   }
 
@@ -166,9 +168,9 @@ impl TabManager {
   }
 
   pub fn resize<V: ViewPort + Copy>(&mut self, view: V) {
-    self.view = view.view_port();
+    self.view = view.get_view_port();
     self.tabs.iter_mut().map(|tab|
-      tab.textbox_mut().resize(self.view)
+      tab.get_textbox_mut().resize(self.view)
     );
   }
 
@@ -179,20 +181,24 @@ impl TabManager {
   }
 
   pub fn textbox_mut(&mut self) -> Option<&mut TextBox> {
-    self.get_mut().map(|tab| tab.textbox_mut())
+    self.get_current_mut().map(|tab| tab.get_textbox_mut())
   }
 
-  // maybe return bool
-  pub fn add_gem<F>(&mut self, url: &url::Url, source: Vec<GemText>, func: F) 
+  pub fn add_gem_tab<F>(
+    &mut self, 
+    url:    &url::Url, 
+    source: Vec<GemText>, 
+    func:   F
+  ) 
   where F: Fn(&GemText) -> StyledText,
   {
     let new_tab = Tab::Gem(UrlTab::new(url, self.view, source, func));
-    self.insert_or_move(|tab| tab.url() == Some(url), new_tab);
+    self.insert_or_move(|tab| tab.get_url() == Some(url), new_tab);
     self.reset_state();
   }
 
-  pub fn banner_text(&self) -> String {
-    match self.get()
+  pub fn get_banner_text(&self) -> String {
+    match self.get_current()
       .map(|tab| match tab {
         Tab::Gem(   UrlTab {url, ..}) | 
         Tab::Gopher(UrlTab {url, ..}) => url.to_string(),
@@ -205,9 +211,9 @@ impl TabManager {
   }
 
   pub fn write<W: Write>(&self, writer: &mut W) -> std::io::Result<()> {
-    if let Some(tab) = self.get() {
-      tab.textbox().write(writer)?;
-      tab.textbox().cursor.write(writer)?;
+    if let Some(tab) = self.get_current() {
+      tab.get_textbox().write(writer)?;
+      tab.get_textbox().cursor.write(writer)?;
     } else {
       TextBox::from(self.view).empty(writer)?;
     }

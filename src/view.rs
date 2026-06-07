@@ -11,7 +11,7 @@ use std::ops::Range;
 
 
 pub trait ViewPort {
-  fn view_port(&self) -> Rect;
+  fn get_view_port(&self) -> Rect;
 }
 
 #[derive(Copy, Clone, Default)]
@@ -22,7 +22,7 @@ pub struct Rect {
   pub h: u16,
 }
 impl ViewPort for Rect {
-  fn view_port(&self) -> Rect {
+  fn get_view_port(&self) -> Rect {
     self.clone()
   }
 }
@@ -158,11 +158,11 @@ impl CursorView {
     }
   }
 
-  pub fn scroll(&self) -> usize {
+  pub fn get_scroll(&self) -> usize {
     self.start
   }
 
-  pub fn cursor(&self) -> u16 {
+  pub fn get_cursor(&self) -> u16 {
     self.view_head
   }
 

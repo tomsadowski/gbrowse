@@ -322,7 +322,7 @@ impl UserTable<MarginField> for Margins {
 }
 impl Margins {
   pub fn get_rect<V: ViewPort>(&self, view: V) -> Rect {
-    view.view_port()
+    view.get_view_port()
       .crop_north(self.north)
       .crop_south(self.south)
       .crop_east(self.east)

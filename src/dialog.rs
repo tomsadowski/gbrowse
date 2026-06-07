@@ -30,7 +30,7 @@ impl Dialog {
     S: Into<Style> + Copy
   {
     let prompt_box = TextBox::from(
-        view.view_port().cropped_south(2)
+        view.get_view_port().cropped_south(2)
       )
       .with_input(
         &vec![prompt], |p| StyledText::from(*p).with_style(style)
@@ -57,7 +57,7 @@ impl Dialog {
     S: Into<Style> + Copy
   {
     let prompt_box = TextBox::from(
-        view.view_port().cropped_south(2)
+        view.get_view_port().cropped_south(2)
       )
       .with_input(
         &vec![prompt], |p| StyledText::from(*p).with_style(style)
@@ -85,7 +85,7 @@ impl Dialog {
     S: Into<Style> + Copy
   {
     let prompt_box = TextBox::from(
-        view.view_port().cropped_south(2)
+        view.get_view_port().cropped_south(2)
       )
       .with_input(
         &vec![prompt], |p| StyledText::from(*p).with_style(style)
@@ -93,7 +93,7 @@ impl Dialog {
       .with_style(style)
       .write_unused_y(false);
     let response_box = TextBox::from(
-        view.view_port().cropped_north(prompt_box.used_rect().h)
+        view.get_view_port().cropped_north(prompt_box.used_rect().h)
       )
       .with_input(
         &input, |s| StyledText::from(s.as_str()).with_style(style)
@@ -112,7 +112,7 @@ impl Dialog {
     S: Into<Style> + Copy
   {
     let prompt_box = TextBox::from(
-        view.view_port().cropped_south(2)
+        view.get_view_port().cropped_south(2)
       )
       .with_input(
         &vec![prompt], |p| StyledText::from(*p).with_style(style)
@@ -131,7 +131,7 @@ impl Dialog {
   }
 
   pub fn resize<V: ViewPort>(&mut self, rect: V) {
-    self.prompt.resize(rect.view_port().cropped_south(2));
+    self.prompt.resize(rect.get_view_port().cropped_south(2));
     match &mut self.input {
       Input::Ack(r) | 
       Input::Ask(r) => {
@@ -141,7 +141,7 @@ impl Dialog {
         r.resize(self.prompt.used_rect().bottom_row());
       }
       Input::Select(r) => {
-        r.resize(rect.view_port().cropped_north(self.prompt.used_rect().h));
+        r.resize(rect.get_view_port().cropped_north(self.prompt.used_rect().h));
       }
     }
   }

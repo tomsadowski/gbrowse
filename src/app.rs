@@ -189,7 +189,7 @@ impl App {
         self.focus_ack_dialog(status.text);
       }
       _ => {
-        self.tabs.add_gem(
+        self.tabs.add_gem_tab(
           url, 
           gemdoc::parse_doc(&content), 
           |g| self.user.get_styled_gemtext(g),
@@ -256,7 +256,9 @@ impl App {
   }
 
   pub fn select_link(&mut self, url_str: &str) {
-    match self.tabs.current().url()
+    match self.tabs
+      .get_current()
+      .and_then(|tab| tab.get_url())
       .map(|url| util::join_if_relative(&url, url_str)) 
     {
       None => {},
@@ -431,8 +433,8 @@ impl App {
       }
       (Msg::Action(Action::SaveUrl), Focus::Tab) => {
         if let Some(url) = self.tabs
-          .get()
-          .map(|tab| tab.url())
+          .get_current()
+          .map(|tab| tab.get_url())
           .flatten()
         {
           match self.user.save_url(url) {
@@ -444,9 +446,9 @@ impl App {
       }
       (Msg::Action(Action::Select), Focus::Tab) => {
         match self.tabs
-          .get()
-          .map(|tab| tab.current_gem_source().map(|g| g.tag.clone()))
-          .flatten()
+          .get_current()
+          .and_then(|tab| tab.get_current_gem_source())
+          .map(|gem_source| gem_source.tag.clone())
         {
           None => self.focus_ack_dialog(format!(
             "You've selected nothing")
@@ -461,14 +463,14 @@ impl App {
         }
       }
       (Msg::Action(Action::CycleLeft), Focus::Tab) => {
-        if self.tabs.units().len() > 1 {
-          self.tabs.wrapping_backward(1);
+        if self.tabs.get_units().len() > 1 {
+          self.tabs.move_backward_wrapped(1);
           self.tab_changed = true;
         }
       }
       (Msg::Action(Action::CycleRight), Focus::Tab) => {
-        if self.tabs.units().len() > 1 {
-          self.tabs.wrapping_forward(1);
+        if self.tabs.get_units().len() > 1 {
+          self.tabs.move_forward_wrapped(1);
           self.tab_changed = true;
         }
       }
@@ -535,7 +537,7 @@ impl App {
       self.frame.write(stdout)?;
     }
     let banner_text = {
-      let text = self.tabs.banner_text();
+      let text = self.tabs.get_banner_text();
       if let Some(request) = &self.request {
         format!("(pending response) {}", text)
       } else {text}

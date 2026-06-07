@@ -44,16 +44,16 @@ impl From<(usize, Vec<char>)> for TextLine {
 }
 impl UnitCursor for TextLine {
   type Unit = char;
-  fn units(&self) -> &Vec<Self::Unit> {
+  fn get_units(&self) -> &Vec<Self::Unit> {
     &self.text
   }
-  fn head_mut(&mut self) -> &mut usize {
+  fn get_head_mut(&mut self) -> &mut usize {
     &mut self.head
   }
-  fn head(&self) -> usize {
+  fn get_head(&self) -> usize {
     self.head
   }
-  fn max_head(&self) -> usize {
+  fn get_max_head(&self) -> usize {
     self.text.len().saturating_sub(1)
   }
 }
@@ -69,7 +69,7 @@ impl From<&str> for EditLine {
       head: 0, 
       text: item.chars().collect()
     };
-    editline.end();
+    editline.move_to_end();
     editline
   }
 }
@@ -80,16 +80,16 @@ impl ToString for EditLine {
 }
 impl UnitCursor for EditLine {
   type Unit = char;
-  fn units(&self) -> &Vec<char> {
+  fn get_units(&self) -> &Vec<char> {
     &self.text
   }
-  fn head_mut(&mut self) -> &mut usize {
+  fn get_head_mut(&mut self) -> &mut usize {
     &mut self.head
   }
-  fn head(&self) -> usize {
+  fn get_head(&self) -> usize {
     self.head
   }
-  fn max_head(&self) -> usize {
+  fn get_max_head(&self) -> usize {
     self.text.len()
   }
 }
@@ -180,16 +180,16 @@ pub struct StyledTextPlane {
 }
 impl UnitCursor for StyledTextPlane {
   type Unit = TextLine;
-  fn units(&self) -> &Vec<Self::Unit> {
+  fn get_units(&self) -> &Vec<Self::Unit> {
     &self.text
   }
-  fn head_mut(&mut self) -> &mut usize {
+  fn get_head_mut(&mut self) -> &mut usize {
     &mut self.head
   }
-  fn head(&self) -> usize {
+  fn get_head(&self) -> usize {
     self.head
   }
-  fn max_head(&self) -> usize {
+  fn get_max_head(&self) -> usize {
     self.text.len().saturating_sub(1)
   }
 }
@@ -208,14 +208,14 @@ impl StyledTextPlane {
     Self {
       head:   0, 
       pref_x: 0, 
-      text: StyledText::get_textlines(&source, view.view_port().w.into()), 
+      text: StyledText::get_textlines(&source, view.get_view_port().w.into()), 
       source,
     }
   }
 
   pub fn get_source_index(&self) -> usize {
     self
-      .get()
+      .get_current()
       .map(|t| t.index)
       .unwrap_or(0)
   }
@@ -228,20 +228,20 @@ impl StyledTextPlane {
   }
 
   fn get_index(&self) -> usize {
-    match self.get().map(|u| u.head()) {
+    match self.get_current().map(|u| u.get_head()) {
       None         => 0,
-      Some(x_head) => self.text[..self.head()]
+      Some(x_head) => self.text[..self.get_head()]
         .iter()
-        .map(|line| line.length().max(1))
+        .map(|line| line.get_length().max(1))
         .chain(std::iter::once(x_head))
         .sum(),
     }
   }
 
   fn set_index(&mut self, idx: usize) {
-    self.start();
-    self.get_mut().map(|t| t.start());
-    self.right(idx);
+    self.move_to_start();
+    self.get_current_mut().map(|t| t.move_to_start());
+    self.move_right(idx);
   }
 
   pub fn restyle<V, I, F>(&mut self, view: V, input: &Vec<I>, func: F) 
@@ -253,7 +253,7 @@ impl StyledTextPlane {
     let idx   = self.get_source_index();
     self.text = StyledText::get_textlines(
       &self.source, 
-      view.view_port().w.into()
+      view.get_view_port().w.into()
     );
     self.set_index(idx);
   }
@@ -264,43 +264,43 @@ impl StyledTextPlane {
     self.set_index(idx);
   }
 
-  pub fn up(&mut self, delta: usize) -> bool {
-    if self.backward(delta) != delta {
+  pub fn move_up(&mut self, delta: usize) -> bool {
+    if self.move_backward(delta) != delta {
       self.text[self.head].fit(self.pref_x);
       true
     } else {false}
   }
 
-  pub fn down(&mut self, delta: usize) -> bool {
-    if self.forward(delta) != delta {
+  pub fn move_down(&mut self, delta: usize) -> bool {
+    if self.move_forward(delta) != delta {
       self.text[self.head].fit(self.pref_x);
       true
     } else {false}
   }
 
-  pub fn left(&mut self, delta: usize) -> usize {
+  pub fn move_left(&mut self, delta: usize) -> usize {
     if self.text.len() == 0 {return delta}
-    let remainder = self.text[self.head].backward(delta);
+    let remainder = self.text[self.head].move_backward(delta);
     if remainder == 0 {
-      self.pref_x = self.text[self.head].head();
+      self.pref_x = self.text[self.head].get_head();
       0
-    } else if self.backward(1) == 0 {
-      self.text[self.head].end();
-      self.left(remainder.saturating_sub(1))
+    } else if self.move_backward(1) == 0 {
+      self.text[self.head].move_to_end();
+      self.move_left(remainder.saturating_sub(1))
     } else {
       remainder
     }
   }
 
-  pub fn right(&mut self, delta: usize) -> usize {
+  pub fn move_right(&mut self, delta: usize) -> usize {
     if self.text.len() == 0 {return delta}
-    let remainder = self.text[self.head].forward(delta);
+    let remainder = self.text[self.head].move_forward(delta);
     if remainder == 0 {
-      self.pref_x = self.text[self.head].head();
+      self.pref_x = self.text[self.head].get_head();
       0
-    } else if self.forward(1) == 0 {
-      self.text[self.head].start();
-      self.right(remainder.saturating_sub(1))
+    } else if self.move_forward(1) == 0 {
+      self.text[self.head].move_to_start();
+      self.move_right(remainder.saturating_sub(1))
     } else {
       remainder
     }

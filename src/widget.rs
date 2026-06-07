@@ -30,7 +30,7 @@ pub struct Frame {
   pub footer_style:  Style,
 }
 impl ViewPort for Frame {
-  fn view_port(&self) -> Rect {
+  fn get_view_port(&self) -> Rect {
     self.inner_rect
   }
 }
@@ -226,7 +226,7 @@ pub struct ScreenCursor {
 }
 impl<V: ViewPort> From<&V> for ScreenCursor {
   fn from(view: &V) -> Self {
-    let view = view.view_port();
+    let view = view.get_view_port();
     Self {
       x: CursorView::new(view.x, view.w),
       y: CursorView::new(view.y, view.h),
@@ -255,9 +255,9 @@ impl ScreenCursor {
     Y: UnitCursor<Unit = X> , 
     X: WeightedCursor 
   {
-    self.y.resize(plane.head(), rect.y, rect.h);
+    self.y.resize(plane.get_head(), rect.y, rect.h);
     self.x.resize(
-      plane.get().map(|c| c.weighted_head()).unwrap_or(0), 
+      plane.get_current().map(|c| c.get_weighted_head()).unwrap_or(0), 
       rect.x, 
       rect.w
     );
@@ -268,16 +268,16 @@ impl ScreenCursor {
     Y: UnitCursor<Unit = X> , 
     X: WeightedCursor
   {
-    let y = self.y.update(plane.head());
+    let y = self.y.update(plane.get_head());
     let x = self.x.update(
-      plane.get().map(|c| c.weighted_head()).unwrap_or(0)
+      plane.get_current().map(|c| c.get_weighted_head()).unwrap_or(0)
     );
     x || y
   }
 
   pub fn write<W: Write>(&self, writer: &mut W) -> std::io::Result<()> {
     writer
-      .queue(MoveTo(self.x.cursor(), self.y.cursor()))?
+      .queue(MoveTo(self.x.get_cursor(), self.y.get_cursor()))?
       .queue(cursor::Show)?;
     Ok(())
   }
@@ -302,7 +302,7 @@ impl<V: ViewPort> From<V> for TextBox {
       style:          Style::default(),
       cursor:         ScreenCursor::from(&view), 
       content:        StyledTextPlane::default(),
-      view:           view.view_port(),
+      view:           view.get_view_port(),
     }
   }
 }
@@ -319,7 +319,7 @@ impl TextBox {
       style:          Style::default(),
       cursor:         ScreenCursor::from(&view), 
       content:        StyledTextPlane::new(&view, input, func),
-      view:           view.view_port(),
+      view:           view.get_view_port(),
     }
   }
 
@@ -370,7 +370,7 @@ impl TextBox {
   }
 
   pub fn used_rect(&self) -> Rect {
-    if let Ok(h) = u16::try_from(self.content.units().len()) {
+    if let Ok(h) = u16::try_from(self.content.get_units().len()) {
       self.view.clone().cap_height(h)
     } else {
       self.view.clone()
@@ -389,35 +389,35 @@ impl TextBox {
   }
 
   pub fn resize<V: ViewPort>(&mut self, view: V) {
-    self.view = view.view_port();
+    self.view = view.get_view_port();
     self.content.resize(self.view.w);
     self.cursor.resize(&self.content, &self.view);
     self.reset_state();
   }
 
-  pub fn left(&mut self, delta: usize) -> bool {
-    if self.content.left(delta) == 0 {
+  pub fn move_left(&mut self, delta: usize) -> bool {
+    if self.content.move_left(delta) == 0 {
       self.write = self.cursor.update(&self.content);
       true
     } else {false}
   }
 
-  pub fn right(&mut self, delta: usize) -> bool {
-    if self.content.right(delta) == 0 {
+  pub fn move_right(&mut self, delta: usize) -> bool {
+    if self.content.move_right(delta) == 0 {
       self.write = self.cursor.update(&self.content);
       true
     } else {false}
   }
 
-  pub fn down(&mut self, delta: usize) -> bool {
-    if self.content.down(delta) {
+  pub fn move_down(&mut self, delta: usize) -> bool {
+    if self.content.move_down(delta) {
       self.write = self.cursor.update(&self.content);
       true
     } else {false}
   }
 
-  pub fn up(&mut self, delta: usize) -> bool {
-    if self.content.up(delta) {
+  pub fn move_up(&mut self, delta: usize) -> bool {
+    if self.content.move_up(delta) {
       self.write = self.cursor.update(&self.content);
       true
     } else {false}
@@ -425,14 +425,14 @@ impl TextBox {
 
   pub fn update(&mut self, action: &Action) {
     match action {
-      Action::PageDown  => {self.down(usize::from(self.view.h));}
-      Action::PageUp    => {self.up(usize::from(self.view.h));}
-      Action::Bottom    => {self.down(self.content.units().len());}
-      Action::Top       => {self.up(self.content.units().len());}
-      Action::MoveDown  => {self.down(1);}
-      Action::MoveUp    => {self.up(1);}
-      Action::MoveLeft  => {self.left(1);}
-      Action::MoveRight => {self.right(1);}
+      Action::PageDown  => {self.move_down(usize::from(self.view.h));}
+      Action::PageUp    => {self.move_up(usize::from(self.view.h));}
+      Action::Bottom    => {self.move_down(self.content.get_length());}
+      Action::Top       => {self.move_up(self.content.get_length());}
+      Action::MoveDown  => {self.move_down(1);}
+      Action::MoveUp    => {self.move_up(1);}
+      Action::MoveLeft  => {self.move_left(1);}
+      Action::MoveRight => {self.move_right(1);}
       _ => {}
     }
   }
@@ -465,11 +465,11 @@ impl TextBox {
       .queue(SetAttribute(Attribute::Reset))?
       .queue(&self.style)?;
     for line in self.content
-      .view_units(self.cursor.y_scroll(), self.view.h.into()) 
+      .get_unit_view(self.cursor.y_scroll(), self.view.h.into()) 
     {
       writer.queue(&self.content.source[line.index].style)?;
       for c in line
-        .view_weighted(self.cursor.x_scroll(), self.view.w.into()) 
+        .get_weighted_view(self.cursor.x_scroll(), self.view.w.into()) 
       {
         writer.queue(Print(c))?;
         x += u16::try_from(c.width().unwrap_or(0)).unwrap();
@@ -515,7 +515,7 @@ pub struct EditBox {
 }
 impl<V: ViewPort> From<V> for EditBox {
   fn from(view: V) -> Self {
-    let view = view.view_port().top_row();
+    let view = view.get_view_port().top_row();
     Self {
       write_unused_x: true,
       write:          true,
@@ -529,7 +529,7 @@ impl<V: ViewPort> From<V> for EditBox {
 impl EditBox {
   pub fn with_text(mut self, text: &str) -> Self {
     self.content = EditLine::from(text);
-    self.cursor.x.update(self.content.weighted_head());
+    self.cursor.x.update(self.content.get_weighted_head());
     self
   }
 
@@ -546,9 +546,9 @@ impl EditBox {
   }
 
   pub fn resize<V: ViewPort>(&mut self, rect: V) {
-    self.rect = rect.view_port().top_row();
+    self.rect = rect.get_view_port().top_row();
     self.cursor.x.resize(
-      self.content.weighted_head(), 
+      self.content.get_weighted_head(), 
       self.rect.x, 
       self.rect.w
       );
@@ -559,23 +559,23 @@ impl EditBox {
     self.write = true;
   }
 
-  pub fn left(&mut self, delta: usize) -> bool {
-    if self.content.backward(delta) == 0 {
-      self.write = self.cursor.x.update(self.content.weighted_head());
+  pub fn move_left(&mut self, delta: usize) -> bool {
+    if self.content.move_backward(delta) == 0 {
+      self.write = self.cursor.x.update(self.content.get_weighted_head());
       true
     } else {false}
   }
 
-  pub fn right(&mut self, delta: usize) -> bool {
-    if self.content.forward(delta) == 0 {
-      self.write = self.cursor.x.update(self.content.weighted_head());
+  pub fn move_right(&mut self, delta: usize) -> bool {
+    if self.content.move_forward(delta) == 0 {
+      self.write = self.cursor.x.update(self.content.get_weighted_head());
       true
     } else {false}
   }
 
   pub fn delete(&mut self) -> bool {
     if self.content.delete() {
-      self.cursor.x.update(self.content.weighted_head());
+      self.cursor.x.update(self.content.get_weighted_head());
       self.write = true;
       true
     } else {false}
@@ -583,7 +583,7 @@ impl EditBox {
 
   pub fn backspace(&mut self) -> bool {
     if self.content.backspace() {
-      self.cursor.x.update(self.content.weighted_head());
+      self.cursor.x.update(self.content.get_weighted_head());
       self.write = true;
       true
     } else {false}
@@ -591,7 +591,7 @@ impl EditBox {
 
   pub fn insert(&mut self, c: char) -> bool {
     if self.content.insert(c) {
-      self.cursor.x.update(self.content.weighted_head());
+      self.cursor.x.update(self.content.get_weighted_head());
       self.write = true;
       true
     } else {false}
@@ -602,8 +602,8 @@ impl EditBox {
       Action::Backspace => {self.backspace();}
       Action::Delete    => {self.delete();}
       Action::Insert(c) => {self.insert(*c);}
-      Action::MoveLeft  => {self.left(1);}
-      Action::MoveRight => {self.right(1);}
+      Action::MoveLeft  => {self.move_left(1);}
+      Action::MoveRight => {self.move_right(1);}
       _ => {}
     }
   }
@@ -624,7 +624,7 @@ impl EditBox {
       .queue(&self.style)?;
     // render chars
     for c in self.content
-      .view_weighted(self.cursor.x_scroll(), self.rect.w.into()) 
+      .get_weighted_view(self.cursor.x_scroll(), self.rect.w.into()) 
     {
       writer.queue(Print(c))?;
       x += u16::try_from(c.width().unwrap_or(0)).unwrap();
