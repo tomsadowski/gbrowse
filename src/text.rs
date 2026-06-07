@@ -150,7 +150,9 @@ impl StyledText {
 
   // get owned chars
   pub fn print(&self, width: usize) -> Vec<Vec<char>> {
-    if self.wrap {
+    if self.text.len() == 0 {
+      vec![vec![' ']]
+    } else if self.wrap {
       util::get_wrapped_text(&self.text, width)
     } else {
       vec![self.text.chars().collect()]
