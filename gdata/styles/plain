@@ -17,7 +17,7 @@ corner  = "round"
 bracket = "space"
 
 [text]
-wrap = false
+wrap = true
 
 [preformat]
 wrap = false

@@ -1,5 +1,4 @@
 // src/util.rs
-use unicode_width::UnicodeWidthChar;
 
 
 pub fn split_whitespace_once(line: &str) -> Option<(&str, &str)> {
@@ -34,7 +33,43 @@ pub fn get_entries(path: &str) -> Result<Vec<String>, String> {
   Ok(vec)
 }
 
-pub fn wrap_text(text: Vec<char>, width: usize) -> Vec<Vec<char>> {
+pub fn bet_wrapped_text(input: &str, width: usize) -> Vec<Vec<char>> {
+  use unicode_width::UnicodeWidthChar;
+  let     input:  Vec<_> = input.chars().collect();
+  let mut output: Vec<_> = vec![];
+  let mut start          = 0;
+  while start < input.len() {
+    let mut accum_width  = 0;
+    let mut text: Vec<_> = vec![];
+    let mut chars        = input[start..].iter();
+    while let 
+      Some(c) = chars.next() && 
+      accum_width < width 
+    {
+      accum_width += &c.width().unwrap_or(0);
+      text.push(c.clone());
+    }
+    let line: Vec<_> = {
+      let s: Vec<_> = text
+        .iter()
+        .rev()
+        .skip_while(|c| !c.is_whitespace())
+        .collect();
+      if text.len() <= width || s.len() == 0 {
+        text
+      } else {
+        s.into_iter().rev().copied().collect()
+      }
+    };
+    start += line.len();
+    output.push(line);
+  }
+  output
+}
+
+pub fn get_wrapped_text(text: &str, width: usize) -> Vec<Vec<char>> {
+  use unicode_width::UnicodeWidthChar;
+  let     text:  Vec<_> = text.chars().collect();
   let mut vec: Vec<Vec<char>> = vec![];
   let mut start = usize::MIN;
   while start < text.len() {
@@ -65,4 +100,16 @@ pub fn wrap_text(text: Vec<char>, width: usize) -> Vec<Vec<char>> {
     vec.push(line);
   }
   vec
+}
+
+#[cfg(test)]
+mod util_test {
+  use super::*;
+  #[test]
+  fn wrap_text() {
+    let input = 
+      "The bicycle feels good to ride so far, but I'll have to practice.";
+    let output = get_wrapped_text(&input, 5);
+    println!("{:?}", output);
+  }
 }

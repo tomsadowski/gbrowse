@@ -234,20 +234,20 @@ impl<V: ViewPort> From<&V> for ScreenCursor {
   }
 }
 impl ScreenCursor {
-  pub fn x_cursor(&self) -> u16 {
-    self.x.view_head
+  pub fn get_x_cursor(&self) -> u16 {
+    self.x.get_cursor()
   }
 
-  pub fn y_cursor(&self) -> u16 {
-    self.y.view_head
+  pub fn get_y_cursor(&self) -> u16 {
+    self.y.get_cursor()
   }
 
-  pub fn x_scroll(&self) -> usize {
-    self.x.start
+  pub fn get_x_scroll(&self) -> usize {
+    self.x.get_scroll()
   }
 
-  pub fn y_scroll(&self) -> usize {
-    self.y.start
+  pub fn get_y_scroll(&self) -> usize {
+    self.y.get_scroll()
   }
 
   pub fn resize<X, Y>(&mut self, plane: &Y, rect: &Rect) 
@@ -465,11 +465,11 @@ impl TextBox {
       .queue(SetAttribute(Attribute::Reset))?
       .queue(&self.style)?;
     for line in self.content
-      .get_unit_view(self.cursor.y_scroll(), self.view.h.into()) 
+      .get_unit_view(self.cursor.get_y_scroll(), self.view.h.into()) 
     {
       writer.queue(&self.content.source[line.index].style)?;
       for c in line
-        .get_weighted_view(self.cursor.x_scroll(), self.view.w.into()) 
+        .get_weighted_view(self.cursor.get_x_scroll(), self.view.w.into()) 
       {
         writer.queue(Print(c))?;
         x += u16::try_from(c.width().unwrap_or(0)).unwrap();
@@ -624,7 +624,7 @@ impl EditBox {
       .queue(&self.style)?;
     // render chars
     for c in self.content
-      .get_weighted_view(self.cursor.x_scroll(), self.rect.w.into()) 
+      .get_weighted_view(self.cursor.get_x_scroll(), self.rect.w.into()) 
     {
       writer.queue(Print(c))?;
       x += u16::try_from(c.width().unwrap_or(0)).unwrap();
