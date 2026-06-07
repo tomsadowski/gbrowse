@@ -140,9 +140,9 @@ impl TabManager {
   where T: Into<Style> + Copy
   {
     self.style = style.into();
-    self.tabs.iter_mut().map(|tab|
-      tab.get_textbox_mut().style = self.style
-    );
+    for tab in self.tabs.iter_mut() {
+      tab.get_textbox_mut().style = self.style;
+    }
     self
   }
 
@@ -150,28 +150,28 @@ impl TabManager {
   where T: Into<Style> + Copy
   {
     self.style = style.into();
-    self.tabs.iter_mut().map(|tab|
-      tab.get_textbox_mut().style = self.style
-    );
+    for tab in self.tabs.iter_mut() {
+      tab.get_textbox_mut().style = self.style;
+    }
   }
 
   pub fn push_gem_style<F>(&mut self, func: F)
   where F: Fn(&GemText) -> StyledText,
   {
-    self.tabs.iter_mut().map(|tab| 
+    for tab in self.tabs.iter_mut() {
       if let Tab::Gem(gem_tab) = tab {
         let source = &gem_tab.source;
         gem_tab.textbox.restyle(source, |gem| func(gem));
         gem_tab.textbox.style = self.style;
       }
-    );
+    }
   }
 
   pub fn resize<V: ViewPort + Copy>(&mut self, view: V) {
     self.view = view.get_view_port();
-    self.tabs.iter_mut().map(|tab|
-      tab.get_textbox_mut().resize(self.view)
-    );
+    for tab in self.tabs.iter_mut() {
+      tab.get_textbox_mut().resize(self.view);
+    }
   }
 
   pub fn reset_state(&mut self) {

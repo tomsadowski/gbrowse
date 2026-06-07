@@ -256,7 +256,7 @@ impl StyledTextPlane {
   }
 
   pub fn resize(&mut self, width: u16) {
-    let idx   = self.get_source_index();
+    let idx   = self.get_index();
     self.text = StyledText::get_textlines(&self.source, width.into());
     self.set_index(idx);
   }
