@@ -119,18 +119,6 @@ impl Rect {
   pub fn cropped_y(&self, delta: u16) -> Self {
     self.clone().crop_y(delta)
   }
-  pub fn north_range(&self, rect: &Rect) -> Range<u16> {
-    Range {start: self.y, end: rect.y}
-  }
-  pub fn south_range(&self, rect: &Rect) -> Range<u16> {
-    Range {start: rect.y_end(), end: self.y_end()}
-  }
-  pub fn east_range(&self, rect: &Rect) -> Range<u16> {
-    Range {start: rect.x_end(), end: self.x_end()}
-  }
-  pub fn west_range(&self, rect: &Rect) -> Range<u16> {
-    Range {start: self.x, end: rect.x}
-  }
   pub fn x_range(&self) -> Range<u16> {
     Range {start: self.x, end: self.x_end()}
   }

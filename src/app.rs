@@ -434,8 +434,7 @@ impl App {
       (Msg::Action(Action::SaveUrl), Focus::Tab) => {
         if let Some(url) = self.tabs
           .get_current()
-          .map(|tab| tab.get_url())
-          .flatten()
+          .and_then(|tab| tab.get_url())
         {
           match self.user.save_url(url) {
             Err(e) => self.focus_ack_dialog(e),

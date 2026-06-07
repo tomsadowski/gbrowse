@@ -126,7 +126,7 @@ impl Frame {
         .queue(MoveTo(x, ay))?.queue(Print(self.border_style.x))?
         .queue(MoveTo(x, cy))?.queue(Print(self.border_style.x))?;
     }
-    for y in self.border_rect.cropped_y(1).y_range() {
+    for y in self.border_rect.clone().crop_y(1).y_range() {
       writer
         .queue(MoveTo(ax, y))?.queue(Print(self.border_style.y))?
         .queue(MoveTo(bx, y))?.queue(Print(self.border_style.y))?;
@@ -136,18 +136,18 @@ impl Frame {
       .queue(SetAttribute(Attribute::Reset))?
       .queue(&self.margin_style)?;
     for x in self.outer_rect.x_range() {
-      for y in self.outer_rect.north_range(&self.inner_rect) {
+      for y in self.outer_rect.y..self.inner_rect.y {
         writer.queue(MoveTo(x, y))?.queue(Print(' '))?;
       }
-      for y in self.outer_rect.south_range(&self.inner_rect) {
+      for y in self.inner_rect.y_end()..self.outer_rect.y_end() {
         writer.queue(MoveTo(x, y))?.queue(Print(' '))?;
       }
     }
     for y in self.inner_rect.y_range() {
-      for x in self.outer_rect.east_range(&self.inner_rect) {
+      for x in self.outer_rect.x..self.inner_rect.x {
         writer.queue(MoveTo(x, y))?.queue(Print(' '))?;
       }
-      for x in self.outer_rect.west_range(&self.inner_rect) {
+      for x in self.inner_rect.x_end()..self.outer_rect.x_end() {
         writer.queue(MoveTo(x, y))?.queue(Print(' '))?;
       }
     }

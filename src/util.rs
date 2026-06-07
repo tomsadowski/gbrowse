@@ -55,7 +55,7 @@ pub fn get_wrapped_text(input: &str, width: usize) -> Vec<Vec<char>> {
         .rev()
         .skip_while(|c| !c.is_whitespace())
         .collect();
-      if text.len() <= width || s.len() == 0 {
+      if text.len() < width || s.len() == 0 {
         text
       } else {
         s.into_iter().rev().copied().collect()
