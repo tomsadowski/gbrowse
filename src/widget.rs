@@ -1,7 +1,7 @@
 // src/widget.rs
 
 use crate::{
-  cursor::{UnitCursor, UnitCursorMut, WeightedCursor},
+  cursor::{UnitCursor, UnitCursorMut, WeightedCursor, CursorPlane},
   view::{ViewPort, Rect, CursorView, ScreenCursor},
   style::{Style, Margins, BorderStyle},
   text::{EditLine, StyledText, StyledTextPlane},
