@@ -78,7 +78,7 @@ impl Tab {
     self.get_gem_tab().map(|gem_tab| &gem_tab.source)
   }
 
-  pub fn get_current_gem_source(&self) -> Option<&GemText> {
+  pub fn get_gem_text(&self) -> Option<&GemText> {
     self.get_gem_tab().and_then(|gem_tab| gem_tab.get_source())
   }
 
@@ -175,13 +175,35 @@ impl TabManager {
   }
 
   pub fn reset_state(&mut self) {
-    self.textbox_mut().map(|textbox|
-      textbox.reset_state()
+    self.use_current_mut(
+      |tab| {
+        tab.get_textbox_mut().reset_state();
+      }
     );
   }
 
-  pub fn textbox_mut(&mut self) -> Option<&mut TextBox> {
-    self.get_current_mut().map(|tab| tab.get_textbox_mut())
+  pub fn get_url(&self) -> Option<&url::Url> {
+    self
+      .get_current()
+      .and_then(|tab| tab.get_url())
+  }
+
+  pub fn use_gem_text<F, T>(&self, func: F) -> Option<T>
+  where F: Fn(&GemText) -> T
+  {
+    self
+      .get_current()
+      .and_then(|tab| tab.get_gem_text())
+      .map(|gem_text| func(gem_text))
+  }
+
+  pub fn use_textbox_mut<F, T>(&mut self, func: F) -> Option<T>
+  where F: Fn(&mut TextBox) -> T
+  {
+    self
+      .get_current_mut()
+      .map(|tab| tab.get_textbox_mut())
+      .map(|textbox| func(textbox))
   }
 
   pub fn add_gem_tab<F>(
@@ -198,8 +220,8 @@ impl TabManager {
   }
 
   pub fn get_banner_text(&self) -> String {
-    match self.get_current()
-      .map(|tab| match tab {
+    match self.use_current(
+      |tab| match tab {
         Tab::Gem(   UrlTab {url, ..}) | 
         Tab::Gopher(UrlTab {url, ..}) => url.to_string(),
         Tab::Text(heading, _)         => heading.to_string(),

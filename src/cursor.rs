@@ -20,6 +20,12 @@ pub trait UnitCursor {
     self.get_units().get(self.get_head())
   }
 
+  fn use_current<F, T>(&self, func: F) -> Option<T>
+  where F: Fn(&Self::Unit) -> T
+  {
+    self.get_current().map(|u| func(u))
+  }
+
   fn get_unit_view(&self, start: usize, width: usize) -> Vec<&Self::Unit> {
     self.get_units().iter().skip(start).take(width).collect() 
   }
@@ -71,19 +77,27 @@ pub trait UnitCursor {
     }
   }
 
-  fn move_backward_wrapped(&mut self, delta: usize) {
-    if delta > self.get_head() {
+  fn move_backward_wrapped(&mut self, delta: usize) -> bool {
+    if self.get_length() <= 1 {
+      false
+    } else if delta > self.get_head() {
       self.move_to_end();
+      true
     } else {
       *self.get_head_mut() -= delta;
+      true
     }
   }
 
-  fn move_forward_wrapped(&mut self, delta: usize) {
-    if self.get_head() + delta > self.get_max_head() {
+  fn move_forward_wrapped(&mut self, delta: usize) -> bool {
+    if self.get_length() <= 1 {
+      false
+    } else if self.get_head() + delta > self.get_max_head() {
       self.move_to_start();
+      true
     } else {
       *self.get_head_mut() += delta;
+      true
     }
   }
 }
@@ -96,13 +110,17 @@ pub trait UnitCursorMut: UnitCursor {
     self.units_mut().get_mut(head)
   }
 
+  fn use_current_mut<F, T>(&mut self, func: F) -> Option<T>
+  where F: Fn(&mut Self::Unit) -> T
+  {
+    self.get_current_mut().map(|u| func(u))
+  }
+
   fn remove(&mut self) -> usize {
     let head = self.get_head();
     if head < self.get_length() {
       self.units_mut().remove(head);
-      if 0 < self.get_length() {
-        self.move_backward_wrapped(1);
-      }
+      self.move_backward_wrapped(1);
     }
     self.get_length()
   }

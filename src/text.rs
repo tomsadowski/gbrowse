@@ -214,8 +214,7 @@ impl StyledTextPlane {
 
   pub fn get_source_index(&self) -> usize {
     self
-      .get_current()
-      .map(|t| t.index)
+      .use_current(|c| c.index)
       .unwrap_or(0)
   }
 
@@ -227,9 +226,9 @@ impl StyledTextPlane {
   }
 
   fn get_index(&self) -> usize {
-    match self.get_current().map(|u| u.get_head()) {
+    match self.use_current(|u| u.get_head()) {
       None         => 0,
-      Some(x_head) => self.text[..self.get_head()]
+      Some(x_head) => self.get_units()[..self.get_head()]
         .iter()
         .map(|line| line.get_length().max(1))
         .chain(std::iter::once(x_head))
@@ -239,7 +238,7 @@ impl StyledTextPlane {
 
   fn set_index(&mut self, idx: usize) {
     self.move_to_start();
-    self.get_current_mut().map(|t| t.move_to_start());
+    self.use_current_mut(|t| t.move_to_start());
     self.move_right(idx);
   }
 
@@ -249,8 +248,8 @@ impl StyledTextPlane {
     F: Fn(&I) -> StyledText,
   {
     self.source = input.iter().map(|i| func(i)).collect();
-    let idx   = self.get_source_index();
-    self.text = StyledText::get_textlines(
+    let idx     = self.get_source_index();
+    self.text   = StyledText::get_textlines(
       &self.source, 
       view.get_view_port().w.into()
     );
@@ -265,26 +264,31 @@ impl StyledTextPlane {
 
   pub fn move_up(&mut self, delta: usize) -> bool {
     if self.move_backward(delta) != delta {
-      self.text[self.head].fit(self.pref_x);
+      let pref_x = self.pref_x;
+      self.use_current_mut(|c| c.fit(pref_x));
       true
     } else {false}
   }
 
   pub fn move_down(&mut self, delta: usize) -> bool {
     if self.move_forward(delta) != delta {
-      self.text[self.head].fit(self.pref_x);
+      let pref_x = self.pref_x;
+      self.use_current_mut(|c| c.fit(pref_x));
       true
     } else {false}
   }
 
   pub fn move_left(&mut self, delta: usize) -> usize {
-    if self.text.len() == 0 {return delta}
-    let remainder = self.text[self.head].move_backward(delta);
+    let remainder = self
+      .use_current_mut(|c| c.move_backward(delta))
+      .unwrap_or(delta);
     if remainder == 0 {
-      self.pref_x = self.text[self.head].get_head();
+      self.pref_x = self
+        .use_current(|c| c.get_head())
+        .unwrap_or(self.pref_x);
       0
     } else if self.move_backward(1) == 0 {
-      self.text[self.head].move_to_end();
+      self.use_current_mut(|c| c.move_to_end());
       self.move_left(remainder.saturating_sub(1))
     } else {
       remainder
@@ -292,13 +296,16 @@ impl StyledTextPlane {
   }
 
   pub fn move_right(&mut self, delta: usize) -> usize {
-    if self.text.len() == 0 {return delta}
-    let remainder = self.text[self.head].move_forward(delta);
+    let remainder = self
+      .use_current_mut(|t| t.move_forward(delta))
+      .unwrap_or(delta);
     if remainder == 0 {
-      self.pref_x = self.text[self.head].get_head();
+      self.pref_x = self
+        .use_current(|c| c.get_head())
+        .unwrap_or(self.pref_x);
       0
     } else if self.move_forward(1) == 0 {
-      self.text[self.head].move_to_start();
+      self.use_current_mut(|c| c.move_to_start());
       self.move_right(remainder.saturating_sub(1))
     } else {
       remainder

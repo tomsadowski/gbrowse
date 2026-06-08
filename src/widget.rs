@@ -324,16 +324,14 @@ impl TextBox {
   }
 
   pub fn with_input<I, F>(mut self, input: &Vec<I>, func: F) -> Self 
-  where 
-    F: Fn(&I) -> StyledText,
+  where F: Fn(&I) -> StyledText,
   {
     self.content = StyledTextPlane::new(&self.view, input, func);
     self
   }
 
   pub fn set_input<I, F>(&mut self, input: &Vec<I>, func: F)
-  where 
-    F: Fn(&I) -> StyledText,
+  where F: Fn(&I) -> StyledText,
   {
     self.content = StyledTextPlane::new(&self.view, input, func);
   }
