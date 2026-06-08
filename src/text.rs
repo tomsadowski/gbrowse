@@ -6,10 +6,9 @@ use crate::{
   style::{Style, TextStyle},
   util,
 };
-use unicode_width::UnicodeWidthChar;
 
-pub trait RenderedText: From<(usize, Vec<char>)>
-{
+
+pub trait RenderedText: From<(usize, Vec<char>)> {
   fn get_origin_index(&self) -> usize;
 }
 
@@ -31,9 +30,9 @@ impl From<&str> for TextLine {
 impl From<(usize, Vec<char>)> for TextLine {
   fn from(item: (usize, Vec<char>)) -> Self {
     Self {
-      head: 0, 
-      index:  item.0,
-      text: item.1
+      head:  0, 
+      index: item.0,
+      text:  item.1
     }
   }
 }
@@ -234,22 +233,6 @@ impl<T> UnitCursorMut for TextPlane<T> {
     &mut self.text
   }
 }
-impl<T: RenderedText> From<(usize, Vec<char>)> for TextPlane<T> {
-  fn from(item: (usize, Vec<char>)) -> Self {
-    Self {
-      head:   0, 
-      pref_x: 0,
-      text:   vec![item.into()],
-    }
-  }
-}
-impl<T: RenderedText> RenderedText for TextPlane<T> {
-  fn get_origin_index(&self) -> usize {
-    self
-      .use_current(|c| c.get_origin_index())
-      .unwrap_or(0)
-  }
-}
 impl<T: RenderedText> TextPlane<T> {
   pub fn new<V: ViewPort>(view: &V, input: &Vec<StyledText>) -> Self {
     Self {
@@ -257,6 +240,11 @@ impl<T: RenderedText> TextPlane<T> {
       head:   0, 
       pref_x: 0, 
     }
+  }
+  pub fn get_origin_index(&self) -> usize {
+    self
+      .use_current(|c| c.get_origin_index())
+      .unwrap_or(0)
   }
 }
 impl<T: UnitCursor> TextPlane<T> {

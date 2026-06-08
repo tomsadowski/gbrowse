@@ -245,9 +245,7 @@ where
     }
   }
 }
-impl<T> TextBox<T> 
-where T: RenderedText,
-{
+impl<T: RenderedText> TextBox<T> {
   pub fn new<V, I, F>(view: V, input: &Vec<I>, func: F) -> Self 
   where 
     V: ViewPort,
@@ -411,7 +409,6 @@ where
 }
 impl<T> TextBox<T> 
 where 
-  T: RenderedText + UnitCursor,
   TextPlane<T>: CursorPlane + UnitCursorMut,
   <TextPlane<T> as UnitCursor>::Unit: WeightedCursor + RenderedText,
   <<TextPlane<T> as UnitCursor>::Unit as UnitCursor>::Unit: 

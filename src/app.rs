@@ -551,7 +551,7 @@ impl App {
     let banner_text = {
       let text = self.tabs.get_banner_text();
       if let Some(request) = &self.request {
-        format!("(pending response) {}", text)
+        format!("(pending response) {text}")
       } else {text}
     };
     self.frame.write_banner(&banner_text, stdout)?;
