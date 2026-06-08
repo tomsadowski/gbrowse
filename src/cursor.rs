@@ -1,8 +1,6 @@
 // src/cursor.rs
 
-use crate::view::Rect;
 use unicode_width::UnicodeWidthChar;
-use std::io::Write;
 
 
 pub trait UnitCursor {
@@ -184,7 +182,9 @@ pub trait UnitCursorMut: UnitCursor {
 
 pub trait WeightedCursor: UnitCursor {
   fn get_weighted_head(&self) -> usize;
+
   fn get_weighted_length(&self) -> usize;
+
   fn get_weighted_view(&self, start: usize, width: usize) 
     -> Vec<&Self::Unit>;
 }
@@ -219,5 +219,81 @@ where U: UnitCursor<Unit = char>
       result.push(c);
     }
     result
+  }
+}
+
+pub trait CursorPlane {
+  fn get_index(&self) -> usize;
+
+  fn set_index(&mut self, idx: usize);
+
+  fn move_up(&mut self, delta: usize) -> bool;
+
+  fn move_down(&mut self, delta: usize) -> bool;
+
+  fn move_left(&mut self, delta: usize) -> usize;
+
+  fn move_right(&mut self, delta: usize) -> usize;
+}
+impl<U, T> CursorPlane for U 
+where 
+  U: UnitCursorMut<Unit = T>,
+  T: UnitCursor,
+{
+  fn get_index(&self) -> usize {
+    match self.use_current(|c| c.get_head()) {
+      None         => 0,
+      Some(x_head) => self.get_units()[..self.get_head()]
+        .iter()
+        .map(|line| line.get_length().max(1))
+        .chain(std::iter::once(x_head))
+        .sum(),
+    }
+  }
+
+  fn set_index(&mut self, idx: usize) {
+    self.move_to_start();
+    self.use_current_mut(|c| c.move_to_start());
+    self.move_right(idx);
+  }
+
+  fn move_up(&mut self, delta: usize) -> bool {
+    let x_head = self
+      .use_current(|c| c.get_head())
+      .unwrap_or(0);
+    if self.move_backward(delta) != delta {
+      self.use_current_mut(|c| c.fit(x_head));
+      true
+    } else {false}
+  }
+
+  fn move_down(&mut self, delta: usize) -> bool {
+    let x_head = self
+      .use_current(|c| c.get_head())
+      .unwrap_or(0);
+    if self.move_forward(delta) != delta {
+      self.use_current_mut(|c| c.fit(x_head));
+      true
+    } else {false}
+  }
+
+  fn move_left(&mut self, delta: usize) -> usize {
+    let remainder = self
+      .use_current_mut(|c| c.move_backward(delta))
+      .unwrap_or(delta);
+    if remainder != 0 && self.move_backward(1) == 0 {
+      self.use_current_mut(|c| c.move_to_end());
+      self.move_left(remainder.saturating_sub(1))
+    } else {remainder}
+  }
+
+  fn move_right(&mut self, delta: usize) -> usize {
+    let remainder = self
+      .use_current_mut(|c| c.move_forward(delta))
+      .unwrap_or(delta);
+    if remainder != 0 && self.move_forward(1) == 0 {
+      self.use_current_mut(|c| c.move_to_start());
+      self.move_right(remainder.saturating_sub(1))
+    } else {remainder}
   }
 }

@@ -229,23 +229,6 @@ impl StyledTextPlane {
       .unwrap_or("empty".into())
   }
 
-  fn get_index(&self) -> usize {
-    match self.use_current(|u| u.get_head()) {
-      None         => 0,
-      Some(x_head) => self.get_units()[..self.get_head()]
-        .iter()
-        .map(|line| line.get_length().max(1))
-        .chain(std::iter::once(x_head))
-        .sum(),
-    }
-  }
-
-  fn set_index(&mut self, idx: usize) {
-    self.move_to_start();
-    self.use_current_mut(|t| t.move_to_start());
-    self.move_right(idx);
-  }
-
   pub fn restyle<V, I, F>(&mut self, view: V, input: &Vec<I>, func: F) 
   where 
     V: ViewPort,
@@ -264,6 +247,23 @@ impl StyledTextPlane {
     let idx   = self.get_index();
     self.text = StyledText::get_textlines(&self.source, width.into());
     self.set_index(idx);
+  }
+
+  fn get_index(&self) -> usize {
+    match self.use_current(|u| u.get_head()) {
+      None         => 0,
+      Some(x_head) => self.get_units()[..self.get_head()]
+        .iter()
+        .map(|line| line.get_length().max(1))
+        .chain(std::iter::once(x_head))
+        .sum(),
+    }
+  }
+
+  fn set_index(&mut self, idx: usize) {
+    self.move_to_start();
+    self.use_current_mut(|t| t.move_to_start());
+    self.move_right(idx);
   }
 
   pub fn move_up(&mut self, delta: usize) -> bool {
