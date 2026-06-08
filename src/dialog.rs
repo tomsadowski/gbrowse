@@ -5,7 +5,7 @@ use crate::{
   widget::{TextBox, EditBox},
   view::{Rect, CursorView, ViewPort},
   style::{Style, Margins, BorderStyle},
-  text::{EditLine, StyledText, TextPlane},
+  text::{TextLine, EditLine, StyledText, TextPlane},
 };
 use crossterm::QueueableCommand;
 use unicode_width::UnicodeWidthChar;
@@ -13,15 +13,15 @@ use std::io::Write;
 
 
 pub enum Input {
-  Ack(TextBox),
-  Ask(TextBox),
-  Select(TextBox),
+  Ack(TextBox<TextLine>),
+  Ask(TextBox<TextLine>),
+  Select(TextBox<TextLine>),
   Edit(EditBox),
 }
 
 pub struct Dialog {
-  pub prompt:   TextBox,
-  pub input: Input,
+  pub prompt: TextBox<TextLine>,
+  pub input:  Input,
 } 
 impl Dialog {
   pub fn ack<V, S>(view: V, style: S, prompt: &str, input: &str) -> Self
