@@ -5,10 +5,14 @@ use unicode_width::UnicodeWidthChar;
 
 pub trait UnitCursor {
   type Unit;
-  fn get_units(&self)        -> &Vec<Self::Unit>;
-  fn get_head(&self)         -> usize;
+
+  fn get_units(&self) -> &Vec<Self::Unit>;
+
+  fn get_head(&self) -> usize;
+
   fn get_head_mut(&mut self) -> &mut usize;
-  fn get_max_head(&self)     -> usize;
+
+  fn get_max_head(&self) -> usize;
 
   fn get_length(&self) -> usize {
     self.get_units().len()
