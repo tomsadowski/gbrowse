@@ -216,6 +216,7 @@ impl Frame {
     Ok(())
   }
 }
+
 #[derive(Default)]
 pub struct TextBox {
   pub view:           Rect,

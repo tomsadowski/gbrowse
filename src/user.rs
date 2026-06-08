@@ -225,6 +225,6 @@ impl User {
       GemTag::ListItem     => self.style.list.into(),
       GemTag::Quote        => self.style.quote.into(),
     };
-    text.with_text(&gemtext.to_string())
+    text.text(&gemtext.to_string())
   }
 }

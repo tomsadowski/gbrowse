@@ -133,22 +133,23 @@ impl From<TextStyle> for StyledText {
   }
 }
 impl StyledText {
-  pub fn with_text(mut self, text: &str) -> Self {
+  pub fn text(mut self, text: &str) -> Self {
     self.text = text.into();
     self
   }
+
   pub fn style<T>(mut self, style: T) -> Self 
   where T: Into<Style> + Copy
   {
     self.style = style.into();
     self
   }
-  pub fn with_wrap(mut self, wrap: bool) -> Self {
+
+  pub fn wrap(mut self, wrap: bool) -> Self {
     self.wrap = wrap;
     self
   }
 
-  // get owned chars
   pub fn print(&self, width: usize) -> Vec<Vec<char>> {
     if self.text.len() == 0 {
       vec![vec![' ']]
@@ -205,9 +206,12 @@ impl StyledTextPlane {
   {
     let source = input.iter().map(|i| func(i)).collect();
     Self {
+      text: StyledText::get_textlines(
+        &source, 
+        view.get_view_port().w.into()
+      ), 
       head:   0, 
       pref_x: 0, 
-      text: StyledText::get_textlines(&source, view.get_view_port().w.into()), 
       source,
     }
   }
@@ -247,8 +251,8 @@ impl StyledTextPlane {
     V: ViewPort,
     F: Fn(&I) -> StyledText,
   {
+    let idx     = self.get_index();
     self.source = input.iter().map(|i| func(i)).collect();
-    let idx     = self.get_source_index();
     self.text   = StyledText::get_textlines(
       &self.source, 
       view.get_view_port().w.into()
