@@ -6,6 +6,7 @@ use crate::{
   keys::Action,
   view::{Rect, ViewPort},
   tab::{Tab, UrlTab, TabManager},
+  text::TextLine,
   widget::{Frame, TextBox},
   dialog::{Input, Dialog},
   gemdoc::{self, GemTag, GemText, Status, StatusText},
@@ -288,7 +289,7 @@ impl App {
         => match (&mut dlg.input, action, task) 
       {
         (Input::Select(textbox), Action::Select, Task::NewTab) => {
-          if let Some(link) = self.user.urls.get(textbox.get_source_index()) {
+          if let Some(link) = self.user.urls.get(textbox.get_origin_index()) {
             let link = link.clone();
             self.select_link(&link);
           } else {
@@ -323,7 +324,7 @@ impl App {
           }
         }
         (Input::Select(textbox), Action::Select, Task::Menu) => {
-          match MENU[textbox.get_source_index()] {
+          match MENU[textbox.get_origin_index()] {
             MANUAL => {
               self.focus_ack_dialog("View manual".into());
             }
@@ -557,7 +558,8 @@ impl App {
     self.frame.write_footer(&self.guide, stdout)?;
     if let Focus::Dialog(_, dialog) = &self.focus {
       if self.new_dlg {
-        TextBox::from(self.frame).empty(stdout)?;
+        let tb: TextBox<TextLine> = self.frame.into();
+        tb.empty(stdout)?;
       }
       dialog.write(stdout)?;
     } else {

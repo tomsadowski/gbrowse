@@ -8,6 +8,10 @@ use crate::{
 };
 use unicode_width::UnicodeWidthChar;
 
+pub trait RenderedText: From<(usize, Vec<char>)>
+{
+  fn get_origin_index(&self) -> usize;
+}
 
 #[derive(Clone, Debug, Default)]
 pub struct TextLine {
@@ -24,15 +28,6 @@ impl From<&str> for TextLine {
     }
   }
 }
-impl From<Vec<char>> for TextLine {
-  fn from(item: Vec<char>) -> Self {
-    Self {
-      index:  0,
-      head: 0, 
-      text: item
-    }
-  }
-}
 impl From<(usize, Vec<char>)> for TextLine {
   fn from(item: (usize, Vec<char>)) -> Self {
     Self {
@@ -40,6 +35,11 @@ impl From<(usize, Vec<char>)> for TextLine {
       index:  item.0,
       text: item.1
     }
+  }
+}
+impl RenderedText for TextLine {
+  fn get_origin_index(&self) -> usize {
+    self.index
   }
 }
 impl UnitCursor for TextLine {
@@ -61,16 +61,45 @@ impl UnitCursor for TextLine {
 #[derive(Clone, Debug, Default)]
 pub struct EditLine {
   pub head: usize,
+  pub index: usize,
   pub text: Vec<char>,
 }
 impl From<&str> for EditLine {
   fn from(item: &str) -> Self {
     let mut editline = Self {
-      head: 0, 
-      text: item.chars().collect()
+      head:  0, 
+      index: 0,
+      text:  item.chars().collect()
     };
     editline.move_to_end();
     editline
+  }
+}
+impl From<Vec<char>> for EditLine {
+  fn from(item: Vec<char>) -> Self {
+    let mut editline = Self {
+      head:  0, 
+      index: 0,
+      text:  item
+    };
+    editline.move_to_end();
+    editline
+  }
+}
+impl From<(usize, Vec<char>)> for EditLine {
+  fn from(item: (usize, Vec<char>)) -> Self {
+    let mut editline = Self {
+      head:  0, 
+      index: item.0,
+      text:  item.1
+    };
+    editline.move_to_end();
+    editline
+  }
+}
+impl RenderedText for EditLine {
+  fn get_origin_index(&self) -> usize {
+    self.index
   }
 }
 impl ToString for EditLine {
@@ -167,7 +196,9 @@ impl StyledText {
   }
 }
 
-pub fn get_textlines(vec: &Vec<StyledText>, width: usize) -> Vec<TextLine> {
+pub fn get_rendered_text<T>(vec: &Vec<StyledText>, width: usize) -> Vec<T>
+where T: RenderedText
+{
   vec.iter().enumerate().flat_map(
     |(idx, styled)| 
       styled
@@ -178,14 +209,13 @@ pub fn get_textlines(vec: &Vec<StyledText>, width: usize) -> Vec<TextLine> {
 }
 
 #[derive(Clone, Debug, Default)]
-pub struct StyledTextPlane {
-  pub source: Vec<StyledText>,
-  pub text:   Vec<TextLine>, 
+pub struct TextPlane<T> {
+  pub text:   Vec<T>, 
   pub head:   usize,
   pub pref_x: usize,
 }
-impl UnitCursor for StyledTextPlane {
-  type Unit = TextLine;
+impl<T> UnitCursor for TextPlane<T> {
+  type Unit = T;
   fn get_units(&self) -> &Vec<Self::Unit> {
     &self.text
   }
@@ -199,56 +229,37 @@ impl UnitCursor for StyledTextPlane {
     self.text.len().saturating_sub(1)
   }
 }
-impl UnitCursorMut for StyledTextPlane {
+impl<T> UnitCursorMut for TextPlane<T> {
   fn units_mut(&mut self) -> &mut Vec<Self::Unit> {
     &mut self.text
   }
 }
-impl StyledTextPlane {
-  pub fn new<V, I, F>(view: &V, input: &Vec<I>, func: F) -> Self 
-  where 
-    V: ViewPort,
-    F: Fn(&I) -> StyledText,
-  {
-    let source = input.iter().map(|i| func(i)).collect();
+impl<T: RenderedText> From<(usize, Vec<char>)> for TextPlane<T> {
+  fn from(item: (usize, Vec<char>)) -> Self {
     Self {
-      text: get_textlines(&source, view.get_view_port().w.into()), 
       head:   0, 
-      pref_x: 0, 
-      source,
+      pref_x: 0,
+      text:   vec![item.into()],
     }
   }
-
-  pub fn get_source_index(&self) -> usize {
+}
+impl<T: RenderedText> RenderedText for TextPlane<T> {
+  fn get_origin_index(&self) -> usize {
     self
-      .use_current(|c| c.index)
+      .use_current(|c| c.get_origin_index())
       .unwrap_or(0)
   }
-
-  pub fn get_source(&self) -> String {
-    self.source
-      .get(self.get_source_index())
-      .map(|t| t.text.clone())
-      .unwrap_or("empty".into())
+}
+impl<T: RenderedText> TextPlane<T> {
+  pub fn new<V: ViewPort>(view: &V, input: &Vec<StyledText>) -> Self {
+    Self {
+      text:   get_rendered_text(input, view.get_view_port().w.into()), 
+      head:   0, 
+      pref_x: 0, 
+    }
   }
-
-  pub fn restyle<V, I, F>(&mut self, view: V, input: &Vec<I>, func: F) 
-  where 
-    V: ViewPort,
-    F: Fn(&I) -> StyledText,
-  {
-    let idx     = self.get_index();
-    self.source = input.iter().map(|i| func(i)).collect();
-    self.text   = get_textlines(&self.source, view.get_view_port().w.into());
-    self.set_index(idx);
-  }
-
-  pub fn resize(&mut self, width: u16) {
-    let idx   = self.get_index();
-    self.text = get_textlines(&self.source, width.into());
-    self.set_index(idx);
-  }
-
+}
+impl<T: UnitCursor> TextPlane<T> {
   pub fn move_up(&mut self, delta: usize) -> bool {
     if CursorPlane::move_up(self, delta) {
       let pref_x = self.pref_x;

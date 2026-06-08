@@ -5,7 +5,7 @@ use crate::{
   widget::{TextBox, EditBox},
   view::{Rect, CursorView, ViewPort},
   style::{Style, Margins, BorderStyle},
-  text::{EditLine, StyledText, StyledTextPlane},
+  text::{EditLine, StyledText, TextPlane},
 };
 use crossterm::QueueableCommand;
 use unicode_width::UnicodeWidthChar;

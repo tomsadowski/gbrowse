@@ -293,7 +293,7 @@ impl ScreenCursor {
 
   pub fn update<X, Y>(&mut self, plane: &Y) -> bool 
   where 
-    Y: UnitCursor<Unit = X> , 
+    Y: UnitCursor<Unit = X>, 
     X: WeightedCursor
   {
     let y = self.y.update(plane.get_head());

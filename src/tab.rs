@@ -5,7 +5,7 @@ use crate::{
   view::{Rect, ViewPort},
   widget::TextBox,
   gemdoc::GemText,
-  text::StyledText,
+  text::{StyledText, TextLine},
   style::Style,
 };
 use std::io::Write;
@@ -14,7 +14,7 @@ use std::io::Write;
 pub struct UrlTab<T> {
   pub url:     url::Url,
   pub source:  Vec<T>,
-  pub textbox: TextBox,
+  pub textbox: TextBox<TextLine>,
 } 
 impl<T> UrlTab<T> {
   pub fn new<V, F>(url: &url::Url, view: V, source: Vec<T>, func: F) -> Self
@@ -29,13 +29,13 @@ impl<T> UrlTab<T> {
 
   pub fn get_source(&self) ->  Option<&T> {
     self.source.get(
-      self.textbox.content.get_source_index()
+      self.textbox.get_origin_index()
     )
   }
 }
 
 pub enum Tab {
-  Text(String, TextBox),
+  Text(String, TextBox<TextLine>),
   Gem(UrlTab<GemText>),
   Gopher(UrlTab<String>),
 }
@@ -68,7 +68,7 @@ impl Tab {
     } else {None}
   }
 
-  pub fn get_text_tab(&self) ->  Option<(&str, &TextBox)> {
+  pub fn get_text_tab(&self) ->  Option<(&str, &TextBox<TextLine>)> {
     if let Tab::Text(heading, textbox) = self {
       Some((heading, textbox))
     } else {None}
@@ -82,7 +82,7 @@ impl Tab {
     self.get_gem_tab().and_then(|gem_tab| gem_tab.get_source())
   }
 
-  pub fn get_textbox(&self) -> &TextBox {
+  pub fn get_textbox(&self) -> &TextBox<TextLine> {
     match self {
       Tab::Text(_, textbox) |
       Tab::Gem(   UrlTab {textbox, ..}) | 
@@ -90,7 +90,7 @@ impl Tab {
     }
   }
 
-  pub fn get_textbox_mut(&mut self) -> &mut TextBox {
+  pub fn get_textbox_mut(&mut self) -> &mut TextBox<TextLine> {
     match self {
       Tab::Text(_, textbox) |
       Tab::Gem(   UrlTab {textbox, ..}) | 
@@ -198,7 +198,7 @@ impl TabManager {
   }
 
   pub fn use_textbox_mut<F, T>(&mut self, func: F) -> Option<T>
-  where F: Fn(&mut TextBox) -> T
+  where F: Fn(&mut TextBox<TextLine>) -> T
   {
     self
       .get_current_mut()
@@ -237,7 +237,8 @@ impl TabManager {
       tab.get_textbox().write(writer)?;
       tab.get_textbox().cursor.write(writer)?;
     } else {
-      TextBox::from(self.view).empty(writer)?;
+      let tb: TextBox<TextLine> = self.view.into();
+      tb.empty(writer)?;
     }
     Ok(())
   }
