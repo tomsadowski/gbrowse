@@ -154,9 +154,15 @@ impl StyledText {
     if self.text.len() == 0 {
       vec![vec![' ']]
     } else if self.wrap {
-      util::get_wrapped_text(&self.text, width)
+      self.text
+        .lines()
+        .flat_map(|line| util::get_wrapped_text(line, width))
+        .collect()
     } else {
-      vec![self.text.chars().collect()]
+      self.text
+        .lines()
+        .map(|line| line.chars().collect())
+        .collect()
     }
   }
 
