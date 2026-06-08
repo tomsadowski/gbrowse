@@ -165,16 +165,16 @@ impl StyledText {
         .collect()
     }
   }
+}
 
-  pub fn get_textlines(vec: &Vec<Self>, width: usize) -> Vec<TextLine> {
-    vec.iter().enumerate().flat_map(
-      |(idx, styled)| 
-        styled
-          .print(width)
-          .into_iter()
-          .map(move |text| (idx, text).into())
-      ).collect()
-  }
+pub fn get_textlines(vec: &Vec<StyledText>, width: usize) -> Vec<TextLine> {
+  vec.iter().enumerate().flat_map(
+    |(idx, styled)| 
+      styled
+        .print(width)
+        .into_iter()
+        .map(move |text| (idx, text).into())
+    ).collect()
 }
 
 #[derive(Clone, Debug, Default)]
@@ -212,10 +212,7 @@ impl StyledTextPlane {
   {
     let source = input.iter().map(|i| func(i)).collect();
     Self {
-      text: StyledText::get_textlines(
-        &source, 
-        view.get_view_port().w.into()
-      ), 
+      text: get_textlines(&source, view.get_view_port().w.into()), 
       head:   0, 
       pref_x: 0, 
       source,
@@ -242,16 +239,13 @@ impl StyledTextPlane {
   {
     let idx     = self.get_index();
     self.source = input.iter().map(|i| func(i)).collect();
-    self.text   = StyledText::get_textlines(
-      &self.source, 
-      view.get_view_port().w.into()
-    );
+    self.text   = get_textlines(&self.source, view.get_view_port().w.into());
     self.set_index(idx);
   }
 
   pub fn resize(&mut self, width: u16) {
     let idx   = self.get_index();
-    self.text = StyledText::get_textlines(&self.source, width.into());
+    self.text = get_textlines(&self.source, width.into());
     self.set_index(idx);
   }
 
