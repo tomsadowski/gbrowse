@@ -22,7 +22,7 @@ impl<T> UrlTab<T> {
   {
     Self {
       url:     url.clone(),
-      textbox: TextBox::from(view).with_input(&source, func),
+      textbox: TextBox::from(view).input(&source, func),
       source,
     }
   }

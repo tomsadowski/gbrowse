@@ -2,7 +2,7 @@
 
 use crate::{
   cursor::{UnitCursor, UnitCursorMut, WeightedCursor},
-  view::{Rect, CursorView, ViewPort},
+  view::{ViewPort, Rect, CursorView, ScreenCursor},
   style::{Style, Margins, BorderStyle},
   text::{EditLine, StyledText, StyledTextPlane},
   keys::Action,
@@ -39,7 +39,7 @@ impl From<Rect> for Frame {
     let screen_margin = Margins::default();
     let text_margin   = Margins::default();
     let border_rect   = screen_margin.get_rect(screen);
-    let outer_rect    = border_rect.clone().crop_x(1).crop_y(1);
+    let outer_rect    = border_rect.crop_x(1).crop_y(1);
     let inner_rect    = text_margin.get_rect(outer_rect);
     Self {
       margin_style: Style::default(),
@@ -56,42 +56,42 @@ impl From<Rect> for Frame {
   }
 }
 impl Frame {
-  pub fn with_screen_margin(mut self, screen_margin: Margins) -> Self {
+  pub fn screen_margin(mut self, screen_margin: Margins) -> Self {
     self.screen_margin = screen_margin;
     self.border_rect = self.screen_margin.get_rect(self.screen);
-    self.outer_rect  = self.border_rect.clone().crop_x(1).crop_y(1);
+    self.outer_rect  = self.border_rect.crop_x(1).crop_y(1);
     self.inner_rect  = self.text_margin.get_rect(self.outer_rect);
     self
   }
 
-  pub fn with_text_margin(mut self, screen_margin: Margins) -> Self {
+  pub fn text_margin(mut self, screen_margin: Margins) -> Self {
     self.text_margin = screen_margin;
     self.inner_rect  = self.text_margin.get_rect(self.outer_rect);
     self
   }
 
-  pub fn with_banner_style<T>(mut self, style: T) -> Self 
+  pub fn banner_style<T>(mut self, style: T) -> Self 
   where T: Into<Style> + Copy
   {
     self.banner_style = style.into();
     self
   }
 
-  pub fn with_footer_style<T>(mut self, style: T) -> Self 
+  pub fn footer_style<T>(mut self, style: T) -> Self 
   where T: Into<Style> + Copy
   {
     self.footer_style = style.into();
     self
   }
 
-  pub fn with_margin_style<T>(mut self, style: T) -> Self 
+  pub fn margin_style<T>(mut self, style: T) -> Self 
   where T: Into<Style> + Copy
   {
     self.margin_style = style.into();
     self
   }
 
-  pub fn with_border_style(mut self, style: BorderStyle) -> Self {
+  pub fn border_style(mut self, style: BorderStyle) -> Self {
     self.border_style = style;
     self
   }
@@ -99,7 +99,7 @@ impl Frame {
   pub fn resize(&mut self, screen: Rect) {
     self.screen      = screen;
     self.border_rect = self.screen_margin.get_rect(screen);
-    self.outer_rect  = self.border_rect.clone().crop_x(1).crop_y(1);
+    self.outer_rect  = self.border_rect.crop_x(1).crop_y(1);
     self.inner_rect  = self.text_margin.get_rect(self.outer_rect);
   }
 
@@ -121,12 +121,12 @@ impl Frame {
       .queue(MoveTo(bx, by))?.queue(Print(self.border_style.b))?
       .queue(MoveTo(cx, cy))?.queue(Print(self.border_style.c))?
       .queue(MoveTo(dx, dy))?.queue(Print(self.border_style.d))?;
-    for x in self.border_rect.cropped_x(1).x_range() {
+    for x in self.border_rect.crop_x(1).x_range() {
       writer
         .queue(MoveTo(x, ay))?.queue(Print(self.border_style.x))?
         .queue(MoveTo(x, cy))?.queue(Print(self.border_style.x))?;
     }
-    for y in self.border_rect.clone().crop_y(1).y_range() {
+    for y in self.border_rect.crop_y(1).y_range() {
       writer
         .queue(MoveTo(ax, y))?.queue(Print(self.border_style.y))?
         .queue(MoveTo(bx, y))?.queue(Print(self.border_style.y))?;
@@ -168,9 +168,7 @@ impl Frame {
       .queue(Print(' '))?
       .queue(&self.footer_style)?;
     x -= 2;
-    for c in text.chars().rev()
-      .take(self.inner_rect.cropped_x(2).w.into()) 
-    {
+    for c in text.chars().rev().take(self.inner_rect.crop_x(2).w.into()) {
       writer.queue(cursor::MoveLeft(2))?.queue(Print(c))?;
       x -= 1;
     }
@@ -202,7 +200,7 @@ impl Frame {
       .queue(Print(' '))?
       .queue(&self.banner_style)?;
     x += 2;
-    for c in text.chars().take(self.inner_rect.cropped_x(2).w.into()) {
+    for c in text.chars().take(self.inner_rect.crop_x(2).w.into()) {
       writer.queue(Print(c))?;
       x += 1;
     }
@@ -218,71 +216,6 @@ impl Frame {
     Ok(())
   }
 }
-
-#[derive(Copy, Clone, Debug, Default)]
-pub struct ScreenCursor {
-  pub x: CursorView,
-  pub y: CursorView,
-}
-impl<V: ViewPort> From<&V> for ScreenCursor {
-  fn from(view: &V) -> Self {
-    let view = view.get_view_port();
-    Self {
-      x: CursorView::new(view.x, view.w),
-      y: CursorView::new(view.y, view.h),
-    }
-  }
-}
-impl ScreenCursor {
-  pub fn get_x_cursor(&self) -> u16 {
-    self.x.get_cursor()
-  }
-
-  pub fn get_y_cursor(&self) -> u16 {
-    self.y.get_cursor()
-  }
-
-  pub fn get_x_scroll(&self) -> usize {
-    self.x.get_scroll()
-  }
-
-  pub fn get_y_scroll(&self) -> usize {
-    self.y.get_scroll()
-  }
-
-  pub fn resize<X, Y>(&mut self, plane: &Y, rect: &Rect) 
-  where 
-    Y: UnitCursor<Unit = X> , 
-    X: WeightedCursor 
-  {
-    self.y.resize(plane.get_head(), rect.y, rect.h);
-    self.x.resize(
-      plane.get_current().map(|c| c.get_weighted_head()).unwrap_or(0), 
-      rect.x, 
-      rect.w
-    );
-  }
-
-  pub fn update<X, Y>(&mut self, plane: &Y) -> bool 
-  where 
-    Y: UnitCursor<Unit = X> , 
-    X: WeightedCursor
-  {
-    let y = self.y.update(plane.get_head());
-    let x = self.x.update(
-      plane.get_current().map(|c| c.get_weighted_head()).unwrap_or(0)
-    );
-    x || y
-  }
-
-  pub fn write<W: Write>(&self, writer: &mut W) -> std::io::Result<()> {
-    writer
-      .queue(MoveTo(self.x.get_cursor(), self.y.get_cursor()))?
-      .queue(cursor::Show)?;
-    Ok(())
-  }
-}
-
 #[derive(Default)]
 pub struct TextBox {
   pub view:           Rect,
@@ -323,20 +256,14 @@ impl TextBox {
     }
   }
 
-  pub fn with_input<I, F>(mut self, input: &Vec<I>, func: F) -> Self 
+  pub fn input<I, F>(mut self, input: &Vec<I>, func: F) -> Self 
   where F: Fn(&I) -> StyledText,
   {
     self.content = StyledTextPlane::new(&self.view, input, func);
     self
   }
 
-  pub fn set_input<I, F>(&mut self, input: &Vec<I>, func: F)
-  where F: Fn(&I) -> StyledText,
-  {
-    self.content = StyledTextPlane::new(&self.view, input, func);
-  }
-
-  pub fn with_style<T>(mut self, style: T) -> Self 
+  pub fn style<T>(mut self, style: T) -> Self 
   where T: Into<Style> + Copy
   {
     self.style = style.into();
@@ -359,6 +286,12 @@ impl TextBox {
       .write_unused_y(write)
   }
 
+  pub fn set_input<I, F>(&mut self, input: &Vec<I>, func: F)
+  where F: Fn(&I) -> StyledText,
+  {
+    self.content = StyledTextPlane::new(&self.view, input, func);
+  }
+
   pub fn get_source_index(&self) -> usize {
     self.content.get_source_index()
   }
@@ -368,10 +301,10 @@ impl TextBox {
   }
 
   pub fn used_rect(&self) -> Rect {
-    if let Ok(h) = u16::try_from(self.content.get_units().len()) {
-      self.view.clone().cap_height(h)
+    if let Ok(h) = u16::try_from(self.content.get_length()) {
+      self.view.cap_height(h)
     } else {
-      self.view.clone()
+      self.view
     }
   }
 
@@ -525,13 +458,13 @@ impl<V: ViewPort> From<V> for EditBox {
   }
 }
 impl EditBox {
-  pub fn with_text(mut self, text: &str) -> Self {
+  pub fn input(mut self, text: &str) -> Self {
     self.content = EditLine::from(text);
     self.cursor.x.update(self.content.get_weighted_head());
     self
   }
 
-  pub fn with_style<T>(mut self, style: T) -> Self 
+  pub fn style<T>(mut self, style: T) -> Self 
   where T: Into<Style> + Copy
   {
     self.style = style.into();

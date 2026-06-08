@@ -3,11 +3,10 @@
 use crate::{
   cursor::{UnitCursor, UnitCursorMut, WeightedCursor},
 };
-use crossterm::{
-  QueueableCommand, 
-  cursor::MoveTo,
+use std::{
+  ops::Range,
+  io::Write,
 };
-use std::ops::Range;
 
 
 pub trait ViewPort {
@@ -30,100 +29,124 @@ impl Rect {
   pub fn new(w: u16, h: u16) -> Self {
     Self {x: 0, y: 0, w, h}
   }
-  pub fn crop_north(mut self, delta: u16) -> Self {
-    if delta * 2 < self.h {
-      self.y += delta;
-      self.h -= delta;
+
+  pub fn crop_north(&self, delta: u16) -> Self {
+    let mut rect = self.clone();
+    if delta * 2 < rect.h {
+      rect.y += delta;
+      rect.h -= delta;
     }
-    self
+    rect
   }
-  pub fn crop_south(mut self, delta: u16) -> Self {
-    if delta < self.h {
-      self.h -= delta;
+
+  pub fn crop_south(&self, delta: u16) -> Self {
+    let mut rect = self.clone();
+    if delta < rect.h {
+      rect.h -= delta;
     }
-    self
+    rect
   }
-  pub fn crop_east(mut self, delta: u16) -> Self {
-    if delta < self.w {
-      self.w -= delta
+
+  pub fn crop_east(&self, delta: u16) -> Self {
+    let mut rect = self.clone();
+    if delta < rect.w {
+      rect.w -= delta
     }
-    self
+    rect
   }
-  pub fn crop_west(mut self, delta: u16) -> Self {
-    if delta * 2 < self.w {
-      self.x += delta;
-      self.w -= delta;
+
+  pub fn crop_west(&self, delta: u16) -> Self {
+    let mut rect = self.clone();
+    if delta * 2 < rect.w {
+      rect.x += delta;
+      rect.w -= delta;
     }
+    rect
+  }
+
+  pub fn crop_y(&self, delta: u16) -> Self {
     self
+      .crop_north(delta)
+      .crop_south(delta)
   }
-  pub fn crop_y(mut self, delta: u16) -> Self {
-    self.crop_north(delta).crop_south(delta)
-  }
-  pub fn crop_x(mut self, delta: u16) -> Self {
-    self.crop_east(delta).crop_west(delta)
-  }
-  pub fn cap_width(mut self, w: u16) -> Self {
-    self.w = w.min(self.w);
+
+  pub fn crop_x(&self, delta: u16) -> Self {
     self
+      .crop_east(delta)
+      .crop_west(delta)
   }
-  pub fn cap_height(mut self, h: u16) -> Self {
-    self.h = h.min(self.h);
-    self
-  }
-  pub fn resize(&mut self, w: u16, h: u16) {
-    self.w = w; 
-    self.h = h;
-  }
-  pub fn x_end(&self) -> u16 {
-    self.x + self.w
-  }
-  pub fn y_end(&self) -> u16 {
-    self.y + self.h
-  }
-  pub fn a(&self) -> (u16, u16) {
-    (self.x, self.y)
-  }
-  pub fn b(&self) -> (u16, u16) {
-    (self.x_end().saturating_sub(1), self.y)
-  }
-  pub fn c(&self) -> (u16, u16) {
-    (self.x, self.y_end().saturating_sub(1))
-  }
-  pub fn d(&self) -> (u16, u16) {
-    (self.x_end().saturating_sub(1), self.y_end().saturating_sub(1))
-  }
+
   pub fn row(&self, y: u16) -> Self {
-    Self {x: self.x, y: y, w: self.w, h: 1}
+    Self {
+      x: self.x, 
+      y: y, 
+      w: self.w, 
+      h: 1
+    }
   }
+
   pub fn top_row(&self) -> Self {
     self.row(self.y)
   }
+
   pub fn bottom_row(&self) -> Self {
     self.row(self.y_end())
   }
-  pub fn cropped_north(&self, delta: u16) -> Self {
-    self.clone().crop_north(delta)
+
+  pub fn cap_width(&self, w: u16) -> Self {
+    let mut rect = self.clone();
+    rect.w = w.min(rect.w);
+    rect
   }
-  pub fn cropped_south(&self, delta: u16) -> Self {
-    self.clone().crop_south(delta)
+
+  pub fn cap_height(&self, h: u16) -> Self {
+    let mut rect = self.clone();
+    rect.h = h.min(rect.h);
+    rect
   }
-  pub fn cropped_east(&self, delta: u16) -> Self {
-    self.clone().crop_east(delta)
+
+  pub fn x_end(&self) -> u16 {
+    self.x + self.w
   }
-  pub fn cropped_west(&self, delta: u16) -> Self {
-    self.clone().crop_west(delta)
+
+  pub fn y_end(&self) -> u16 {
+    self.y + self.h
   }
-  pub fn cropped_x(&self, delta: u16) -> Self {
-    self.clone().crop_x(delta)
+
+  pub fn a(&self) -> (u16, u16) {
+    (self.x, self.y)
   }
-  pub fn cropped_y(&self, delta: u16) -> Self {
-    self.clone().crop_y(delta)
+
+  pub fn b(&self) -> (u16, u16) {
+    (self.x_end().saturating_sub(1), self.y)
   }
+
+  pub fn c(&self) -> (u16, u16) {
+    (self.x, self.y_end().saturating_sub(1))
+  }
+
+  pub fn d(&self) -> (u16, u16) {
+    (self.x_end().saturating_sub(1), 
+     self.y_end().saturating_sub(1))
+  }
+
   pub fn x_range(&self) -> Range<u16> {
-    Range {start: self.x, end: self.x_end()}
+    Range {
+      start: self.x, 
+      end:   self.x_end()
+    }
   }
+
   pub fn y_range(&self) -> Range<u16> {
-    Range {start: self.y, end: self.y_end()}
+    Range {
+      start: self.y, 
+      end:   self.y_end()
+    }
+  }
+
+  pub fn resize(&mut self, w: u16, h: u16) {
+    self.w = w; 
+    self.h = h;
   }
 }
 
@@ -223,3 +246,69 @@ impl CursorView {
     } 
   }
 }
+
+#[derive(Copy, Clone, Debug, Default)]
+pub struct ScreenCursor {
+  pub x: CursorView,
+  pub y: CursorView,
+}
+impl<V: ViewPort> From<&V> for ScreenCursor {
+  fn from(view: &V) -> Self {
+    let view = view.get_view_port();
+    Self {
+      x: CursorView::new(view.x, view.w),
+      y: CursorView::new(view.y, view.h),
+    }
+  }
+}
+impl ScreenCursor {
+  pub fn get_x_cursor(&self) -> u16 {
+    self.x.get_cursor()
+  }
+
+  pub fn get_y_cursor(&self) -> u16 {
+    self.y.get_cursor()
+  }
+
+  pub fn get_x_scroll(&self) -> usize {
+    self.x.get_scroll()
+  }
+
+  pub fn get_y_scroll(&self) -> usize {
+    self.y.get_scroll()
+  }
+
+  pub fn resize<X, Y>(&mut self, plane: &Y, rect: &Rect) 
+  where 
+    Y: UnitCursor<Unit = X> , 
+    X: WeightedCursor 
+  {
+    self.y.resize(plane.get_head(), rect.y, rect.h);
+    self.x.resize(
+      plane.use_current(|c| c.get_weighted_head()).unwrap_or(0), 
+      rect.x, 
+      rect.w
+    );
+  }
+
+  pub fn update<X, Y>(&mut self, plane: &Y) -> bool 
+  where 
+    Y: UnitCursor<Unit = X> , 
+    X: WeightedCursor
+  {
+    let y = self.y.update(plane.get_head());
+    let x = self.x.update(
+      plane.use_current(|c| c.get_weighted_head()).unwrap_or(0)
+    );
+    x || y
+  }
+
+  pub fn write<W: Write>(&self, writer: &mut W) -> std::io::Result<()> {
+    use crossterm::{QueueableCommand, cursor};
+    writer
+      .queue(cursor::MoveTo(self.x.get_cursor(), self.y.get_cursor()))?
+      .queue(cursor::Show)?;
+    Ok(())
+  }
+}
+

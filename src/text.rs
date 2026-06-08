@@ -137,7 +137,7 @@ impl StyledText {
     self.text = text.into();
     self
   }
-  pub fn with_style<T>(mut self, style: T) -> Self 
+  pub fn style<T>(mut self, style: T) -> Self 
   where T: Into<Style> + Copy
   {
     self.style = style.into();

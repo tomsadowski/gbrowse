@@ -29,25 +29,17 @@ impl Dialog {
     V: ViewPort,
     S: Into<Style> + Copy
   {
-    let prompt_box = TextBox::from(
-        view.get_view_port().cropped_south(2)
-      )
-      .with_input(
-        &vec![prompt], |p| StyledText::from(*p).with_style(style)
-      )
-      .with_style(style)
+    let prompt_box = TextBox::from(view.get_view_port().crop_south(2))
+      .input(&vec![prompt], |p| StyledText::from(*p).style(style))
+      .style(style)
       .write_unused_y(false);
-    let response_box = TextBox::from(
-        prompt_box.used_rect().bottom_row()
-      )
-      .with_input(
-        &vec![input], |i| StyledText::from(*i).with_style(style)
-      )
-      .with_style(style)
+    let response_box = TextBox::from(prompt_box.used_rect().bottom_row())
+      .input(&vec![input], |i| StyledText::from(*i).style(style))
+      .style(style)
       .write_unused_y(false);
     Dialog {
-      prompt:   prompt_box,
-      input: Input::Ack(response_box),
+      prompt: prompt_box,
+      input:  Input::Ack(response_box),
     }
   }
 
@@ -56,25 +48,17 @@ impl Dialog {
     V: ViewPort,
     S: Into<Style> + Copy
   {
-    let prompt_box = TextBox::from(
-        view.get_view_port().cropped_south(2)
-      )
-      .with_input(
-        &vec![prompt], |p| StyledText::from(*p).with_style(style)
-      )
-      .with_style(style)
+    let prompt_box = TextBox::from(view.get_view_port().crop_south(2))
+      .input(&vec![prompt], |p| StyledText::from(*p).style(style))
+      .style(style)
       .write_unused_y(false);
-    let response_box = TextBox::from(
-        prompt_box.used_rect().bottom_row()
-      )
-      .with_input(
-        &vec![input], |i| StyledText::from(*i).with_style(style)
-      )
-      .with_style(style)
+    let response_box = TextBox::from(prompt_box.used_rect().bottom_row())
+      .input(&vec![input], |i| StyledText::from(*i).style(style))
+      .style(style)
       .write_unused_y(false);
     Dialog {
-      prompt:   prompt_box,
-      input: Input::Ask(response_box),
+      prompt: prompt_box,
+      input:  Input::Ask(response_box),
     }
   }
 
@@ -87,22 +71,18 @@ impl Dialog {
     let prompt_box = TextBox::from(
         view.get_view_port().crop_south(2)
       )
-      .with_input(
-        &vec![prompt], |p| StyledText::from(*p).with_style(style)
-      )
-      .with_style(style)
+      .input(&vec![prompt], |p| StyledText::from(*p).style(style))
+      .style(style)
       .write_unused_y(false);
     let response_box = TextBox::from(
         view.get_view_port().crop_north(prompt_box.used_rect().h)
       )
-      .with_input(
-        &input, |s| StyledText::from(s.as_str()).with_style(style)
-      )
-      .with_style(style)
+      .input(&input, |s| StyledText::from(s.as_str()).style(style))
+      .style(style)
       .write_unused_y(false);
     Dialog {
-      prompt:   prompt_box,
-      input: Input::Select(response_box),
+      prompt: prompt_box,
+      input:  Input::Select(response_box),
     }
   }
 
@@ -112,26 +92,24 @@ impl Dialog {
     S: Into<Style> + Copy
   {
     let prompt_box = TextBox::from(
-        view.get_view_port().cropped_south(2)
+        view.get_view_port().crop_south(2)
       )
-      .with_input(
-        &vec![prompt], |p| StyledText::from(*p).with_style(style)
-      )
-      .with_style(style)
+      .input(&vec![prompt], |p| StyledText::from(*p).style(style))
+      .style(style)
       .write_unused_y(false);
     let response_box = EditBox::from(
         prompt_box.used_rect().bottom_row()
       )
-      .with_text(text)
-      .with_style(style);
+      .input(text)
+      .style(style);
     Dialog {
-      prompt:   prompt_box,
-      input: Input::Edit(response_box),
+      prompt: prompt_box,
+      input:  Input::Edit(response_box),
     }
   }
 
   pub fn resize<V: ViewPort>(&mut self, rect: V) {
-    self.prompt.resize(rect.get_view_port().cropped_south(2));
+    self.prompt.resize(rect.get_view_port().crop_south(2));
     match &mut self.input {
       Input::Ack(r) | 
       Input::Ask(r) => {
@@ -141,7 +119,7 @@ impl Dialog {
         r.resize(self.prompt.used_rect().bottom_row());
       }
       Input::Select(r) => {
-        r.resize(rect.get_view_port().cropped_north(self.prompt.used_rect().h));
+        r.resize(rect.get_view_port().crop_north(self.prompt.used_rect().h));
       }
     }
   }

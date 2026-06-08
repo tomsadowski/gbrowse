@@ -206,12 +206,12 @@ impl User {
 
   pub fn get_frame(&self, screen: Rect) -> Frame {
     Frame::from(screen)
-      .with_screen_margin(self.style.screen_margin)
-      .with_text_margin(self.style.text_margin)
-      .with_banner_style(self.style.banner)
-      .with_footer_style(self.style.banner)
-      .with_margin_style(self.style.general)
-      .with_border_style(self.style.border)
+      .screen_margin(self.style.screen_margin)
+      .text_margin(self.style.text_margin)
+      .banner_style(self.style.banner)
+      .footer_style(self.style.banner)
+      .margin_style(self.style.general)
+      .border_style(self.style.border)
   }
 
   pub fn get_styled_gemtext(&self, gemtext: &GemText) -> StyledText {
