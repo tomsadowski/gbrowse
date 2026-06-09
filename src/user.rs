@@ -1,13 +1,15 @@
 // src/user.rs
 
 use crate::{
-  keys::KeysTable,
-  style::StyleTable,
-  tab::UrlTab,
-  widget::{Frame, TextBox},
-  view::Rect,
-  text::StyledText,
-  gemdoc::{GemText, GemTag},
+  KeysTable,
+  StyleTable,
+  StyledText,
+  UrlTab,
+  Frame, 
+  TextBox,
+  GemText, 
+  GemTag,
+  Rect,
 };
 use toml::{Table, Value};
 use std::io::Write;
@@ -20,15 +22,15 @@ pub const STYLES_PATH: &str = "gdata/styles";
 pub const KEYS_PATH:   &str = "gdata/keys";
 
 pub fn get_init_file(name: &str) -> String {
-  format!("{}/{}", DATA_PATH, name)
+  format!("{DATA_PATH}/{name}")
 }
 
 pub fn get_keys_file(name: &str) -> String {
-  format!("{}/{}", KEYS_PATH, name)
+  format!("{KEYS_PATH}/{name}")
 }
 
 pub fn get_styles_file(name: &str) -> String {
-  format!("{}/{}", STYLES_PATH, name)
+  format!("{STYLES_PATH}/{name}")
 }
 
 pub trait UserTable<F>: Sized 
@@ -77,7 +79,7 @@ impl std::str::FromStr for UserField {
       "keys"      => Ok(Self::Keys),
       "gsave" | 
       "save_file" => Ok(Self::SaveFile),
-      s           => Err(format!("No field {} in User table", s)),
+      s           => Err(format!("No field {s} in User table")),
     }
   }
 }
@@ -175,7 +177,8 @@ impl UserTable<UserField> for User {
         self.keys.update_from_table(v)?;
       }
       (f, v) => return Err(
-        format!("field {:?} value {:?} not valid here", f, v))
+        format!("field {f:?} value {v:?} not valid here")
+      )
     }
     Ok(())
   }

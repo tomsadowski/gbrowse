@@ -1,8 +1,9 @@
 // src/style.rs
 
 use crate::{
-  user::UserTable,
-  view::{Rect, ViewPort},
+  UserTable, 
+  Rect, 
+  ViewPort,
 };
 use crossterm::{
   Command,
@@ -276,7 +277,7 @@ impl UserTable<StyleField> for Style {
       }
       (f, v) => 
         return Err(
-          format!("field {:?} value {:?} not valid here", f, v))
+          format!("field {f:?} value {v:?} not valid here"))
     }
     Ok(())
   }
@@ -306,7 +307,7 @@ impl UserTable<MarginField> for Margins {
     match (field, value) {
       (f, Value::Integer(v)) => {
         let v = u16::try_from(v)
-          .map_err(|e| format!("{:?} : {}", v, e))?;
+          .map_err(|e| format!("{v:?} : {e}"))?;
         match f {
           MarginField::North => self.north = v,
           MarginField::South => self.south = v,

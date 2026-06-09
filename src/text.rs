@@ -1,9 +1,12 @@
 // src/text.rs
 
 use crate::{
-  view::ViewPort,
-  cursor::{UnitCursor, UnitCursorMut, CursorPlane},
-  style::{Style, TextStyle},
+  UnitCursor, 
+  UnitCursorMut, 
+  CursorPlane,
+  Style, 
+  TextStyle,
+  ViewPort,
   util,
 };
 
@@ -216,10 +219,10 @@ impl<T: From<Vec<char>>> TextPlane<T> {
       );
     let (indexes, text) = rendered.unzip();
     Self {
-      indexes,
-      text, 
       head:   0, 
       pref_x: 0, 
+      indexes,
+      text, 
     }
   }
 }
@@ -227,7 +230,7 @@ impl<T: UnitCursor> TextPlane<T> {
   pub fn move_up(&mut self, delta: usize) -> bool {
     if CursorPlane::move_up(self, delta) {
       let pref_x = self.pref_x;
-      self.use_current_mut(|c| c.fit(pref_x));
+      self.use_current_mut(|current| current.fit(pref_x));
       true
     } else {false}
   }
@@ -235,7 +238,7 @@ impl<T: UnitCursor> TextPlane<T> {
   pub fn move_down(&mut self, delta: usize) -> bool {
     if CursorPlane::move_down(self, delta) {
       let pref_x = self.pref_x;
-      self.use_current_mut(|c| c.fit(pref_x));
+      self.use_current_mut(|current| current.fit(pref_x));
       true
     } else {false}
   }
@@ -244,7 +247,7 @@ impl<T: UnitCursor> TextPlane<T> {
     let remainder = CursorPlane::move_left(self, delta);
     if remainder == 0 {
       self.pref_x = self
-        .use_current(|c| c.get_head())
+        .use_current(|current| current.get_head())
         .unwrap_or(self.pref_x);
     } 
     remainder
@@ -254,7 +257,7 @@ impl<T: UnitCursor> TextPlane<T> {
     let remainder = CursorPlane::move_right(self, delta);
     if remainder == 0 {
       self.pref_x = self
-        .use_current(|c| c.get_head())
+        .use_current(|current| current.get_head())
         .unwrap_or(self.pref_x);
     } 
     remainder

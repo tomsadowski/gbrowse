@@ -1,7 +1,9 @@
 // src/view.rs
 
 use crate::{
-  cursor::{UnitCursor, UnitCursorMut, WeightedCursor},
+  UnitCursor, 
+  UnitCursorMut, 
+  WeightedCursor,
 };
 use std::{
   ops::Range,

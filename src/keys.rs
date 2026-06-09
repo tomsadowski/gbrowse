@@ -1,10 +1,11 @@
 // src/keys.rs
 
 use crate::{
-  cursor::UnitCursor,
-  user::UserTable,
-  widget::{TextBox},
-  dialog::{Dialog, Input},
+  UnitCursor,
+  UserTable, 
+  TextBox, 
+  Dialog, 
+  DialogInput,
 };
 use crossterm::event::KeyCode;
 use toml::Value;
@@ -204,10 +205,10 @@ impl KeysTable {
 
   pub fn get_dlg_action(&self, dialog: &Dialog, kc: &KeyCode) -> Option<Action> {
     match dialog.input {
-      Input::Ack(_)    => self.get_ack_dialog_action(kc),
-      Input::Ask(_)    => self.get_ask_dialog_action(kc),
-      Input::Edit(_)   => self.get_edit_dialog_action(kc),
-      Input::Select(_) => self.get_select_dialog_action(kc),
+      DialogInput::Ack(_)    => self.get_ack_dialog_action(kc),
+      DialogInput::Ask(_)    => self.get_ask_dialog_action(kc),
+      DialogInput::Edit(_)   => self.get_edit_dialog_action(kc),
+      DialogInput::Select(_) => self.get_select_dialog_action(kc),
     }
   }
 

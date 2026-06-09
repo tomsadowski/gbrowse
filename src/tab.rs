@@ -1,12 +1,15 @@
 // src/tab.rs
 
 use crate::{
-  cursor::{UnitCursor, UnitCursorMut},
-  view::{Rect, ViewPort},
-  widget::TextBox,
-  gemdoc::GemText,
-  text::{StyledText, TextLine},
-  style::Style,
+  StyledText, 
+  TextLine,
+  UnitCursor, 
+  UnitCursorMut,
+  Style, 
+  Rect, 
+  ViewPort, 
+  TextBox, 
+  GemText,
 };
 use std::io::Write;
 
@@ -27,7 +30,7 @@ impl<T> UrlTab<T> {
     }
   }
 
-  pub fn get_source(&self) ->  Option<&T> {
+  pub fn get_source(&self) -> Option<&T> {
     self.source.get(
       self.textbox.get_current_reference_index()
     )

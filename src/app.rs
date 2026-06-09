@@ -1,17 +1,29 @@
 // src/app.rs
 
 use crate::{
-  cursor::{UnitCursor, UnitCursorMut},
-  user::{self, User, UserTable},
-  keys::Action,
-  view::{Rect, ViewPort},
-  tab::{Tab, UrlTab, TabManager},
-  text::TextLine,
-  widget::{Frame, TextBox},
-  dialog::{Input, Dialog},
-  gemdoc::{self, GemTag, GemText, Status, StatusText},
-  network::Request,
+  gemini, 
   util,
+  user,
+  User, 
+  UserTable,
+  Tab, 
+  UrlTab, 
+  TabManager,
+  Request,
+  UnitCursor, 
+  UnitCursorMut,
+  TextLine,
+  DialogInput, 
+  Dialog,
+  Action,
+  Rect, 
+  ViewPort,
+  GemTag, 
+  GemText, 
+  Status, 
+  StatusText,
+  TextBox,
+  Frame,
 };
 use crossterm::{
   QueueableCommand, cursor,
@@ -192,7 +204,7 @@ impl App {
       _ => {
         self.tabs.add_gem_tab(
           url, 
-          gemdoc::parse_doc(&content), 
+          gemini::parse_doc(&content), 
           |g| self.user.get_styled_gemtext(g),
         );
         self.tab_changed = true;
@@ -288,7 +300,7 @@ impl App {
       (Msg::Action(action), Focus::Dialog(task, dlg)) 
         => match (&mut dlg.input, action, task) 
       {
-        (Input::Select(textbox), Action::Select, Task::NewTab) => {
+        (DialogInput::Select(textbox), Action::Select, Task::NewTab) => {
           if let Some(link) = self.user.urls.get(
             textbox.get_current_reference_index()
           ) {
@@ -298,7 +310,7 @@ impl App {
             self.focus_tabs();
           }
         }
-        (Input::Select(textbox), Action::Select, Task::ChangeKeys) => {
+        (DialogInput::Select(textbox), Action::Select, Task::ChangeKeys) => {
           match std::fs::read_to_string(
             user::get_keys_file(
               &textbox.get_current_reference()
@@ -312,7 +324,7 @@ impl App {
             }
           }
         }
-        (Input::Select(textbox), Action::Select, Task::ChangeStyle) => {
+        (DialogInput::Select(textbox), Action::Select, Task::ChangeStyle) => {
           match std::fs::read_to_string(
             user::get_styles_file(
               &textbox.get_current_reference()
@@ -328,7 +340,7 @@ impl App {
             }
           }
         }
-        (Input::Select(textbox), Action::Select, Task::Menu) => {
+        (DialogInput::Select(textbox), Action::Select, Task::Menu) => {
           match MENU[textbox.get_current_reference_index()] {
             MANUAL => {
               self.focus_ack_dialog("View manual".into());
@@ -357,8 +369,11 @@ impl App {
             _ => self.focus_tabs(),
           }
         }
-        (Input::Edit(editbox), Action::Enter, Task::Init(_)) => {
-          let url_str = editbox.text_plane.get_current().unwrap().to_string();
+        (DialogInput::Edit(editbox), Action::Enter, Task::Init(_)) => {
+          let url_str = editbox.text_plane
+            .get_current()
+            .unwrap()
+            .to_string();
           match Url::parse(&url_str) {
             Err(e) => 
               self.focus_edit_dialog(
@@ -373,15 +388,19 @@ impl App {
             }
           }
         }
-        (Input::Edit(editbox), Action::Cancel, Task::Init(url_str)) => {
+        (DialogInput::Edit(editbox), Action::Cancel, Task::Init(url_str)) => {
           let url_str = url_str.clone();
           self.focus_ask_dialog(
             Task::Init(url_str), "Exit application?".into()
           )
         }
-        (Input::Edit(editbox), Action::Enter, Task::Reply(url)) => {
-          let text = editbox.text_plane.get_current().unwrap()
-            .to_string().trim().replace(" ", "%20");
+        (DialogInput::Edit(editbox), Action::Enter, Task::Reply(url)) => {
+          let text = editbox.text_plane
+            .get_current()
+            .unwrap()
+            .to_string()
+            .trim()
+            .replace(" ", "%20");
           match url.clone().join(&format!("?{text}")) {
             Err(e) => 
               self.focus_ack_dialog(
@@ -394,8 +413,10 @@ impl App {
             }
           }
         }
-        (Input::Edit(editbox), Action::Enter, Task::NewTab) => {
-          match Url::parse(&editbox.text_plane.get_current().unwrap().to_string()) {
+        (DialogInput::Edit(editbox), Action::Enter, Task::NewTab) => {
+          match Url::parse(
+            &editbox.text_plane.get_current().unwrap().to_string()
+          ) {
             Err(e) => 
               self.focus_ack_dialog(
                 format!("Invalid URL. {e}")
@@ -437,16 +458,16 @@ impl App {
             self.focus_tabs();
           }
         }
-        (Input::Ack(_), _, _) |
+        (DialogInput::Ack(_), _, _) |
         (_,   Action::Select, _) |
         (_,       Action::No, _) |
         (_,   Action::Cancel, _) => {
           self.focus_tabs();
         }
-        (Input::Select(textbox), action, _) => {
+        (DialogInput::Select(textbox), action, _) => {
           textbox.update(action);
         }
-        (Input::Edit(editbox),   action, _) => {
+        (DialogInput::Edit(editbox),   action, _) => {
           editbox.update_edit(action);
         }
         (_, _, _) => {

@@ -1,27 +1,28 @@
 // src/dialog.rs
 
 use crate::{
-  cursor::{UnitCursor, UnitCursorMut, WeightedCursor},
-  widget::{TextBox},
-  view::{Rect, CursorView, ViewPort},
-  style::{Style, Margins, BorderStyle},
-  text::{TextLine, EditLine, StyledText, TextPlane},
+  TextLine, 
+  EditLine, 
+  TextBox, 
+  StyledText, 
+  Style, 
+  Rect, 
+  ViewPort,
 };
 use crossterm::QueueableCommand;
-use unicode_width::UnicodeWidthChar;
 use std::io::Write;
 
 
-pub enum Input {
-  Ack(TextBox<TextLine>),
-  Ask(TextBox<TextLine>),
+pub enum DialogInput {
+  Ack(   TextBox<TextLine>),
+  Ask(   TextBox<TextLine>),
   Select(TextBox<TextLine>),
-  Edit(TextBox<EditLine>),
+  Edit(  TextBox<EditLine>),
 }
 
 pub struct Dialog {
   pub prompt: TextBox<TextLine>,
-  pub input:  Input,
+  pub input:  DialogInput,
 } 
 impl Dialog {
   pub fn ack<V, S>(view: V, style: S, prompt: &str, input: &str) -> Self
@@ -39,7 +40,7 @@ impl Dialog {
       .write_unused_y(false);
     Dialog {
       prompt: prompt_box,
-      input:  Input::Ack(response_box),
+      input:  DialogInput::Ack(response_box),
     }
   }
 
@@ -58,7 +59,7 @@ impl Dialog {
       .write_unused_y(false);
     Dialog {
       prompt: prompt_box,
-      input:  Input::Ask(response_box),
+      input:  DialogInput::Ask(response_box),
     }
   }
 
@@ -82,7 +83,7 @@ impl Dialog {
       .write_unused_y(false);
     Dialog {
       prompt: prompt_box,
-      input:  Input::Select(response_box),
+      input:  DialogInput::Select(response_box),
     }
   }
 
@@ -104,21 +105,21 @@ impl Dialog {
       .style(style);
     Dialog {
       prompt: prompt_box,
-      input:  Input::Edit(response_box),
+      input:  DialogInput::Edit(response_box),
     }
   }
 
   pub fn resize<V: ViewPort>(&mut self, rect: V) {
     self.prompt.resize(rect.get_view_port().crop_south(2));
     match &mut self.input {
-      Input::Ack(r) | 
-      Input::Ask(r) => {
+      DialogInput::Ack(r) | 
+      DialogInput::Ask(r) => {
         r.resize(self.prompt.used_rect().bottom_row());
       }
-      Input::Edit(r) => {
+      DialogInput::Edit(r) => {
         r.resize(self.prompt.used_rect().bottom_row());
       }
-      Input::Select(r) => {
+      DialogInput::Select(r) => {
         r.resize(rect.get_view_port().crop_north(self.prompt.used_rect().h));
       }
     }
@@ -127,15 +128,15 @@ impl Dialog {
   pub fn write<W: Write>(&self, writer: &mut W) -> std::io::Result<()> {
     self.prompt.write(writer)?;
     match &self.input {
-      Input::Ack(r) | 
-      Input::Ask(r) => { 
+      DialogInput::Ack(r) | 
+      DialogInput::Ask(r) => { 
         r.write(writer)?;
       }
-      Input::Edit(r) => {
+      DialogInput::Edit(r) => {
         r.write(writer)?;
         r.cursor.write(writer)?;
       }
-      Input::Select(r) => {
+      DialogInput::Select(r) => {
         r.write(writer)?;
         r.cursor.write(writer)?;
       }
