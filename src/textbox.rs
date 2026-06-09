@@ -32,6 +32,24 @@ pub struct TextBox<T> {
   pub write_unused_x: bool,
   pub write_unused_y: bool,
 }
+impl<T, V> From<V> for TextBox<T> 
+where 
+  TextPlane<T>: Default,
+  V:            ViewPort, 
+{
+  fn from(view: V) -> Self {
+    Self {
+      write_unused_x: true,
+      write_unused_y: true,
+      write:          true,
+      style:          Style::default(),
+      styled_text:    vec![StyledText::default()],
+      cursor:         ScreenCursor::from(&view), 
+      text_plane:     TextPlane::default(),
+      view:           view.get_view_port(),
+    }
+  }
+}
 impl<T> TextBox<T> {
   pub fn get_current_reference(&self) -> String {
     self.styled_text
@@ -93,71 +111,55 @@ impl<T> TextBox<T> {
   }
 }
 impl<T> TextBox<T> 
-where T: From<Vec<char>>
-{
-  pub fn new<V, O, F>(view: V, origin: &Vec<O>, to_styled_text: F) -> Self 
-  where 
-    V: ViewPort,
-    F: Fn(&O) -> StyledText,
-  {
-    let styled_text = origin.iter().map(|i| to_styled_text(i)).collect();
-    Self {
-      write_unused_x: true,
-      write_unused_y: true,
-      write:          true,
-      style:          Style::default(),
-      cursor:         ScreenCursor::from(&view), 
-      text_plane:     TextPlane::new(&view, &styled_text),
-      view:           view.get_view_port(),
-      styled_text,
-    }
-  }
-
-  pub fn input<I, F>(mut self, input: &Vec<I>, func: F) -> Self 
-  where F: Fn(&I) -> StyledText,
-  {
-    self.styled_text = input.iter().map(|i| func(i)).collect();
-    self.text_plane  = TextPlane::new(&self.view, &self.styled_text);
-    self
-  }
-
-  pub fn set_input<I, F>(&mut self, input: &Vec<I>, func: F)
-  where F: Fn(&I) -> StyledText,
-  {
-    self.styled_text = input.iter().map(|i| func(i)).collect();
-    self.text_plane  = TextPlane::new(&self.view, &self.styled_text);
-  }
-}
-impl<T, V> From<V> for TextBox<T> 
-where 
-  TextPlane<T>: Default,
-  V:            ViewPort, 
-{
-  fn from(view: V) -> Self {
-    Self {
-      write_unused_x: true,
-      write_unused_y: true,
-      write:          true,
-      style:          Style::default(),
-      styled_text:    vec![StyledText::default()],
-      cursor:         ScreenCursor::from(&view), 
-      text_plane:     TextPlane::default(),
-      view:           view.get_view_port(),
-    }
-  }
-}
-impl<T> TextBox<T> 
 where 
   TextPlane<T>: CursorPlane + UnitCursor<Unit = T>,
   T:            WeightedCursor + From<Vec<char>>,
 {
-  pub fn restyle<I, F>(&mut self, input: &Vec<I>, func: F) 
-  where F: Fn(&I) -> StyledText,
+  pub fn new<V, R, F>(view: V, reference: &Vec<R>, to_styled_text: F) -> Self 
+  where 
+    V: ViewPort,
+    F: Fn(&R) -> StyledText,
+  {
+    let styled_text = reference.iter().map(|i| to_styled_text(i)).collect();
+    let text_plane  = TextPlane::new(&view, &styled_text);
+    let mut cursor  = ScreenCursor::from(&view);
+    cursor.update(&text_plane);
+    Self {
+      write_unused_x: true,
+      write_unused_y: true,
+      write:          true,
+      style:          Style::default(),
+      view:           view.get_view_port(),
+      cursor, 
+      text_plane,
+      styled_text,
+    }
+  }
+
+  pub fn input<R, F>(mut self, reference: &Vec<R>, to_styled_text: F) -> Self 
+  where F: Fn(&R) -> StyledText,
+  {
+    self.styled_text = reference.iter().map(|i| to_styled_text(i)).collect();
+    self.text_plane  = TextPlane::new(&self.view, &self.styled_text);
+    self.cursor.update(&self.text_plane);
+    self
+  }
+
+  pub fn set_input<R, F>(&mut self, reference: &Vec<R>, to_styled_text: F)
+  where F: Fn(&R) -> StyledText,
+  {
+    self.styled_text = reference.iter().map(|i| to_styled_text(i)).collect();
+    self.text_plane  = TextPlane::new(&self.view, &self.styled_text);
+    self.cursor.update(&self.text_plane);
+  }
+  pub fn restyle<R, F>(&mut self, reference: &Vec<R>, to_styled_text: F) 
+  where F: Fn(&R) -> StyledText,
   {
     let idx          = self.text_plane.get_index();
-    self.styled_text = input.iter().map(|i| func(i)).collect();
+    self.styled_text = reference.iter().map(|i| to_styled_text(i)).collect();
     self.text_plane  = TextPlane::new(&self.view, &self.styled_text);
     self.text_plane.set_index(idx);
+    self.cursor.update(&self.text_plane);
     self.reset_state();
   }
 
@@ -165,8 +167,8 @@ where
     let idx         = self.text_plane.get_index();
     self.view       = view.get_view_port();
     self.text_plane = TextPlane::new(&view, &self.styled_text);
-    self.cursor.resize(&self.text_plane, &self.view);
     self.text_plane.set_index(idx);
+    self.cursor.resize(&self.text_plane, &self.view);
     self.reset_state();
   }
 }
