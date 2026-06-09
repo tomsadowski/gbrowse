@@ -3,7 +3,7 @@
 use crate::{
   UserTable, 
   Dialog, 
-  DialogInput,
+  DlgInput,
 };
 use crossterm::event::KeyCode;
 use toml::Value;
@@ -203,10 +203,10 @@ impl KeysTable {
 
   pub fn get_dlg_action(&self, dialog: &Dialog, kc: &KeyCode) -> Option<Action> {
     match dialog.input {
-      DialogInput::Ack(_)    => self.get_ack_dialog_action(kc),
-      DialogInput::Ask(_)    => self.get_ask_dialog_action(kc),
-      DialogInput::Edit(_)   => self.get_edit_dialog_action(kc),
-      DialogInput::Select(_) => self.get_select_dialog_action(kc),
+      DlgInput::Ack(_)    => self.get_ack_dialog_action(kc),
+      DlgInput::Ask(_)    => self.get_ask_dialog_action(kc),
+      DlgInput::Edit(_)   => self.get_edit_dialog_action(kc),
+      DlgInput::Select(_) => self.get_select_dialog_action(kc),
     }
   }
 

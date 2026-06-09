@@ -11,7 +11,7 @@ use crate::{
   UnitCursor, 
   UnitCursorMut,
   TextLine,
-  DialogInput, 
+  DlgInput, 
   Dialog,
   Action,
   Rect, 
@@ -130,7 +130,9 @@ impl App {
   }
 
   fn focus_ask_dialog(&mut self, task: Task, prompt: &str) {
-    self.guide = format!("{} yes {} no", self.user.keys.yes, self.user.keys.no);
+    self.guide = format!(
+      "{} yes {} no", self.user.keys.yes, self.user.keys.no
+    );
     let dlg = Dialog::ask(
       self.frame,
       self.user.style.info, 
@@ -296,7 +298,7 @@ impl App {
       (Msg::Action(action), Focus::Dialog(task, dlg)) 
         => match (&mut dlg.input, action, task) 
       {
-        (DialogInput::Select(textbox), Action::Select, Task::NewTab) => {
+        (DlgInput::Select(textbox), Action::Select, Task::NewTab) => {
           if let Some(link) = self.user.urls.get(
             textbox.get_current_reference_index()
           ) {
@@ -306,7 +308,7 @@ impl App {
             self.focus_tabs();
           }
         }
-        (DialogInput::Select(textbox), Action::Select, Task::ChangeKeys) => {
+        (DlgInput::Select(textbox), Action::Select, Task::ChangeKeys) => {
           match std::fs::read_to_string(
             user::get_keys_file(
               &textbox.get_current_reference()
@@ -320,7 +322,7 @@ impl App {
             }
           }
         }
-        (DialogInput::Select(textbox), Action::Select, Task::ChangeStyle) => {
+        (DlgInput::Select(textbox), Action::Select, Task::ChangeStyle) => {
           match std::fs::read_to_string(
             user::get_styles_file(
               &textbox.get_current_reference()
@@ -336,7 +338,7 @@ impl App {
             }
           }
         }
-        (DialogInput::Select(textbox), Action::Select, Task::Menu) => {
+        (DlgInput::Select(textbox), Action::Select, Task::Menu) => {
           match MENU[textbox.get_current_reference_index()] {
             MANUAL => {
               self.focus_ack_dialog("View manual".into());
@@ -365,7 +367,7 @@ impl App {
             _ => self.focus_tabs(),
           }
         }
-        (DialogInput::Edit(editbox), Action::Enter, Task::Init(_)) => {
+        (DlgInput::Edit(editbox), Action::Enter, Task::Init(_)) => {
           let url_str = editbox.text_plane
             .get_current()
             .unwrap()
@@ -384,13 +386,13 @@ impl App {
             }
           }
         }
-        (DialogInput::Edit(editbox), Action::Cancel, Task::Init(url_str)) => {
+        (DlgInput::Edit(editbox), Action::Cancel, Task::Init(url_str)) => {
           let url_str = url_str.clone();
           self.focus_ask_dialog(
             Task::Init(url_str), "Exit application?".into()
           )
         }
-        (DialogInput::Edit(editbox), Action::Enter, Task::Reply(url)) => {
+        (DlgInput::Edit(editbox), Action::Enter, Task::Reply(url)) => {
           let text = editbox.text_plane
             .get_current()
             .unwrap()
@@ -409,7 +411,7 @@ impl App {
             }
           }
         }
-        (DialogInput::Edit(editbox), Action::Enter, Task::NewTab) => {
+        (DlgInput::Edit(editbox), Action::Enter, Task::NewTab) => {
           match Url::parse(
             &editbox.text_plane.get_current().unwrap().to_string()
           ) {
@@ -454,16 +456,16 @@ impl App {
             self.focus_tabs();
           }
         }
-        (DialogInput::Ack(_), _, _) |
+        (DlgInput::Ack(_), _, _) |
         (_,   Action::Select, _) |
         (_,       Action::No, _) |
         (_,   Action::Cancel, _) => {
           self.focus_tabs();
         }
-        (DialogInput::Select(textbox), action, _) => {
+        (DlgInput::Select(textbox), action, _) => {
           textbox.update(action);
         }
-        (DialogInput::Edit(editbox),   action, _) => {
+        (DlgInput::Edit(editbox),   action, _) => {
           editbox.update_edit(action);
         }
         (_, _, _) => {

@@ -28,7 +28,7 @@ pub use crate::cursor::{
 };
 mod dialog;
 pub use crate::dialog::{
-  Dialog, DialogInput
+  Dialog, DlgInput
 };
 mod text;
 pub use crate::text::{

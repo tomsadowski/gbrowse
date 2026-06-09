@@ -11,7 +11,7 @@ use crate::{
 use std::io::Write;
 
 
-pub enum DialogInput {
+pub enum DlgInput {
   Ack(   TextBox<TextLine>),
   Ask(   TextBox<TextLine>),
   Select(TextBox<TextLine>),
@@ -20,7 +20,7 @@ pub enum DialogInput {
 
 pub struct Dialog {
   pub prompt: TextBox<TextLine>,
-  pub input:  DialogInput,
+  pub input:  DlgInput,
 } 
 impl Dialog {
   pub fn ack<V, S>(view: V, style: S, prompt: &str, input: &str) -> Self
@@ -38,7 +38,7 @@ impl Dialog {
       .write_unused_y(false);
     Dialog {
       prompt: prompt_box,
-      input:  DialogInput::Ack(response_box),
+      input:  DlgInput::Ack(response_box),
     }
   }
 
@@ -57,7 +57,7 @@ impl Dialog {
       .write_unused_y(false);
     Dialog {
       prompt: prompt_box,
-      input:  DialogInput::Ask(response_box),
+      input:  DlgInput::Ask(response_box),
     }
   }
 
@@ -81,7 +81,7 @@ impl Dialog {
       .write_unused_y(false);
     Dialog {
       prompt: prompt_box,
-      input:  DialogInput::Select(response_box),
+      input:  DlgInput::Select(response_box),
     }
   }
 
@@ -103,21 +103,21 @@ impl Dialog {
       .style(style);
     Dialog {
       prompt: prompt_box,
-      input:  DialogInput::Edit(response_box),
+      input:  DlgInput::Edit(response_box),
     }
   }
 
   pub fn resize<V: ViewPort>(&mut self, rect: V) {
     self.prompt.resize(rect.get_view_port().crop_south(2));
     match &mut self.input {
-      DialogInput::Ack(r) | 
-      DialogInput::Ask(r) => {
+      DlgInput::Ack(r) | 
+      DlgInput::Ask(r) => {
         r.resize(self.prompt.used_rect().bottom_row());
       }
-      DialogInput::Edit(r) => {
+      DlgInput::Edit(r) => {
         r.resize(self.prompt.used_rect().bottom_row());
       }
-      DialogInput::Select(r) => {
+      DlgInput::Select(r) => {
         r.resize(rect.get_view_port().crop_north(self.prompt.used_rect().h));
       }
     }
@@ -126,15 +126,15 @@ impl Dialog {
   pub fn write<W: Write>(&self, writer: &mut W) -> std::io::Result<()> {
     self.prompt.write(writer)?;
     match &self.input {
-      DialogInput::Ack(r) | 
-      DialogInput::Ask(r) => { 
+      DlgInput::Ack(r) | 
+      DlgInput::Ask(r) => { 
         r.write(writer)?;
       }
-      DialogInput::Edit(r) => {
+      DlgInput::Edit(r) => {
         r.write(writer)?;
         r.cursor.write(writer)?;
       }
-      DialogInput::Select(r) => {
+      DlgInput::Select(r) => {
         r.write(writer)?;
         r.cursor.write(writer)?;
       }
