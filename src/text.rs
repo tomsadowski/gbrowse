@@ -149,7 +149,7 @@ impl StyledText {
 
   pub fn print(&self, width: usize) -> Vec<Vec<char>> {
     if self.text.len() == 0 {
-      vec![vec![' ']]
+      vec![vec![]]
     } else if self.wrap {
       self.text
         .lines()
