@@ -1,4 +1,4 @@
-// src/gemdoc.rs
+// src/gemini.rs
 
 use crate::util;
 

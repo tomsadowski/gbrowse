@@ -1,17 +1,17 @@
 // src/textbox.rs
 
 use crate::{
+  ViewPort, 
+  Rect,
   UnitCursor, 
   UnitCursorMut, 
   WeightedCursor, 
   CursorPlane,
-  StyledText, 
   TextPlane,
   ScreenCursor,
   Style, 
+  StyledText, 
   Action, 
-  ViewPort, 
-  Rect,
 };
 use crossterm::{
   QueueableCommand, 
@@ -22,17 +22,17 @@ use unicode_width::UnicodeWidthChar;
 use std::io::Write;
 
 
-pub struct TextBox<Y> {
+pub struct TextBox<T> {
   pub view:           Rect,
   pub cursor:         ScreenCursor,
   pub styled_text:    Vec<StyledText>,
-  pub text_plane:     TextPlane<Y>,
+  pub text_plane:     TextPlane<T>,
   pub style:          Style,
   pub write:          bool,
   pub write_unused_x: bool,
   pub write_unused_y: bool,
 }
-impl<Y> TextBox<Y> {
+impl<T> TextBox<T> {
   pub fn get_current_reference(&self) -> String {
     self.styled_text
       .get(self.text_plane.get_current_reference_index())
@@ -92,8 +92,8 @@ impl<Y> TextBox<Y> {
     Ok(())
   }
 }
-impl<Y> TextBox<Y> 
-where Y: From<Vec<char>>
+impl<T> TextBox<T> 
+where T: From<Vec<char>>
 {
   pub fn new<V, O, F>(view: V, origin: &Vec<O>, to_styled_text: F) -> Self 
   where 
@@ -128,9 +128,9 @@ where Y: From<Vec<char>>
     self.text_plane  = TextPlane::new(&self.view, &self.styled_text);
   }
 }
-impl<Y, V> From<V> for TextBox<Y> 
+impl<T, V> From<V> for TextBox<T> 
 where 
-  TextPlane<Y>: Default,
+  TextPlane<T>: Default,
   V:            ViewPort, 
 {
   fn from(view: V) -> Self {
@@ -146,11 +146,10 @@ where
     }
   }
 }
-impl<Y, X> TextBox<Y> 
+impl<T> TextBox<T> 
 where 
-  TextPlane<Y>: CursorPlane + UnitCursor<Unit = X>,
-  Y:            UnitCursor + From<Vec<char>>,
-  X:            WeightedCursor,
+  TextPlane<T>: CursorPlane + UnitCursor<Unit = T>,
+  T:            WeightedCursor + From<Vec<char>>,
 {
   pub fn restyle<I, F>(&mut self, input: &Vec<I>, func: F) 
   where F: Fn(&I) -> StyledText,
@@ -171,10 +170,10 @@ where
     self.reset_state();
   }
 }
-impl<Y> TextBox<Y> 
+impl<T> TextBox<T> 
 where 
-  TextPlane<Y>: CursorPlane + UnitCursor<Unit = Y>,
-  Y:            WeightedCursor,
+  TextPlane<T>: CursorPlane + UnitCursor<Unit = T>,
+  T:            WeightedCursor,
 {
   pub fn move_left(&mut self, delta: usize) -> bool {
     if self.text_plane.move_left(delta) == 0 {
@@ -218,10 +217,10 @@ where
     }
   }
 }
-impl<Y> TextBox<Y> 
+impl<T> TextBox<T> 
 where 
-  TextPlane<Y>: CursorPlane + UnitCursor<Unit = Y>,
-  Y:            UnitCursorMut<Unit = char>,
+  TextPlane<T>: CursorPlane + UnitCursor<Unit = T>,
+  T:            UnitCursorMut<Unit = char>,
 {
   pub fn delete(&mut self) -> bool {
     if self.text_plane
@@ -267,10 +266,10 @@ where
     }
   }
 }
-impl<Y> TextBox<Y> 
+impl<T> TextBox<T> 
 where 
-  TextPlane<Y>: CursorPlane,
-  Y:            UnitCursor<Unit = char>,
+  TextPlane<T>: CursorPlane,
+  T:            UnitCursor<Unit = char>,
 {
   pub fn write<W: Write>(&self, writer: &mut W) -> std::io::Result<()> {
     if self.write {
