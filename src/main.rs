@@ -1,58 +1,71 @@
 // src/main.rs
 
-#![allow(dead_code)]
 //#![allow(unused_imports)]
+#![allow(dead_code)]
 #![allow(unused_mut)]
 #![allow(unused_variables)]
 #![allow(unused_must_use)]
 
 mod app;
 mod util;
-
 mod frame;
 pub use crate::frame::Frame;
-
 mod textbox;
 pub use crate::textbox::TextBox;
-
 mod network;
 pub use crate::network::Request;
-
+mod screencursor;
+pub use crate::screencursor::ScreenCursor;
+mod userkeys;
+pub use crate::userkeys::UserKeys;
+mod userstyle;
+pub use crate::userstyle::UserStyle;
+mod user;
+pub use crate::user::{
+  User,
+  UserTable,
+};
 mod tab;
 pub use crate::tab::{
-  Tab, UrlTab, TabManager
+  Tab, 
+  UrlTab, 
+  TabManager,
 };
 mod cursor;
 pub use crate::cursor::{
-  UnitCursor, UnitCursorMut, WeightedCursor, CursorPlane
+  UnitCursor, 
+  UnitCursorMut, 
+  WeightedCursor, 
+  CursorPlane,
 };
 mod dialog;
 pub use crate::dialog::{
-  Dialog, DlgInput
+  Dialog, 
+  DlgInput,
 };
 mod text;
 pub use crate::text::{
-  TextLine, EditLine, StyledText, TextPlane
-};
-mod view;
-pub use crate::view::{
-  ViewPort, Rect, CursorView, ScreenCursor
+  TextLine, 
+  EditLine, 
+  TextPlane,
 };
 mod gemini;
 pub use crate::gemini::{
-  GemTag, GemText, Status, StatusText
+  GemTag, 
+  GemText, 
+  Status, 
+  StatusText,
 };
-mod style;
-pub use crate::style::{
-  Style, TextStyle, Margins, BorderStyle, StyleTable,
-};
-mod keys;
-pub use crate::keys::{
-  Action, KeysTable,
-};
-mod user;
-pub use crate::user::{
-  User, UserTable
+mod uiprimitives;
+pub use crate::uiprimitives::{
+  Action,
+  Style, 
+  TextStyle, 
+  StyledText, 
+  BorderStyle, 
+  Margins, 
+  ViewPort, 
+  Rect, 
 };
 
 

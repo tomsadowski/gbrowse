@@ -1,73 +1,17 @@
-// src/keys.rs
+// src/userkeys.rs
 
 use crate::{
   UserTable, 
   Dialog, 
   DlgInput,
+  Action,
 };
 use crossterm::event::KeyCode;
 use toml::Value;
 
 
 #[derive(Copy, Clone, Debug)]
-pub enum Action {
-  // editor
-  Insert(char),
-  Backspace,
-  Enter,
-  Delete,
-  // tab
-  Menu,
-  LoadUrl,
-  SaveUrl,
-  DelTab, 
-  NewTab, 
-  CycleLeft, 
-  CycleRight, 
-  // selector
-  MoveUp, 
-  MoveDown, 
-  MoveLeft, 
-  MoveRight,
-  Top,
-  Bottom,
-  PageUp,
-  PageDown,
-  Select, 
-  // dialog
-  Ack, 
-  Yes, 
-  No, 
-  Cancel,
-}
-impl std::str::FromStr for Action {
-  type Err = String;
-  fn from_str(s: &str) -> Result<Self, Self::Err> {
-    match s {
-      "load_url"    => Ok(Self::LoadUrl),
-      "save_url"    => Ok(Self::SaveUrl),
-      "move_up"     => Ok(Self::MoveUp),
-      "menu"        => Ok(Self::Menu),
-      "move_down"   => Ok(Self::MoveDown),
-      "move_left"   => Ok(Self::MoveLeft),
-      "move_right"  => Ok(Self::MoveRight),
-      "cycle_left"  => Ok(Self::CycleLeft),
-      "cycle_right" => Ok(Self::CycleRight),
-      "delete_tab"  => Ok(Self::DelTab),
-      "new_tab"     => Ok(Self::NewTab),
-      "select"      => Ok(Self::Select),
-      "ack"         => Ok(Self::Ack),
-      "yes"         => Ok(Self::Yes),
-      "no"          => Ok(Self::No),
-      "cancel"      => Ok(Self::Cancel),
-      s => 
-        Err(format!("Keys table does not contain field {}", s)),
-    }
-  }
-}
-
-#[derive(Copy, Clone, Debug)]
-pub struct KeysTable {
+pub struct UserKeys {
   pub up:          KeyCode,
   pub down:        KeyCode,
   pub left:        KeyCode,
@@ -88,7 +32,7 @@ pub struct KeysTable {
   pub no:          KeyCode,
   pub cancel:      KeyCode,
 } 
-impl Default for KeysTable {
+impl Default for UserKeys {
   fn default() -> Self {
     Self {
       load_url:    KeyCode::Char('u'),
@@ -113,10 +57,8 @@ impl Default for KeysTable {
     }
   }
 }
-impl UserTable<Action> for KeysTable {
-  fn try_assign(&mut self, field: Action, value: Value) 
-    -> Result<(), String> 
-  {
+impl UserTable<Action> for UserKeys {
+  fn assign(&mut self, field: Action, value: Value) -> Result<(), String> {
     let get_keycode = || -> Result<KeyCode, String> {
       if let Value::String(s) = value {
         match s.as_str() {
@@ -164,7 +106,7 @@ impl UserTable<Action> for KeysTable {
     Ok(())
   }
 }
-impl KeysTable {
+impl UserKeys {
   pub fn get_tab_action(&self, kc: &KeyCode) -> Option<Action> {
     if        &self.load_url    == kc {Some(Action::LoadUrl)
     } else if &self.save_url    == kc {Some(Action::SaveUrl)

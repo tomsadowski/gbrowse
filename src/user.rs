@@ -1,12 +1,11 @@
 // src/user.rs
 
 use crate::{
-  KeysTable,
-  StyleTable,
+  UserKeys,
+  UserStyle,
   StyledText,
   Frame, 
   GemText, 
-  GemTag,
   Rect,
 };
 use toml::{Table, Value};
@@ -34,12 +33,12 @@ pub fn get_styles_file(name: &str) -> String {
 pub trait UserTable<F>: Sized 
 where F: std::str::FromStr<Err = String> 
 {
-  fn try_assign(&mut self, field: F, value: Value) -> Result<(), String>;
+  fn assign(&mut self, field: F, value: Value) -> Result<(), String>;
 
   fn read_table(mut self, table: Table) -> Result<Self, String> {
     for (key, value) in table.into_iter() {
       let field = F::from_str(&key)?;
-      self.try_assign(field, value)?;
+      self.assign(field, value)?;
     }
     Ok(self)
   }
@@ -47,7 +46,7 @@ where F: std::str::FromStr<Err = String>
   fn update_from_table(&mut self, table: Table) -> Result<(), String> {
     for (key, value) in table.into_iter() {
       let field = F::from_str(&key)?;
-      self.try_assign(field, value)?;
+      self.assign(field, value)?;
     }
     Ok(())
   }
@@ -109,8 +108,8 @@ pub struct User {
   pub timeout:        u64,
   pub save_file:      String,
   pub init_url:       String,
-  pub style:          StyleTable,
-  pub keys:           KeysTable,
+  pub style:          UserStyle,
+  pub keys:           UserKeys,
   pub urls:           Vec<String>,
 } 
 impl Default for User {
@@ -123,8 +122,8 @@ impl Default for User {
       timeout:        10,
       init_url:       "gemini://geminiprotocol.net/".into(),
       save_file:      SAVE_FILE.into(),
-      style:          StyleTable::default(),
-      keys:           KeysTable::default(),
+      style:          UserStyle::default(),
+      keys:           UserKeys::default(),
       urls,
     }
   }
@@ -137,7 +136,7 @@ impl std::str::FromStr for User {
   }
 }
 impl UserTable<UserField> for User {
-  fn try_assign(&mut self, field: UserField, value: Value) 
+  fn assign(&mut self, field: UserField, value: Value) 
     -> Result<(), String> 
   {
     match (field, value) {
@@ -208,26 +207,10 @@ impl User {
   }
 
   pub fn get_frame(&self, screen: Rect) -> Frame {
-    Frame::from(screen)
-      .screen_margin(self.style.screen_margin)
-      .text_margin(self.style.text_margin)
-      .banner_style(self.style.banner)
-      .footer_style(self.style.banner)
-      .margin_style(self.style.general)
-      .border_style(self.style.border)
+    self.style.get_frame(screen)
   }
 
   pub fn get_styled_gemtext(&self, gemtext: &GemText) -> StyledText {
-    let mut text: StyledText = match gemtext.tag {
-      GemTag::HeadingOne   => self.style.heading1.into(),
-      GemTag::HeadingTwo   => self.style.heading2.into(),
-      GemTag::HeadingThree => self.style.heading3.into(),
-      GemTag::Text         => self.style.text.into(),
-      GemTag::PreFormat    => self.style.preformat.into(),
-      GemTag::Link(_)      => self.style.link.into(),
-      GemTag::ListItem     => self.style.list.into(),
-      GemTag::Quote        => self.style.quote.into(),
-    };
-    text.text(&gemtext.to_string())
+    self.style.get_styled_gemtext(gemtext)
   }
 }
