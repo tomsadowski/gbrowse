@@ -412,6 +412,46 @@ where
     }
   }
 }
+impl<T, W> TextBox<T> 
+where 
+  TextPlane<T>: CursorPlane + UnitCursor<Unit = W>,
+  W:            WeightedCursor + UnitCursorMut<Unit = char>,
+{
+  pub fn delete(&mut self) -> bool {
+    if self.text.use_current_mut(|c| c.delete()).unwrap_or(false) {
+      self.cursor.update(&self.text);
+      self.write = true;
+      true
+    } else {false}
+  }
+
+  pub fn backspace(&mut self) -> bool {
+    if self.text.use_current_mut(|c| c.backspace()).unwrap_or(false) {
+      self.cursor.update(&self.text);
+      self.write = true;
+      true
+    } else {false}
+  }
+
+  pub fn insert(&mut self, ch: char) -> bool {
+    if self.text.use_current_mut(|c| c.insert(ch)).unwrap_or(false) {
+      self.cursor.update(&self.text);
+      self.write = true;
+      true
+    } else {false}
+  }
+
+  pub fn update_edit(&mut self, action: &Action) {
+    match action {
+      Action::Backspace => {self.backspace();}
+      Action::Delete    => {self.delete();}
+      Action::Insert(c) => {self.insert(*c);}
+      Action::MoveLeft  => {self.move_left(1);}
+      Action::MoveRight => {self.move_right(1);}
+      _ => {}
+    }
+  }
+}
 impl<T, C> TextBox<T> 
 where 
   TextPlane<T>: CursorPlane,
@@ -464,143 +504,6 @@ where
         x = self.view.x;
         y += 1;
         writer.queue(MoveTo(x, y))?;
-      }
-    }
-    writer.queue(SetAttribute(Attribute::Reset))?;
-    Ok(())
-  }
-}
-
-#[derive(Default)]
-pub struct EditBox {
-  pub style:          Style,
-  pub write:          bool,
-  pub rect:           Rect,
-  pub content:        EditLine,
-  pub cursor:         ScreenCursor,
-  pub write_unused_x: bool,
-}
-impl<V: ViewPort> From<V> for EditBox {
-  fn from(view: V) -> Self {
-    let view = view.get_view_port().top_row();
-    Self {
-      write_unused_x: true,
-      write:          true,
-      style:          Style::default(),
-      cursor:         ScreenCursor::from(&view), 
-      content:        EditLine::default(), 
-      rect: view,
-    }
-  }
-}
-impl EditBox {
-  pub fn input(mut self, text: &str) -> Self {
-    self.content = EditLine::from(text);
-    self.cursor.x.update(self.content.get_weighted_head());
-    self
-  }
-
-  pub fn style<T>(mut self, style: T) -> Self 
-  where T: Into<Style> + Copy
-  {
-    self.style = style.into();
-    self
-  }
-
-  pub fn write_unused_x(mut self, write: bool) -> Self {
-    self.write_unused_x = write;
-    self
-  }
-
-  pub fn resize<V: ViewPort>(&mut self, rect: V) {
-    self.rect = rect.get_view_port().top_row();
-    self.cursor.x.resize(
-      self.content.get_weighted_head(), 
-      self.rect.x, 
-      self.rect.w
-      );
-    self.reset_state();
-  }
-
-  pub fn reset_state(&mut self) {
-    self.write = true;
-  }
-
-  pub fn move_left(&mut self, delta: usize) -> bool {
-    if self.content.move_backward(delta) == 0 {
-      self.write = self.cursor.x.update(self.content.get_weighted_head());
-      true
-    } else {false}
-  }
-
-  pub fn move_right(&mut self, delta: usize) -> bool {
-    if self.content.move_forward(delta) == 0 {
-      self.write = self.cursor.x.update(self.content.get_weighted_head());
-      true
-    } else {false}
-  }
-
-  pub fn delete(&mut self) -> bool {
-    if self.content.delete() {
-      self.cursor.x.update(self.content.get_weighted_head());
-      self.write = true;
-      true
-    } else {false}
-  }
-
-  pub fn backspace(&mut self) -> bool {
-    if self.content.backspace() {
-      self.cursor.x.update(self.content.get_weighted_head());
-      self.write = true;
-      true
-    } else {false}
-  }
-
-  pub fn insert(&mut self, c: char) -> bool {
-    if self.content.insert(c) {
-      self.cursor.x.update(self.content.get_weighted_head());
-      self.write = true;
-      true
-    } else {false}
-  }
-
-  pub fn update(&mut self, action: &Action) {
-    match action {
-      Action::Backspace => {self.backspace();}
-      Action::Delete    => {self.delete();}
-      Action::Insert(c) => {self.insert(*c);}
-      Action::MoveLeft  => {self.move_left(1);}
-      Action::MoveRight => {self.move_right(1);}
-      _ => {}
-    }
-  }
-
-  pub fn write<W: Write>(&self, writer: &mut W) -> std::io::Result<()> {
-    if self.write {
-      self.write_all(writer)?;
-    }
-    Ok(())
-  }
-
-  pub fn write_all<W: Write>(&self, writer: &mut W) -> std::io::Result<()> {
-    let mut x = self.rect.x;
-    let     y = self.rect.y;
-    writer
-      .queue(MoveTo(x, y))?
-      .queue(SetAttribute(Attribute::Reset))?
-      .queue(&self.style)?;
-    // render chars
-    for c in self.content
-      .get_weighted_view(self.cursor.get_x_scroll(), self.rect.w.into()) 
-    {
-      writer.queue(Print(c))?;
-      x += u16::try_from(c.width().unwrap_or(0)).unwrap();
-    }
-    writer.queue(MoveTo(x, y))?;
-    // render page space
-    if self.write_unused_x {
-      for _ in x..self.rect.x_end() {
-        writer.queue(Print(' '))?;
       }
     }
     writer.queue(SetAttribute(Attribute::Reset))?;

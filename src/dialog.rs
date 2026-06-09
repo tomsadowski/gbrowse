@@ -2,7 +2,7 @@
 
 use crate::{
   cursor::{UnitCursor, UnitCursorMut, WeightedCursor},
-  widget::{TextBox, EditBox},
+  widget::{TextBox},
   view::{Rect, CursorView, ViewPort},
   style::{Style, Margins, BorderStyle},
   text::{TextLine, EditLine, StyledText, TextPlane},
@@ -16,7 +16,7 @@ pub enum Input {
   Ack(TextBox<TextLine>),
   Ask(TextBox<TextLine>),
   Select(TextBox<TextLine>),
-  Edit(EditBox),
+  Edit(TextBox<EditLine>),
 }
 
 pub struct Dialog {
@@ -97,10 +97,10 @@ impl Dialog {
       .input(&vec![prompt], |p| StyledText::from(*p).style(style))
       .style(style)
       .write_unused_y(false);
-    let response_box = EditBox::from(
+    let response_box = TextBox::from(
         prompt_box.used_rect().bottom_row()
       )
-      .input(text)
+      .input(&vec![text], |p| StyledText::from(*p).style(style))
       .style(style);
     Dialog {
       prompt: prompt_box,
