@@ -25,6 +25,8 @@ pub use crate::user::{
   User,
   UserTable,
 };
+mod styledtext;
+pub use crate::styledtext::StyledText;
 mod tab;
 pub use crate::tab::{
   Tab, 
@@ -61,7 +63,6 @@ pub use crate::uiprimitives::{
   Action,
   Style, 
   TextStyle, 
-  StyledText, 
   BorderStyle, 
   Margins, 
   ViewPort, 
