@@ -353,7 +353,7 @@ impl App {
           }
         }
         (Input::Edit(editbox), Action::Enter, Task::Init(_)) => {
-          let url_str = editbox.content.to_string();
+          let url_str = editbox.text.get_current().unwrap().to_string();
           match Url::parse(&url_str) {
             Err(e) => 
               self.focus_edit_dialog(
@@ -375,7 +375,8 @@ impl App {
           )
         }
         (Input::Edit(editbox), Action::Enter, Task::Reply(url)) => {
-          let text = editbox.content.to_string().trim().replace(" ", "%20");
+          let text = editbox.text.get_current().unwrap()
+            .to_string().trim().replace(" ", "%20");
           match url.clone().join(&format!("?{text}")) {
             Err(e) => 
               self.focus_ack_dialog(
@@ -389,7 +390,7 @@ impl App {
           }
         }
         (Input::Edit(editbox), Action::Enter, Task::NewTab) => {
-          match Url::parse(&editbox.content.to_string()) {
+          match Url::parse(&editbox.text.get_current().unwrap().to_string()) {
             Err(e) => 
               self.focus_ack_dialog(
                 format!("Invalid URL. {e}")
@@ -441,7 +442,7 @@ impl App {
           textbox.update(action);
         }
         (Input::Edit(editbox),   action, _) => {
-          editbox.update(action);
+          editbox.update_edit(action);
         }
         (_, _, _) => {
           self.focus_tabs();

@@ -3,7 +3,7 @@
 use crate::{
   cursor::UnitCursor,
   user::UserTable,
-  widget::{EditBox, TextBox},
+  widget::{TextBox},
   dialog::{Dialog, Input},
 };
 use crossterm::event::KeyCode;
