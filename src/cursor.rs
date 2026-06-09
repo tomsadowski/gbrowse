@@ -226,7 +226,7 @@ where U: UnitCursor<Unit = char>
   }
 }
 
-pub trait CursorPlane {
+pub trait CursorPlane: UnitCursorMut {
   fn get_index(&self) -> usize;
 
   fn set_index(&mut self, idx: usize);

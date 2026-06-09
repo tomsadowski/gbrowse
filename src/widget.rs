@@ -4,7 +4,7 @@ use crate::{
   cursor::{UnitCursor, UnitCursorMut, WeightedCursor, CursorPlane},
   view::{ViewPort, Rect, CursorView, ScreenCursor},
   style::{Style, Margins, BorderStyle},
-  text::{EditLine, StyledText, TextPlane, RenderedText},
+  text::{EditLine, StyledText, TextPlane},
   keys::Action,
 };
 use crossterm::{
@@ -229,8 +229,8 @@ pub struct TextBox<T> {
 }
 impl<T, V> From<V> for TextBox<T> 
 where 
-      V: ViewPort, 
-      TextPlane<T>: Default,
+  V:            ViewPort, 
+  TextPlane<T>: Default,
 {
   fn from(view: V) -> Self {
     Self {
@@ -245,7 +245,7 @@ where
     }
   }
 }
-impl<T: RenderedText> TextBox<T> {
+impl<T: From<Vec<char>>> TextBox<T> {
   pub fn new<V, I, F>(view: V, input: &Vec<I>, func: F) -> Self 
   where 
     V: ViewPort,
@@ -278,7 +278,9 @@ impl<T: RenderedText> TextBox<T> {
     self.origin = input.iter().map(|i| func(i)).collect();
     self.text = TextPlane::new(&self.view, &self.origin);
   }
+}
 
+impl<T> TextBox<T> {
   pub fn get_source(&self) -> String {
     self.origin
       .get(self.text.get_origin_index())
@@ -289,9 +291,7 @@ impl<T: RenderedText> TextBox<T> {
   pub fn get_origin_index(&self) -> usize {
     self.text.get_origin_index()
   }
-}
 
-impl<T> TextBox<T> {
   pub fn style<S>(mut self, style: S) -> Self 
   where S: Into<Style> + Copy
   {
@@ -340,11 +340,11 @@ impl<T> TextBox<T> {
     Ok(())
   }
 }
-impl<T> TextBox<T> 
+impl<T, W> TextBox<T> 
 where 
-  T: RenderedText + UnitCursor,
-  TextPlane<T>: CursorPlane + UnitCursorMut,
-  <TextPlane<T> as UnitCursor>::Unit: WeightedCursor + RenderedText,
+  TextPlane<T>: CursorPlane + UnitCursor<Unit = W>,
+  T:            UnitCursor + From<Vec<char>>,
+  W:            WeightedCursor,
 {
   pub fn restyle<I, F>(&mut self, input: &Vec<I>, func: F) 
   where F: Fn(&I) -> StyledText,
@@ -364,7 +364,12 @@ where
     self.text.set_index(idx);
     self.reset_state();
   }
-
+}
+impl<T, W> TextBox<T> 
+where 
+  TextPlane<T>: CursorPlane + UnitCursor<Unit = W>,
+  W:            WeightedCursor,
+{
   pub fn move_left(&mut self, delta: usize) -> bool {
     if self.text.move_left(delta) == 0 {
       self.write = self.cursor.update(&self.text);
@@ -407,14 +412,12 @@ where
     }
   }
 }
-impl<T> TextBox<T> 
+impl<T, C> TextBox<T> 
 where 
-  TextPlane<T>: CursorPlane + UnitCursorMut,
-  <TextPlane<T> as UnitCursor>::Unit: WeightedCursor + RenderedText,
-  <<TextPlane<T> as UnitCursor>::Unit as UnitCursor>::Unit: 
-    std::fmt::Display + UnicodeWidthChar + Copy,
+  TextPlane<T>: CursorPlane,
+  T:            WeightedCursor + UnitCursor<Unit = C>,
+  C:            std::fmt::Display + UnicodeWidthChar + Copy,
 {
-
   pub fn write<W: Write>(&self, writer: &mut W) -> std::io::Result<()> {
     if self.write {
       self.write_all(writer)?;
@@ -428,10 +431,10 @@ where
       .queue(MoveTo(x, y))?
       .queue(SetAttribute(Attribute::Reset))?
       .queue(&self.style)?;
-    for line in self.text
-      .get_unit_view(self.cursor.get_y_scroll(), self.view.h.into()) 
+    for (index, line) in self.text
+      .get_view(self.cursor.get_y_scroll(), self.view.h.into()) 
     {
-      writer.queue(&self.origin[line.get_origin_index()].style)?;
+      writer.queue(&self.origin[*index].style)?;
       for c in line
         .get_weighted_view(self.cursor.get_x_scroll(), self.view.w.into()) 
       {
