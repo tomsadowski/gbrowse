@@ -194,7 +194,9 @@ impl User {
         .truncate(true)
         .open(&self.save_file) 
       {
-        Err(e) => Err(format!("could not create save file: {e}")),
+        Err(e) => Err(
+          format!("could not create save file: {e}")
+        ),
         Ok(mut f) => {
           for url in self.urls.iter() {
             f.write(&format!("{url}\n").as_bytes());

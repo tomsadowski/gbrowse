@@ -311,7 +311,7 @@ impl App {
         (DlgInput::Select(textbox), Action::Select, Task::ChangeKeys) => {
           match std::fs::read_to_string(
             user::get_keys_file(
-              &textbox.get_current_reference()
+              &textbox.get_current_reference_string()
             )
           ) {
             Err(e) => self.focus_ack_dialog(format!("Problem: {e}")),
@@ -325,7 +325,7 @@ impl App {
         (DlgInput::Select(textbox), Action::Select, Task::ChangeStyle) => {
           match std::fs::read_to_string(
             user::get_styles_file(
-              &textbox.get_current_reference()
+              &textbox.get_current_reference_string()
             )
           ) {
             Err(e) => self.focus_ack_dialog(e.to_string()),

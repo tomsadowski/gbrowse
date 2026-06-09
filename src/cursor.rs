@@ -227,9 +227,9 @@ where U: UnitCursor<Unit = char>
 }
 
 pub trait CursorPlane: UnitCursorMut {
-  fn get_index(&self) -> usize;
+  fn get_linear_head(&self) -> usize;
 
-  fn set_index(&mut self, idx: usize);
+  fn set_linear_head(&mut self, idx: usize);
 
   fn move_up(&mut self, delta: usize) -> bool;
 
@@ -244,7 +244,7 @@ where
   U: UnitCursorMut<Unit = T>,
   T: UnitCursor,
 {
-  fn get_index(&self) -> usize {
+  fn get_linear_head(&self) -> usize {
     match self.use_current(|c| c.get_head()) {
       None         => 0,
       Some(x_head) => self.get_units()[..self.get_head()]
@@ -255,7 +255,7 @@ where
     }
   }
 
-  fn set_index(&mut self, idx: usize) {
+  fn set_linear_head(&mut self, idx: usize) {
     self.move_to_start();
     self.use_current_mut(|c| c.move_to_start());
     self.move_right(idx);

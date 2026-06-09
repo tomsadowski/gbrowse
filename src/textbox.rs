@@ -51,7 +51,7 @@ where
   }
 }
 impl<T> TextBox<T> {
-  pub fn get_current_reference(&self) -> String {
+  pub fn get_current_reference_string(&self) -> String {
     self.styled_text
       .get(self.text_plane.get_current_reference_index())
       .map(|t| t.text.clone())
@@ -152,22 +152,23 @@ where
     self.text_plane  = TextPlane::new(&self.view, &self.styled_text);
     self.cursor.update(&self.text_plane);
   }
+
   pub fn restyle<R, F>(&mut self, reference: &Vec<R>, to_styled_text: F) 
   where F: Fn(&R) -> StyledText,
   {
-    let idx          = self.text_plane.get_index();
+    let linear_head  = self.text_plane.get_linear_head();
     self.styled_text = reference.iter().map(|i| to_styled_text(i)).collect();
     self.text_plane  = TextPlane::new(&self.view, &self.styled_text);
-    self.text_plane.set_index(idx);
+    self.text_plane.set_linear_head(linear_head);
     self.cursor.update(&self.text_plane);
     self.reset_state();
   }
 
   pub fn resize<V: ViewPort>(&mut self, view: V) {
-    let idx         = self.text_plane.get_index();
+    let linear_head = self.text_plane.get_linear_head();
     self.view       = view.get_view_port();
     self.text_plane = TextPlane::new(&view, &self.styled_text);
-    self.text_plane.set_index(idx);
+    self.text_plane.set_linear_head(linear_head);
     self.cursor.resize(&self.text_plane, &self.view);
     self.reset_state();
   }
@@ -259,11 +260,15 @@ where
 
   pub fn update_edit(&mut self, action: &Action) {
     match action {
+      Action::PageDown  => {self.move_left(usize::from(self.view.w));}
+      Action::PageUp    => {self.move_right(usize::from(self.view.w));}
       Action::Backspace => {self.backspace();}
       Action::Delete    => {self.delete();}
       Action::Insert(c) => {self.insert(*c);}
       Action::MoveLeft  => {self.move_left(1);}
       Action::MoveRight => {self.move_right(1);}
+      Action::MoveDown  => {self.move_down(1);}
+      Action::MoveUp    => {self.move_up(1);}
       _ => {}
     }
   }
