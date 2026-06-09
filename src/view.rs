@@ -2,7 +2,6 @@
 
 use crate::{
   UnitCursor, 
-  UnitCursorMut, 
   WeightedCursor,
 };
 use std::{

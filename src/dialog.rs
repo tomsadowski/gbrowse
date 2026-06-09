@@ -6,10 +6,8 @@ use crate::{
   TextBox, 
   StyledText, 
   Style, 
-  Rect, 
   ViewPort,
 };
-use crossterm::QueueableCommand;
 use std::io::Write;
 
 

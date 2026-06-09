@@ -1,9 +1,7 @@
 // src/keys.rs
 
 use crate::{
-  UnitCursor,
   UserTable, 
-  TextBox, 
   Dialog, 
   DialogInput,
 };

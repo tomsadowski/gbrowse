@@ -7,7 +7,6 @@ use crate::{
   CursorPlane,
   StyledText, 
   TextPlane,
-  CursorView, 
   ScreenCursor,
   Style, 
   Action, 
@@ -16,7 +15,7 @@ use crate::{
 };
 use crossterm::{
   QueueableCommand, 
-  cursor::{self, MoveTo}, 
+  cursor::{MoveTo}, 
   style::{Print, SetAttribute, Attribute},
 };
 use unicode_width::UnicodeWidthChar;
