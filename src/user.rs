@@ -145,7 +145,7 @@ impl UserTable<UserField> for User {
         self.init_url = v.into();
       }
       (UserField::SaveFile, Value::String(v)) => {
-        self.save_file = format!("{}/{}", DATA_PATH, v);
+        self.save_file = format!("{DATA_PATH}/{v}");
       }
       (UserField::Timeout, Value::Integer(v)) => {
         self.timeout = u64::try_from(v).map_err(|e| e.to_string())?;
@@ -184,7 +184,7 @@ impl User {
   pub fn save_url(&mut self, url: &url::Url) -> Result<(), String> {
     let url_str = url.to_string();
     if self.urls.iter().any(|url| **url == url_str) {
-      Err(format!("URL {} already saved", url_str))
+      Err(format!("URL {url_str} already saved"))
     } else {
       self.urls.push(url_str.clone());
       // write to save file
@@ -193,10 +193,10 @@ impl User {
         .truncate(true)
         .open(&self.save_file) 
       {
-        Err(e) => Err(format!("could not create save file: {}", &e)),
+        Err(e) => Err(format!("could not create save file: {e}")),
         Ok(mut f) => {
           for url in self.urls.iter() {
-            f.write(&format!("{}\n", url).as_bytes());
+            f.write(&format!("{url}\n").as_bytes());
           }
           Ok(())
         }

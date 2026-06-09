@@ -289,7 +289,9 @@ impl App {
         => match (&mut dlg.input, action, task) 
       {
         (Input::Select(textbox), Action::Select, Task::NewTab) => {
-          if let Some(link) = self.user.urls.get(textbox.get_origin_index()) {
+          if let Some(link) = self.user.urls.get(
+            textbox.get_current_reference_index()
+          ) {
             let link = link.clone();
             self.select_link(&link);
           } else {
@@ -298,8 +300,10 @@ impl App {
         }
         (Input::Select(textbox), Action::Select, Task::ChangeKeys) => {
           match std::fs::read_to_string(
-            user::get_keys_file(&textbox.get_source())) 
-          {
+            user::get_keys_file(
+              &textbox.get_current_reference()
+            )
+          ) {
             Err(e) => self.focus_ack_dialog(format!("Problem: {e}")),
             Ok(s)  => if let Err(e) = self.user.keys.update_from_str(&s) {
               self.focus_ack_dialog(format!("Problem: {e}"));
@@ -310,9 +314,10 @@ impl App {
         }
         (Input::Select(textbox), Action::Select, Task::ChangeStyle) => {
           match std::fs::read_to_string(
-            user::get_styles_file(&textbox.get_source())
-          ) 
-          {
+            user::get_styles_file(
+              &textbox.get_current_reference()
+            )
+          ) {
             Err(e) => self.focus_ack_dialog(e.to_string()),
             Ok(s)  => if let Err(e) = self.user.style.update_from_str(&s) {
               self.focus_ack_dialog(e.to_string());
@@ -324,7 +329,7 @@ impl App {
           }
         }
         (Input::Select(textbox), Action::Select, Task::Menu) => {
-          match MENU[textbox.get_origin_index()] {
+          match MENU[textbox.get_current_reference_index()] {
             MANUAL => {
               self.focus_ack_dialog("View manual".into());
             }
@@ -353,7 +358,7 @@ impl App {
           }
         }
         (Input::Edit(editbox), Action::Enter, Task::Init(_)) => {
-          let url_str = editbox.text.get_current().unwrap().to_string();
+          let url_str = editbox.text_plane.get_current().unwrap().to_string();
           match Url::parse(&url_str) {
             Err(e) => 
               self.focus_edit_dialog(
@@ -375,7 +380,7 @@ impl App {
           )
         }
         (Input::Edit(editbox), Action::Enter, Task::Reply(url)) => {
-          let text = editbox.text.get_current().unwrap()
+          let text = editbox.text_plane.get_current().unwrap()
             .to_string().trim().replace(" ", "%20");
           match url.clone().join(&format!("?{text}")) {
             Err(e) => 
@@ -390,7 +395,7 @@ impl App {
           }
         }
         (Input::Edit(editbox), Action::Enter, Task::NewTab) => {
-          match Url::parse(&editbox.text.get_current().unwrap().to_string()) {
+          match Url::parse(&editbox.text_plane.get_current().unwrap().to_string()) {
             Err(e) => 
               self.focus_ack_dialog(
                 format!("Invalid URL. {e}")

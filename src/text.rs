@@ -192,7 +192,7 @@ impl<T> UnitCursorMut for TextPlane<T> {
   }
 }
 impl<T> TextPlane<T> {
-  pub fn get_origin_index(&self) -> usize {
+  pub fn get_current_reference_index(&self) -> usize {
     self.indexes.get(self.get_head())
       .map(|u| u.clone())
       .unwrap_or(usize::MIN)

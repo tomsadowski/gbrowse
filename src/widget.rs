@@ -217,20 +217,20 @@ impl Frame {
   }
 }
 
-pub struct TextBox<T> {
+pub struct TextBox<Y> {
   pub view:           Rect,
   pub cursor:         ScreenCursor,
-  pub origin:         Vec<StyledText>,
-  pub text:           TextPlane<T>,
+  pub styled_text:    Vec<StyledText>,
+  pub text_plane:     TextPlane<Y>,
   pub style:          Style,
   pub write:          bool,
   pub write_unused_x: bool,
   pub write_unused_y: bool,
 }
-impl<T, V> From<V> for TextBox<T> 
+impl<Y, V> From<V> for TextBox<Y> 
 where 
   V:            ViewPort, 
-  TextPlane<T>: Default,
+  TextPlane<Y>: Default,
 {
   fn from(view: V) -> Self {
     Self {
@@ -238,58 +238,58 @@ where
       write_unused_y: true,
       write:          true,
       style:          Style::default(),
-      origin:         vec![StyledText::default()],
+      styled_text:    vec![StyledText::default()],
       cursor:         ScreenCursor::from(&view), 
-      text:           TextPlane::default(),
+      text_plane:     TextPlane::default(),
       view:           view.get_view_port(),
     }
   }
 }
-impl<T: From<Vec<char>>> TextBox<T> {
-  pub fn new<V, I, F>(view: V, input: &Vec<I>, func: F) -> Self 
+impl<Y: From<Vec<char>>> TextBox<Y> {
+  pub fn new<V, O, F>(view: V, origin: &Vec<O>, to_styled_text: F) -> Self 
   where 
     V: ViewPort,
-    F: Fn(&I) -> StyledText,
+    F: Fn(&O) -> StyledText,
   {
-    let origin = input.iter().map(|i| func(i)).collect();
+    let styled_text = origin.iter().map(|i| to_styled_text(i)).collect();
     Self {
       write_unused_x: true,
       write_unused_y: true,
       write:          true,
       style:          Style::default(),
       cursor:         ScreenCursor::from(&view), 
-      text:           TextPlane::new(&view, &origin),
+      text_plane:     TextPlane::new(&view, &styled_text),
       view:           view.get_view_port(),
-      origin,
+      styled_text,
     }
   }
 
   pub fn input<I, F>(mut self, input: &Vec<I>, func: F) -> Self 
   where F: Fn(&I) -> StyledText,
   {
-    self.origin = input.iter().map(|i| func(i)).collect();
-    self.text = TextPlane::new(&self.view, &self.origin);
+    self.styled_text = input.iter().map(|i| func(i)).collect();
+    self.text_plane = TextPlane::new(&self.view, &self.styled_text);
     self
   }
 
   pub fn set_input<I, F>(&mut self, input: &Vec<I>, func: F)
   where F: Fn(&I) -> StyledText,
   {
-    self.origin = input.iter().map(|i| func(i)).collect();
-    self.text = TextPlane::new(&self.view, &self.origin);
+    self.styled_text = input.iter().map(|i| func(i)).collect();
+    self.text_plane = TextPlane::new(&self.view, &self.styled_text);
   }
 }
 
 impl<T> TextBox<T> {
-  pub fn get_source(&self) -> String {
-    self.origin
-      .get(self.text.get_origin_index())
+  pub fn get_current_reference(&self) -> String {
+    self.styled_text
+      .get(self.text_plane.get_current_reference_index())
       .map(|t| t.text.clone())
       .unwrap_or("empty".into())
   }
 
-  pub fn get_origin_index(&self) -> usize {
-    self.text.get_origin_index()
+  pub fn get_current_reference_index(&self) -> usize {
+    self.text_plane.get_current_reference_index()
   }
 
   pub fn style<S>(mut self, style: S) -> Self 
@@ -316,7 +316,7 @@ impl<T> TextBox<T> {
   }
 
   pub fn used_rect(&self) -> Rect {
-    if let Ok(h) = u16::try_from(self.text.get_length()) {
+    if let Ok(h) = u16::try_from(self.text_plane.get_length()) {
       self.view.cap_height(h)
     } else {
       self.view
@@ -349,19 +349,19 @@ where
   pub fn restyle<I, F>(&mut self, input: &Vec<I>, func: F) 
   where F: Fn(&I) -> StyledText,
   {
-    let idx     = self.text.get_index();
-    self.origin = input.iter().map(|i| func(i)).collect();
-    self.text   = TextPlane::new(&self.view, &self.origin);
-    self.text.set_index(idx);
+    let idx     = self.text_plane.get_index();
+    self.styled_text = input.iter().map(|i| func(i)).collect();
+    self.text_plane   = TextPlane::new(&self.view, &self.styled_text);
+    self.text_plane.set_index(idx);
     self.reset_state();
   }
 
   pub fn resize<V: ViewPort>(&mut self, view: V) {
-    let idx   = self.text.get_index();
+    let idx   = self.text_plane.get_index();
     self.view = view.get_view_port();
-    self.text = TextPlane::new(&view, &self.origin);
-    self.cursor.resize(&self.text, &self.view);
-    self.text.set_index(idx);
+    self.text_plane = TextPlane::new(&view, &self.styled_text);
+    self.cursor.resize(&self.text_plane, &self.view);
+    self.text_plane.set_index(idx);
     self.reset_state();
   }
 }
@@ -371,29 +371,29 @@ where
   W:            WeightedCursor,
 {
   pub fn move_left(&mut self, delta: usize) -> bool {
-    if self.text.move_left(delta) == 0 {
-      self.write = self.cursor.update(&self.text);
+    if self.text_plane.move_left(delta) == 0 {
+      self.write = self.cursor.update(&self.text_plane);
       true
     } else {false}
   }
 
   pub fn move_right(&mut self, delta: usize) -> bool {
-    if self.text.move_right(delta) == 0 {
-      self.write = self.cursor.update(&self.text);
+    if self.text_plane.move_right(delta) == 0 {
+      self.write = self.cursor.update(&self.text_plane);
       true
     } else {false}
   }
 
   pub fn move_down(&mut self, delta: usize) -> bool {
-    if self.text.move_down(delta) {
-      self.write = self.cursor.update(&self.text);
+    if self.text_plane.move_down(delta) {
+      self.write = self.cursor.update(&self.text_plane);
       true
     } else {false}
   }
 
   pub fn move_up(&mut self, delta: usize) -> bool {
-    if self.text.move_up(delta) {
-      self.write = self.cursor.update(&self.text);
+    if self.text_plane.move_up(delta) {
+      self.write = self.cursor.update(&self.text_plane);
       true
     } else {false}
   }
@@ -402,8 +402,8 @@ where
     match action {
       Action::PageDown  => {self.move_down(usize::from(self.view.h));}
       Action::PageUp    => {self.move_up(usize::from(self.view.h));}
-      Action::Bottom    => {self.move_down(self.text.get_length());}
-      Action::Top       => {self.move_up(self.text.get_length());}
+      Action::Bottom    => {self.move_down(self.text_plane.get_length());}
+      Action::Top       => {self.move_up(self.text_plane.get_length());}
       Action::MoveDown  => {self.move_down(1);}
       Action::MoveUp    => {self.move_up(1);}
       Action::MoveLeft  => {self.move_left(1);}
@@ -412,30 +412,30 @@ where
     }
   }
 }
-impl<T, W> TextBox<T> 
+impl<Y, W> TextBox<Y> 
 where 
-  TextPlane<T>: CursorPlane + UnitCursor<Unit = W>,
+  TextPlane<Y>: CursorPlane + UnitCursor<Unit = W>,
   W:            WeightedCursor + UnitCursorMut<Unit = char>,
 {
   pub fn delete(&mut self) -> bool {
-    if self.text.use_current_mut(|c| c.delete()).unwrap_or(false) {
-      self.cursor.update(&self.text);
+    if self.text_plane.use_current_mut(|c| c.delete()).unwrap_or(false) {
+      self.cursor.update(&self.text_plane);
       self.write = true;
       true
     } else {false}
   }
 
   pub fn backspace(&mut self) -> bool {
-    if self.text.use_current_mut(|c| c.backspace()).unwrap_or(false) {
-      self.cursor.update(&self.text);
+    if self.text_plane.use_current_mut(|c| c.backspace()).unwrap_or(false) {
+      self.cursor.update(&self.text_plane);
       self.write = true;
       true
     } else {false}
   }
 
   pub fn insert(&mut self, ch: char) -> bool {
-    if self.text.use_current_mut(|c| c.insert(ch)).unwrap_or(false) {
-      self.cursor.update(&self.text);
+    if self.text_plane.use_current_mut(|c| c.insert(ch)).unwrap_or(false) {
+      self.cursor.update(&self.text_plane);
       self.write = true;
       true
     } else {false}
@@ -471,10 +471,10 @@ where
       .queue(MoveTo(x, y))?
       .queue(SetAttribute(Attribute::Reset))?
       .queue(&self.style)?;
-    for (index, line) in self.text
+    for (index, line) in self.text_plane
       .get_view(self.cursor.get_y_scroll(), self.view.h.into()) 
     {
-      writer.queue(&self.origin[*index].style)?;
+      writer.queue(&self.styled_text[*index].style)?;
       for c in line
         .get_weighted_view(self.cursor.get_x_scroll(), self.view.w.into()) 
       {

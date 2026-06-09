@@ -29,7 +29,7 @@ impl<T> UrlTab<T> {
 
   pub fn get_source(&self) ->  Option<&T> {
     self.source.get(
-      self.textbox.get_origin_index()
+      self.textbox.get_current_reference_index()
     )
   }
 }
