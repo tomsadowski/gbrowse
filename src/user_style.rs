@@ -15,7 +15,6 @@ use crate::{
   core_ui as ui,
 };
 use toml::Value;
-use std::str::FromStr;
 
 
 #[derive(Copy, Clone, Default, Debug)]
@@ -36,6 +35,32 @@ pub struct UserStyle {
   pub quote:           TextStyle,
   pub list:            TextStyle,
 } 
+impl UserStyle {
+  pub fn get_frame(&self, screen: Rect) -> Frame {
+    Frame::from(screen)
+      .screen_margin(self.screen_margin)
+      .text_margin(self.text_margin)
+      .banner_style(self.banner)
+      .footer_style(self.banner)
+      .margin_style(self.general)
+      .border_style(self.border)
+  }
+
+  pub fn get_styled_gemtext(&self, gemtext: &GemText) -> StyledText {
+    let mut text: StyledText = match gemtext.tag {
+      GemTag::HeadingOne   => self.heading1.into(),
+      GemTag::HeadingTwo   => self.heading2.into(),
+      GemTag::HeadingThree => self.heading3.into(),
+      GemTag::Text         => self.text.into(),
+      GemTag::PreFormat    => self.preformat.into(),
+      GemTag::Link(_)      => self.link.into(),
+      GemTag::ListItem     => self.list.into(),
+      GemTag::Quote        => self.quote.into(),
+    };
+    text.text(&gemtext.to_string())
+  }
+}
+
 impl Assign for UserStyle {
   type Field = StyleTableField;
   fn assign(&mut self, f: Self::Field, v: Value) -> Result<(), String> {
@@ -74,150 +99,6 @@ impl Assign for UserStyle {
     Ok(())
   }
 }
-impl UserStyle {
-  pub fn get_frame(&self, screen: Rect) -> Frame {
-    Frame::from(screen)
-      .screen_margin(self.screen_margin)
-      .text_margin(self.text_margin)
-      .banner_style(self.banner)
-      .footer_style(self.banner)
-      .margin_style(self.general)
-      .border_style(self.border)
-  }
-
-  pub fn get_styled_gemtext(&self, gemtext: &GemText) -> StyledText {
-    let mut text: StyledText = match gemtext.tag {
-      GemTag::HeadingOne   => self.heading1.into(),
-      GemTag::HeadingTwo   => self.heading2.into(),
-      GemTag::HeadingThree => self.heading3.into(),
-      GemTag::Text         => self.text.into(),
-      GemTag::PreFormat    => self.preformat.into(),
-      GemTag::Link(_)      => self.link.into(),
-      GemTag::ListItem     => self.list.into(),
-      GemTag::Quote        => self.quote.into(),
-    };
-    text.text(&gemtext.to_string())
-  }
-}
-
-#[derive(Debug)]
-pub enum ColorField {Fg, Bg}
-#[derive(Debug)]
-pub enum AttributeField {Bold, Underline}
-#[derive(Debug)]
-pub enum StyleMarginField {Text, Screen}
-#[derive(Debug)]
-pub enum StyleTextField {
-  General,
-  Banner,
-  Info,
-  Text,
-  Heading3,
-  Heading2,
-  Heading1,
-  Preformat,
-  Link,
-  Error,
-  Quote,
-  List,
-}
-
-#[derive(Debug)]
-pub enum StyleTableField {
-  Border, 
-  Margin(StyleMarginField), 
-  Text(StyleTextField),
-}
-impl FromStr for StyleTableField {
-  type Err = String;
-  fn from_str(s: &str) -> Result<Self, Self::Err> {
-    match s {
-      "border"          => Ok(Self::Border),
-      "text_margin"     => Ok(Self::Margin(StyleMarginField::Text)),
-      "screen_margin"   => Ok(Self::Margin(StyleMarginField::Screen)),
-      "general"         => Ok(Self::Text(StyleTextField::General)),
-      "banner"          => Ok(Self::Text(StyleTextField::Banner)),
-      "info"            => Ok(Self::Text(StyleTextField::Info)),
-      "text"            => Ok(Self::Text(StyleTextField::Text)),
-      "heading3" | "h3" => Ok(Self::Text(StyleTextField::Heading3)),
-      "heading2" | "h2" => Ok(Self::Text(StyleTextField::Heading2)),
-      "heading1" | "h1" => Ok(Self::Text(StyleTextField::Heading1)),
-      "preformat"       => Ok(Self::Text(StyleTextField::Preformat)),
-      "link"            => Ok(Self::Text(StyleTextField::Link)),
-      "error"           => Ok(Self::Text(StyleTextField::Error)),
-      "quote"           => Ok(Self::Text(StyleTextField::Quote)),
-      "list"            => Ok(Self::Text(StyleTextField::List)),
-      s => Err(format!("Style table does not contain field {s}")),
-    }
-  }
-}
-
-#[derive(Debug)]
-pub enum MarginField {
-  North, South, East, West,
-}
-impl FromStr for MarginField {
-  type Err = String;
-  fn from_str(s: &str) -> Result<Self, Self::Err> {
-    match s {
-      "north" | "n" => Ok(Self::North),
-      "south" | "s" => Ok(Self::South),
-      "east"  | "e" => Ok(Self::East),
-      "west"  | "w" => Ok(Self::West),
-      s => Err(format!("Margin table does not contain field {s}")),
-    }
-  }
-}
-
-#[derive(Debug)]
-pub enum StyleField {
-  Color(ColorField), 
-  Attribute(AttributeField),
-}
-impl FromStr for StyleField {
-  type Err = String;
-  fn from_str(s: &str) -> Result<Self, Self::Err> {
-    match s {
-      "fg"        => Ok(Self::Color(ColorField::Fg)),
-      "bg"        => Ok(Self::Color(ColorField::Bg)),
-      "bold"      => Ok(Self::Attribute(AttributeField::Bold)),
-      "underline" => Ok(Self::Attribute(AttributeField::Underline)),
-      s => Err(format!("Style table does not contain field {s}")),
-    }
-  }
-}
-
-#[derive(Debug)]
-pub enum TextField {
-  Wrap, Style(StyleField)
-}
-impl FromStr for TextField {
-  type Err = String;
-  fn from_str(s: &str) -> Result<Self, Self::Err> {
-    match s {
-      "wrap" => Ok(Self::Wrap),
-      s      => StyleField::from_str(s).map(|s| Self::Style(s))
-    }
-  }
-}
-
-#[derive(Debug)]
-pub enum BorderField {
-  Style(StyleField), 
-  Corner, 
-  Bracket,
-}
-impl FromStr for BorderField {
-  type Err = String;
-  fn from_str(s: &str) -> Result<Self, Self::Err> {
-    match s {
-      "corner"  => Ok(Self::Corner),
-      "bracket" => Ok(Self::Bracket),
-      s         => StyleField::from_str(s).map(|s| Self::Style(s))
-    }
-  }
-}
-
 impl Assign for Style {
   type Field = StyleField;
   fn assign(&mut self, f: Self::Field, v: Value) -> Result<(), String> {
@@ -242,7 +123,6 @@ impl Assign for Style {
     Ok(())
   }
 }
-
 impl Assign for Margins {
   type Field = MarginField;
   fn assign(&mut self, f: Self::Field, v: Value) -> Result<(), String> {
@@ -263,7 +143,6 @@ impl Assign for Margins {
     Ok(())
   }
 }
-
 impl Assign for BorderStyle {
   type Field = BorderField;
   fn assign(&mut self, f: Self::Field, v: Value) -> Result<(), String> {
@@ -324,7 +203,6 @@ impl Assign for BorderStyle {
     Ok(())
   }
 }
-
 impl Assign for TextStyle {
   type Field = TextField;
   fn assign(&mut self, f: Self::Field, v: Value) -> Result<(), String> {
@@ -342,3 +220,116 @@ impl Assign for TextStyle {
     Ok(())
   }
 }
+
+#[derive(Debug)]
+pub enum ColorField {Fg, Bg}
+#[derive(Debug)]
+pub enum AttributeField {Bold, Underline}
+#[derive(Debug)]
+pub enum StyleMarginField {Text, Screen}
+#[derive(Debug)]
+pub enum StyleTextField {
+  General,
+  Banner,
+  Info,
+  Text,
+  Heading3,
+  Heading2,
+  Heading1,
+  Preformat,
+  Link,
+  Error,
+  Quote,
+  List,
+}
+#[derive(Debug)]
+pub enum StyleTableField {
+  Border, Margin(StyleMarginField), Text(StyleTextField),
+}
+impl std::str::FromStr for StyleTableField {
+  type Err = String;
+  fn from_str(s: &str) -> Result<Self, Self::Err> {
+    match s {
+      "border"          => Ok(Self::Border),
+      "text_margin"     => Ok(Self::Margin(StyleMarginField::Text)),
+      "screen_margin"   => Ok(Self::Margin(StyleMarginField::Screen)),
+      "general"         => Ok(Self::Text(StyleTextField::General)),
+      "banner"          => Ok(Self::Text(StyleTextField::Banner)),
+      "info"            => Ok(Self::Text(StyleTextField::Info)),
+      "text"            => Ok(Self::Text(StyleTextField::Text)),
+      "heading3" | "h3" => Ok(Self::Text(StyleTextField::Heading3)),
+      "heading2" | "h2" => Ok(Self::Text(StyleTextField::Heading2)),
+      "heading1" | "h1" => Ok(Self::Text(StyleTextField::Heading1)),
+      "preformat"       => Ok(Self::Text(StyleTextField::Preformat)),
+      "link"            => Ok(Self::Text(StyleTextField::Link)),
+      "error"           => Ok(Self::Text(StyleTextField::Error)),
+      "quote"           => Ok(Self::Text(StyleTextField::Quote)),
+      "list"            => Ok(Self::Text(StyleTextField::List)),
+      s => Err(format!("Style table does not contain field {s}")),
+    }
+  }
+}
+
+#[derive(Debug)]
+pub enum MarginField {
+  North, South, East, West,
+}
+impl std::str::FromStr for MarginField {
+  type Err = String;
+  fn from_str(s: &str) -> Result<Self, Self::Err> {
+    match s {
+      "north" | "n" => Ok(Self::North),
+      "south" | "s" => Ok(Self::South),
+      "east"  | "e" => Ok(Self::East),
+      "west"  | "w" => Ok(Self::West),
+      s => Err(format!("Margin table does not contain field {s}")),
+    }
+  }
+}
+
+#[derive(Debug)]
+pub enum StyleField {
+  Color(ColorField), Attribute(AttributeField),
+}
+impl std::str::FromStr for StyleField {
+  type Err = String;
+  fn from_str(s: &str) -> Result<Self, Self::Err> {
+    match s {
+      "fg"        => Ok(Self::Color(ColorField::Fg)),
+      "bg"        => Ok(Self::Color(ColorField::Bg)),
+      "bold"      => Ok(Self::Attribute(AttributeField::Bold)),
+      "underline" => Ok(Self::Attribute(AttributeField::Underline)),
+      s => Err(format!("Style table does not contain field {s}")),
+    }
+  }
+}
+
+#[derive(Debug)]
+pub enum TextField {
+  Wrap, Style(StyleField)
+}
+impl std::str::FromStr for TextField {
+  type Err = String;
+  fn from_str(s: &str) -> Result<Self, Self::Err> {
+    match s {
+      "wrap" => Ok(Self::Wrap),
+      s      => StyleField::from_str(s).map(|s| Self::Style(s))
+    }
+  }
+}
+
+#[derive(Debug)]
+pub enum BorderField {
+  Style(StyleField), Corner, Bracket,
+}
+impl std::str::FromStr for BorderField {
+  type Err = String;
+  fn from_str(s: &str) -> Result<Self, Self::Err> {
+    match s {
+      "corner"  => Ok(Self::Corner),
+      "bracket" => Ok(Self::Bracket),
+      s         => StyleField::from_str(s).map(|s| Self::Style(s))
+    }
+  }
+}
+

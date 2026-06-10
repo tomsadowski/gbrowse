@@ -161,22 +161,22 @@ impl std::str::FromStr for UserField {
 impl ToString for UserField {
   fn to_string(&self) -> String {
     match self {
-     Self::InitUrl  => "init url".into(),
+     Self::InitUrl  => "init_url".into(),
      Self::Timeout  => "timeout".into(),
      Self::Style    => "style".into(),
      Self::Keys     => "keys".into(),
-     Self::SaveFile => "save file".into(),
+     Self::SaveFile => "save_file".into(),
     }
   }
 }
 impl UserField {
   pub fn get_select(&self) -> Vec<(Self, String)> {
     vec![
-      (Self::InitUrl,  "init url".into()),
+      (Self::InitUrl,  "init_url".into()),
       (Self::Timeout,  "timeout".into()),
       (Self::Style,    "style".into()),
       (Self::Keys,     "keys".into()),
-      (Self::SaveFile, "save file".into()),
+      (Self::SaveFile, "save_file".into()),
     ]
   }
 }

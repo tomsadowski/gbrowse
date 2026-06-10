@@ -16,18 +16,12 @@ pub struct TextLine {
 }
 impl From<&str> for TextLine {
   fn from(item: &str) -> Self {
-    Self {
-      head: 0, 
-      text: item.chars().collect()
-    }
+    Self {head: 0, text: item.chars().collect()}
   }
 }
 impl From<Vec<char>> for TextLine {
   fn from(item: Vec<char>) -> Self {
-    Self {
-      head:  0, 
-      text:  item
-    }
+    Self {head: 0, text: item}
   }
 }
 impl UnitCursor for TextLine {
