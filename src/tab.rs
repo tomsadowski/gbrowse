@@ -11,6 +11,7 @@ use crate::{
   TextBox, 
   GemText,
 };
+use url::Url;
 use std::io::Write;
 
 
@@ -97,7 +98,7 @@ impl TabManager {
     );
   }
 
-  pub fn get_url(&self) -> Option<&url::Url> {
+  pub fn get_url(&self) -> Option<&Url> {
     self
       .get_current()
       .and_then(|tab| tab.get_url())
@@ -123,7 +124,7 @@ impl TabManager {
 
   pub fn add_gem_tab<F>(
     &mut self, 
-    url:    &url::Url, 
+    url:    &Url, 
     source: Vec<GemText>, 
     func:   F
   ) 
@@ -143,7 +144,7 @@ impl TabManager {
       }) 
     {
       None    => format!("Empty"),
-      Some(s) => format!("{}/{} - {}", self.head + 1, self.tabs.len(), s),
+      Some(s) => format!("{}/{} - {s}", self.head + 1, self.tabs.len()),
     }
   }
 
@@ -173,7 +174,7 @@ impl Tab {
     }
   }
 
-  pub fn get_url(&self) -> Option<&url::Url> {
+  pub fn get_url(&self) -> Option<&Url> {
     match self {
       Tab::Gem(   UrlTab {url, ..}) | 
       Tab::Gopher(UrlTab {url, ..}) => Some(url),
@@ -204,7 +205,7 @@ impl Tab {
   }
 
   pub fn get_gem_text(&self) -> Option<&GemText> {
-    self.get_gem_tab().and_then(|gem_tab| gem_tab.get_source())
+    self.get_gem_tab().and_then(|gem_tab| gem_tab.get_current_source())
   }
 
   pub fn get_textbox(&self) -> &TextBox<TextLine> {
@@ -225,22 +226,29 @@ impl Tab {
 }
 
 pub struct UrlTab<T> {
-  pub url:     url::Url,
+  pub url:     Url,
   pub source:  Vec<T>,
   pub textbox: TextBox<TextLine>,
 } 
 impl<T> UrlTab<T> {
-  pub fn new<V, F>(url: &url::Url, view: V, source: Vec<T>, func: F) -> Self
-  where V: ViewPort, F: Fn(&T) -> StyledText
+  pub fn new<V, F>(
+    url:            &Url, 
+    view:           V, 
+    source:         Vec<T>, 
+    to_styled_text: F
+  ) -> Self
+  where 
+    V: ViewPort, 
+    F: Fn(&T) -> StyledText
   {
     Self {
       url:     url.clone(),
-      textbox: TextBox::from(view).input(&source, func),
+      textbox: TextBox::from(view).reference(&source, to_styled_text),
       source,
     }
   }
 
-  pub fn get_source(&self) -> Option<&T> {
+  pub fn get_current_source(&self) -> Option<&T> {
     self.source.get(
       self.textbox.get_current_reference_index()
     )

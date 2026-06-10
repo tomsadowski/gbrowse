@@ -45,14 +45,14 @@ where
 }
 
 pub trait UserFromStr: Sized {
-  fn from_str(s: &str) -> Result<Self, String>;
+  fn user_from_str(s: &str) -> Result<Self, String>;
 }
 
 impl<T> UserFromStr for T
 where 
   T: UserTable + Default,
 {
-  fn from_str(s: &str) -> Result<Self, String> {
+  fn user_from_str(s: &str) -> Result<Self, String> {
     let table = s.parse::<Table>().map_err(|e| e.to_string())?;
     Self::default().read_table(table)
   }

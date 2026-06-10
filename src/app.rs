@@ -58,7 +58,7 @@ pub enum Task {
   Go(Url), 
 }
 
-#[derive(Clone, Debug)]
+#[derive(Copy, Clone, Debug)]
 pub enum Msg {
   Quit,
   Action(Action),
@@ -84,7 +84,7 @@ pub struct App {
 impl App {
   pub fn init(path: &str, w: u16, h: u16) -> Self {
     let user_text = std::fs::read_to_string(path).unwrap_or_default();
-    let user      = User::from_str(&user_text).unwrap_or_default();
+    let user      = User::user_from_str(&user_text).unwrap_or_default();
     let frame     = user.get_frame(Rect::new(w, h));
     let mut app = Self {
       guide:       "".into(),
@@ -368,10 +368,7 @@ impl App {
           }
         }
         (DlgInput::Edit(editbox), Action::Enter, Task::Init(_)) => {
-          let url_str = editbox.text_plane
-            .get_current()
-            .unwrap()
-            .to_string();
+          let url_str = editbox.get_current_string().unwrap();
           match Url::parse(&url_str) {
             Err(e) => 
               self.focus_edit_dialog(
@@ -393,17 +390,15 @@ impl App {
           )
         }
         (DlgInput::Edit(editbox), Action::Enter, Task::Reply(url)) => {
-          let text = editbox.text_plane
-            .get_current()
+          let text = editbox
+            .get_current_string()
             .unwrap()
-            .to_string()
             .trim()
             .replace(" ", "%20");
           match url.clone().join(&format!("?{text}")) {
-            Err(e) => 
-              self.focus_ack_dialog(
-                format!("Invalid URL. {e}")
-              ),
+            Err(e) => self.focus_ack_dialog(
+              format!("Invalid URL. {e}")
+            ),
             Ok(url) => {
               self.focus_tabs();
               self.tab_changed = true;
@@ -413,7 +408,7 @@ impl App {
         }
         (DlgInput::Edit(editbox), Action::Enter, Task::NewTab) => {
           match Url::parse(
-            &editbox.text_plane.get_current().unwrap().to_string()
+            &editbox.get_current_string().unwrap()
           ) {
             Err(e) => 
               self.focus_ack_dialog(

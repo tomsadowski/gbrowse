@@ -136,7 +136,11 @@ where
     }
   }
 
-  pub fn input<R, F>(mut self, reference: &Vec<R>, to_styled_text: F) -> Self 
+  pub fn reference<R, F>(
+    mut self, 
+    reference:      &Vec<R>, 
+    to_styled_text: F
+  ) -> Self 
   where F: Fn(&R) -> StyledText,
   {
     self.styled_text = reference.iter().map(|i| to_styled_text(i)).collect();
@@ -145,7 +149,7 @@ where
     self
   }
 
-  pub fn set_input<R, F>(&mut self, reference: &Vec<R>, to_styled_text: F)
+  pub fn set_reference<R, F>(&mut self, reference: &Vec<R>, to_styled_text: F)
   where F: Fn(&R) -> StyledText,
   {
     self.styled_text = reference.iter().map(|i| to_styled_text(i)).collect();
@@ -218,6 +222,15 @@ where
       Action::MoveRight => {self.move_right(1);}
       _ => {}
     }
+  }
+}
+impl<T> TextBox<T> 
+where 
+  TextPlane<T>: UnitCursor<Unit = T>,
+  T:            ToString,
+{
+  pub fn get_current_string(&self) -> Option<String> {
+    self.text_plane.use_current(|c| c.to_string())
   }
 }
 impl<T> TextBox<T> 

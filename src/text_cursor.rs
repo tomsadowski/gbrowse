@@ -1,4 +1,4 @@
-// src/text.rs
+// src/text_cursor.rs
 
 use crate::{
   UnitCursor, 

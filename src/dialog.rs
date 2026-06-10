@@ -29,11 +29,11 @@ impl Dialog {
     S: Into<Style> + Copy
   {
     let prompt_box = TextBox::from(view.get_view_port().crop_south(2))
-      .input(&vec![prompt], |p| StyledText::from(*p).style(style))
+      .reference(&vec![prompt], |p| StyledText::from(*p).style(style))
       .style(style)
       .write_unused_y(false);
     let response_box = TextBox::from(prompt_box.used_rect().bottom_row())
-      .input(&vec![input], |i| StyledText::from(*i).style(style))
+      .reference(&vec![input], |i| StyledText::from(*i).style(style))
       .style(style)
       .write_unused_y(false);
     Dialog {
@@ -48,11 +48,11 @@ impl Dialog {
     S: Into<Style> + Copy
   {
     let prompt_box = TextBox::from(view.get_view_port().crop_south(2))
-      .input(&vec![prompt], |p| StyledText::from(*p).style(style))
+      .reference(&vec![prompt], |p| StyledText::from(*p).style(style))
       .style(style)
       .write_unused_y(false);
     let response_box = TextBox::from(prompt_box.used_rect().bottom_row())
-      .input(&vec![input], |i| StyledText::from(*i).style(style))
+      .reference(&vec![input], |i| StyledText::from(*i).style(style))
       .style(style)
       .write_unused_y(false);
     Dialog {
@@ -70,13 +70,13 @@ impl Dialog {
     let prompt_box = TextBox::from(
         view.get_view_port().crop_south(2)
       )
-      .input(&vec![prompt], |p| StyledText::from(*p).style(style))
+      .reference(&vec![prompt], |p| StyledText::from(*p).style(style))
       .style(style)
       .write_unused_y(false);
     let response_box = TextBox::from(
         view.get_view_port().crop_north(prompt_box.used_rect().h)
       )
-      .input(&input, |s| StyledText::from(s.as_str()).style(style))
+      .reference(&input, |s| StyledText::from(s.as_str()).style(style))
       .style(style)
       .write_unused_y(false);
     Dialog {
@@ -93,13 +93,13 @@ impl Dialog {
     let prompt_box = TextBox::from(
         view.get_view_port().crop_south(2)
       )
-      .input(&vec![prompt], |p| StyledText::from(*p).style(style))
+      .reference(&vec![prompt], |p| StyledText::from(*p).style(style))
       .style(style)
       .write_unused_y(false);
     let response_box = TextBox::from(
         prompt_box.used_rect().bottom_row()
       )
-      .input(&vec![text], |p| StyledText::from(*p).style(style))
+      .reference(&vec![text], |p| StyledText::from(*p).style(style))
       .style(style);
     Dialog {
       prompt: prompt_box,

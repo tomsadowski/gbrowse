@@ -1,4 +1,4 @@
-// src/userstyle.rs
+// src/user_style.rs
 
 use crate::{
   Assign, 
@@ -12,13 +12,13 @@ use crate::{
   GemText,
   Frame,
   Style,
-  ui_primitives,
+  core_ui as ui,
 };
 use toml::Value;
 use std::str::FromStr;
 
 
-#[derive(Clone, Default, Debug)]
+#[derive(Copy, Clone, Default, Debug)]
 pub struct UserStyle {
   pub text_margin:     Margins,
   pub screen_margin:   Margins,
@@ -38,10 +38,8 @@ pub struct UserStyle {
 } 
 impl Assign for UserStyle {
   type Field = StyleTableField;
-  fn assign(&mut self, field: Self::Field, value: Value) 
-    -> Result<(), String> 
-  {
-    match (field, value) {
+  fn assign(&mut self, f: Self::Field, v: Value) -> Result<(), String> {
+    match (f, v) {
       (StyleTableField::Border, Value::Table(v)) => {
         self.border = BorderStyle::default().read_table(v)?;
       }
@@ -222,13 +220,10 @@ impl FromStr for BorderField {
 
 impl Assign for Style {
   type Field = StyleField;
-  fn assign(&mut self, field: StyleField, value: Value) 
-    -> Result<(), String> 
-  {
-    match (field, value) {
+  fn assign(&mut self, f: Self::Field, v: Value) -> Result<(), String> {
+    match (f, v) {
       (StyleField::Color(f), v) => {
-        let v = ui_primitives::parse_color(&v)
-          .map_err(|e| format!("{:?} : {}", v, e))?;
+        let v = ui::parse_color(&v).map_err(|e| format!("{v:?} : {e}"))?;
         match f {
           ColorField::Fg => self.fg = Some(v),
           ColorField::Bg => self.bg = Some(v),
@@ -250,10 +245,8 @@ impl Assign for Style {
 
 impl Assign for Margins {
   type Field = MarginField;
-  fn assign(&mut self, field: MarginField, value: Value) 
-    -> Result<(), String> 
-  {
-    match (field, value) {
+  fn assign(&mut self, f: Self::Field, v: Value) -> Result<(), String> {
+    match (f, v) {
       (f, Value::Integer(v)) => {
         let v = u16::try_from(v).map_err(|e| format!("{v:?} : {e}"))?;
         match f {
@@ -273,26 +266,24 @@ impl Assign for Margins {
 
 impl Assign for BorderStyle {
   type Field = BorderField;
-  fn assign(&mut self, field: BorderField, value: Value) 
-    -> Result<(), String> 
-  {
-    match (field, value) {
+  fn assign(&mut self, f: Self::Field, v: Value) -> Result<(), String> {
+    match (f, v) {
       (BorderField::Style(f), v) => {
         self.style.assign(f, v)?;
       }
       (BorderField::Corner, Value::String(v)) => {
         match v.as_str() {
           "square" => {
-            self.a = ui_primitives::A_SQR;
-            self.b = ui_primitives::B_SQR;
-            self.c = ui_primitives::C_SQR;
-            self.d = ui_primitives::D_SQR;
+            self.a = ui::A_SQR;
+            self.b = ui::B_SQR;
+            self.c = ui::C_SQR;
+            self.d = ui::D_SQR;
           }
           "round" => {
-            self.a = ui_primitives::A_RND;
-            self.b = ui_primitives::B_RND;
-            self.c = ui_primitives::C_RND;
-            self.d = ui_primitives::D_RND;
+            self.a = ui::A_RND;
+            self.b = ui::B_RND;
+            self.c = ui::C_RND;
+            self.d = ui::D_RND;
           }
           s => return Err(
             format!("Corner field does not contain {s}")
@@ -306,20 +297,20 @@ impl Assign for BorderStyle {
             self.close = ' ';
           }
           "tortoise" | "tort" | "t" => {
-            self.open  = ui_primitives::OPEN_TORT;
-            self.close = ui_primitives::CLOSE_TORT;
+            self.open  = ui::OPEN_TORT;
+            self.close = ui::CLOSE_TORT;
           }
           "integral" | "int"  | "i" | "j" | "J" => {
-            self.open  = ui_primitives::OPEN_INT;
-            self.close = ui_primitives::CLOSE_INT;
+            self.open  = ui::OPEN_INT;
+            self.close = ui::CLOSE_INT;
           }
           "square" | "sqr" => {
-            self.open  = ui_primitives::OPEN_SQR;
-            self.close = ui_primitives::CLOSE_SQR;
+            self.open  = ui::OPEN_SQR;
+            self.close = ui::CLOSE_SQR;
           }
           "E" | "e" => {
-            self.open  = ui_primitives::OPEN_E;
-            self.close = ui_primitives::CLOSE_E;
+            self.open  = ui::OPEN_E;
+            self.close = ui::CLOSE_E;
           }
           s => return Err(
             format!("Bracket field does not contain {s}")
@@ -336,10 +327,8 @@ impl Assign for BorderStyle {
 
 impl Assign for TextStyle {
   type Field = TextField;
-  fn assign(&mut self, field: TextField, value: Value) 
-    -> Result<(), String> 
-  {
-    match (field, value) {
+  fn assign(&mut self, f: Self::Field, v: Value) -> Result<(), String> {
+    match (f, v) {
       (TextField::Wrap, Value::Boolean(v)) => {
         self.wrap = v;
       }

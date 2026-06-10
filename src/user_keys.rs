@@ -59,9 +59,9 @@ impl Default for UserKeys {
 }
 impl Assign for UserKeys {
   type Field = Action;
-  fn assign(&mut self, field: Action, value: Value) -> Result<(), String> {
+  fn assign(&mut self, f: Self::Field, v: Value) -> Result<(), String> {
     let get_keycode = || -> Result<KeyCode, String> {
-      if let Value::String(s) = value {
+      if let Value::String(s) = v {
         match s.as_str() {
           "esc" | "escape" => Ok(KeyCode::Esc),
           "ent" | "enter"  => Ok(KeyCode::Enter),
@@ -74,34 +74,37 @@ impl Assign for UserKeys {
           "pgup"           => Ok(KeyCode::PageUp),
           "end"            => Ok(KeyCode::End),
           "home"           => Ok(KeyCode::Home),
-          s => s.chars().next().map(KeyCode::Char)
+          s => s
+            .chars()
+            .next()
+            .map(KeyCode::Char)
             .ok_or("could not parse keycode from string".into()),
         }
       } else {
         Err("could not parse keycode from value".into())
       }
     };
-    let value = get_keycode()?;
-    match field {
-      Action::LoadUrl    => self.load_url    = value,
-      Action::SaveUrl    => self.save_url    = value,
-      Action::Menu       => self.menu        = value,
-      Action::MoveUp     => self.up          = value,
-      Action::MoveDown   => self.down        = value,
-      Action::MoveLeft   => self.left        = value,
-      Action::MoveRight  => self.right       = value,
-      Action::CycleLeft  => self.cycle_left  = value,
-      Action::CycleRight => self.cycle_right = value,
-      Action::DelTab     => self.delete_tab  = value,
-      Action::NewTab     => self.new_tab     = value,
-      Action::Select     => self.select      = value,
-      Action::Yes        => self.yes         = value,
-      Action::No         => self.no          = value,
-      Action::Cancel     => self.cancel      = value,
-      Action::Top        => self.top         = value,
-      Action::Bottom     => self.bottom      = value,
-      Action::PageUp     => self.pgup        = value,
-      Action::PageDown   => self.pgdown      = value,
+    let v = get_keycode()?;
+    match f {
+      Action::LoadUrl    => self.load_url    = v,
+      Action::SaveUrl    => self.save_url    = v,
+      Action::Menu       => self.menu        = v,
+      Action::MoveUp     => self.up          = v,
+      Action::MoveDown   => self.down        = v,
+      Action::MoveLeft   => self.left        = v,
+      Action::MoveRight  => self.right       = v,
+      Action::CycleLeft  => self.cycle_left  = v,
+      Action::CycleRight => self.cycle_right = v,
+      Action::DelTab     => self.delete_tab  = v,
+      Action::NewTab     => self.new_tab     = v,
+      Action::Select     => self.select      = v,
+      Action::Yes        => self.yes         = v,
+      Action::No         => self.no          = v,
+      Action::Cancel     => self.cancel      = v,
+      Action::Top        => self.top         = v,
+      Action::Bottom     => self.bottom      = v,
+      Action::PageUp     => self.pgup        = v,
+      Action::PageDown   => self.pgdown      = v,
       _ => {},
     }
     Ok(())

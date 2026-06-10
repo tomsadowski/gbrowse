@@ -59,10 +59,8 @@ impl Default for User {
 }
 impl Assign for User {
   type Field = UserField;
-  fn assign(&mut self, field: UserField, value: Value) 
-    -> Result<(), String> 
-  {
-    match (field, value) {
+  fn assign(&mut self, f: Self::Field, v: Value) -> Result<(), String> {
+    match (f, v) {
       (UserField::InitUrl, Value::String(v)) => {
         self.init_url = v.into();
       }

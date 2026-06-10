@@ -41,8 +41,8 @@ pub use crate::tab::{
   TabManager,
 };
 
-mod ui_primitives;
-pub use crate::ui_primitives::{
+mod core_ui;
+pub use crate::core_ui::{
   Action,
   Style, 
   TextStyle, 

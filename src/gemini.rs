@@ -30,8 +30,8 @@ pub enum Status {
 }
 impl TryFrom<&str> for Status {
   type Error = String;
-  fn try_from(item: &str) -> Result<Self, Self::Error> {
-    let status = match item.parse::<u8>().map_err(|e| e.to_string())? {
+  fn try_from(s: &str) -> Result<Self, Self::Error> {
+    let status = match s.parse::<u8>().map_err(|e| e.to_string())? {
       10 | 12..=19 => Status::InputExpected,
       11 =>           Status::InputExpectedSensitive,
       20..=29 =>      Status::Success,
