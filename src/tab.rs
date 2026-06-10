@@ -14,94 +14,6 @@ use crate::{
 use std::io::Write;
 
 
-pub struct UrlTab<T> {
-  pub url:     url::Url,
-  pub source:  Vec<T>,
-  pub textbox: TextBox<TextLine>,
-} 
-impl<T> UrlTab<T> {
-  pub fn new<V, F>(url: &url::Url, view: V, source: Vec<T>, func: F) -> Self
-  where V: ViewPort, F: Fn(&T) -> StyledText
-  {
-    Self {
-      url:     url.clone(),
-      textbox: TextBox::from(view).input(&source, func),
-      source,
-    }
-  }
-
-  pub fn get_source(&self) -> Option<&T> {
-    self.source.get(
-      self.textbox.get_current_reference_index()
-    )
-  }
-}
-
-pub enum Tab {
-  Text(String, TextBox<TextLine>),
-  Gem(UrlTab<GemText>),
-  Gopher(UrlTab<String>),
-}
-impl Tab {
-  pub fn get_heading(&self) -> &str {
-    match self {
-      Tab::Gem(   UrlTab {url, ..}) | 
-      Tab::Gopher(UrlTab {url, ..}) => url.as_str(),
-      Tab::Text(heading, _)         => heading,
-    }
-  }
-
-  pub fn get_url(&self) -> Option<&url::Url> {
-    match self {
-      Tab::Gem(   UrlTab {url, ..}) | 
-      Tab::Gopher(UrlTab {url, ..}) => Some(url),
-      _                             => None,
-    }
-  }
-
-  pub fn get_gem_tab(&self) ->  Option<&UrlTab<GemText>> {
-    if let Tab::Gem(tab) = self {
-      Some(tab)
-    } else {None}
-  }
-
-  pub fn get_gopher_tab(&self) ->  Option<&UrlTab<String>> {
-    if let Tab::Gopher(tab) = self {
-      Some(tab)
-    } else {None}
-  }
-
-  pub fn get_text_tab(&self) ->  Option<(&str, &TextBox<TextLine>)> {
-    if let Tab::Text(heading, textbox) = self {
-      Some((heading, textbox))
-    } else {None}
-  }
-
-  pub fn get_gem_source(&self) ->  Option<&Vec<GemText>> {
-    self.get_gem_tab().map(|gem_tab| &gem_tab.source)
-  }
-
-  pub fn get_gem_text(&self) -> Option<&GemText> {
-    self.get_gem_tab().and_then(|gem_tab| gem_tab.get_source())
-  }
-
-  pub fn get_textbox(&self) -> &TextBox<TextLine> {
-    match self {
-      Tab::Text(_, textbox) |
-      Tab::Gem(   UrlTab {textbox, ..}) | 
-      Tab::Gopher(UrlTab {textbox, ..}) => textbox,
-    }
-  }
-
-  pub fn get_textbox_mut(&mut self) -> &mut TextBox<TextLine> {
-    match self {
-      Tab::Text(_, textbox) |
-      Tab::Gem(   UrlTab {textbox, ..}) | 
-      Tab::Gopher(UrlTab {textbox, ..}) => textbox,
-    }
-  }
-}
-
 pub struct TabManager {
   pub view:  Rect,
   pub style: Style,
@@ -244,5 +156,93 @@ impl TabManager {
       tb.empty(writer)?;
     }
     Ok(())
+  }
+}
+
+pub enum Tab {
+  Text(String, TextBox<TextLine>),
+  Gem(UrlTab<GemText>),
+  Gopher(UrlTab<String>),
+}
+impl Tab {
+  pub fn get_heading(&self) -> &str {
+    match self {
+      Tab::Gem(   UrlTab {url, ..}) | 
+      Tab::Gopher(UrlTab {url, ..}) => url.as_str(),
+      Tab::Text(heading, _)         => heading,
+    }
+  }
+
+  pub fn get_url(&self) -> Option<&url::Url> {
+    match self {
+      Tab::Gem(   UrlTab {url, ..}) | 
+      Tab::Gopher(UrlTab {url, ..}) => Some(url),
+      _                             => None,
+    }
+  }
+
+  pub fn get_gem_tab(&self) ->  Option<&UrlTab<GemText>> {
+    if let Tab::Gem(tab) = self {
+      Some(tab)
+    } else {None}
+  }
+
+  pub fn get_gopher_tab(&self) ->  Option<&UrlTab<String>> {
+    if let Tab::Gopher(tab) = self {
+      Some(tab)
+    } else {None}
+  }
+
+  pub fn get_text_tab(&self) ->  Option<(&str, &TextBox<TextLine>)> {
+    if let Tab::Text(heading, textbox) = self {
+      Some((heading, textbox))
+    } else {None}
+  }
+
+  pub fn get_gem_source(&self) ->  Option<&Vec<GemText>> {
+    self.get_gem_tab().map(|gem_tab| &gem_tab.source)
+  }
+
+  pub fn get_gem_text(&self) -> Option<&GemText> {
+    self.get_gem_tab().and_then(|gem_tab| gem_tab.get_source())
+  }
+
+  pub fn get_textbox(&self) -> &TextBox<TextLine> {
+    match self {
+      Tab::Text(_, textbox) |
+      Tab::Gem(   UrlTab {textbox, ..}) | 
+      Tab::Gopher(UrlTab {textbox, ..}) => textbox,
+    }
+  }
+
+  pub fn get_textbox_mut(&mut self) -> &mut TextBox<TextLine> {
+    match self {
+      Tab::Text(_, textbox) |
+      Tab::Gem(   UrlTab {textbox, ..}) | 
+      Tab::Gopher(UrlTab {textbox, ..}) => textbox,
+    }
+  }
+}
+
+pub struct UrlTab<T> {
+  pub url:     url::Url,
+  pub source:  Vec<T>,
+  pub textbox: TextBox<TextLine>,
+} 
+impl<T> UrlTab<T> {
+  pub fn new<V, F>(url: &url::Url, view: V, source: Vec<T>, func: F) -> Self
+  where V: ViewPort, F: Fn(&T) -> StyledText
+  {
+    Self {
+      url:     url.clone(),
+      textbox: TextBox::from(view).input(&source, func),
+      source,
+    }
+  }
+
+  pub fn get_source(&self) -> Option<&T> {
+    self.source.get(
+      self.textbox.get_current_reference_index()
+    )
   }
 }

@@ -6,6 +6,7 @@ use crate::{
   user,
   User, 
   UserTable,
+  UserFromStr,
   TabManager,
   Request,
   UnitCursor, 
@@ -28,7 +29,6 @@ use crossterm::{
 };
 use url::Url;
 use std::{
-  str::FromStr, 
   io::{Write, Stdout}
 };
 

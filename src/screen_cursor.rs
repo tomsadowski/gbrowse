@@ -9,6 +9,70 @@ use crate::{
 use std::io::Write;
 
 
+#[derive(Copy, Clone, Debug, Default)]
+pub struct ScreenCursor {
+  x: CursorView,
+  y: CursorView,
+}
+impl<V: ViewPort> From<&V> for ScreenCursor {
+  fn from(view: &V) -> Self {
+    let view = view.get_view_port();
+    Self {
+      x: CursorView::new(view.x, view.w),
+      y: CursorView::new(view.y, view.h),
+    }
+  }
+}
+impl ScreenCursor {
+  pub fn get_x_cursor(&self) -> u16 {
+    self.x.get_cursor()
+  }
+
+  pub fn get_y_cursor(&self) -> u16 {
+    self.y.get_cursor()
+  }
+
+  pub fn get_x_scroll(&self) -> usize {
+    self.x.get_scroll()
+  }
+
+  pub fn get_y_scroll(&self) -> usize {
+    self.y.get_scroll()
+  }
+
+  pub fn resize<X, Y>(&mut self, plane: &Y, rect: &Rect) 
+  where 
+    Y: UnitCursor<Unit = X>, 
+    X: WeightedCursor 
+  {
+    self.y.resize(plane.get_head(), rect.y, rect.h);
+    self.x.resize(
+      plane.use_current(|c| c.get_weighted_head()).unwrap_or(0), 
+      rect.x, 
+      rect.w
+    );
+  }
+
+  pub fn update<X, Y>(&mut self, plane: &Y) -> bool 
+  where 
+    Y: UnitCursor<Unit = X>, 
+    X: WeightedCursor
+  {
+    let y = self.y.update(plane.get_head());
+    let x = self.x.update(
+      plane.use_current(|c| c.get_weighted_head()).unwrap_or(0)
+    );
+    x || y
+  }
+
+  pub fn write<W: Write>(&self, writer: &mut W) -> std::io::Result<()> {
+    use crossterm::{QueueableCommand, cursor};
+    writer
+      .queue(cursor::MoveTo(self.x.get_cursor(), self.y.get_cursor()))?
+      .queue(cursor::Show)?;
+    Ok(())
+  }
+}
 
 #[derive(Copy, Clone, Debug, Default)]
 struct CursorView {
@@ -106,69 +170,3 @@ impl CursorView {
     } 
   }
 }
-
-#[derive(Copy, Clone, Debug, Default)]
-pub struct ScreenCursor {
-  x: CursorView,
-  y: CursorView,
-}
-impl<V: ViewPort> From<&V> for ScreenCursor {
-  fn from(view: &V) -> Self {
-    let view = view.get_view_port();
-    Self {
-      x: CursorView::new(view.x, view.w),
-      y: CursorView::new(view.y, view.h),
-    }
-  }
-}
-impl ScreenCursor {
-  pub fn get_x_cursor(&self) -> u16 {
-    self.x.get_cursor()
-  }
-
-  pub fn get_y_cursor(&self) -> u16 {
-    self.y.get_cursor()
-  }
-
-  pub fn get_x_scroll(&self) -> usize {
-    self.x.get_scroll()
-  }
-
-  pub fn get_y_scroll(&self) -> usize {
-    self.y.get_scroll()
-  }
-
-  pub fn resize<X, Y>(&mut self, plane: &Y, rect: &Rect) 
-  where 
-    Y: UnitCursor<Unit = X>, 
-    X: WeightedCursor 
-  {
-    self.y.resize(plane.get_head(), rect.y, rect.h);
-    self.x.resize(
-      plane.use_current(|c| c.get_weighted_head()).unwrap_or(0), 
-      rect.x, 
-      rect.w
-    );
-  }
-
-  pub fn update<X, Y>(&mut self, plane: &Y) -> bool 
-  where 
-    Y: UnitCursor<Unit = X>, 
-    X: WeightedCursor
-  {
-    let y = self.y.update(plane.get_head());
-    let x = self.x.update(
-      plane.use_current(|c| c.get_weighted_head()).unwrap_or(0)
-    );
-    x || y
-  }
-
-  pub fn write<W: Write>(&self, writer: &mut W) -> std::io::Result<()> {
-    use crossterm::{QueueableCommand, cursor};
-    writer
-      .queue(cursor::MoveTo(self.x.get_cursor(), self.y.get_cursor()))?
-      .queue(cursor::Show)?;
-    Ok(())
-  }
-}
-

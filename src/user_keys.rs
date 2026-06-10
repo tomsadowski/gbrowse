@@ -1,7 +1,7 @@
 // src/userkeys.rs
 
 use crate::{
-  UserTable, 
+  Assign,
   Dialog, 
   DlgInput,
   Action,
@@ -57,7 +57,8 @@ impl Default for UserKeys {
     }
   }
 }
-impl UserTable<Action> for UserKeys {
+impl Assign for UserKeys {
+  type Field = Action;
   fn assign(&mut self, field: Action, value: Value) -> Result<(), String> {
     let get_keycode = || -> Result<KeyCode, String> {
       if let Value::String(s) = value {

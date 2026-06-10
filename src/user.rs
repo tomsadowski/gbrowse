@@ -1,6 +1,8 @@
 // src/user.rs
 
 use crate::{
+  Assign,
+  UserTable,
   UserKeys,
   UserStyle,
   StyledText,
@@ -8,7 +10,7 @@ use crate::{
   GemText, 
   Rect,
 };
-use toml::{Table, Value};
+use toml::Value;
 use std::io::Write;
 
 
@@ -30,80 +32,7 @@ pub fn get_styles_file(name: &str) -> String {
   format!("{STYLES_PATH}/{name}")
 }
 
-pub trait UserTable<F>: Sized 
-where F: std::str::FromStr<Err = String> 
-{
-  fn assign(&mut self, field: F, value: Value) -> Result<(), String>;
-
-  fn read_table(mut self, table: Table) -> Result<Self, String> {
-    for (key, value) in table.into_iter() {
-      let field = F::from_str(&key)?;
-      self.assign(field, value)?;
-    }
-    Ok(self)
-  }
-
-  fn update_from_table(&mut self, table: Table) -> Result<(), String> {
-    for (key, value) in table.into_iter() {
-      let field = F::from_str(&key)?;
-      self.assign(field, value)?;
-    }
-    Ok(())
-  }
-
-  fn update_from_str(&mut self, s: &str) -> Result<(), String> {  
-    let table = s.parse::<Table>().map_err(|e| e.to_string())?;
-    self.update_from_table(table)?;
-    Ok(())
-  }
-}
-
 #[derive(Debug)]
-enum UserField {
-  InitUrl, 
-  SaveFile,
-  Timeout, 
-  Style, 
-  Keys,
-}
-impl std::str::FromStr for UserField {
-  type Err = String;
-  fn from_str(s: &str) -> Result<Self, Self::Err> {
-    match s {
-      "init_url"  => Ok(Self::InitUrl),
-      "timeout"   => Ok(Self::Timeout),
-      "style"     => Ok(Self::Style),
-      "keys"      => Ok(Self::Keys),
-      "gsave" | 
-      "save_file" => Ok(Self::SaveFile),
-      s           => Err(format!("No field {s} in User table")),
-    }
-  }
-}
-impl ToString for UserField {
-  fn to_string(&self) -> String {
-    match self {
-     Self::InitUrl  => "init url".into(),
-     Self::Timeout  => "timeout".into(),
-     Self::Style    => "style".into(),
-     Self::Keys     => "keys".into(),
-     Self::SaveFile => "save file".into(),
-    }
-  }
-}
-impl UserField {
-  pub fn get_select(&self) -> Vec<(Self, String)> {
-    vec![
-      (Self::InitUrl,  "init url".into()),
-      (Self::Timeout,  "timeout".into()),
-      (Self::Style,    "style".into()),
-      (Self::Keys,     "keys".into()),
-      (Self::SaveFile, "save file".into()),
-    ]
-  }
-}
-
-#[derive(Clone, Debug)]
 pub struct User {
   pub timeout:        u64,
   pub save_file:      String,
@@ -128,14 +57,8 @@ impl Default for User {
     }
   }
 }
-impl std::str::FromStr for User {
-  type Err = String;
-  fn from_str(s: &str) -> Result<Self, Self::Err> {
-    let table = s.parse::<Table>().map_err(|e| e.to_string())?;
-    Self::default().read_table(table)
-  }
-}
-impl UserTable<UserField> for User {
+impl Assign for User {
+  type Field = UserField;
   fn assign(&mut self, field: UserField, value: Value) 
     -> Result<(), String> 
   {
@@ -212,5 +135,50 @@ impl User {
 
   pub fn get_styled_gemtext(&self, gemtext: &GemText) -> StyledText {
     self.style.get_styled_gemtext(gemtext)
+  }
+}
+
+#[derive(Debug)]
+pub enum UserField {
+  InitUrl, 
+  SaveFile,
+  Timeout, 
+  Style, 
+  Keys,
+}
+impl std::str::FromStr for UserField {
+  type Err = String;
+  fn from_str(s: &str) -> Result<Self, Self::Err> {
+    match s {
+      "init_url"  => Ok(Self::InitUrl),
+      "timeout"   => Ok(Self::Timeout),
+      "style"     => Ok(Self::Style),
+      "keys"      => Ok(Self::Keys),
+      "gsave" | 
+      "save_file" => Ok(Self::SaveFile),
+      s           => Err(format!("No field {s} in User table")),
+    }
+  }
+}
+impl ToString for UserField {
+  fn to_string(&self) -> String {
+    match self {
+     Self::InitUrl  => "init url".into(),
+     Self::Timeout  => "timeout".into(),
+     Self::Style    => "style".into(),
+     Self::Keys     => "keys".into(),
+     Self::SaveFile => "save file".into(),
+    }
+  }
+}
+impl UserField {
+  pub fn get_select(&self) -> Vec<(Self, String)> {
+    vec![
+      (Self::InitUrl,  "init url".into()),
+      (Self::Timeout,  "timeout".into()),
+      (Self::Style,    "style".into()),
+      (Self::Keys,     "keys".into()),
+      (Self::SaveFile, "save file".into()),
+    ]
   }
 }

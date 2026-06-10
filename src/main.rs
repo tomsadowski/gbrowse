@@ -6,60 +6,43 @@
 #![allow(unused_variables)]
 #![allow(unused_must_use)]
 
-mod app;
-mod util;
-mod frame;
-pub use crate::frame::Frame;
-mod textbox;
-pub use crate::textbox::TextBox;
-mod network;
-pub use crate::network::Request;
-mod screencursor;
-pub use crate::screencursor::ScreenCursor;
-mod userkeys;
-pub use crate::userkeys::UserKeys;
-mod userstyle;
-pub use crate::userstyle::UserStyle;
-mod user;
-pub use crate::user::{
-  User,
+mod user_traits;
+pub use crate::user_traits::{
+  Assign,
   UserTable,
+  UserFromStr,
 };
-mod styledtext;
-pub use crate::styledtext::StyledText;
+mod user;
+pub use crate::user::User;
+mod user_keys;
+pub use crate::user_keys::UserKeys;
+mod user_style;
+pub use crate::user_style::UserStyle;
+
+mod cursor_traits;
+pub use crate::cursor_traits::{
+  UnitCursor, 
+  UnitCursorMut, 
+  WeightedCursor, 
+  CursorPlane,
+};
+mod screen_cursor;
+pub use crate::screen_cursor::ScreenCursor;
+mod text_cursor;
+pub use crate::text_cursor::{
+  TextLine, 
+  EditLine, 
+  TextPlane,
+};
 mod tab;
 pub use crate::tab::{
   Tab, 
   UrlTab, 
   TabManager,
 };
-mod cursor;
-pub use crate::cursor::{
-  UnitCursor, 
-  UnitCursorMut, 
-  WeightedCursor, 
-  CursorPlane,
-};
-mod dialog;
-pub use crate::dialog::{
-  Dialog, 
-  DlgInput,
-};
-mod text;
-pub use crate::text::{
-  TextLine, 
-  EditLine, 
-  TextPlane,
-};
-mod gemini;
-pub use crate::gemini::{
-  GemTag, 
-  GemText, 
-  Status, 
-  StatusText,
-};
-mod uiprimitives;
-pub use crate::uiprimitives::{
+
+mod ui_primitives;
+pub use crate::ui_primitives::{
   Action,
   Style, 
   TextStyle, 
@@ -68,6 +51,30 @@ pub use crate::uiprimitives::{
   ViewPort, 
   Rect, 
 };
+mod frame;
+pub use crate::frame::Frame;
+mod styled_text;
+pub use crate::styled_text::StyledText;
+mod text_box;
+pub use crate::text_box::TextBox;
+mod dialog;
+pub use crate::dialog::{
+  Dialog, 
+  DlgInput,
+};
+
+mod network;
+pub use crate::network::Request;
+mod gemini;
+pub use crate::gemini::{
+  GemTag, 
+  GemText, 
+  Status, 
+  StatusText,
+};
+
+mod app;
+mod util;
 
 
 fn main() -> std::io::Result<()> {
@@ -75,9 +82,7 @@ fn main() -> std::io::Result<()> {
     QueueableCommand, terminal, event, cursor,
   };
   use std::{
-    io::Write,
-    time::Duration,
-    env,
+    io::Write, time::Duration, env,
   };
 
   // initialize app
