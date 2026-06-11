@@ -84,7 +84,7 @@ struct LineCursor {
   start:      usize,
   /// on-screen cursor
   view_head:  u16,
-  /// edge of rectangle
+  /// x or y
   view_start: u16,
   /// width or height of rectangle
   view_size:  u16,

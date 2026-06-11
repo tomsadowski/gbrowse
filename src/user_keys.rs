@@ -32,6 +32,7 @@ pub struct UserKeys {
   pub no:          KeyCode,
   pub cancel:      KeyCode,
 } 
+
 impl Default for UserKeys {
   fn default() -> Self {
     Self {
@@ -57,6 +58,7 @@ impl Default for UserKeys {
     }
   }
 }
+
 impl Assign for UserKeys {
   type Field = Action;
   fn assign(&mut self, f: Self::Field, v: Value) -> Result<(), String> {
@@ -110,6 +112,7 @@ impl Assign for UserKeys {
     Ok(())
   }
 }
+
 impl UserKeys {
   pub fn get_tab_action(&self, kc: &KeyCode) -> Option<Action> {
     if        &self.load_url    == kc {Some(Action::LoadUrl)

@@ -308,21 +308,17 @@ where
   pub fn write_all<W: Write>(&self, writer: &mut W) -> std::io::Result<()> {
     let mut x = self.view.x;
     let mut y = self.view.y;
+    let y_scroll = self.cursor.get_y_scroll();
+    let height   = usize::from(self.view.h);
+    let x_scroll = self.cursor.get_y_scroll();
+    let width    = usize::from(self.view.w);
     writer
       .queue(MoveTo(x, y))?
       .queue(SetAttribute(Attribute::Reset))?
       .queue(&self.style)?;
-    for (index, line) in self.text_plane.get_view(
-        self.cursor.get_y_scroll(), 
-        self.view.h.into()
-      ) 
-    {
+    for (index, line) in self.text_plane.get_view(y_scroll, height) {
       writer.queue(&self.styled_text[*index].style)?;
-      for c in line.get_weighted_view(
-          self.cursor.get_x_scroll(), 
-          self.view.w.into()
-        ) 
-      {
+      for c in line.get_weighted_view(x_scroll, width) {
         writer.queue(Print(c))?;
         x += u16::try_from(c.width().unwrap_or(0)).unwrap();
       }
@@ -334,9 +330,7 @@ where
           writer.queue(Print(' '))?;
         }
       }
-      x = self.view.x;
-      y += 1;
-      writer.queue(MoveTo(x, y))?;
+      x = self.view.x; y += 1; writer.queue(MoveTo(x, y))?;
     }
     if self.write_unused_y {
       writer
@@ -346,9 +340,7 @@ where
         for _ in self.view.x_range() {
           writer.queue(Print(' '))?;
         }
-        x = self.view.x;
-        y += 1;
-        writer.queue(MoveTo(x, y))?;
+        x = self.view.x; y += 1; writer.queue(MoveTo(x, y))?;
       }
     }
     writer.queue(SetAttribute(Attribute::Reset))?;

@@ -41,6 +41,7 @@ pub struct User {
   pub keys:           UserKeys,
   pub urls:           Vec<String>,
 } 
+
 impl Default for User {
   fn default() -> Self {
     let urls: Vec<String> = match std::fs::read_to_string(&SAVE_FILE) {
@@ -57,6 +58,7 @@ impl Default for User {
     }
   }
 }
+
 impl Assign for User {
   type Field = UserField;
   fn assign(&mut self, f: Self::Field, v: Value) -> Result<(), String> {
@@ -101,6 +103,7 @@ impl Assign for User {
     Ok(())
   }
 }
+
 impl User {
   pub fn save_url(&mut self, url: &url::Url) -> Result<(), String> {
     let url_str = url.to_string();
@@ -144,6 +147,7 @@ pub enum UserField {
   Style, 
   Keys,
 }
+
 impl std::str::FromStr for UserField {
   type Err = String;
   fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -158,6 +162,7 @@ impl std::str::FromStr for UserField {
     }
   }
 }
+
 impl ToString for UserField {
   fn to_string(&self) -> String {
     match self {
@@ -169,6 +174,7 @@ impl ToString for UserField {
     }
   }
 }
+
 impl UserField {
   pub fn get_select(&self) -> Vec<(Self, String)> {
     vec![
