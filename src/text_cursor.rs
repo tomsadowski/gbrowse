@@ -14,16 +14,19 @@ pub struct TextLine {
   pub head:   usize,
   pub text:   Vec<char>,
 }
+
 impl From<&str> for TextLine {
   fn from(item: &str) -> Self {
     Self {head: 0, text: item.chars().collect()}
   }
 }
+
 impl From<Vec<char>> for TextLine {
   fn from(item: Vec<char>) -> Self {
     Self {head: 0, text: item}
   }
 }
+
 impl UnitCursor for TextLine {
   type Unit = char;
   fn get_units(&self) -> &Vec<Self::Unit> {
@@ -40,11 +43,13 @@ impl UnitCursor for TextLine {
   }
 }
 
+
 #[derive(Clone, Debug, Default)]
 pub struct EditLine {
   pub head: usize,
   pub text: Vec<char>,
 }
+
 impl From<&str> for EditLine {
   fn from(item: &str) -> Self {
     let mut editline = Self {
@@ -55,6 +60,7 @@ impl From<&str> for EditLine {
     editline
   }
 }
+
 impl From<Vec<char>> for EditLine {
   fn from(item: Vec<char>) -> Self {
     let mut editline = Self {
@@ -65,11 +71,13 @@ impl From<Vec<char>> for EditLine {
     editline
   }
 }
+
 impl ToString for EditLine {
   fn to_string(&self) -> String {
     self.text.iter().collect()
   }
 }
+
 impl UnitCursor for EditLine {
   type Unit = char;
   fn get_units(&self) -> &Vec<char> {
@@ -85,11 +93,13 @@ impl UnitCursor for EditLine {
     self.text.len()
   }
 }
+
 impl UnitCursorMut for EditLine {
   fn units_mut(&mut self) -> &mut Vec<char> {
     &mut self.text
   }
 }
+
 
 #[derive(Clone, Debug, Default)]
 pub struct TextPlane<T> {
@@ -98,6 +108,7 @@ pub struct TextPlane<T> {
   pub head:     usize,
   pub pref_x:   usize,
 }
+
 impl<T> UnitCursor for TextPlane<T> {
   type Unit = T;
   fn get_units(&self) -> &Vec<Self::Unit> {
@@ -113,11 +124,13 @@ impl<T> UnitCursor for TextPlane<T> {
     self.text.len().saturating_sub(1)
   }
 }
+
 impl<T> UnitCursorMut for TextPlane<T> {
   fn units_mut(&mut self) -> &mut Vec<Self::Unit> {
     &mut self.text
   }
 }
+
 impl<T> TextPlane<T> {
   pub fn get_current_reference_index(&self) -> usize {
     self.indexes.get(self.get_head())
@@ -131,6 +144,7 @@ impl<T> TextPlane<T> {
     indexes.zip(units).collect()
   }
 }
+
 impl<T: From<Vec<char>>> TextPlane<T> {
   pub fn new<V: ViewPort>(view: &V, input: &Vec<StyledText>) -> Self {
     let width    = usize::from(view.get_view_port().w);
@@ -150,6 +164,7 @@ impl<T: From<Vec<char>>> TextPlane<T> {
     }
   }
 }
+
 impl<T: UnitCursor> TextPlane<T> {
   pub fn move_up(&mut self, delta: usize) -> bool {
     if CursorPlane::move_up(self, delta) {

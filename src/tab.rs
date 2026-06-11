@@ -21,6 +21,7 @@ pub struct TabManager {
   pub head:  usize,
   pub tabs:  Vec<Tab>,
 } 
+
 impl UnitCursor for TabManager {
   type Unit = Tab;
   fn get_units(&self) -> &Vec<Tab> {
@@ -36,11 +37,13 @@ impl UnitCursor for TabManager {
     self.tabs.len().saturating_sub(1)
   }
 }
+
 impl UnitCursorMut for TabManager {
   fn units_mut(&mut self) -> &mut Vec<Tab> {
     &mut self.tabs
   }
 }
+
 impl<V: ViewPort> From<V> for TabManager {
   fn from(view: V) -> Self {
     Self {
@@ -51,6 +54,7 @@ impl<V: ViewPort> From<V> for TabManager {
     }
   }
 }
+
 impl TabManager {
   pub fn with_style<T>(mut self, style: T) -> Self 
   where T: Into<Style> + Copy
@@ -205,7 +209,9 @@ impl Tab {
   }
 
   pub fn get_gem_text(&self) -> Option<&GemText> {
-    self.get_gem_tab().and_then(|gem_tab| gem_tab.get_current_source())
+    self
+      .get_gem_tab()
+      .and_then(|gem_tab| gem_tab.get_current_source())
   }
 
   pub fn get_textbox(&self) -> &TextBox<TextLine> {

@@ -1,4 +1,4 @@
-// src/view.rs
+// src/screen_cursor.rs
 
 use crate::{
   UnitCursor, 
@@ -11,18 +11,20 @@ use std::io::Write;
 
 #[derive(Copy, Clone, Debug, Default)]
 pub struct ScreenCursor {
-  x: CursorView,
-  y: CursorView,
+  x: LineCursor,
+  y: LineCursor,
 }
+
 impl<V: ViewPort> From<&V> for ScreenCursor {
   fn from(view: &V) -> Self {
     let view = view.get_view_port();
     Self {
-      x: CursorView::new(view.x, view.w),
-      y: CursorView::new(view.y, view.h),
+      x: LineCursor::new(view.x, view.w),
+      y: LineCursor::new(view.y, view.h),
     }
   }
 }
+
 impl ScreenCursor {
   pub fn get_x_cursor(&self) -> u16 {
     self.x.get_cursor()
@@ -75,14 +77,20 @@ impl ScreenCursor {
 }
 
 #[derive(Copy, Clone, Debug, Default)]
-struct CursorView {
-  head:  usize,
-  start: usize,
+struct LineCursor {
+  /// data head
+  head:       usize,
+  /// start of data
+  start:      usize,
+  /// on-screen cursor
   view_head:  u16,
+  /// edge of rectangle
   view_start: u16,
+  /// width or height of rectangle
   view_size:  u16,
 }
-impl CursorView {
+
+impl LineCursor {
   pub fn new(view_start: u16, view_size: u16) -> Self {
     Self {
       start:     0, 
@@ -93,13 +101,9 @@ impl CursorView {
     }
   }
 
-  pub fn get_scroll(&self) -> usize {
-    self.start
-  }
+  pub fn get_scroll(&self) -> usize {self.start}
 
-  pub fn get_cursor(&self) -> u16 {
-    self.view_head
-  }
+  pub fn get_cursor(&self) -> u16 {self.view_head}
 
   // preserve cursor position if it still fits in the new bounds
   pub fn resize(
@@ -108,10 +112,10 @@ impl CursorView {
     new_view_start: u16, 
     new_view_size: u16
   ) {
-    let cursor_position   = self.view_head - self.view_start;
-    self.view_start       = new_view_start;
-    self.view_size        = new_view_size;
-    self.head             = new_head;
+    let cursor_position = self.view_head - self.view_start;
+    self.view_start     = new_view_start;
+    self.view_size      = new_view_size;
+    self.head           = new_head;
     // go to beginning of line
     if new_head < usize::from(new_view_size) {
       self.start     = 0;
@@ -160,10 +164,13 @@ impl CursorView {
         false
       // scroll backward
       } else { 
-        self.start = self.start
-          .saturating_sub(delta_size - usize::from(max_view_delta));
-        self.view_head = self.view_start 
-          + u16::try_from(new_head - self.start).unwrap();
+        self.start = self.start.saturating_sub(
+          delta_size - usize::from(max_view_delta)
+        );
+        self.view_head = 
+          self.view_start + u16::try_from(
+            new_head - self.start
+          ).unwrap();
         self.head = new_head;
         true
       }

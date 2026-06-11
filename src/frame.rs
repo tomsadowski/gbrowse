@@ -28,11 +28,13 @@ pub struct Frame {
   pub banner_style:  Style,
   pub footer_style:  Style,
 }
+
 impl ViewPort for Frame {
   fn get_view_port(&self) -> Rect {
     self.inner_rect
   }
 }
+
 impl From<Rect> for Frame {
   fn from(screen: Rect) -> Self {
     let screen_margin = Margins::default();
@@ -54,6 +56,7 @@ impl From<Rect> for Frame {
     }
   }
 }
+
 impl Frame {
   pub fn screen_margin(mut self, screen_margin: Margins) -> Self {
     self.screen_margin = screen_margin;

@@ -13,33 +13,34 @@ pub struct StyledText {
   pub style: Style,
   pub text:  String,
 }
+
+/// wrap default to true, style default
 impl From<&str> for StyledText {
   fn from(s: &str) -> Self {
     Self {
-      wrap:  true,
-      style: Style::default(),
-      text:  s.into(),
+      wrap: true, style: Style::default(), text: s.into(),
     }
   }
 }
+
+/// wrap default to true, style default
 impl From<String> for StyledText {
   fn from(s: String) -> Self {
     Self {
-      wrap:  true,
-      style: Style::default(),
-      text:  s,
+      wrap: true, style: Style::default(), text: s,
     }
   }
 }
+
+/// init with empty string
 impl From<TextStyle> for StyledText {
   fn from(t: TextStyle) -> Self {
     Self {
-      wrap:  t.wrap,
-      style: t.style,
-      text:  "".into(),
+      wrap: t.wrap, style: t.style, text: "".into(),
     }
   }
 }
+
 impl StyledText {
   pub fn text(mut self, text: &str) -> Self {
     self.text = text.into();
@@ -58,6 +59,7 @@ impl StyledText {
     self
   }
 
+  // split at spaces within width and split at lines
   pub fn print(&self, width: usize) -> Vec<Vec<char>> {
     if self.text.len() == 0 {
       vec![vec![]]

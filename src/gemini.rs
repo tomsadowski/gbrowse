@@ -28,6 +28,7 @@ pub enum Status {
   ExpiredCertRejected,     
   Unknown(u8),
 }
+
 impl TryFrom<&str> for Status {
   type Error = String;
   fn try_from(s: &str) -> Result<Self, Self::Error> {
@@ -64,6 +65,7 @@ pub struct StatusText {
   pub tag:  Status, 
   pub text: String,
 }
+
 impl TryFrom<&str> for StatusText {
   type Error = String;
   fn try_from(item: &str) -> Result<Self, Self::Error> {
@@ -92,6 +94,7 @@ pub struct GemText {
   pub tag:  GemTag,
   pub text: String,
 }
+
 impl std::fmt::Display for GemText {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) 
     -> Result<(), std::fmt::Error> 
@@ -99,11 +102,13 @@ impl std::fmt::Display for GemText {
     write!(f, "{}", self.text)
   }
 }
+
 impl From<(GemTag, String)> for GemText {
   fn from(item: (GemTag, String)) -> Self {
     Self {tag: item.0, text: item.1}
   }
 }
+
 impl GemText {
   pub fn text(s: String) -> Self {
     Self {tag: GemTag::Text, text: s}

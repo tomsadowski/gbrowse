@@ -6,42 +6,53 @@
 #![allow(unused_variables)]
 #![allow(unused_must_use)]
 
+mod user;
+mod user_keys;
+mod user_style;
+mod cursor_traits;
 mod user_traits;
+mod screen_cursor;
+mod text_cursor;
+mod tab;
+mod core_ui;
+mod frame;
+mod styled_text;
+mod text_box;
+mod dialog;
+mod network;
+mod gemini;
+mod app;
+mod util;
+
+pub use crate::screen_cursor::ScreenCursor;
+pub use crate::user::User;
+pub use crate::user_keys::UserKeys;
+pub use crate::user_style::UserStyle;
+pub use crate::frame::Frame;
+pub use crate::styled_text::StyledText;
+pub use crate::text_box::TextBox;
+pub use crate::network::Request;
 pub use crate::user_traits::{
   Assign,
   UserTable,
   UserFromStr,
 };
-mod user;
-pub use crate::user::User;
-mod user_keys;
-pub use crate::user_keys::UserKeys;
-mod user_style;
-pub use crate::user_style::UserStyle;
-
-mod cursor_traits;
 pub use crate::cursor_traits::{
   UnitCursor, 
   UnitCursorMut, 
   WeightedCursor, 
   CursorPlane,
 };
-mod screen_cursor;
-pub use crate::screen_cursor::ScreenCursor;
-mod text_cursor;
 pub use crate::text_cursor::{
   TextLine, 
   EditLine, 
   TextPlane,
 };
-mod tab;
 pub use crate::tab::{
   Tab, 
   UrlTab, 
   TabManager,
 };
-
-mod core_ui;
 pub use crate::core_ui::{
   Action,
   Style, 
@@ -51,30 +62,16 @@ pub use crate::core_ui::{
   ViewPort, 
   Rect, 
 };
-mod frame;
-pub use crate::frame::Frame;
-mod styled_text;
-pub use crate::styled_text::StyledText;
-mod text_box;
-pub use crate::text_box::TextBox;
-mod dialog;
 pub use crate::dialog::{
   Dialog, 
   DlgInput,
 };
-
-mod network;
-pub use crate::network::Request;
-mod gemini;
 pub use crate::gemini::{
   GemTag, 
   GemText, 
   Status, 
   StatusText,
 };
-
-mod app;
-mod util;
 
 
 fn main() -> std::io::Result<()> {

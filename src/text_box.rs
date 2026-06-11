@@ -32,6 +32,7 @@ pub struct TextBox<T> {
   pub write_unused_x: bool,
   pub write_unused_y: bool,
 }
+
 impl<T, V> From<V> for TextBox<T> 
 where 
   TextPlane<T>: Default,
@@ -50,6 +51,7 @@ where
     }
   }
 }
+
 impl<T> TextBox<T> {
   pub fn get_current_reference_string(&self) -> String {
     self.styled_text
@@ -110,6 +112,7 @@ impl<T> TextBox<T> {
     Ok(())
   }
 }
+
 impl<T> TextBox<T> 
 where 
   TextPlane<T>: CursorPlane + UnitCursor<Unit = T>,
@@ -177,6 +180,7 @@ where
     self.reset_state();
   }
 }
+
 impl<T> TextBox<T> 
 where 
   TextPlane<T>: CursorPlane + UnitCursor<Unit = T>,
@@ -224,6 +228,7 @@ where
     }
   }
 }
+
 impl<T> TextBox<T> 
 where 
   TextPlane<T>: UnitCursor<Unit = T>,
@@ -233,6 +238,7 @@ where
     self.text_plane.use_current(|c| c.to_string())
   }
 }
+
 impl<T> TextBox<T> 
 where 
   TextPlane<T>: CursorPlane + UnitCursor<Unit = T>,
@@ -286,6 +292,7 @@ where
     }
   }
 }
+
 impl<T> TextBox<T> 
 where 
   TextPlane<T>: CursorPlane,
