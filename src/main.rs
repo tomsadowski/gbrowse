@@ -7,43 +7,43 @@
 #![allow(unused_must_use)]
 
 mod user;
-mod user_keys;
-mod user_style;
-mod cursor_traits;
-mod user_traits;
-mod screen_cursor;
-mod text_cursor;
+mod userkeys;
+mod userstyle;
+mod cursortraits;
+mod usertraits;
+mod screencursor;
+mod textcursor;
 mod tab;
-mod core_ui;
+mod coreui;
 mod frame;
-mod styled_text;
-mod text_box;
+mod styledtext;
+mod textbox;
 mod dialog;
 mod network;
 mod gemini;
 mod app;
 mod util;
 
-pub use crate::screen_cursor::ScreenCursor;
+pub use crate::screencursor::ScreenCursor;
 pub use crate::user::User;
-pub use crate::user_keys::UserKeys;
-pub use crate::user_style::UserStyle;
+pub use crate::userkeys::UserKeys;
+pub use crate::userstyle::UserStyle;
 pub use crate::frame::Frame;
-pub use crate::styled_text::StyledText;
-pub use crate::text_box::TextBox;
+pub use crate::styledtext::StyledText;
+pub use crate::textbox::TextBox;
 pub use crate::network::Request;
-pub use crate::user_traits::{
+pub use crate::usertraits::{
   Assign,
   UserTable,
   UserFromStr,
 };
-pub use crate::cursor_traits::{
+pub use crate::cursortraits::{
   UnitCursor, 
   UnitCursorMut, 
   WeightedCursor, 
   CursorPlane,
 };
-pub use crate::text_cursor::{
+pub use crate::textcursor::{
   TextLine, 
   EditLine, 
   TextPlane,
@@ -53,7 +53,7 @@ pub use crate::tab::{
   UrlTab, 
   TabManager,
 };
-pub use crate::core_ui::{
+pub use crate::coreui::{
   Action,
   Style, 
   TextStyle, 

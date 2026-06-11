@@ -12,7 +12,7 @@ use crate::{
   GemText,
   Frame,
   Style,
-  core_ui as ui,
+  coreui as ui,
 };
 use toml::Value;
 
