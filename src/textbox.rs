@@ -29,6 +29,7 @@ pub struct TextBox<T> {
   pub text_plane:     TextPlane<T>,
   pub style:          Style,
   pub write:          bool,
+  pub show_cursor:    bool,
   pub write_unused_x: bool,
   pub write_unused_y: bool,
 }
@@ -43,6 +44,7 @@ where
       write_unused_x: true,
       write_unused_y: true,
       write:          true,
+      show_cursor:    false,
       style:          Style::default(),
       styled_text:    vec![StyledText::default()],
       cursor:         ScreenCursor::from(&view), 
@@ -71,13 +73,18 @@ impl<T> TextBox<T> {
     self
   }
 
-  pub fn write_unused_x(mut self, write: bool) -> Self {
-    self.write_unused_x = write;
+  pub fn write_unused_x(mut self, b: bool) -> Self {
+    self.write_unused_x = b;
     self
   }
 
-  pub fn write_unused_y(mut self, write: bool) -> Self {
-    self.write_unused_y = write;
+  pub fn write_unused_y(mut self, b: bool) -> Self {
+    self.write_unused_y = b;
+    self
+  }
+
+  pub fn show_cursor(mut self, b: bool) -> Self {
+    self.show_cursor = b;
     self
   }
 
@@ -118,27 +125,6 @@ where
   TextPlane<T>: CursorPlane + UnitCursor<Unit = T>,
   T:            WeightedCursor + From<Vec<char>>,
 {
-  pub fn new<V, R, F>(view: V, reference: &Vec<R>, to_styled_text: F) -> Self 
-  where 
-    V: ViewPort,
-    F: Fn(&R) -> StyledText,
-  {
-    let styled_text = reference.iter().map(|i| to_styled_text(i)).collect();
-    let text_plane  = TextPlane::new(&view, &styled_text);
-    let mut cursor  = ScreenCursor::from(&view);
-    cursor.update(&text_plane);
-    Self {
-      write_unused_x: true,
-      write_unused_y: true,
-      write:          true,
-      style:          Style::default(),
-      view:           view.get_view_port(),
-      cursor, 
-      text_plane,
-      styled_text,
-    }
-  }
-
   pub fn reference<R, F>(
     mut self, 
     reference:      &Vec<R>, 
@@ -308,6 +294,7 @@ where
   pub fn write_all<W: Write>(&self, writer: &mut W) -> std::io::Result<()> {
     let mut x = self.view.x;
     let mut y = self.view.y;
+    let cursor   = self.cursor.clone();
     let y_scroll = self.cursor.get_y_scroll();
     let height   = usize::from(self.view.h);
     let x_scroll = self.cursor.get_y_scroll();
@@ -316,9 +303,9 @@ where
       .queue(MoveTo(x, y))?
       .queue(SetAttribute(Attribute::Reset))?
       .queue(&self.style)?;
-    for (index, line) in self.text_plane.get_view(y_scroll, height) {
+    for (index, line) in self.text_plane.get_view(cursor.get_y_line()) {
       writer.queue(&self.styled_text[*index].style)?;
-      for c in line.get_weighted_view(x_scroll, width) {
+      for c in line.get_weighted_view(cursor.get_x_line()) {
         writer.queue(Print(c))?;
         x += u16::try_from(c.width().unwrap_or(0)).unwrap();
       }

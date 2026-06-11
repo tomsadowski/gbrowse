@@ -24,7 +24,6 @@ mod gemini;
 mod app;
 mod util;
 
-pub use crate::screencursor::ScreenCursor;
 pub use crate::user::User;
 pub use crate::userkeys::UserKeys;
 pub use crate::userstyle::UserStyle;
@@ -32,6 +31,10 @@ pub use crate::frame::Frame;
 pub use crate::styledtext::StyledText;
 pub use crate::textbox::TextBox;
 pub use crate::network::Request;
+pub use crate::screencursor::{
+  ScreenCursor,
+  LineCursor,
+};
 pub use crate::usertraits::{
   Assign,
   UserTable,
@@ -60,6 +63,7 @@ pub use crate::coreui::{
   BorderStyle, 
   Margins, 
   ViewPort, 
+  ViewAxis,
   Rect, 
 };
 pub use crate::dialog::{

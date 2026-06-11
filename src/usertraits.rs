@@ -5,15 +5,19 @@ use toml::{Table, Value};
 pub trait Assign {
   type Field;
 
-  fn assign(&mut self, field: Self::Field, value: Value) -> Result<(), String>;
+  fn assign(&mut self, field: Self::Field, value: Value) 
+    -> Result<(), String>;
 }
 
 pub trait UserTable: Sized {
-  fn read_table(self, table: Table)             -> Result<Self, String>;
+  fn read_table(self, table: Table) 
+    -> Result<Self, String>;
 
-  fn update_from_table(&mut self, table: Table) -> Result<(), String>;
+  fn update_from_table(&mut self, table: Table) 
+    -> Result<(), String>;
 
-  fn update_from_str(&mut self, s: &str)        -> Result<(), String>;
+  fn update_from_str(&mut self, s: &str) 
+    -> Result<(), String>;
 }
 
 impl<T, F> UserTable for T

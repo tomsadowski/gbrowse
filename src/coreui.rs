@@ -1,4 +1,4 @@
-// src/style.rs
+// src/coreui.rs
 
 use crossterm::{
   style::{SetStyle, ContentStyle, Attribute, Attributes, Color},
@@ -12,17 +12,34 @@ pub trait ViewPort {
 }
 
 #[derive(Copy, Clone, Default)]
+pub struct ViewAxis {
+  pub start: u16,
+  pub size:  u16,
+}
+
+impl ViewAxis {
+  pub fn range(&self) -> Range<u16> {
+    Range {
+      start: self.start, 
+      end:   self.start + self.size,
+    }
+  }
+}
+
+#[derive(Copy, Clone, Default)]
 pub struct Rect {
   pub x: u16,
   pub y: u16,
   pub w: u16,
   pub h: u16,
 }
+
 impl ViewPort for Rect {
   fn get_view_port(&self) -> Rect {
     self.clone()
   }
 }
+
 impl Rect {
   pub fn new(w: u16, h: u16) -> Self {
     Self {x: 0, y: 0, w, h}
@@ -126,6 +143,14 @@ impl Rect {
   pub fn d(&self) -> (u16, u16) {
     (self.x_end().saturating_sub(1), 
      self.y_end().saturating_sub(1))
+  }
+
+  pub fn x_axis(&self) -> ViewAxis {
+    ViewAxis {start: self.x, size: self.w}
+  }
+
+  pub fn y_axis(&self) -> ViewAxis {
+    ViewAxis {start: self.y, size: self.h}
   }
 
   pub fn x_range(&self) -> Range<u16> {
@@ -256,11 +281,13 @@ pub struct Style {
   pub fg:        Option<Color>,
   pub bg:        Option<Color>,
 }
+
 impl From<TextStyle> for Style {
   fn from(item: TextStyle) -> Self {
     item.style
   }
 }
+
 impl crossterm::Command for Style {
   fn write_ansi(&self, f: &mut impl std::fmt::Write) -> std::fmt::Result {
     let mut contentstyle = ContentStyle::new();
@@ -286,6 +313,7 @@ pub struct Margins {
   pub east:  u16,
   pub west:  u16,
 }
+
 impl Default for Margins {
   fn default() -> Self {
     Self {
@@ -296,6 +324,7 @@ impl Default for Margins {
     }
   }
 }
+
 impl Margins {
   pub fn get_rect<V: ViewPort>(&self, view: V) -> Rect {
     view.get_view_port()
@@ -318,6 +347,7 @@ pub struct BorderStyle {
   pub open:  char,
   pub close: char,
 }
+
 impl Default for BorderStyle {
   fn default() -> Self {
     Self {
@@ -339,6 +369,7 @@ pub struct TextStyle {
   pub style: Style,
   pub wrap:  bool,
 }
+
 impl Default for TextStyle {
   fn default() -> Self {
     Self {
@@ -379,6 +410,7 @@ pub enum Action {
   No, 
   Cancel,
 }
+
 impl std::str::FromStr for Action {
   type Err = String;
   fn from_str(s: &str) -> Result<Self, Self::Err> {

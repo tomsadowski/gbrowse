@@ -1,4 +1,4 @@
-// src/screen_cursor.rs
+// src/screencursor.rs
 
 use crate::{
   UnitCursor, 
@@ -25,13 +25,40 @@ impl<V: ViewPort> From<&V> for ScreenCursor {
   }
 }
 
+impl ViewPort for ScreenCursor {
+  fn get_view_port(&self) -> Rect {
+    Rect {
+      x: self.x.get_start(),
+      y: self.y.get_start(),
+      w: self.x.get_size(),
+      h: self.y.get_size(),
+    }
+  }
+}
+
 impl ScreenCursor {
+  pub fn get_x_line(&self) -> LineCursor {
+    self.x
+  }
+
+  pub fn get_y_line(&self) -> LineCursor {
+    self.y
+  }
+
   pub fn get_x_cursor(&self) -> u16 {
     self.x.get_cursor()
   }
 
   pub fn get_y_cursor(&self) -> u16 {
     self.y.get_cursor()
+  }
+
+  pub fn get_width(&self) -> u16 {
+    self.x.get_size()
+  }
+
+  pub fn get_height(&self) -> u16 {
+    self.y.get_size()
   }
 
   pub fn get_x_scroll(&self) -> usize {
@@ -77,57 +104,62 @@ impl ScreenCursor {
 }
 
 #[derive(Copy, Clone, Debug, Default)]
-struct LineCursor {
+pub struct LineCursor {
   /// data head
-  head:       usize,
-  /// start of data
-  start:      usize,
+  head:    usize,
+  /// start of displayable data
+  scroll:  usize,
   /// on-screen cursor
-  view_head:  u16,
+  cursor:  u16,
   /// x or y
-  view_start: u16,
+  start:   u16,
   /// width or height of rectangle
-  view_size:  u16,
+  size:    u16,
 }
 
 impl LineCursor {
-  pub fn new(view_start: u16, view_size: u16) -> Self {
+  pub fn new(start: u16, size: u16) -> Self {
     Self {
-      start:     0, 
-      head:      0, 
-      view_head: view_start, 
-      view_start, 
-      view_size
+      scroll:     0, 
+      head:       0, 
+      cursor: start, 
+      start, 
+      size,
     }
   }
 
-  pub fn get_scroll(&self) -> usize {self.start}
+  pub fn get_scroll(&self) -> usize {self.scroll}
 
-  pub fn get_cursor(&self) -> u16 {self.view_head}
+  pub fn get_cursor(&self) -> u16 {self.cursor}
+
+  pub fn get_size(&self)   -> u16 {self.size}
+
+  pub fn get_start(&self)  -> u16 {self.start}
 
   // preserve cursor position if it still fits in the new bounds
   pub fn resize(
     &mut self, 
-    new_head: usize, 
-    new_view_start: u16, 
-    new_view_size: u16
+    new_head:  usize, 
+    new_start: u16, 
+    new_size:  u16
   ) {
-    let cursor_position = self.view_head - self.view_start;
-    self.view_start     = new_view_start;
-    self.view_size      = new_view_size;
-    self.head           = new_head;
+    // position of cursor on screen
+    let position = self.cursor - self.start;
+    self.start = new_start;
+    self.size  = new_size;
+    self.head  = new_head;
     // go to beginning of line
-    if new_head < usize::from(new_view_size) {
-      self.start     = 0;
-      self.view_head = self.view_start + u16::try_from(self.head).unwrap();
-    // cursor_position must be lowered to fit within new bounds
-    } else if cursor_position > new_view_size - 1 {
-      self.view_head = self.view_start + self.view_size - 1;
-      self.start     = self.head - usize::from(self.view_size - 1);
-    // cursor_position can be preserved
+    if new_head < usize::from(new_size) {
+      self.scroll = 0;
+      self.cursor = self.start + u16::try_from(self.head).unwrap();
+    // position must be lowered to fit within new bounds
+    } else if position > new_size - 1 {
+      self.cursor = self.start + self.size - 1;
+      self.scroll = self.head - usize::from(self.size - 1);
+    // position can be preserved
     } else {
-      self.view_head = self.view_start + cursor_position;
-      self.start     = self.head.saturating_sub(usize::from(cursor_position));
+      self.cursor = self.start + position;
+      self.scroll = self.head.saturating_sub(usize::from(position));
     }
   }
 
@@ -137,40 +169,37 @@ impl LineCursor {
       false
     // move forward
     } else if self.head < new_head {
-      let delta_size     = new_head - self.head;
-      let max_view_delta = 
-        (self.view_start + self.view_size.saturating_sub(1))
-          .saturating_sub(self.view_head);
+      let delta_size = new_head - self.head;
+      let max_delta  = (self.start + self.size.saturating_sub(1))
+          .saturating_sub(self.cursor);
       // no scroll
-      if delta_size < usize::from(max_view_delta) { 
-        self.view_head  += u16::try_from(delta_size).unwrap();
-        self.head        = new_head;
+      if delta_size < usize::from(max_delta) { 
+        self.cursor  += u16::try_from(delta_size).unwrap();
+        self.head     = new_head;
         false
       // scroll forward
       } else {
-        self.start     += delta_size - usize::from(max_view_delta);
-        self.view_head += max_view_delta;
-        self.head       = new_head;
+        self.scroll += delta_size - usize::from(max_delta);
+        self.cursor += max_delta;
+        self.head    = new_head;
         true
       }
     // move backward
     } else { 
-      let delta_size     = self.head - new_head;
-      let max_view_delta = self.view_head.saturating_sub(self.view_start);
+      let delta_size = self.head - new_head;
+      let max_delta  = self.cursor.saturating_sub(self.start);
       // no scroll
-      if delta_size <= usize::from(max_view_delta) {
-        self.view_head -= u16::try_from(delta_size).unwrap();
-        self.head       = new_head;
+      if delta_size <= usize::from(max_delta) {
+        self.cursor -= u16::try_from(delta_size).unwrap();
+        self.head    = new_head;
         false
       // scroll backward
       } else { 
-        self.start = self.start.saturating_sub(
-          delta_size - usize::from(max_view_delta)
+        self.scroll = self.scroll.saturating_sub(
+          delta_size - usize::from(max_delta)
         );
-        self.view_head = 
-          self.view_start + u16::try_from(
-            new_head - self.start
-          ).unwrap();
+        self.cursor = self.start + 
+          u16::try_from(new_head - self.scroll).unwrap();
         self.head = new_head;
         true
       }

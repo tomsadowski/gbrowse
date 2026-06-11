@@ -1,5 +1,6 @@
 // src/cursor.rs
 
+use crate::LineCursor;
 use unicode_width::UnicodeWidthChar;
 
 
@@ -28,8 +29,13 @@ pub trait UnitCursor {
     self.get_current().map(|u| func(u))
   }
 
-  fn get_unit_view(&self, start: usize, width: usize) -> Vec<&Self::Unit> {
-    self.get_units().iter().skip(start).take(width).collect() 
+  fn get_unit_view(&self, axis: LineCursor) -> Vec<&Self::Unit> {
+    self
+      .get_units()
+      .iter()
+      .skip(axis.get_scroll())
+      .take(axis.get_size().into())
+      .collect() 
   }
 
   fn peek_backward(&self, delta: usize) -> usize {
@@ -189,9 +195,10 @@ pub trait WeightedCursor: UnitCursor {
 
   fn get_weighted_length(&self) -> usize;
 
-  fn get_weighted_view(&self, start: usize, width: usize) 
+  fn get_weighted_view(&self, axis: LineCursor) 
     -> Vec<&Self::Unit>;
 }
+
 impl<U> WeightedCursor for U 
 where U: UnitCursor<Unit = char> 
 {
@@ -212,14 +219,15 @@ where U: UnitCursor<Unit = char>
       .sum()
   }
 
-  fn get_weighted_view(&self, start: usize, width: usize) 
+  fn get_weighted_view(&self, axis: LineCursor) 
     -> Vec<&Self::Unit> 
   {
-    let mut text      = self.get_units().iter().skip(start);
-    let mut acc_width = 0;
-    let mut result    = vec![];
-    while let Some(c) = text.next() && acc_width < width {
-      acc_width += &c.width().unwrap_or(0);
+    let size         = usize::from(axis.get_size());  
+    let mut text     = self.get_units().iter().skip(axis.get_scroll());
+    let mut acc_size = 0;
+    let mut result   = vec![];
+    while let Some(c) = text.next() && acc_size < size {
+      acc_size += &c.width().unwrap_or(0);
       result.push(c);
     }
     result
@@ -239,6 +247,7 @@ pub trait CursorPlane: UnitCursorMut {
 
   fn move_right(&mut self, delta: usize) -> usize;
 }
+
 impl<U, T> CursorPlane for U 
 where 
   U: UnitCursorMut<Unit = T>,

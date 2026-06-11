@@ -1,4 +1,4 @@
-// src/text_cursor.rs
+// src/textcursor.rs
 
 use crate::{
   UnitCursor, 
@@ -6,6 +6,7 @@ use crate::{
   CursorPlane,
   StyledText,
   ViewPort,
+  LineCursor,
 };
 
 
@@ -138,9 +139,11 @@ impl<T> TextPlane<T> {
       .unwrap_or(usize::MIN)
   }
 
-  pub fn get_view(&self, start: usize, width: usize) -> Vec<(&usize, &T)> {
-    let indexes = self.indexes.iter().skip(start).take(width); 
-    let units   = self.get_units().iter().skip(start).take(width);
+  pub fn get_view(&self, axis: LineCursor) -> Vec<(&usize, &T)> {
+    let start   = axis.get_scroll();
+    let size    = usize::from(axis.get_size());
+    let indexes = self.indexes.iter().skip(start).take(size); 
+    let units   = self.get_units().iter().skip(start).take(size);
     indexes.zip(units).collect()
   }
 }
