@@ -152,9 +152,9 @@ impl TabManager {
     }
   }
 
-  pub fn write<W: Write>(&self, writer: &mut W) -> std::io::Result<()> {
+  pub fn write<W: Write>(&self, writer: &mut W, overlay: u16) -> std::io::Result<()> {
     if let Some(tab) = self.get_current() {
-      tab.get_textbox().write(writer)?;
+      tab.get_textbox().write(writer, overlay)?;
       tab.get_textbox().cursor.write(writer)?;
     } else {
       let tb: TextBox<TextLine> = self.view.into();

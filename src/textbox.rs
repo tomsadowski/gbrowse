@@ -281,24 +281,23 @@ where
 
 impl<T> TextBox<T> 
 where 
-  TextPlane<T>: CursorPlane,
+  TextPlane<T>: CursorPlane + UnitCursor<Unit = T>,
   T:            UnitCursor<Unit = char>,
 {
-  pub fn write<W: Write>(&self, writer: &mut W) -> std::io::Result<()> {
+  pub fn write<W: Write>(&self, writer: &mut W, overlay: u16) -> std::io::Result<()> {
     if self.write {
-      self.write_all(writer)?;
+      self.write_all(writer, overlay)?;
     }
     Ok(())
   }
 
-  pub fn write_all<W: Write>(&self, writer: &mut W) -> std::io::Result<()> {
-    let mut x = self.view.x;
-    let mut y = self.view.y;
-    let cursor   = self.cursor.clone();
-    let y_scroll = self.cursor.get_y_scroll();
-    let height   = usize::from(self.view.h);
-    let x_scroll = self.cursor.get_y_scroll();
-    let width    = usize::from(self.view.w);
+  pub fn write_all<W: Write>(&self, writer: &mut W, overlay: u16) -> std::io::Result<()> {
+    let mut cursor = self.cursor.clone();
+    if overlay > 0 {
+      cursor.resize(&self.text_plane, &self.view.crop_north(overlay));
+    }
+    let mut x = cursor.get_x_line().get_start();
+    let mut y = cursor.get_y_line().get_start();
     writer
       .queue(MoveTo(x, y))?
       .queue(SetAttribute(Attribute::Reset))?

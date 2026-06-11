@@ -126,18 +126,18 @@ impl Dialog {
   }
 
   pub fn write<W: Write>(&self, writer: &mut W) -> std::io::Result<()> {
-    self.prompt.write(writer)?;
+    self.prompt.write(writer, 0)?;
     match &self.input {
       DlgInput::Ack(r) | 
       DlgInput::Ask(r) => { 
-        r.write(writer)?;
+        r.write(writer, 0)?;
       }
       DlgInput::Edit(r) => {
-        r.write(writer)?;
+        r.write(writer, 0)?;
         r.cursor.write(writer)?;
       }
       DlgInput::Select(r) => {
-        r.write(writer)?;
+        r.write(writer, 0)?;
         r.cursor.write(writer)?;
       }
     }

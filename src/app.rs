@@ -11,6 +11,8 @@ use crate::{
   Request,
   UnitCursor, 
   UnitCursorMut,
+  StyledText,
+  ViewPort,
   TextLine,
   DlgInput, 
   Dialog,
@@ -568,12 +570,7 @@ impl App {
       stdout.queue(Clear(ClearType::All))?;
       self.frame.write(stdout)?;
     }
-    let banner_text = {
-      let text = self.tabs.get_banner_text();
-      if let Some(request) = &self.request {
-        format!("(pending response) {text}")
-      } else {text}
-    };
+    let banner_text = self.tabs.get_banner_text();
     self.frame.write_banner(&banner_text, stdout)?;
     self.frame.write_footer(&self.guide, stdout)?;
     if let Focus::Dialog(_, dialog) = &self.focus {
@@ -583,7 +580,18 @@ impl App {
       }
       dialog.write(stdout)?;
     } else {
-      self.tabs.write(stdout)?;
+      if let Some(request) = &self.request {
+        let tb: TextBox<TextLine> = TextBox::from(
+            self.frame.get_view_port().top_row()
+          ).reference(
+            &vec![format!("(pending response)")],
+            |s| StyledText::from(s.clone())
+          );
+        tb.write(stdout, 0)?;
+        self.tabs.write(stdout, 1)?;
+      } else {
+        self.tabs.write(stdout, 0)?;
+      }
     }
     stdout.flush()
   }
