@@ -150,7 +150,9 @@ impl UserKeys {
     }
   }
 
-  pub fn get_dlg_action(&self, dialog: &Dialog, kc: &KeyCode) -> Option<Action> {
+  pub fn get_dlg_action(&self, dialog: &Dialog, kc: &KeyCode) 
+    -> Option<Action> 
+  {
     match dialog.input {
       DlgInput::Ack(_)    => self.get_ack_dialog_action(kc),
       DlgInput::Ask(_)    => self.get_ask_dialog_action(kc),

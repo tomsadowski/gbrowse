@@ -25,20 +25,19 @@ pub struct Dialog {
 
 impl Dialog {
   pub fn ack<V, S>(view: V, style: S, prompt: &str, input: &str) -> Self
-  where 
-    V: ViewPort,
-    S: Into<Style> + Copy
+  where V: ViewPort,
+        S: Into<Style> + Copy
   {
     let prompt_box = TextBox::from(
         view.get_view_port().crop_south(2)
       ).reference(
         &vec![prompt], |p| StyledText::from(*p).style(style)
-      ).style(style).write_unused_y(false);
+      ).style(style);
     let response_box = TextBox::from(
         prompt_box.used_rect().bottom_row()
       ).reference(
         &vec![input], |i| StyledText::from(*i).style(style)
-      ).style(style).write_unused_y(false);
+      ).style(style);
     Dialog {
       prompt: prompt_box,
       input:  DlgInput::Ack(response_box),
@@ -46,20 +45,19 @@ impl Dialog {
   }
 
   pub fn ask<V, S>(view: V, style: S, prompt: &str, input: &str) -> Self 
-  where 
-    V: ViewPort,
-    S: Into<Style> + Copy
+  where V: ViewPort,
+        S: Into<Style> + Copy
   {
     let prompt_box = TextBox::from(
         view.get_view_port().crop_south(2)
       ).reference(
         &vec![prompt], |p| StyledText::from(*p).style(style)
-      ).style(style).write_unused_y(false);
+      ).style(style);
     let response_box = TextBox::from(
         prompt_box.used_rect().bottom_row()
       ).reference(
         &vec![input], |i| StyledText::from(*i).style(style)
-      ).style(style).write_unused_y(false);
+      ).style(style);
     Dialog {
       prompt: prompt_box,
       input:  DlgInput::Ask(response_box),
@@ -68,20 +66,19 @@ impl Dialog {
 
   pub fn select<V, S>(view: V, style: S, prompt: &str, input: Vec<String>) 
     -> Self 
-  where 
-    V: ViewPort,
-    S: Into<Style> + Copy
+  where V: ViewPort,
+        S: Into<Style> + Copy
   {
     let prompt_box = TextBox::from(
         view.get_view_port().crop_south(2)
       ).reference(
         &vec![prompt], |p| StyledText::from(*p).style(style)
-      ).style(style).write_unused_y(false);
+      ).style(style);
     let response_box = TextBox::from(
         view.get_view_port().crop_north(prompt_box.used_rect().h)
       ).reference(
         &input, |s| StyledText::from(s.as_str()).style(style)
-      ).style(style).write_unused_y(false);
+      ).style(style);
     Dialog {
       prompt: prompt_box,
       input:  DlgInput::Select(response_box),
@@ -89,15 +86,14 @@ impl Dialog {
   }
 
   pub fn edit<V, S>(view: V, style: S, prompt: &str, text: &str) -> Self 
-  where 
-    V: ViewPort,
-    S: Into<Style> + Copy
+  where V: ViewPort,
+        S: Into<Style> + Copy
   {
     let prompt_box = TextBox::from(
         view.get_view_port().crop_south(2)
       ).reference(
         &vec![prompt], |p| StyledText::from(*p).style(style)
-      ).style(style).write_unused_y(false);
+      ).style(style);
     let response_box = TextBox::from(
         prompt_box.used_rect().bottom_row()
       ).reference(

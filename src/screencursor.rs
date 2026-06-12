@@ -4,10 +4,10 @@ use crate::{
   UnitCursor, 
   ViewPort,
   Rect,
-  GetWeight,
   util,
 };
 use std::io::Write;
+use unicode_width::UnicodeWidthChar;
 
 
 #[derive(Copy, Clone, Debug, Default)]
@@ -70,27 +70,29 @@ impl ScreenCursor {
     self.y.get_scroll()
   }
 
-  pub fn resize<U, X, Y>(&mut self, plane: &Y, rect: &Rect) 
+  pub fn resize<X, Y>(&mut self, plane: &Y, rect: &Rect) 
   where Y: UnitCursor<Unit = X>, 
-        X: UnitCursor<Unit = U>,
-        U: GetWeight,
+        X: UnitCursor<Unit = char>,
   {
     self.y.resize(plane.get_head(), rect.y, rect.h);
     self.x.resize(
-      plane.use_current(|c| util::get_weighted_head(c)).unwrap_or(0), 
+      plane.use_current(
+        |ch| util::get_weighted_head(ch, |ch| ch.width().unwrap_or(0))
+      ).unwrap_or(0), 
       rect.x, 
       rect.w
     );
   }
 
-  pub fn update<U, X, Y>(&mut self, plane: &Y) -> bool 
+  pub fn update<X, Y>(&mut self, plane: &Y) -> bool 
   where Y: UnitCursor<Unit = X>, 
-        X: UnitCursor<Unit = U>,
-        U: GetWeight,
+        X: UnitCursor<Unit = char>,
   {
     let y = self.y.update(plane.get_head());
     let x = self.x.update(
-      plane.use_current(|c| util::get_weighted_head(c)).unwrap_or(0)
+      plane.use_current(
+        |ch| util::get_weighted_head(ch, |ch| ch.width().unwrap_or(0))
+      ).unwrap_or(0)
     );
     x || y
   }

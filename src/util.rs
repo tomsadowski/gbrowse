@@ -38,47 +38,43 @@ pub fn get_entries(path: &str) -> Result<Vec<String>, String> {
   Ok(vec)
 }
 
-pub trait GetWeight {
-  fn get_weight(&self) -> usize;
-}
-
-impl GetWeight for char {
-  fn get_weight(&self) -> usize {
-    use unicode_width::UnicodeWidthChar;
-    self.width().unwrap_or(0)
-  }
-}
-
-pub fn get_weighted_head<U, T>(cursor: &U) -> usize 
+pub fn get_weighted_head<U, T, F>(cursor: &U, get_weight: F) -> usize 
 where U: UnitCursor<Unit = T>,
-      T: GetWeight,
+      F: Fn(&T) -> usize,
 {
   cursor
     .get_units()
     .iter()
     .take(cursor.get_head())
-    .map(|u| u.get_weight())
+    .map(|u| get_weight(u))
     .sum()
 }
 
-pub fn get_weighted_length<T>(vec: &Vec<T>) -> usize 
-where T: GetWeight
+
+pub fn get_weighted_length<T, F>(vec: &Vec<T>, get_weight: F) -> usize 
+where F: Fn(&T) -> usize,
 {
   vec
     .iter()
-    .map(|u| u.get_weight())
+    .map(|u| get_weight(u))
     .sum()
 }
 
-pub fn get_weighted_view<T>(vec: &Vec<T>, axis: LineCursor) -> Vec<&T> 
-where T: GetWeight
+
+pub fn get_weighted_view<T, F>(
+  vec:          &Vec<T>, 
+  get_weight:   F, 
+  axis:         LineCursor
+) -> Vec<&T> 
+where 
+  F: Fn(&T) -> usize,
 {
   let size         = usize::from(axis.get_size());  
   let mut text     = vec.iter().skip(axis.get_scroll());
   let mut acc_size = 0;
   let mut result   = vec![];
   while let Some(c) = text.next() && acc_size < size {
-    acc_size += &c.get_weight();
+    acc_size += get_weight(&c);
     result.push(c);
   }
   result

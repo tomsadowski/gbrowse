@@ -23,6 +23,7 @@ mod network;
 mod gemini;
 mod app;
 mod util;
+mod layout;
 
 pub use crate::user::User;
 pub use crate::userkeys::UserKeys;
@@ -31,7 +32,6 @@ pub use crate::frame::Frame;
 pub use crate::styledtext::StyledText;
 pub use crate::textbox::TextBox;
 pub use crate::network::Request;
-pub use crate::util::GetWeight;
 pub use crate::screencursor::{
   ScreenCursor,
   LineCursor,
