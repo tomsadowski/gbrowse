@@ -284,14 +284,18 @@ where
   TextPlane<T>: CursorPlane + UnitCursor<Unit = T>,
   T:            UnitCursor<Unit = char>,
 {
-  pub fn write<W: Write>(&self, writer: &mut W, overlay: u16) -> std::io::Result<()> {
+  pub fn write<W: Write>(&self, writer: &mut W, overlay: u16) 
+    -> std::io::Result<()> 
+  {
     if self.write {
       self.write_all(writer, overlay)?;
     }
     Ok(())
   }
 
-  pub fn write_all<W: Write>(&self, writer: &mut W, overlay: u16) -> std::io::Result<()> {
+  pub fn write_all<W: Write>(&self, writer: &mut W, overlay: u16) 
+    -> std::io::Result<()> 
+  {
     let mut cursor = self.cursor.clone();
     if overlay > 0 {
       cursor.resize(&self.text_plane, &self.view.crop_north(overlay));
