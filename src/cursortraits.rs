@@ -250,9 +250,8 @@ pub trait CursorPlane: UnitCursorMut {
 }
 
 impl<U, T> CursorPlane for U 
-where 
-  U: UnitCursorMut<Unit = T>,
-  T: UnitCursor,
+where U: UnitCursorMut<Unit = T>,
+      T: UnitCursor,
 {
   type Unit = T;
   fn get_linear_head(&self) -> usize {

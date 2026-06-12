@@ -1,6 +1,6 @@
 // src/main.rs
 
-//#![allow(unused_imports)]
+#![allow(unused_imports)]
 #![allow(dead_code)]
 #![allow(unused_mut)]
 #![allow(unused_variables)]
@@ -31,6 +31,7 @@ pub use crate::frame::Frame;
 pub use crate::styledtext::StyledText;
 pub use crate::textbox::TextBox;
 pub use crate::network::Request;
+pub use crate::util::GetWeight;
 pub use crate::screencursor::{
   ScreenCursor,
   LineCursor,

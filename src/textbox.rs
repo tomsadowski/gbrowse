@@ -12,6 +12,8 @@ use crate::{
   Style, 
   StyledText, 
   Action, 
+  GetWeight,
+  util,
 };
 use crossterm::{
   QueueableCommand, 
@@ -120,10 +122,11 @@ impl<T> TextBox<T> {
   }
 }
 
-impl<T> TextBox<T> 
+impl<U, T> TextBox<T> 
 where 
   TextPlane<T>: UnitCursor<Unit = T>,
-  T:            WeightedCursor + From<Vec<char>>,
+  T:            UnitCursor<Unit = U> + From<Vec<char>>,
+  U:            GetWeight,
 {
   pub fn reference<R, F>(
     mut self, 
@@ -304,7 +307,8 @@ where
       .queue(&self.style)?;
     for (index, line) in self.text_plane.get_view(cursor.get_y_line()) {
       writer.queue(&self.styled_text[*index].style)?;
-      for c in line.get_weighted_view(cursor.get_x_line()) {
+      for c in util::get_weighted_view(&line.get_units(), cursor.get_x_line()) 
+      {
         writer.queue(Print(c))?;
         x += u16::try_from(c.width().unwrap_or(0)).unwrap();
       }

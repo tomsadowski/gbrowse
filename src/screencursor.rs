@@ -5,6 +5,8 @@ use crate::{
   WeightedCursor,
   ViewPort,
   Rect,
+  GetWeight,
+  util,
 };
 use std::io::Write;
 
@@ -69,27 +71,27 @@ impl ScreenCursor {
     self.y.get_scroll()
   }
 
-  pub fn resize<X, Y>(&mut self, plane: &Y, rect: &Rect) 
-  where 
-    Y: UnitCursor<Unit = X>, 
-    X: WeightedCursor 
+  pub fn resize<U, X, Y>(&mut self, plane: &Y, rect: &Rect) 
+  where Y: UnitCursor<Unit = X>, 
+        X: UnitCursor<Unit = U>,
+        U: GetWeight,
   {
     self.y.resize(plane.get_head(), rect.y, rect.h);
     self.x.resize(
-      plane.use_current(|c| c.get_weighted_head()).unwrap_or(0), 
+      plane.use_current(|c| util::get_weighted_head(c)).unwrap_or(0), 
       rect.x, 
       rect.w
     );
   }
 
-  pub fn update<X, Y>(&mut self, plane: &Y) -> bool 
-  where 
-    Y: UnitCursor<Unit = X>, 
-    X: WeightedCursor
+  pub fn update<U, X, Y>(&mut self, plane: &Y) -> bool 
+  where Y: UnitCursor<Unit = X>, 
+        X: UnitCursor<Unit = U>,
+        U: GetWeight,
   {
     let y = self.y.update(plane.get_head());
     let x = self.x.update(
-      plane.use_current(|c| c.get_weighted_head()).unwrap_or(0)
+      plane.use_current(|c| util::get_weighted_head(c)).unwrap_or(0)
     );
     x || y
   }

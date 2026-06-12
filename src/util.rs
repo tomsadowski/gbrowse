@@ -1,5 +1,10 @@
 // src/util.rs
 
+use crate::{
+  UnitCursor,
+  LineCursor,
+};
+
 
 pub fn split_whitespace_once(line: &str) -> Option<(&str, &str)> {
   line
@@ -31,6 +36,52 @@ pub fn get_entries(path: &str) -> Result<Vec<String>, String> {
     );
   }
   Ok(vec)
+}
+
+pub trait GetWeight {
+  fn get_weight(&self) -> usize;
+}
+
+impl GetWeight for char {
+  fn get_weight(&self) -> usize {
+    use unicode_width::UnicodeWidthChar;
+    self.width().unwrap_or(0)
+  }
+}
+
+pub fn get_weighted_head<U, T>(cursor: &U) -> usize 
+where U: UnitCursor<Unit = T>,
+      T: GetWeight,
+{
+  cursor
+    .get_units()
+    .iter()
+    .take(cursor.get_head())
+    .map(|u| u.get_weight())
+    .sum()
+}
+
+pub fn get_weighted_length<T>(vec: &Vec<T>) -> usize 
+where T: GetWeight
+{
+  vec
+    .iter()
+    .map(|u| u.get_weight())
+    .sum()
+}
+
+pub fn get_weighted_view<T>(vec: &Vec<T>, axis: LineCursor) -> Vec<&T> 
+where T: GetWeight
+{
+  let size         = usize::from(axis.get_size());  
+  let mut text     = vec.iter().skip(axis.get_scroll());
+  let mut acc_size = 0;
+  let mut result   = vec![];
+  while let Some(c) = text.next() && acc_size < size {
+    acc_size += &c.get_weight();
+    result.push(c);
+  }
+  result
 }
 
 pub fn get_wrapped_text(input: &str, width: usize) -> Vec<Vec<char>> {
