@@ -30,8 +30,6 @@ pub struct TextBox<T> {
   pub style:          Style,
   pub write:          bool,
   pub show_cursor:    bool,
-  pub write_unused_x: bool,
-  pub write_unused_y: bool,
 }
 
 impl<T> TextBox<T> {
@@ -53,23 +51,9 @@ impl<T> TextBox<T> {
     self
   }
 
-  pub fn write_unused_x(mut self, b: bool) -> Self {
-    self.write_unused_x = b;
-    self
-  }
-
-  pub fn write_unused_y(mut self, b: bool) -> Self {
-    self.write_unused_y = b;
-    self
-  }
-
   pub fn show_cursor(mut self, b: bool) -> Self {
     self.show_cursor = b;
     self
-  }
-
-  pub fn write_unused(mut self, b: bool) -> Self {
-    self.write_unused_x(b).write_unused_y(b)
   }
 
   pub fn used_rect(&self) -> Rect {
@@ -104,8 +88,6 @@ where TextPlane<T>: Default,
 {
   fn from(view: V) -> Self {
     Self {
-      write_unused_x: true,
-      write_unused_y: true,
       write:          true,
       show_cursor:    false,
       style:          Style::default(),
@@ -306,26 +288,22 @@ where TextPlane<T>: UnitCursor<Unit = T>,
         writer.queue(Print(c))?;
         x += u16::try_from(c.width().unwrap_or(0)).unwrap();
       }
-      if self.write_unused_x {
-        writer
-          .queue(SetAttribute(Attribute::Reset))?
-          .queue(&self.style)?;
-        for _ in x..self.view.x_end() {
-          writer.queue(Print(' '))?;
-        }
-      }
-      x = self.view.x; y += 1; writer.queue(MoveTo(x, y))?;
-    }
-    if self.write_unused_y {
       writer
         .queue(SetAttribute(Attribute::Reset))?
         .queue(&self.style)?;
-      for _ in y..self.view.y_end() {
-        for _ in self.view.x_range() {
-          writer.queue(Print(' '))?;
-        }
-        x = self.view.x; y += 1; writer.queue(MoveTo(x, y))?;
+      for _ in x..self.view.x_end() {
+        writer.queue(Print(' '))?;
       }
+      x = self.view.x; y += 1; writer.queue(MoveTo(x, y))?;
+    }
+    writer
+      .queue(SetAttribute(Attribute::Reset))?
+      .queue(&self.style)?;
+    for _ in y..self.view.y_end() {
+      for _ in self.view.x_range() {
+        writer.queue(Print(' '))?;
+      }
+      x = self.view.x; y += 1; writer.queue(MoveTo(x, y))?;
     }
     writer.queue(SetAttribute(Attribute::Reset))?;
     Ok(())

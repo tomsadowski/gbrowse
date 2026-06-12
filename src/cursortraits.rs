@@ -1,7 +1,6 @@
 // src/cursor.rs
 
 use crate::LineCursor;
-use unicode_width::UnicodeWidthChar;
 
 
 pub trait UnitCursor {
