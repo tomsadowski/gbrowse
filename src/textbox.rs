@@ -122,7 +122,7 @@ impl<T> TextBox<T> {
 
 impl<T> TextBox<T> 
 where 
-  TextPlane<T>: CursorPlane + UnitCursor<Unit = T>,
+  TextPlane<T>: UnitCursor<Unit = T>,
   T:            WeightedCursor + From<Vec<char>>,
 {
   pub fn reference<R, F>(
@@ -169,54 +169,6 @@ where
 
 impl<T> TextBox<T> 
 where 
-  TextPlane<T>: CursorPlane + UnitCursor<Unit = T>,
-  T:            WeightedCursor,
-{
-  pub fn move_left(&mut self, delta: usize) -> bool {
-    if self.text_plane.move_left(delta) == 0 {
-      self.write = self.cursor.update(&self.text_plane);
-      true
-    } else {false}
-  }
-
-  pub fn move_right(&mut self, delta: usize) -> bool {
-    if self.text_plane.move_right(delta) == 0 {
-      self.write = self.cursor.update(&self.text_plane);
-      true
-    } else {false}
-  }
-
-  pub fn move_down(&mut self, delta: usize) -> bool {
-    if self.text_plane.move_down(delta) {
-      self.write = self.cursor.update(&self.text_plane);
-      true
-    } else {false}
-  }
-
-  pub fn move_up(&mut self, delta: usize) -> bool {
-    if self.text_plane.move_up(delta) {
-      self.write = self.cursor.update(&self.text_plane);
-      true
-    } else {false}
-  }
-
-  pub fn update(&mut self, action: &Action) {
-    match action {
-      Action::PageDown  => {self.move_down(usize::from(self.view.h));}
-      Action::PageUp    => {self.move_up(usize::from(self.view.h));}
-      Action::Bottom    => {self.move_down(self.text_plane.get_length());}
-      Action::Top       => {self.move_up(self.text_plane.get_length());}
-      Action::MoveDown  => {self.move_down(1);}
-      Action::MoveUp    => {self.move_up(1);}
-      Action::MoveLeft  => {self.move_left(1);}
-      Action::MoveRight => {self.move_right(1);}
-      _ => {}
-    }
-  }
-}
-
-impl<T> TextBox<T> 
-where 
   TextPlane<T>: UnitCursor<Unit = T>,
   T:            ToString,
 {
@@ -227,7 +179,7 @@ where
 
 impl<T> TextBox<T> 
 where 
-  TextPlane<T>: CursorPlane + UnitCursor<Unit = T>,
+  TextPlane<T>: UnitCursor<Unit = T>,
   T:            UnitCursorMut<Unit = char>,
 {
   pub fn delete(&mut self) -> bool {
@@ -281,9 +233,51 @@ where
 
 impl<T> TextBox<T> 
 where 
-  TextPlane<T>: CursorPlane + UnitCursor<Unit = T>,
+  TextPlane<T>: UnitCursor<Unit = T>,
   T:            UnitCursor<Unit = char>,
 {
+  pub fn move_left(&mut self, delta: usize) -> bool {
+    if self.text_plane.move_left(delta) == 0 {
+      self.write = self.cursor.update(&self.text_plane);
+      true
+    } else {false}
+  }
+
+  pub fn move_right(&mut self, delta: usize) -> bool {
+    if self.text_plane.move_right(delta) == 0 {
+      self.write = self.cursor.update(&self.text_plane);
+      true
+    } else {false}
+  }
+
+  pub fn move_down(&mut self, delta: usize) -> bool {
+    if self.text_plane.move_down(delta) {
+      self.write = self.cursor.update(&self.text_plane);
+      true
+    } else {false}
+  }
+
+  pub fn move_up(&mut self, delta: usize) -> bool {
+    if self.text_plane.move_up(delta) {
+      self.write = self.cursor.update(&self.text_plane);
+      true
+    } else {false}
+  }
+
+  pub fn update(&mut self, action: &Action) {
+    match action {
+      Action::PageDown  => {self.move_down(usize::from(self.view.h));}
+      Action::PageUp    => {self.move_up(usize::from(self.view.h));}
+      Action::Bottom    => {self.move_down(self.text_plane.get_length());}
+      Action::Top       => {self.move_up(self.text_plane.get_length());}
+      Action::MoveDown  => {self.move_down(1);}
+      Action::MoveUp    => {self.move_up(1);}
+      Action::MoveLeft  => {self.move_left(1);}
+      Action::MoveRight => {self.move_right(1);}
+      _ => {}
+    }
+  }
+
   pub fn write<W: Write>(&self, writer: &mut W, overlay: u16) 
     -> std::io::Result<()> 
   {
@@ -298,7 +292,9 @@ where
   {
     let mut cursor = self.cursor.clone();
     if overlay > 0 {
-      cursor.resize(&self.text_plane, &self.view.crop_north(overlay));
+      cursor.resize(
+        &self.text_plane, &self.view.crop_north(overlay)
+      );
     }
     let mut x = cursor.get_x_line().get_start();
     let mut y = cursor.get_y_line().get_start();

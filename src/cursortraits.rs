@@ -235,6 +235,7 @@ where U: UnitCursor<Unit = char>
 }
 
 pub trait CursorPlane: UnitCursorMut {
+  type Unit;
   fn get_linear_head(&self) -> usize;
 
   fn set_linear_head(&mut self, idx: usize);
@@ -253,6 +254,7 @@ where
   U: UnitCursorMut<Unit = T>,
   T: UnitCursor,
 {
+  type Unit = T;
   fn get_linear_head(&self) -> usize {
     match self.use_current(|c| c.get_head()) {
       None         => 0,

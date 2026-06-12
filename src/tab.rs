@@ -169,6 +169,7 @@ pub enum Tab {
   Gem(UrlTab<GemText>),
   Gopher(UrlTab<String>),
 }
+
 impl Tab {
   pub fn get_heading(&self) -> &str {
     match self {
@@ -236,6 +237,7 @@ pub struct UrlTab<T> {
   pub source:  Vec<T>,
   pub textbox: TextBox<TextLine>,
 } 
+
 impl<T> UrlTab<T> {
   pub fn new<V, F>(
     url:            &Url, 
