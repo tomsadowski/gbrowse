@@ -21,9 +21,8 @@ pub trait UserTable: Sized {
 }
 
 impl<T, F> UserTable for T
-where 
-  T: Assign<Field = F>,
-  F: std::str::FromStr<Err = String>
+where T: Assign<Field = F>,
+      F: std::str::FromStr<Err = String>
 {
   fn read_table(mut self, table: Table) -> Result<Self, String> {
     for (key, value) in table.into_iter() {

@@ -2,7 +2,6 @@
 
 use crate::{
   UnitCursor, 
-  WeightedCursor,
   ViewPort,
   Rect,
   GetWeight,

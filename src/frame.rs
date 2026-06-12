@@ -30,9 +30,7 @@ pub struct Frame {
 }
 
 impl ViewPort for Frame {
-  fn get_view_port(&self) -> Rect {
-    self.inner_rect
-  }
+  fn get_view_port(&self) -> Rect {self.inner_rect}
 }
 
 impl From<Rect> for Frame {

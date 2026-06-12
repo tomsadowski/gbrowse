@@ -5,7 +5,6 @@ use crate::{
   Rect,
   UnitCursor, 
   UnitCursorMut, 
-  WeightedCursor, 
   CursorPlane,
   TextPlane,
   ScreenCursor,
@@ -34,26 +33,6 @@ pub struct TextBox<T> {
   pub show_cursor:    bool,
   pub write_unused_x: bool,
   pub write_unused_y: bool,
-}
-
-impl<T, V> From<V> for TextBox<T> 
-where 
-  TextPlane<T>: Default,
-  V:            ViewPort, 
-{
-  fn from(view: V) -> Self {
-    Self {
-      write_unused_x: true,
-      write_unused_y: true,
-      write:          true,
-      show_cursor:    false,
-      style:          Style::default(),
-      styled_text:    vec![StyledText::default()],
-      cursor:         ScreenCursor::from(&view), 
-      text_plane:     TextPlane::default(),
-      view:           view.get_view_port(),
-    }
-  }
 }
 
 impl<T> TextBox<T> {
@@ -90,10 +69,8 @@ impl<T> TextBox<T> {
     self
   }
 
-  pub fn write_unused(mut self, write: bool) -> Self {
-    self
-      .write_unused_x(write)
-      .write_unused_y(write)
+  pub fn write_unused(mut self, b: bool) -> Self {
+    self.write_unused_x(b).write_unused_y(b)
   }
 
   pub fn used_rect(&self) -> Rect {
@@ -122,11 +99,29 @@ impl<T> TextBox<T> {
   }
 }
 
+impl<T, V> From<V> for TextBox<T> 
+where TextPlane<T>: Default,
+      V:            ViewPort, 
+{
+  fn from(view: V) -> Self {
+    Self {
+      write_unused_x: true,
+      write_unused_y: true,
+      write:          true,
+      show_cursor:    false,
+      style:          Style::default(),
+      styled_text:    vec![StyledText::default()],
+      cursor:         ScreenCursor::from(&view), 
+      text_plane:     TextPlane::default(),
+      view:           view.get_view_port(),
+    }
+  }
+}
+
 impl<U, T> TextBox<T> 
-where 
-  TextPlane<T>: UnitCursor<Unit = T>,
-  T:            UnitCursor<Unit = U> + From<Vec<char>>,
-  U:            GetWeight,
+where TextPlane<T>: UnitCursor<Unit = T>,
+      T:            UnitCursor<Unit = U> + From<Vec<char>>,
+      U:            GetWeight,
 {
   pub fn reference<R, F>(
     mut self, 
@@ -171,9 +166,8 @@ where
 }
 
 impl<T> TextBox<T> 
-where 
-  TextPlane<T>: UnitCursor<Unit = T>,
-  T:            ToString,
+where TextPlane<T>: UnitCursor<Unit = T>,
+      T:            ToString,
 {
   pub fn get_current_string(&self) -> Option<String> {
     self.text_plane.use_current(|c| c.to_string())
@@ -181,9 +175,8 @@ where
 }
 
 impl<T> TextBox<T> 
-where 
-  TextPlane<T>: UnitCursor<Unit = T>,
-  T:            UnitCursorMut<Unit = char>,
+where TextPlane<T>: UnitCursor<Unit = T>,
+      T:            UnitCursorMut<Unit = char>,
 {
   pub fn delete(&mut self) -> bool {
     if self.text_plane
@@ -235,9 +228,8 @@ where
 }
 
 impl<T> TextBox<T> 
-where 
-  TextPlane<T>: UnitCursor<Unit = T>,
-  T:            UnitCursor<Unit = char>,
+where TextPlane<T>: UnitCursor<Unit = T>,
+      T:            UnitCursor<Unit = char>,
 {
   pub fn move_left(&mut self, delta: usize) -> bool {
     if self.text_plane.move_left(delta) == 0 {

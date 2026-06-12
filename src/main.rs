@@ -44,7 +44,6 @@ pub use crate::usertraits::{
 pub use crate::cursortraits::{
   UnitCursor, 
   UnitCursorMut, 
-  WeightedCursor, 
   CursorPlane,
 };
 pub use crate::textcursor::{

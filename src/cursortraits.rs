@@ -190,50 +190,6 @@ pub trait UnitCursorMut: UnitCursor {
   }
 }
 
-pub trait WeightedCursor: UnitCursor {
-  fn get_weighted_head(&self) -> usize;
-
-  fn get_weighted_length(&self) -> usize;
-
-  fn get_weighted_view(&self, axis: LineCursor) 
-    -> Vec<&Self::Unit>;
-}
-
-impl<U> WeightedCursor for U 
-where U: UnitCursor<Unit = char> 
-{
-  fn get_weighted_head(&self) -> usize {
-    self
-      .get_units()
-      .iter()
-      .take(self.get_head())
-      .map(|u| u.width().unwrap_or(0))
-      .sum()
-  }
-
-  fn get_weighted_length(&self) -> usize {
-    self
-      .get_units()
-      .iter()
-      .map(|u| u.width().unwrap_or(0))
-      .sum()
-  }
-
-  fn get_weighted_view(&self, axis: LineCursor) 
-    -> Vec<&Self::Unit> 
-  {
-    let size         = usize::from(axis.get_size());  
-    let mut text     = self.get_units().iter().skip(axis.get_scroll());
-    let mut acc_size = 0;
-    let mut result   = vec![];
-    while let Some(c) = text.next() && acc_size < size {
-      acc_size += &c.width().unwrap_or(0);
-      result.push(c);
-    }
-    result
-  }
-}
-
 pub trait CursorPlane: UnitCursorMut {
   type Unit;
   fn get_linear_head(&self) -> usize;
@@ -250,7 +206,7 @@ pub trait CursorPlane: UnitCursorMut {
 }
 
 impl<U, T> CursorPlane for U 
-where U: UnitCursorMut<Unit = T>,
+where U: UnitCursorMut<Unit = T>, 
       T: UnitCursor,
 {
   type Unit = T;

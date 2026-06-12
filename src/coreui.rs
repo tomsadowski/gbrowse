@@ -250,22 +250,28 @@ pub fn parse_hex_color(s: &str) -> Result<Color, String> {
     }
   }
   let mut c = s.chars();
-  let r1 = c.next()
+  let r1 = c
+    .next()
     .ok_or("missing first red".into())
     .and_then(|c| try_hex(c))?;
-  let r2 = c.next()
+  let r2 = c
+    .next()
     .ok_or("missing second red".into())
     .and_then(|c| try_hex(c))?;
-  let g1 = c.next()
+  let g1 = c
+    .next()
     .ok_or("missing first green".into())
     .and_then(|c| try_hex(c))?;
-  let g2 = c.next()
+  let g2 = c
+    .next()
     .ok_or("missing second green".into())
     .and_then(|c| try_hex(c))?;
-  let b1 = c.next()
+  let b1 = c
+    .next()
     .ok_or("missing first blue".into())
     .and_then(|c| try_hex(c))?;
-  let b2 = c.next()
+  let b2 = c
+    .next()
     .ok_or("missing second blue".into())
     .and_then(|c| try_hex(c))?;
   let r = 16 * r1 + r2;
@@ -283,9 +289,7 @@ pub struct Style {
 }
 
 impl From<TextStyle> for Style {
-  fn from(item: TextStyle) -> Self {
-    item.style
-  }
+  fn from(item: TextStyle) -> Self {item.style}
 }
 
 impl crossterm::Command for Style {
@@ -327,7 +331,8 @@ impl Default for Margins {
 
 impl Margins {
   pub fn get_rect<V: ViewPort>(&self, view: V) -> Rect {
-    view.get_view_port()
+    view
+      .get_view_port()
       .crop_north(self.north)
       .crop_south(self.south)
       .crop_east(self.east)
