@@ -24,16 +24,16 @@ use unicode_width::UnicodeWidthChar;
 use std::io::Write;
 
 
-pub enum TextType {
+pub enum Window {
   Edit(TextBox<EditLine>),
   Text(TextBox<TextLine>),
 }
 
-impl ViewPort for TextType {
+impl ViewPort for Window {
   fn get_view_port(&self) -> Rect {
     match self {
-      TextType::Edit(textbox) => textbox.view,
-      TextType::Text(textbox) => textbox.view,
+      Window::Edit(textbox) => textbox.view,
+      Window::Text(textbox) => textbox.view,
     }
   }
 }
@@ -42,15 +42,11 @@ pub enum Orientation {
   Horizontal, Vertical,
 }
 
-pub struct Window {
-  pub texttype:    TextType,
-  pub orientation: Orientation,
-}
-
 pub struct Layout {
   pub view:    Rect,
   pub head:    usize,
   pub windows: Vec<Window>,
+  pub orientation: Orientation,
 }
 
 impl UnitCursor for Layout {
@@ -78,20 +74,19 @@ impl UnitCursorMut for Layout {
 impl<V: ViewPort> From<V> for Layout {
   fn from(view: V) -> Self {
     Self {
-      view:    view.get_view_port(),
-      head:    0,
-      windows: vec![],
+      view:        view.get_view_port(),
+      head:        0,
+      windows:     vec![],
+      orientation: Orientation::Horizontal,
     }
   }
 }
 
 impl Layout {
-//fn get_weight(&self) -> usize {
-//  match self.orientation {
-//    Orientation::Horizontal => 
-//      self.texttype.get_view_port().w.into(),
-//    Orientation::Vertical => 
-//      self.texttype.get_view_port().h.into(),
-//  }
-//}
+  fn get_weight(&self) -> usize {
+    match self.orientation {
+      Orientation::Horizontal => 0,
+      Orientation::Vertical => 0
+    }
+  }
 }
