@@ -1,6 +1,10 @@
 // src/cursor.rs
 
-use crate::LineCursor;
+use crate::{
+  LineCursor,
+  ViewPort,
+  StyledText,
+};
 
 
 pub trait UnitCursor {
@@ -264,5 +268,160 @@ where U: UnitCursorMut<Unit = T>,
       self.use_current_mut(|c| c.move_to_start());
       self.move_right(remainder.saturating_sub(1))
     } else {remainder}
+  }
+}
+
+#[derive(Clone, Debug, Default)]
+pub struct CursorUnits<T> {
+  pub head: usize,
+  pub data: Vec<T>,
+  pub buff: bool,
+}
+
+impl<T> From<Vec<T>> for CursorUnits<T> {
+  fn from(item: Vec<T>) -> Self {
+    let mut editline = Self {
+      buff:  true,
+      head:  0, 
+      data:  item
+    };
+    editline.move_to_end();
+    editline
+  }
+}
+
+
+impl<T> UnitCursor for CursorUnits<T> {
+  type Unit = T;
+  fn get_units(&self) -> &Vec<Self::Unit> {
+    &self.data
+  }
+  fn get_head_mut(&mut self) -> &mut usize {
+    &mut self.head
+  }
+  fn get_head(&self) -> usize {
+    self.head
+  }
+  fn get_max_head(&self) -> usize {
+    match self.buff {
+      true  => self.data.len(),
+      false => self.data.len().saturating_sub(1),
+    }
+  }
+}
+
+impl<T> UnitCursorMut for CursorUnits<T> {
+  fn units_mut(&mut self) -> &mut Vec<T> {
+    &mut self.data
+  }
+}
+
+#[derive(Clone, Debug, Default)]
+pub struct CursorMatrix<T> {
+  pub text:     CursorUnits<CursorUnits<T>>, 
+  pub indexes:  Vec<usize>,
+  pub pref_x:   usize,
+}
+
+impl<T> CursorMatrix<T> {
+  pub fn get_current_reference_index(&self) -> usize {
+    self.indexes.get(self.text.get_head())
+      .map(|u| u.clone())
+      .unwrap_or(usize::MIN)
+  }
+
+  pub fn get_view(&self, axis: LineCursor) -> Vec<(&usize, &CursorUnits<T>)> {
+    let start   = axis.get_scroll();
+    let size    = usize::from(axis.get_size());
+    let indexes = self.indexes.iter().skip(start).take(size); 
+    let units   = self.text.get_units().iter().skip(start).take(size);
+    indexes.zip(units).collect()
+  }
+
+  fn get_linear_head(&self) -> usize {
+    match self.text.use_current(|c| c.get_head()) {
+      None         => 0,
+      Some(x_head) => self.text.get_units()[..self.text.get_head()]
+        .iter()
+        .map(|line| line.get_length().max(1))
+        .chain(std::iter::once(x_head))
+        .sum(),
+    }
+  }
+
+  fn set_linear_head(&mut self, idx: usize) {
+    self.text.move_to_start();
+    self.text.use_current_mut(|c| c.move_to_start());
+    self.text.move_right(idx);
+  }
+
+  fn move_up(&mut self, delta: usize) -> bool {
+    let x_head = self.text
+      .use_current(|c| c.get_head())
+      .unwrap_or(0);
+    if self.text.move_backward(delta) != delta {
+//    let pref_x = self.pref_x;
+//    self.use_current_mut(|current| current.fit(pref_x));
+      self.text.use_current_mut(|c| c.fit(x_head));
+      true
+    } else {false}
+  }
+
+  fn move_down(&mut self, delta: usize) -> bool {
+    let x_head = self.text
+      .use_current(|c| c.get_head())
+      .unwrap_or(0);
+    if self.text.move_forward(delta) != delta {
+//    let pref_x = self.pref_x;
+//    self.use_current_mut(|current| current.fit(pref_x));
+      self.text.use_current_mut(|c| c.fit(x_head));
+      true
+    } else {false}
+  }
+
+  fn move_left(&mut self, delta: usize) -> usize {
+    let remainder = self.text
+      .use_current_mut(|c| c.move_backward(delta))
+      .unwrap_or(delta);
+    if remainder != 0 && self.text.move_backward(1) == 0 {
+//    self.pref_x = self
+//      .use_current(|current| current.get_head())
+//      .unwrap_or(self.pref_x);
+      self.text.use_current_mut(|c| c.move_to_end());
+      self.move_left(remainder.saturating_sub(1))
+    } else {remainder}
+  }
+
+  fn move_right(&mut self, delta: usize) -> usize {
+    let remainder = self.text
+      .use_current_mut(|c| c.move_forward(delta))
+      .unwrap_or(delta);
+    if remainder != 0 && self.text.move_forward(1) == 0 {
+//    self.pref_x = self
+//      .use_current(|current| current.get_head())
+//      .unwrap_or(self.pref_x);
+      self.text.use_current_mut(|c| c.move_to_start());
+      self.move_right(remainder.saturating_sub(1))
+    } else {remainder}
+  }
+}
+
+impl CursorMatrix<char> {
+  pub fn new<V: ViewPort>(view: &V, input: &Vec<StyledText>) -> Self {
+    let width    = usize::from(view.get_view_port().w);
+    let rendered = input.iter().enumerate().flat_map(
+      |(idx, styled)| 
+        styled
+          .print(width)
+          .into_iter()
+          .map(move |text| (idx, text.into()))
+      );
+    let (indexes, text): (Vec<usize>, Vec<CursorUnits<char>>) = 
+                          rendered.unzip();
+    Self {
+      pref_x: 0, 
+      indexes,
+      text: text.into(), 
+    }
   }
 }

@@ -24,24 +24,16 @@ pub struct TabManager {
 
 impl UnitCursor for TabManager {
   type Unit = Tab;
-  fn get_units(&self) -> &Vec<Tab> {
-    &self.tabs
-  }
-  fn get_head_mut(&mut self) -> &mut usize {
-    &mut self.head
-  }
-  fn get_head(&self) -> usize {
-    self.head
-  }
-  fn get_max_head(&self) -> usize {
+  fn get_units(&self)        -> &Vec<Self::Unit> {&self.tabs}
+  fn get_head_mut(&mut self) -> &mut usize       {&mut self.head}
+  fn get_head(&self)         -> usize            {self.head}
+  fn get_max_head(&self)     -> usize {
     self.tabs.len().saturating_sub(1)
   }
 }
 
 impl UnitCursorMut for TabManager {
-  fn units_mut(&mut self) -> &mut Vec<Tab> {
-    &mut self.tabs
-  }
+  fn units_mut(&mut self) -> &mut Vec<Tab> {&mut self.tabs}
 }
 
 impl<V: ViewPort> From<V> for TabManager {

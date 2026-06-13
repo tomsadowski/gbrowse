@@ -30,32 +30,24 @@ pub enum Orientation {
 }
 
 pub struct Layout {
-  pub view:    Rect,
-  pub head:    usize,
-  pub windows: Vec<Window>,
+  pub view:        Rect,
+  pub head:        usize,
+  pub windows:     Vec<Window>,
   pub orientation: Orientation,
 }
 
 impl UnitCursor for Layout {
   type Unit = Window;
-  fn get_units(&self) -> &Vec<Self::Unit> {
-    &self.windows
-  }
-  fn get_head_mut(&mut self) -> &mut usize {
-    &mut self.head
-  }
-  fn get_head(&self) -> usize {
-    self.head
-  }
-  fn get_max_head(&self) -> usize {
+  fn get_units(&self)        -> &Vec<Self::Unit> {&self.windows}
+  fn get_head_mut(&mut self) -> &mut usize       {&mut self.head}
+  fn get_head(&self)         -> usize            {self.head}
+  fn get_max_head(&self)     -> usize {
     self.windows.len().saturating_sub(1)
   }
 }
 
 impl UnitCursorMut for Layout {
-  fn units_mut(&mut self) -> &mut Vec<Window> {
-    &mut self.windows
-  }
+  fn units_mut(&mut self) -> &mut Vec<Window> {&mut self.windows}
 }
 
 impl<V: ViewPort> From<V> for Layout {
@@ -70,10 +62,12 @@ impl<V: ViewPort> From<V> for Layout {
 }
 
 impl Layout {
-  fn get_weight(&self) -> usize {
+  fn get_weight(&self, window: &Window) -> usize {
     match self.orientation {
-      Orientation::Horizontal => 0,
-      Orientation::Vertical => 0
+      Orientation::Horizontal => 
+        window.get_view_port().w.into(),
+      Orientation::Vertical => 
+        window.get_view_port().h.into(),
     }
   }
 }

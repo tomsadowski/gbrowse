@@ -30,16 +30,10 @@ impl From<Vec<char>> for TextLine {
 
 impl UnitCursor for TextLine {
   type Unit = char;
-  fn get_units(&self) -> &Vec<Self::Unit> {
-    &self.text
-  }
-  fn get_head_mut(&mut self) -> &mut usize {
-    &mut self.head
-  }
-  fn get_head(&self) -> usize {
-    self.head
-  }
-  fn get_max_head(&self) -> usize {
+  fn get_units(&self)        -> &Vec<Self::Unit> {&self.text}
+  fn get_head_mut(&mut self) -> &mut usize       {&mut self.head}
+  fn get_head(&self)         -> usize            {self.head}
+  fn get_max_head(&self)     -> usize {
     self.text.len().saturating_sub(1)
   }
 }
@@ -81,24 +75,14 @@ impl ToString for EditLine {
 
 impl UnitCursor for EditLine {
   type Unit = char;
-  fn get_units(&self) -> &Vec<char> {
-    &self.text
-  }
-  fn get_head_mut(&mut self) -> &mut usize {
-    &mut self.head
-  }
-  fn get_head(&self) -> usize {
-    self.head
-  }
-  fn get_max_head(&self) -> usize {
-    self.text.len()
-  }
+  fn get_units(&self)        -> &Vec<char> {&self.text}
+  fn get_head_mut(&mut self) -> &mut usize {&mut self.head}
+  fn get_head(&self)         -> usize      {self.head}
+  fn get_max_head(&self)     -> usize      {self.text.len()}
 }
 
 impl UnitCursorMut for EditLine {
-  fn units_mut(&mut self) -> &mut Vec<char> {
-    &mut self.text
-  }
+  fn units_mut(&mut self)    -> &mut Vec<char> {&mut self.text}
 }
 
 
@@ -112,24 +96,16 @@ pub struct TextPlane<T> {
 
 impl<T> UnitCursor for TextPlane<T> {
   type Unit = T;
-  fn get_units(&self) -> &Vec<Self::Unit> {
-    &self.text
-  }
-  fn get_head_mut(&mut self) -> &mut usize {
-    &mut self.head
-  }
-  fn get_head(&self) -> usize {
-    self.head
-  }
+  fn get_units(&self) -> &Vec<Self::Unit> {&self.text}
+  fn get_head_mut(&mut self) -> &mut usize {&mut self.head}
+  fn get_head(&self) -> usize {self.head}
   fn get_max_head(&self) -> usize {
     self.text.len().saturating_sub(1)
   }
 }
 
 impl<T> UnitCursorMut for TextPlane<T> {
-  fn units_mut(&mut self) -> &mut Vec<Self::Unit> {
-    &mut self.text
-  }
+  fn units_mut(&mut self) -> &mut Vec<Self::Unit> {&mut self.text}
 }
 
 impl<T> TextPlane<T> {
