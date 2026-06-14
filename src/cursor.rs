@@ -33,13 +33,11 @@ impl<T> DerefMut for Cursor<T> {
 
 impl<T> From<Vec<T>> for Cursor<T> {
   fn from(item: Vec<T>) -> Self {
-    let mut editline = Self {
-      buff:  true,
+    Self {
       head:  0, 
+      buff:  false,
       data:  item
-    };
-    editline.move_to_end();
-    editline
+    }
   }
 }
 
@@ -50,6 +48,11 @@ impl ToString for Cursor<char> {
 }
 
 impl<T> Cursor<T> {
+  pub fn make_editor(&mut self) {
+    self.buff = true;
+    self.move_to_end();
+  }
+
   pub fn get_max_head(&self) -> usize {
     match self.buff {
       true  => self.data.len(),
@@ -238,6 +241,12 @@ impl<T> DerefMut for MatrixCursor<T> {
 }
 
 impl<T> MatrixCursor<T> {
+  pub fn make_editor(&mut self) {
+    for cursor in self.matrix.iter_mut() {
+      cursor.make_editor();
+    }
+  }
+
   pub fn get_current_reference_index(&self) -> usize {
     self.indexes.get(self.matrix.head)
       .map(|u| u.clone())
@@ -326,10 +335,10 @@ impl MatrixCursor<char> {
           .into_iter()
           .map(move |text| (idx, text.into()))
       );
-    let (indexes, matrix): (Vec<usize>, Vec<Cursor<char>>) = rendered.unzip();
+    let (indexes, cursors): (Vec<usize>, Vec<Cursor<char>>) = rendered.unzip();
     Self {
-      pref_x:  0, 
-      matrix:  matrix.into(), 
+      pref_x: 0, 
+      matrix: cursors.into(), 
       indexes,
     }
   }
@@ -404,15 +413,15 @@ impl MatrixCursorView {
 
 #[derive(Copy, Clone, Debug, Default)]
 pub struct LineCursorView {
-  /// data head
+  // data head
   head:    usize,
-  /// start of displayable data
+  // start of displayable data
   scroll:  usize,
-  /// on-screen cursor
+  // on-screen cursor
   cursor:  u16,
-  /// x or y
+  // x or y
   start:   u16,
-  /// width or height of rectangle
+  // width or height of rectangle
   size:    u16,
 }
 
@@ -428,12 +437,9 @@ impl LineCursorView {
   }
 
   pub fn get_scroll(&self) -> usize {self.scroll}
-
-  pub fn get_cursor(&self) -> u16 {self.cursor}
-
-  pub fn get_size(&self)   -> u16 {self.size}
-
-  pub fn get_start(&self)  -> u16 {self.start}
+  pub fn get_cursor(&self) -> u16   {self.cursor}
+  pub fn get_size(&self)   -> u16   {self.size}
+  pub fn get_start(&self)  -> u16   {self.start}
 
   // preserve cursor position if it still fits in the new bounds
   pub fn resize(

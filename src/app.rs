@@ -460,7 +460,6 @@ impl App {
           textbox.update(action);
         }
         (DlgInput::Edit(editbox),   action, _) => {
-          eprintln!("{action:?}");
           editbox.update_edit(action);
         }
         (_, _, _) => {

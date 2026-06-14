@@ -29,12 +29,14 @@ impl Dialog {
     let prompt_box = TextBox::from(
         view.get_view_port().crop_south(2)
       ).reference(
-        &vec![prompt], |p| StyledText::from(*p).style(style)
+        &vec![prompt], 
+        |p| StyledText::from(*p).style(style)
       ).style(style);
     let response_box = TextBox::from(
         prompt_box.used_rect().bottom_row()
       ).reference(
-        &vec![input], |i| StyledText::from(*i).style(style)
+        &vec![input], 
+        |i| StyledText::from(*i).style(style)
       ).style(style);
     Dialog {
       prompt: prompt_box,
@@ -49,12 +51,14 @@ impl Dialog {
     let prompt_box = TextBox::from(
         view.get_view_port().crop_south(2)
       ).reference(
-        &vec![prompt], |p| StyledText::from(*p).style(style)
+        &vec![prompt], 
+        |p| StyledText::from(*p).style(style)
       ).style(style);
     let response_box = TextBox::from(
         prompt_box.used_rect().bottom_row()
       ).reference(
-        &vec![input], |i| StyledText::from(*i).style(style)
+        &vec![input], 
+        |i| StyledText::from(*i).style(style)
       ).style(style);
     Dialog {
       prompt: prompt_box,
@@ -70,7 +74,8 @@ impl Dialog {
     let prompt_box = TextBox::from(
         view.get_view_port().crop_south(2)
       ).reference(
-        &vec![prompt], |p| StyledText::from(*p).style(style)
+        &vec![prompt], 
+        |p| StyledText::from(*p).style(style)
       ).style(style);
     let response_box = TextBox::from(
         view.get_view_port().crop_north(prompt_box.used_rect().h)
@@ -90,13 +95,15 @@ impl Dialog {
     let prompt_box = TextBox::from(
         view.get_view_port().crop_south(2)
       ).reference(
-        &vec![prompt], |p| StyledText::from(*p).style(style)
+        &vec![prompt], 
+        |p| StyledText::from(*p).style(style)
       ).style(style);
     let response_box = TextBox::from(
         prompt_box.used_rect().bottom_row()
       ).reference(
-        &vec![text], |p| StyledText::from(*p).style(style)
-      ).style(style);
+        &vec![text], 
+        |p| StyledText::from(*p).style(style)
+      ).style(style).editor();
     Dialog {
       prompt: prompt_box,
       input:  DlgInput::Edit(response_box),

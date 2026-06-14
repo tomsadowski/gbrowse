@@ -105,7 +105,13 @@ impl TextBox {
   where F: Fn(&R) -> StyledText,
   {
     self.styled_text = reference.iter().map(|i| to_styled_text(i)).collect();
-    self.char_matrix  = MatrixCursor::new(&self.view, &self.styled_text);
+    self.char_matrix = MatrixCursor::new(&self.view, &self.styled_text);
+    self.cursor.update(&self.char_matrix);
+    self
+  }
+
+  pub fn editor(mut self) -> Self {
+    self.char_matrix.make_editor();
     self.cursor.update(&self.char_matrix);
     self
   }
@@ -165,12 +171,10 @@ impl TextBox {
   }
 
   pub fn insert(&mut self, ch: char) -> bool {
-    eprintln!("maybe inserting {ch}");
     if self.char_matrix
       .use_current_mut(|c| c.insert(ch))
       .unwrap_or(false) 
     {
-      eprintln!("inserted {ch}");
       self.cursor.update(&self.char_matrix);
       self.write = true;
       true
