@@ -581,7 +581,7 @@ impl App {
         let tb: TextBox = TextBox::from(
             self.frame.get_view_port().top_row()
           ).reference(
-            &vec![format!("(pending response)")],
+            &vec![format!("requesting {}", request.url)],
             |s| StyledText::from(s.clone())
           );
         tb.write(stdout, 0)?;
