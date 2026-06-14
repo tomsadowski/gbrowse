@@ -61,10 +61,20 @@ impl<T> Cursor<T> {
     self.data.get(self.head)
   }
 
+  pub fn get_current_mut(&mut self) -> Option<&mut T> {
+    self.data.get_mut(self.head)
+  }
+
   pub fn use_current<F, S>(&self, func: F) -> Option<S>
   where F: Fn(&T) -> S
   {
     self.get_current().map(|u| func(u))
+  }
+
+  pub fn use_current_mut<F, S>(&mut self, func: F) -> Option<S>
+  where F: Fn(&mut T) -> S
+  {
+    self.get_current_mut().map(|u| func(u))
   }
 
   pub fn get_unit_view(&self, axis: LineCursorView) -> Vec<&T> {
@@ -146,21 +156,9 @@ impl<T> Cursor<T> {
     }
   }
 
-  pub fn get_current_mut(&mut self) -> Option<&mut T> {
-    let head = self.head;
-    self.data.get_mut(head)
-  }
-
-  pub fn use_current_mut<F, S>(&mut self, func: F) -> Option<S>
-  where F: Fn(&mut T) -> S
-  {
-    self.get_current_mut().map(|u| func(u))
-  }
-
   pub fn remove(&mut self) -> usize {
-    let head = self.head;
-    if head < self.data.len() {
-      self.data.remove(head);
+    if self.head < self.data.len() {
+      self.data.remove(self.head);
       self.move_backward_wrapped(1);
     }
     self.data.len()
@@ -186,16 +184,14 @@ impl<T> Cursor<T> {
     }
     else {
       self.head += 1;
-      let head = self.head;
-      self.data.insert(head, unit);
+      self.data.insert(self.head, unit);
       true
     }
   }
 
   pub fn delete(&mut self) -> bool {
-    let head = self.head;
-    if head < self.data.len() {
-      self.data.remove(head);
+    if self.head < self.data.len() {
+      self.data.remove(self.head);
       true
     } else {false}
   }
@@ -203,20 +199,18 @@ impl<T> Cursor<T> {
   pub fn backspace(&mut self) -> bool {
     if self.peek_backward(1) == 0 {
       self.move_backward(1);
-      let head = self.head;
-      self.data.remove(head);
+      self.data.remove(self.head);
       true
     } else {false}
   }
 
   pub fn insert(&mut self, c: T) -> bool {
-    let head = self.head;
-    if head + 1 == self.data.len() || self.data.len() == 0 {
+    if self.head + 1 == self.data.len() || self.data.len() == 0 {
       self.data.push(c);
       self.move_forward(1);
       true
     } else {
-      self.data.insert(head, c);
+      self.data.insert(self.head, c);
       self.move_forward(1);
       true
     }
@@ -369,37 +363,14 @@ impl ViewPort for MatrixCursorView {
 }
 
 impl MatrixCursorView {
-  pub fn get_x_view(&self) -> LineCursorView {
-    self.x
-  }
-
-  pub fn get_y_view(&self) -> LineCursorView {
-    self.y
-  }
-
-  pub fn get_x_cursor(&self) -> u16 {
-    self.x.get_cursor()
-  }
-
-  pub fn get_y_cursor(&self) -> u16 {
-    self.y.get_cursor()
-  }
-
-  pub fn get_width(&self) -> u16 {
-    self.x.get_size()
-  }
-
-  pub fn get_height(&self) -> u16 {
-    self.y.get_size()
-  }
-
-  pub fn get_x_scroll(&self) -> usize {
-    self.x.get_scroll()
-  }
-
-  pub fn get_y_scroll(&self) -> usize {
-    self.y.get_scroll()
-  }
+  pub fn get_x_view(&self)   -> LineCursorView {self.x}
+  pub fn get_y_view(&self)   -> LineCursorView {self.y}
+  pub fn get_x_cursor(&self) -> u16            {self.x.get_cursor()}
+  pub fn get_y_cursor(&self) -> u16            {self.y.get_cursor()}
+  pub fn get_width(&self)    -> u16            {self.x.get_size()}
+  pub fn get_height(&self)   -> u16            {self.y.get_size()}
+  pub fn get_x_scroll(&self) -> usize          {self.x.get_scroll()}
+  pub fn get_y_scroll(&self) -> usize          {self.y.get_scroll()}
 
   pub fn resize(&mut self, plane: &MatrixCursor<char>, rect: &Rect) {
     self.y.resize(plane.head, rect.y, rect.h);
