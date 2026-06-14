@@ -1,6 +1,6 @@
 // src/main.rs
 
-//#![allow(unused_imports)]
+#![allow(unused_imports)]
 #![allow(dead_code)]
 #![allow(unused_mut)]
 #![allow(unused_variables)]
@@ -9,10 +9,8 @@
 mod user;
 mod userkeys;
 mod userstyle;
-mod cursortraits;
+mod cursor;
 mod usertraits;
-mod screencursor;
-mod textcursor;
 mod tab;
 mod coreui;
 mod frame;
@@ -32,24 +30,16 @@ pub use crate::frame::Frame;
 pub use crate::styledtext::StyledText;
 pub use crate::textbox::TextBox;
 pub use crate::network::Request;
-pub use crate::screencursor::{
-  ScreenCursor,
-  LineCursor,
-};
 pub use crate::usertraits::{
   Assign,
   UserTable,
   UserFromStr,
 };
-pub use crate::cursortraits::{
-  UnitCursor, 
-  UnitCursorMut, 
-  CursorPlane,
-};
-pub use crate::textcursor::{
-  TextLine, 
-  EditLine, 
-  TextPlane,
+pub use crate::cursor::{
+  LineCursor, 
+  MatrixCursor,
+  MatrixCursorView,
+  LineCursorView,
 };
 pub use crate::tab::{
   Tab, 

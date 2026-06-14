@@ -1,8 +1,6 @@
 // src/dialog.rs
 
 use crate::{
-  TextLine, 
-  EditLine, 
   TextBox, 
   StyledText, 
   Style, 
@@ -12,14 +10,14 @@ use std::io::Write;
 
 
 pub enum DlgInput {
-  Ack(   TextBox<TextLine>),
-  Ask(   TextBox<TextLine>),
-  Select(TextBox<TextLine>),
-  Edit(  TextBox<EditLine>),
+  Ack(   TextBox),
+  Ask(   TextBox),
+  Select(TextBox),
+  Edit(  TextBox),
 }
 
 pub struct Dialog {
-  pub prompt: TextBox<TextLine>,
+  pub prompt: TextBox,
   pub input:  DlgInput,
 } 
 

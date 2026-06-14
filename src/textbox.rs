@@ -3,11 +3,9 @@
 use crate::{
   ViewPort, 
   Rect,
-  UnitCursor, 
-  UnitCursorMut, 
-  CursorPlane,
+  MatrixCursor, 
   TextPlane,
-  ScreenCursor,
+  MatrixCursorView,
   Style, 
   StyledText, 
   Action, 
@@ -22,26 +20,26 @@ use unicode_width::UnicodeWidthChar;
 use std::io::Write;
 
 
-pub struct TextBox<T> {
+pub struct TextBox {
   pub view:           Rect,
-  pub cursor:         ScreenCursor,
+  pub cursor:         MatrixCursorView,
   pub styled_text:    Vec<StyledText>,
-  pub text_plane:     TextPlane<T>,
+  pub text_matrix:    MatrixCursor<char>,
   pub style:          Style,
   pub write:          bool,
   pub show_cursor:    bool,
 }
 
-impl<T> TextBox<T> {
+impl TextBox {
   pub fn get_current_reference_string(&self) -> String {
     self.styled_text
-      .get(self.text_plane.get_current_reference_index())
+      .get(self.text_matrix.get_current_reference_index())
       .map(|t| t.text.clone())
       .unwrap_or("empty".into())
   }
 
   pub fn get_current_reference_index(&self) -> usize {
-    self.text_plane.get_current_reference_index()
+    self.text_matrix.get_current_reference_index()
   }
 
   pub fn style<S>(mut self, style: S) -> Self 
@@ -57,7 +55,7 @@ impl<T> TextBox<T> {
   }
 
   pub fn used_rect(&self) -> Rect {
-    if let Ok(h) = u16::try_from(self.text_plane.get_length()) {
+    if let Ok(h) = u16::try_from(self.text_matrix.get_length()) {
       self.view.cap_height(h)
     } else {
       self.view
@@ -80,29 +78,19 @@ impl<T> TextBox<T> {
     writer.queue(SetAttribute(Attribute::Reset))?;
     Ok(())
   }
-}
 
-impl<T, V> From<V> for TextBox<T> 
-where TextPlane<T>: Default,
-      V:            ViewPort, 
-{
-  fn from(view: V) -> Self {
+  pub fn from<V: ViewPort>(view: V) -> Self {
     Self {
       write:          true,
       show_cursor:    false,
       style:          Style::default(),
       styled_text:    vec![StyledText::default()],
-      cursor:         ScreenCursor::from(&view), 
-      text_plane:     TextPlane::default(),
+      cursor:         MatrixCursorView::from(&view), 
+      text_matrix:    MatrixCursor::default(),
       view:           view.get_view_port(),
     }
   }
-}
 
-impl<T> TextBox<T> 
-where TextPlane<T>: UnitCursor<Unit = T>,
-      T:            UnitCursor<Unit = char> + From<Vec<char>>,
-{
   pub fn reference<R, F>(
     mut self, 
     reference:      &Vec<R>, 
@@ -111,8 +99,8 @@ where TextPlane<T>: UnitCursor<Unit = T>,
   where F: Fn(&R) -> StyledText,
   {
     self.styled_text = reference.iter().map(|i| to_styled_text(i)).collect();
-    self.text_plane  = TextPlane::new(&self.view, &self.styled_text);
-    self.cursor.update(&self.text_plane);
+    self.text_matrix  = TextPlane::new(&self.view, &self.styled_text);
+    self.cursor.update(&self.text_matrix);
     self
   }
 
@@ -120,72 +108,62 @@ where TextPlane<T>: UnitCursor<Unit = T>,
   where F: Fn(&R) -> StyledText,
   {
     self.styled_text = reference.iter().map(|i| to_styled_text(i)).collect();
-    self.text_plane  = TextPlane::new(&self.view, &self.styled_text);
-    self.cursor.update(&self.text_plane);
+    self.text_matrix  = TextPlane::new(&self.view, &self.styled_text);
+    self.cursor.update(&self.text_matrix);
   }
 
   pub fn restyle<R, F>(&mut self, reference: &Vec<R>, to_styled_text: F) 
   where F: Fn(&R) -> StyledText,
   {
-    let linear_head  = self.text_plane.get_linear_head();
+    let linear_head  = self.text_matrix.get_linear_head();
     self.styled_text = reference.iter().map(|i| to_styled_text(i)).collect();
-    self.text_plane  = TextPlane::new(&self.view, &self.styled_text);
-    self.text_plane.set_linear_head(linear_head);
-    self.cursor.update(&self.text_plane);
+    self.text_matrix  = TextPlane::new(&self.view, &self.styled_text);
+    self.text_matrix.set_linear_head(linear_head);
+    self.cursor.update(&self.text_matrix);
     self.reset_state();
   }
 
   pub fn resize<V: ViewPort>(&mut self, view: V) {
-    let linear_head = self.text_plane.get_linear_head();
+    let linear_head = self.text_matrix.get_linear_head();
     self.view       = view.get_view_port();
-    self.text_plane = TextPlane::new(&view, &self.styled_text);
-    self.text_plane.set_linear_head(linear_head);
-    self.cursor.resize(&self.text_plane, &self.view);
+    self.text_matrix = TextPlane::new(&view, &self.styled_text);
+    self.text_matrix.set_linear_head(linear_head);
+    self.cursor.resize(&self.text_matrix, &self.view);
     self.reset_state();
   }
-}
 
-impl<T> TextBox<T> 
-where TextPlane<T>: UnitCursor<Unit = T>,
-      T:            ToString,
-{
   pub fn get_current_string(&self) -> Option<String> {
-    self.text_plane.use_current(|c| c.to_string())
+    self.text_matrix.use_current(|c| c.to_string())
   }
-}
 
-impl<T> TextBox<T> 
-where TextPlane<T>: UnitCursor<Unit = T>,
-      T:            UnitCursorMut<Unit = char>,
-{
   pub fn delete(&mut self) -> bool {
-    if self.text_plane
+    if self.text_matrix
       .use_current_mut(|c| c.delete())
       .unwrap_or(false) 
     {
-      self.cursor.update(&self.text_plane);
+      self.cursor.update(&self.text_matrix);
       self.write = true;
       true
     } else {false}
   }
 
   pub fn backspace(&mut self) -> bool {
-    if self.text_plane
+    if self.text_matrix
       .use_current_mut(|c| c.backspace())
       .unwrap_or(false) 
     {
-      self.cursor.update(&self.text_plane);
+      self.cursor.update(&self.text_matrix);
       self.write = true;
       true
     } else {false}
   }
 
   pub fn insert(&mut self, ch: char) -> bool {
-    if self.text_plane
+    if self.text_matrix
       .use_current_mut(|c| c.insert(ch))
       .unwrap_or(false) 
     {
-      self.cursor.update(&self.text_plane);
+      self.cursor.update(&self.text_matrix);
       self.write = true;
       true
     } else {false}
@@ -205,36 +183,31 @@ where TextPlane<T>: UnitCursor<Unit = T>,
       _ => {}
     }
   }
-}
 
-impl<T> TextBox<T> 
-where TextPlane<T>: UnitCursor<Unit = T>,
-      T:            UnitCursor<Unit = char>,
-{
   pub fn move_left(&mut self, delta: usize) -> bool {
-    if self.text_plane.move_left(delta) == 0 {
-      self.write = self.cursor.update(&self.text_plane);
+    if self.text_matrix.move_left(delta) == 0 {
+      self.write = self.cursor.update(&self.text_matrix);
       true
     } else {false}
   }
 
   pub fn move_right(&mut self, delta: usize) -> bool {
-    if self.text_plane.move_right(delta) == 0 {
-      self.write = self.cursor.update(&self.text_plane);
+    if self.text_matrix.move_right(delta) == 0 {
+      self.write = self.cursor.update(&self.text_matrix);
       true
     } else {false}
   }
 
   pub fn move_down(&mut self, delta: usize) -> bool {
-    if self.text_plane.move_down(delta) {
-      self.write = self.cursor.update(&self.text_plane);
+    if self.text_matrix.move_down(delta) {
+      self.write = self.cursor.update(&self.text_matrix);
       true
     } else {false}
   }
 
   pub fn move_up(&mut self, delta: usize) -> bool {
-    if self.text_plane.move_up(delta) {
-      self.write = self.cursor.update(&self.text_plane);
+    if self.text_matrix.move_up(delta) {
+      self.write = self.cursor.update(&self.text_matrix);
       true
     } else {false}
   }
@@ -243,8 +216,8 @@ where TextPlane<T>: UnitCursor<Unit = T>,
     match action {
       Action::PageDown  => {self.move_down(usize::from(self.view.h));}
       Action::PageUp    => {self.move_up(usize::from(self.view.h));}
-      Action::Bottom    => {self.move_down(self.text_plane.get_length());}
-      Action::Top       => {self.move_up(self.text_plane.get_length());}
+      Action::Bottom    => {self.move_down(self.text_matrix.get_length());}
+      Action::Top       => {self.move_up(self.text_matrix.get_length());}
       Action::MoveDown  => {self.move_down(1);}
       Action::MoveUp    => {self.move_up(1);}
       Action::MoveLeft  => {self.move_left(1);}
@@ -268,7 +241,7 @@ where TextPlane<T>: UnitCursor<Unit = T>,
     let mut cursor = self.cursor.clone();
     if overlay > 0 {
       cursor.resize(
-        &self.text_plane, &self.view.crop_north(overlay)
+        &self.text_matrix, &self.view.crop_north(overlay)
       );
     }
     let mut x = cursor.get_x_line().get_start();
@@ -277,7 +250,7 @@ where TextPlane<T>: UnitCursor<Unit = T>,
       .queue(MoveTo(x, y))?
       .queue(SetAttribute(Attribute::Reset))?
       .queue(&self.style)?;
-    for (index, line) in self.text_plane.get_view(cursor.get_y_line()) {
+    for (index, line) in self.text_matrix.get_view(cursor.get_y_line()) {
       writer.queue(&self.styled_text[*index].style)?;
       for c in util::get_weighted_view(
         &line.get_units(), 

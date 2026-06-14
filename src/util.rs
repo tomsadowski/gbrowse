@@ -2,7 +2,7 @@
 
 use crate::{
   UnitCursor,
-  LineCursor,
+  LineCursorView,
 };
 
 
@@ -64,7 +64,7 @@ where F: Fn(&T) -> usize,
 pub fn get_weighted_view<T, F>(
   vec:          &Vec<T>, 
   get_weight:   F, 
-  axis:         LineCursor
+  axis:         LineCursorView
 ) -> Vec<&T> 
 where 
   F: Fn(&T) -> usize,

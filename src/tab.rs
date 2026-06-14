@@ -3,8 +3,7 @@
 use crate::{
   StyledText, 
   TextLine,
-  UnitCursor, 
-  UnitCursorMut,
+  LineCursor, 
   Style, 
   Rect, 
   ViewPort, 
@@ -18,31 +17,15 @@ use std::io::Write;
 pub struct TabManager {
   pub view:  Rect,
   pub style: Style,
-  pub head:  usize,
-  pub tabs:  Vec<Tab>,
+  pub tabs:  LineCursor<Tab>,
 } 
-
-impl UnitCursor for TabManager {
-  type Unit = Tab;
-  fn get_units(&self)        -> &Vec<Self::Unit> {&self.tabs}
-  fn get_head_mut(&mut self) -> &mut usize       {&mut self.head}
-  fn get_head(&self)         -> usize            {self.head}
-  fn get_max_head(&self)     -> usize {
-    self.tabs.len().saturating_sub(1)
-  }
-}
-
-impl UnitCursorMut for TabManager {
-  fn units_mut(&mut self) -> &mut Vec<Tab> {&mut self.tabs}
-}
 
 impl<V: ViewPort> From<V> for TabManager {
   fn from(view: V) -> Self {
     Self {
       view:  view.get_view_port(),
       style: Style::default(),
-      head:  0,
-      tabs:  vec![],
+      tabs:  LineCursor::default(),
     }
   }
 }
@@ -62,7 +45,7 @@ impl TabManager {
   where T: Into<Style> + Copy
   {
     self.style = style.into();
-    for tab in self.tabs.iter_mut() {
+    for tab in self.tabs.data.iter_mut() {
       tab.get_textbox_mut().style = self.style;
     }
   }
@@ -87,7 +70,7 @@ impl TabManager {
   }
 
   pub fn reset_state(&mut self) {
-    self.use_current_mut(
+    self.tabs.use_current_mut(
       |tab| {
         tab.get_textbox_mut().reset_state();
       }
@@ -95,7 +78,7 @@ impl TabManager {
   }
 
   pub fn get_url(&self) -> Option<&Url> {
-    self
+    self.tabs
       .get_current()
       .and_then(|tab| tab.get_url())
   }
@@ -103,16 +86,16 @@ impl TabManager {
   pub fn use_gem_text<F, T>(&self, func: F) -> Option<T>
   where F: Fn(&GemText) -> T
   {
-    self
+    self.tabs
       .get_current()
       .and_then(|tab| tab.get_gem_text())
       .map(|gem_text| func(gem_text))
   }
 
   pub fn use_textbox_mut<F, T>(&mut self, func: F) -> Option<T>
-  where F: Fn(&mut TextBox<TextLine>) -> T
+  where F: Fn(&mut TextBox) -> T
   {
-    self
+    self.tabs
       .get_current_mut()
       .map(|tab| tab.get_textbox_mut())
       .map(|textbox| func(textbox))
@@ -140,7 +123,7 @@ impl TabManager {
       }) 
     {
       None    => format!("Empty"),
-      Some(s) => format!("{}/{} - {s}", self.head + 1, self.tabs.len()),
+      Some(s) => format!("{}/{} - {s}", self.head + 1, self.data.len()),
     }
   }
 
@@ -151,7 +134,7 @@ impl TabManager {
       tab.get_textbox().write(writer, overlay)?;
       tab.get_textbox().cursor.write(writer)?;
     } else {
-      let tb: TextBox<TextLine> = self.view.into();
+      let tb: TextBox = self.view.into();
       tb.empty(writer)?;
     }
     Ok(())
@@ -159,7 +142,6 @@ impl TabManager {
 }
 
 pub enum Tab {
-  Text(String, TextBox<TextLine>),
   Gem(UrlTab<GemText>),
   Gopher(UrlTab<String>),
 }
@@ -229,7 +211,7 @@ impl Tab {
 pub struct UrlTab<T> {
   pub url:     Url,
   pub source:  Vec<T>,
-  pub textbox: TextBox<TextLine>,
+  pub textbox: TextBox,
 } 
 
 impl<T> UrlTab<T> {
