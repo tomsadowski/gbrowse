@@ -1,7 +1,7 @@
 // src/util.rs
 
 use crate::{
-  UnitCursor,
+  Cursor,
   LineCursorView,
 };
 
@@ -38,14 +38,12 @@ pub fn get_entries(path: &str) -> Result<Vec<String>, String> {
   Ok(vec)
 }
 
-pub fn get_weighted_head<U, T, F>(cursor: &U, get_weight: F) -> usize 
-where U: UnitCursor<Unit = T>,
-      F: Fn(&T) -> usize,
+pub fn get_weighted_head<T, F>(cursor: &Cursor<T>, get_weight: F) -> usize 
+where F: Fn(&T) -> usize,
 {
   cursor
-    .get_units()
     .iter()
-    .take(cursor.get_head())
+    .take(cursor.head)
     .map(|u| get_weight(u))
     .sum()
 }

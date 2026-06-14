@@ -12,24 +12,26 @@ use unicode_width::UnicodeWidthChar;
 
 
 #[derive(Clone, Debug, Default)]
-pub struct LineCursor<T> {
+pub struct Cursor<T> {
   pub head: usize,
   pub data: Vec<T>,
   pub buff: bool,
 }
-impl<T> Deref for LineCursor<T> {
+
+impl<T> Deref for Cursor<T> {
   type Target = Vec<T>;
   fn deref(&self) -> &Self::Target {
     &self.data
   }
 }
-impl<T> DerefMut for LineCursor<T> {
+
+impl<T> DerefMut for Cursor<T> {
   fn deref_mut(&mut self) -> &mut Self::Target {
     &mut self.data
   }
 }
 
-impl<T> From<Vec<T>> for LineCursor<T> {
+impl<T> From<Vec<T>> for Cursor<T> {
   fn from(item: Vec<T>) -> Self {
     let mut editline = Self {
       buff:  true,
@@ -41,7 +43,7 @@ impl<T> From<Vec<T>> for LineCursor<T> {
   }
 }
 
-impl<T> LineCursor<T> {
+impl<T> Cursor<T> {
   pub fn get_max_head(&self) -> usize {
     match self.buff {
       true  => self.data.len(),
@@ -217,30 +219,43 @@ impl<T> LineCursor<T> {
 
 #[derive(Clone, Debug, Default)]
 pub struct MatrixCursor<T> {
-  pub text:     LineCursor<LineCursor<T>>, 
+  pub matrix:   Cursor<Cursor<T>>, 
   pub indexes:  Vec<usize>,
   pub pref_x:   usize,
 }
 
+impl<T> Deref for MatrixCursor<T> {
+  type Target = Cursor<Cursor<T>>;
+  fn deref(&self) -> &Self::Target {
+    &self.matrix
+  }
+}
+
+impl<T> DerefMut for MatrixCursor<T> {
+  fn deref_mut(&mut self) -> &mut Self::Target {
+    &mut self.matrix
+  }
+}
+
 impl<T> MatrixCursor<T> {
   pub fn get_current_reference_index(&self) -> usize {
-    self.indexes.get(self.text.head)
+    self.indexes.get(self.matrix.head)
       .map(|u| u.clone())
       .unwrap_or(usize::MIN)
   }
 
-  pub fn get_view(&self, axis: LineCursorView) -> Vec<(&usize, &LineCursor<T>)> {
+  pub fn get_view(&self, axis: LineCursorView) -> Vec<(&usize, &Cursor<T>)> {
     let start   = axis.get_scroll();
     let size    = usize::from(axis.get_size());
     let indexes = self.indexes.iter().skip(start).take(size); 
-    let units   = self.text.get_units().iter().skip(start).take(size);
+    let units   = self.matrix.iter().skip(start).take(size);
     indexes.zip(units).collect()
   }
 
   pub fn get_linear_head(&self) -> usize {
-    match self.text.use_current(|c| c.head) {
+    match self.matrix.use_current(|c| c.head) {
       None         => 0,
-      Some(x_head) => self.text.get_units()[..self.text.head]
+      Some(x_head) => self.matrix[..self.matrix.head]
         .iter()
         .map(|line| line.data.len().max(1))
         .chain(std::iter::once(x_head))
@@ -249,36 +264,36 @@ impl<T> MatrixCursor<T> {
   }
 
   pub fn set_linear_head(&mut self, idx: usize) {
-    self.text.move_to_start();
-    self.text.use_current_mut(|c| c.move_to_start());
-    self.text.move_right(idx);
+    self.matrix.move_to_start();
+    self.matrix.use_current_mut(|c| c.move_to_start());
+    self.move_right(idx);
   }
 
   pub fn move_up(&mut self, delta: usize) -> bool {
-    if self.text.move_backward(delta) != delta {
+    if self.matrix.move_backward(delta) != delta {
       let pref_x = self.pref_x;
-      self.text.use_current_mut(|current| current.fit(pref_x));
+      self.matrix.use_current_mut(|current| current.fit(pref_x));
       true
     } else {false}
   }
 
   pub fn move_down(&mut self, delta: usize) -> bool {
-    if self.text.move_forward(delta) != delta {
+    if self.matrix.move_forward(delta) != delta {
       let pref_x = self.pref_x;
-      self.text.use_current_mut(|current| current.fit(pref_x));
+      self.matrix.use_current_mut(|current| current.fit(pref_x));
       true
     } else {false}
   }
 
   pub fn move_left(&mut self, delta: usize) -> usize {
-    let remainder = self.text
+    let remainder = self.matrix
       .use_current_mut(|c| c.move_backward(delta))
       .unwrap_or(delta);
-    if remainder != 0 && self.text.move_backward(1) == 0 {
-      self.text.use_current_mut(|c| c.move_to_end());
+    if remainder != 0 && self.matrix.move_backward(1) == 0 {
+      self.matrix.use_current_mut(|c| c.move_to_end());
       self.move_left(remainder.saturating_sub(1))
     } else {
-      self.pref_x = self.text
+      self.pref_x = self.matrix
         .use_current(|current| current.head)
         .unwrap_or(self.pref_x);
       remainder
@@ -286,14 +301,14 @@ impl<T> MatrixCursor<T> {
   }
 
   pub fn move_right(&mut self, delta: usize) -> usize {
-    let remainder = self.text
+    let remainder = self.matrix
       .use_current_mut(|c| c.move_forward(delta))
       .unwrap_or(delta);
-    if remainder != 0 && self.text.move_forward(1) == 0 {
-      self.text.use_current_mut(|c| c.move_to_start());
+    if remainder != 0 && self.matrix.move_forward(1) == 0 {
+      self.matrix.use_current_mut(|c| c.move_to_start());
       self.move_right(remainder.saturating_sub(1))
     } else {
-      self.pref_x = self.text
+      self.pref_x = self.matrix
         .use_current(|current| current.head)
         .unwrap_or(self.pref_x);
       remainder
@@ -311,11 +326,11 @@ impl MatrixCursor<char> {
           .into_iter()
           .map(move |text| (idx, text.into()))
       );
-    let (idxs, text): (Vec<usize>, Vec<LineCursor<char>>) = rendered.unzip();
+    let (idxs, text): (Vec<usize>, Vec<Cursor<char>>) = rendered.unzip();
     Self {
       pref_x:  0, 
       indexes: idxs,
-      text:    text.into(), 
+      matrix:    text.into(), 
     }
   }
 }
@@ -381,7 +396,7 @@ impl MatrixCursorView {
   }
 
   pub fn resize(&mut self, plane: &MatrixCursor<char>, rect: &Rect) {
-    self.y.resize(plane.get_head(), rect.y, rect.h);
+    self.y.resize(plane.head, rect.y, rect.h);
     self.x.resize(
       plane.use_current(
         |ch| util::get_weighted_head(ch, |ch| ch.width().unwrap_or(0))
@@ -392,7 +407,7 @@ impl MatrixCursorView {
   }
 
   pub fn update(&mut self, plane: &MatrixCursor<char>) -> bool {
-    let y = self.y.update(plane.get_head());
+    let y = self.y.update(plane.head);
     let x = self.x.update(
       plane.use_current(
         |ch| util::get_weighted_head(ch, |ch| ch.width().unwrap_or(0))

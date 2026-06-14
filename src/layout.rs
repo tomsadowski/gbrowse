@@ -3,7 +3,7 @@
 use crate::{
   ViewPort, 
   Rect,
-  LineCursor, 
+  Cursor, 
   MatrixCursor, 
   TextBox,
 };
@@ -16,7 +16,7 @@ pub enum Orientation {
 pub struct Layout {
   pub view:        Rect,
   pub head:        usize,
-  pub windows:     LineCursor<TextBox>,
+  pub windows:     Cursor<TextBox>,
   pub orientation: Orientation,
 }
 
@@ -25,7 +25,7 @@ impl<V: ViewPort> From<V> for Layout {
     Self {
       view:        view.get_view_port(),
       head:        0,
-      windows:     LineCursor::default(),
+      windows:     Cursor::default(),
       orientation: Orientation::Horizontal,
     }
   }

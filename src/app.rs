@@ -572,13 +572,13 @@ impl App {
     self.frame.write_footer(&self.guide, stdout)?;
     if let Focus::Dialog(_, dialog) = &self.focus {
       if self.new_dlg {
-        let tb: TextBox<TextLine> = self.frame.into();
+        let tb: TextBox = self.frame.into();
         tb.empty(stdout)?;
       }
       dialog.write(stdout)?;
     } else {
       if let Some(request) = &self.request {
-        let tb: TextBox<TextLine> = TextBox::from(
+        let tb: TextBox = TextBox::from(
             self.frame.get_view_port().top_row()
           ).reference(
             &vec![format!("(pending response)")],

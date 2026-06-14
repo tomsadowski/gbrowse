@@ -2,8 +2,7 @@
 
 use crate::{
   StyledText, 
-  TextLine,
-  LineCursor, 
+  Cursor, 
   Style, 
   Rect, 
   ViewPort, 
@@ -17,7 +16,7 @@ use std::io::Write;
 pub struct TabManager {
   pub view:  Rect,
   pub style: Style,
-  pub tabs:  LineCursor<Tab>,
+  pub tabs:  Cursor<Tab>,
 } 
 
 impl<V: ViewPort> From<V> for TabManager {
@@ -25,7 +24,7 @@ impl<V: ViewPort> From<V> for TabManager {
     Self {
       view:  view.get_view_port(),
       style: Style::default(),
-      tabs:  LineCursor::default(),
+      tabs:  Cursor::default(),
     }
   }
 }
