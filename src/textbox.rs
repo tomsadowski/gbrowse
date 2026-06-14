@@ -283,12 +283,12 @@ impl TextBox {
     writer
       .queue(SetAttribute(Attribute::Reset))?
       .queue(&self.style)?;
-    for _ in y..self.view.y_end() {
-      for _ in self.view.x_range() {
-        writer.queue(Print(' '))?;
-      }
-      x = self.view.x; y += 1; writer.queue(MoveTo(x, y))?;
-    }
+//  for _ in y..self.view.y_end() {
+//    for _ in self.view.x_range() {
+//      writer.queue(Print(' '))?;
+//    }
+//    x = self.view.x; y += 1; writer.queue(MoveTo(x, y))?;
+//  }
     writer.queue(SetAttribute(Attribute::Reset))?;
     Ok(())
   }
