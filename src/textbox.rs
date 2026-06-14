@@ -165,10 +165,12 @@ impl TextBox {
   }
 
   pub fn insert(&mut self, ch: char) -> bool {
+    eprintln!("maybe inserting {ch}");
     if self.char_matrix
       .use_current_mut(|c| c.insert(ch))
       .unwrap_or(false) 
     {
+      eprintln!("inserted {ch}");
       self.cursor.update(&self.char_matrix);
       self.write = true;
       true

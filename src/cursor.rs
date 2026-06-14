@@ -8,7 +8,6 @@ use crate::{
 };
 use std::ops::{Deref, DerefMut};
 use std::io::Write;
-//use std::str::ToString;
 use unicode_width::UnicodeWidthChar;
 
 
@@ -333,11 +332,11 @@ impl MatrixCursor<char> {
           .into_iter()
           .map(move |text| (idx, text.into()))
       );
-    let (idxs, text): (Vec<usize>, Vec<Cursor<char>>) = rendered.unzip();
+    let (indexes, matrix): (Vec<usize>, Vec<Cursor<char>>) = rendered.unzip();
     Self {
       pref_x:  0, 
-      indexes: idxs,
-      matrix:    text.into(), 
+      matrix:  matrix.into(), 
+      indexes,
     }
   }
 }
