@@ -11,6 +11,7 @@ use crate::{
 };
 use url::Url;
 use std::io::Write;
+use std::ops::{Deref, DerefMut};
 
 
 pub struct TabManager {
@@ -18,6 +19,19 @@ pub struct TabManager {
   pub style: Style,
   pub tabs:  Cursor<Tab>,
 } 
+
+impl Deref for TabManager {
+  type Target = Cursor<Tab>;
+  fn deref(&self) -> &Self::Target {
+    &self.tabs
+  }
+}
+
+impl DerefMut for TabManager {
+  fn deref_mut(&mut self) -> &mut Self::Target {
+    &mut self.tabs
+  }
+}
 
 impl<V: ViewPort> From<V> for TabManager {
   fn from(view: V) -> Self {
@@ -141,8 +155,15 @@ impl TabManager {
 }
 
 pub enum Tab {
+  Text(String, TextBox),
   Gem(UrlTab<GemText>),
   Gopher(UrlTab<String>),
+}
+
+impl Default for Tab {
+  fn default() -> Self {
+    Self::Text("".into(), TextBox::default())
+  }
 }
 
 impl Tab {
@@ -174,7 +195,7 @@ impl Tab {
     } else {None}
   }
 
-  pub fn get_text_tab(&self) ->  Option<(&str, &TextBox<TextLine>)> {
+  pub fn get_text_tab(&self) ->  Option<(&str, &TextBox)> {
     if let Tab::Text(heading, textbox) = self {
       Some((heading, textbox))
     } else {None}
@@ -190,7 +211,7 @@ impl Tab {
       .and_then(|gem_tab| gem_tab.get_current_source())
   }
 
-  pub fn get_textbox(&self) -> &TextBox<TextLine> {
+  pub fn get_textbox(&self) -> &TextBox {
     match self {
       Tab::Text(_, textbox) |
       Tab::Gem(   UrlTab {textbox, ..}) | 
@@ -198,7 +219,7 @@ impl Tab {
     }
   }
 
-  pub fn get_textbox_mut(&mut self) -> &mut TextBox<TextLine> {
+  pub fn get_textbox_mut(&mut self) -> &mut TextBox {
     match self {
       Tab::Text(_, textbox) |
       Tab::Gem(   UrlTab {textbox, ..}) | 
@@ -226,7 +247,8 @@ impl<T> UrlTab<T> {
   {
     Self {
       url:     url.clone(),
-      textbox: TextBox::from(view).reference(&source, to_styled_text),
+      textbox: TextBox::from(view.get_view_port())
+        .reference(&source, to_styled_text),
       source,
     }
   }

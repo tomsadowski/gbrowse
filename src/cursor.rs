@@ -8,6 +8,7 @@ use crate::{
 };
 use std::ops::{Deref, DerefMut};
 use std::io::Write;
+//use std::str::ToString;
 use unicode_width::UnicodeWidthChar;
 
 
@@ -40,6 +41,12 @@ impl<T> From<Vec<T>> for Cursor<T> {
     };
     editline.move_to_end();
     editline
+  }
+}
+
+impl ToString for Cursor<char> {
+  fn to_string(&self) -> String {
+    self.data.iter().collect()
   }
 }
 
@@ -363,11 +370,11 @@ impl ViewPort for MatrixCursorView {
 }
 
 impl MatrixCursorView {
-  pub fn get_x_line(&self) -> LineCursorView {
+  pub fn get_x_view(&self) -> LineCursorView {
     self.x
   }
 
-  pub fn get_y_line(&self) -> LineCursorView {
+  pub fn get_y_view(&self) -> LineCursorView {
     self.y
   }
 

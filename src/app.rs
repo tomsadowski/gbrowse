@@ -572,7 +572,7 @@ impl App {
     self.frame.write_footer(&self.guide, stdout)?;
     if let Focus::Dialog(_, dialog) = &self.focus {
       if self.new_dlg {
-        let tb: TextBox = self.frame.into();
+        let tb: TextBox = self.frame.get_view_port().into();
         tb.empty(stdout)?;
       }
       dialog.write(stdout)?;
