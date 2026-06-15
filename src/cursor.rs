@@ -14,7 +14,7 @@ use unicode_width::UnicodeWidthChar;
 pub struct Cursor<T> {
   pub head: usize,
   pub data: Vec<T>,
-  pub buff: bool,
+  buff:     bool,
 }
 
 impl<T> Deref for Cursor<T> {
@@ -413,7 +413,7 @@ impl MatrixCursorView {
   pub fn get_x_scroll(&self) -> usize          {self.x.get_scroll()}
   pub fn get_y_scroll(&self) -> usize          {self.y.get_scroll()}
 
-  pub fn resize<V>(&mut self, matrix: &IndexedCursor<Cursor<char>>, view: &V)
+  pub fn resize<V>(&mut self, matrix: &Cursor<Cursor<char>>, view: &V)
   where V: ViewPort,
   {
     let rect = view.get_view_port();
@@ -425,7 +425,7 @@ impl MatrixCursorView {
     );
   }
 
-  pub fn update(&mut self, plane: &IndexedCursor<Cursor<char>>) -> bool {
+  pub fn update(&mut self, plane: &Cursor<Cursor<char>>) -> bool {
     let y = self.y.update(plane.head);
     let x = self.x.update(
       plane.use_current(|c| c.get_weighted_head()).unwrap_or(0)
