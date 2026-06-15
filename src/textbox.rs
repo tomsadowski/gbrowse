@@ -9,7 +9,6 @@ use crate::{
   Cursor,
   StyledText, 
   Action, 
-  util,
 };
 use crossterm::{
   QueueableCommand, 
@@ -112,7 +111,7 @@ impl TextBox {
   }
 
   pub fn as_editor(mut self) -> Self {
-    self.matrix.make_editor();
+    self.matrix.make_editor_lines();
     self.cursor.update(&self.matrix);
     self
   }
@@ -265,11 +264,7 @@ impl TextBox {
       .queue(&self.style)?;
     for (index, line) in self.matrix.get_view(cursor.get_y_view()) {
       writer.queue(&self.text[*index].style)?;
-      for c in util::get_weighted_view(
-        &line, 
-        |c| c.width().unwrap_or(0),
-        cursor.get_x_view()
-      ) {
+      for c in line.get_weighted_view(cursor.get_x_view()) {
         writer.queue(Print(c))?;
         x += u16::try_from(c.width().unwrap_or(0)).unwrap();
       }
@@ -284,12 +279,6 @@ impl TextBox {
     writer
       .queue(SetAttribute(Attribute::Reset))?
       .queue(&self.style)?;
-//  for _ in y..self.view.y_end() {
-//    for _ in self.view.x_range() {
-//      writer.queue(Print(' '))?;
-//    }
-//    x = self.view.x; y += 1; writer.queue(MoveTo(x, y))?;
-//  }
     writer.queue(SetAttribute(Attribute::Reset))?;
     Ok(())
   }
