@@ -282,16 +282,16 @@ impl<T> Cursor<Cursor<T>> {
   }
 
   pub fn move_up(&mut self, delta: usize) -> bool {
+    let pref_x = self.use_current_mut(|current| current.head).unwrap_or(0);
     if self.move_backward(delta) != delta {
-      let pref_x = self.head;
       self.use_current_mut(|current| current.fit(pref_x));
       true
     } else {false}
   }
 
   pub fn move_down(&mut self, delta: usize) -> bool {
+    let pref_x = self.use_current_mut(|current| current.head).unwrap_or(0);
     if self.move_forward(delta) != delta {
-      let pref_x = self.head;
       self.use_current_mut(|current| current.fit(pref_x));
       true
     } else {false}
