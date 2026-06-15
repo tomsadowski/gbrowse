@@ -14,7 +14,7 @@ pub struct StyledText {
   pub text:  String,
 }
 
-/// wrap default to true, style default
+// wrap default to true, style default
 impl From<&str> for StyledText {
   fn from(s: &str) -> Self {
     Self {
@@ -23,7 +23,7 @@ impl From<&str> for StyledText {
   }
 }
 
-/// wrap default to true, style default
+// wrap default to true, style default
 impl From<String> for StyledText {
   fn from(s: String) -> Self {
     Self {
@@ -32,7 +32,7 @@ impl From<String> for StyledText {
   }
 }
 
-/// init with empty string
+// init with empty string
 impl From<TextStyle> for StyledText {
   fn from(t: TextStyle) -> Self {
     Self {

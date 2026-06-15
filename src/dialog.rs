@@ -28,16 +28,20 @@ impl Dialog {
   {
     let prompt_box = TextBox::from(
         view.get_view_port().crop_south(2)
-      ).reference(
+      )
+      .reference(
         &vec![prompt], 
         |p| StyledText::from(*p).style(style)
-      ).style(style);
+      )
+      .style(style);
     let response_box = TextBox::from(
         prompt_box.used_rect().bottom_row()
-      ).reference(
+      )
+      .reference(
         &vec![input], 
         |i| StyledText::from(*i).style(style)
-      ).style(style);
+      )
+      .style(style);
     Dialog {
       prompt: prompt_box,
       input:  DlgInput::Ack(response_box),

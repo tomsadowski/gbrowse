@@ -47,7 +47,6 @@ impl ViewPort for TextBox {
   fn get_view_port(&self) -> Rect {self.view}
 }
 
-
 impl TextBox {
   pub fn get_current_reference_string(&self) -> String {
     self.text

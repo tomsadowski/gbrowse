@@ -305,7 +305,6 @@ impl<T> Cursor<Cursor<T>> {
       self.use_current_mut(|c| c.move_to_end());
       self.move_left(remainder.saturating_sub(1))
     } else {
-      // set pref_x
       remainder
     }
   }
@@ -318,7 +317,6 @@ impl<T> Cursor<Cursor<T>> {
       self.use_current_mut(|c| c.move_to_start());
       self.move_right(remainder.saturating_sub(1))
     } else {
-      // set pref_x
       remainder
     }
   }
