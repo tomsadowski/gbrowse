@@ -25,8 +25,13 @@ pub struct TextBox {
   pub text:           Vec<StyledText>,
   pub matrix:         IndexedCursor<Cursor<char>>,
   pub cursor:         MatrixCursorView,
+  pub pref_x:         usize,
   pub write:          bool,
   pub show_cursor:    bool,
+}
+
+impl ViewPort for TextBox {
+  fn get_view_port(&self) -> Rect {self.view}
 }
 
 impl From<Rect> for TextBox {
@@ -34,6 +39,7 @@ impl From<Rect> for TextBox {
     Self {
       write:          true,
       show_cursor:    false,
+      pref_x:         0,
       style:          Style::default(),
       text:           vec![StyledText::default()],
       cursor:         MatrixCursorView::from(&view), 
@@ -41,10 +47,6 @@ impl From<Rect> for TextBox {
       view:           view.get_view_port(),
     }
   }
-}
-
-impl ViewPort for TextBox {
-  fn get_view_port(&self) -> Rect {self.view}
 }
 
 impl TextBox {
@@ -197,6 +199,7 @@ impl TextBox {
 
   pub fn move_left(&mut self, delta: usize) -> bool {
     if self.matrix.move_left(delta) == 0 {
+      self.pref_x = self.matrix.use_current(|c| c.head).unwrap_or(0);
       self.write = self.cursor.update(&self.matrix);
       true
     } else {false}
@@ -204,6 +207,7 @@ impl TextBox {
 
   pub fn move_right(&mut self, delta: usize) -> bool {
     if self.matrix.move_right(delta) == 0 {
+      self.pref_x = self.matrix.use_current(|c| c.head).unwrap_or(0);
       self.write = self.cursor.update(&self.matrix);
       true
     } else {false}
@@ -211,6 +215,7 @@ impl TextBox {
 
   pub fn move_down(&mut self, delta: usize) -> bool {
     if self.matrix.move_down(delta) {
+      self.matrix.use_current_mut(|c| c.fit(self.pref_x));
       self.write = self.cursor.update(&self.matrix);
       true
     } else {false}
@@ -218,6 +223,7 @@ impl TextBox {
 
   pub fn move_up(&mut self, delta: usize) -> bool {
     if self.matrix.move_up(delta) {
+      self.matrix.use_current_mut(|c| c.fit(self.pref_x));
       self.write = self.cursor.update(&self.matrix);
       true
     } else {false}
