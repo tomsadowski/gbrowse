@@ -3,9 +3,10 @@
 use crate::{
   ViewPort, 
   Rect,
-  MatrixCursor, 
+  IndexedCursor, 
   MatrixCursorView,
   Style, 
+  Cursor,
   StyledText, 
   Action, 
   util,
@@ -23,7 +24,7 @@ pub struct TextBox {
   pub view:           Rect,
   pub style:          Style,
   pub text:           Vec<StyledText>,
-  pub matrix:         MatrixCursor<char>,
+  pub matrix:         IndexedCursor<Cursor<char>>,
   pub cursor:         MatrixCursorView,
   pub write:          bool,
   pub show_cursor:    bool,
@@ -37,7 +38,7 @@ impl From<Rect> for TextBox {
       style:          Style::default(),
       text:           vec![StyledText::default()],
       cursor:         MatrixCursorView::from(&view), 
-      matrix:         MatrixCursor::default(),
+      matrix:         IndexedCursor::default(),
       view:           view.get_view_port(),
     }
   }
@@ -105,7 +106,7 @@ impl TextBox {
   where F: Fn(&R) -> StyledText,
   {
     self.text   = reference.iter().map(|i| to_styled_text(i)).collect();
-    self.matrix = MatrixCursor::new(&self.view, &self.text);
+    self.matrix = IndexedCursor::new(&self.view, &self.text);
     self.cursor.update(&self.matrix);
     self
   }
@@ -120,7 +121,7 @@ impl TextBox {
   where F: Fn(&R) -> StyledText,
   {
     self.text   = reference.iter().map(|i| to_styled_text(i)).collect();
-    self.matrix = MatrixCursor::new(&self.view, &self.text);
+    self.matrix = IndexedCursor::new(&self.view, &self.text);
     self.cursor.update(&self.matrix);
   }
 
@@ -129,7 +130,7 @@ impl TextBox {
   {
     let linear_head = self.matrix.get_linear_head();
     self.text       = reference.iter().map(|i| to_styled_text(i)).collect();
-    self.matrix     = MatrixCursor::new(&self.view, &self.text);
+    self.matrix     = IndexedCursor::new(&self.view, &self.text);
     self.matrix.set_linear_head(linear_head);
     self.cursor.update(&self.matrix);
     self.reset_state();
@@ -138,7 +139,7 @@ impl TextBox {
   pub fn resize<V: ViewPort>(&mut self, view: V) {
     let linear_head = self.matrix.get_linear_head();
     self.view       = view.get_view_port();
-    self.matrix     = MatrixCursor::new(&view, &self.text);
+    self.matrix     = IndexedCursor::new(&view, &self.text);
     self.matrix.set_linear_head(linear_head);
     self.cursor.resize(&self.matrix, &view);
     self.reset_state();

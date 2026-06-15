@@ -37,7 +37,7 @@ pub use crate::usertraits::{
 };
 pub use crate::cursor::{
   Cursor, 
-  MatrixCursor,
+  IndexedCursor,
   MatrixCursorView,
   LineCursorView,
 };
