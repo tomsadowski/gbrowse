@@ -87,15 +87,6 @@ impl<T> Cursor<T> {
       .collect() 
   }
 
-  pub fn get_indexed_view(&self, axis: LineCursorView) -> Vec<(usize, &T)> {
-    self.data
-      .iter()
-      .enumerate()
-      .skip(axis.get_scroll())
-      .take(axis.get_size().into())
-      .collect() 
-  }
-
   pub fn peek_backward(&self, delta: usize) -> usize {
     if delta > self.head {
       delta - self.head
@@ -350,11 +341,12 @@ impl<T> IndexedCursor<T> {
   }
 
   pub fn get_view(&self, axis: LineCursorView) -> Vec<(&usize, &T)> {
-    let start   = axis.get_scroll();
-    let size    = usize::from(axis.get_size());
-    let indexes = self.indexes.iter().skip(axis.get_scroll()).take(size); 
-    let units   = self.matrix.iter().skip(axis.get_scroll()).take(size);
-    indexes.zip(units).collect()
+    self.indexes
+      .iter()
+      .zip(self.matrix.iter())
+      .skip(axis.get_scroll())
+      .take(usize::from(axis.get_size()))
+      .collect()
   }
 }
 
@@ -425,10 +417,10 @@ impl MatrixCursorView {
     );
   }
 
-  pub fn update(&mut self, plane: &Cursor<Cursor<char>>) -> bool {
-    let y = self.y.update(plane.head);
+  pub fn update(&mut self, matrix: &Cursor<Cursor<char>>) -> bool {
+    let y = self.y.update(matrix.head);
     let x = self.x.update(
-      plane.use_current(|c| c.get_weighted_head()).unwrap_or(0)
+      matrix.use_current(|c| c.get_weighted_head()).unwrap_or(0)
     );
     x || y
   }
