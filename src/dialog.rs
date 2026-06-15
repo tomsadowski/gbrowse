@@ -50,16 +50,20 @@ impl Dialog {
   {
     let prompt_box = TextBox::from(
         view.get_view_port().crop_south(2)
-      ).reference(
+      )
+      .reference(
         &vec![prompt], 
         |p| StyledText::from(*p).style(style)
-      ).style(style);
+      )
+      .style(style);
     let response_box = TextBox::from(
         prompt_box.used_rect().bottom_row()
-      ).reference(
+      )
+      .reference(
         &vec![input], 
         |i| StyledText::from(*i).style(style)
-      ).style(style);
+      )
+      .style(style);
     Dialog {
       prompt: prompt_box,
       input:  DlgInput::Ask(response_box),
@@ -73,15 +77,19 @@ impl Dialog {
   {
     let prompt_box = TextBox::from(
         view.get_view_port().crop_south(2)
-      ).reference(
+      )
+      .reference(
         &vec![prompt], 
         |p| StyledText::from(*p).style(style)
-      ).style(style);
+      )
+      .style(style);
     let response_box = TextBox::from(
         view.get_view_port().crop_north(prompt_box.used_rect().h)
-      ).reference(
+      )
+      .reference(
         &input, |s| StyledText::from(s.as_str()).style(style)
-      ).style(style);
+      )
+      .style(style);
     Dialog {
       prompt: prompt_box,
       input:  DlgInput::Select(response_box),
@@ -94,16 +102,21 @@ impl Dialog {
   {
     let prompt_box = TextBox::from(
         view.get_view_port().crop_south(2)
-      ).reference(
+      )
+      .reference(
         &vec![prompt], 
         |p| StyledText::from(*p).style(style)
-      ).style(style);
+      )
+      .style(style);
     let response_box = TextBox::from(
         prompt_box.used_rect().bottom_row()
-      ).reference(
+      )
+      .reference(
         &vec![text], 
         |p| StyledText::from(*p).style(style)
-      ).style(style).editor();
+      )
+      .style(style)
+      .as_editor();
     Dialog {
       prompt: prompt_box,
       input:  DlgInput::Edit(response_box),
@@ -114,9 +127,7 @@ impl Dialog {
     self.prompt.resize(rect.get_view_port().crop_south(2));
     match &mut self.input {
       DlgInput::Ack(r) | 
-      DlgInput::Ask(r) => {
-        r.resize(self.prompt.used_rect().bottom_row());
-      }
+      DlgInput::Ask(r) |
       DlgInput::Edit(r) => {
         r.resize(self.prompt.used_rect().bottom_row());
       }

@@ -21,10 +21,10 @@ use std::io::Write;
 #[derive(Default)]
 pub struct TextBox {
   pub view:           Rect,
-  pub cursor:         MatrixCursorView,
-  pub styled_text:    Vec<StyledText>,
-  pub char_matrix:    MatrixCursor<char>,
   pub style:          Style,
+  pub text:           Vec<StyledText>,
+  pub matrix:         MatrixCursor<char>,
+  pub cursor:         MatrixCursorView,
   pub write:          bool,
   pub show_cursor:    bool,
 }
@@ -35,9 +35,9 @@ impl From<Rect> for TextBox {
       write:          true,
       show_cursor:    false,
       style:          Style::default(),
-      styled_text:    vec![StyledText::default()],
+      text:           vec![StyledText::default()],
       cursor:         MatrixCursorView::from(&view), 
-      char_matrix:    MatrixCursor::default(),
+      matrix:         MatrixCursor::default(),
       view:           view.get_view_port(),
     }
   }
@@ -50,14 +50,14 @@ impl ViewPort for TextBox {
 
 impl TextBox {
   pub fn get_current_reference_string(&self) -> String {
-    self.styled_text
-      .get(self.char_matrix.get_current_reference_index())
+    self.text
+      .get(self.matrix.get_current_reference_index())
       .map(|t| t.text.clone())
       .unwrap_or("empty".into())
   }
 
   pub fn get_current_reference_index(&self) -> usize {
-    self.char_matrix.get_current_reference_index()
+    self.matrix.get_current_reference_index()
   }
 
   pub fn style<S>(mut self, style: S) -> Self 
@@ -73,7 +73,7 @@ impl TextBox {
   }
 
   pub fn used_rect(&self) -> Rect {
-    if let Ok(h) = u16::try_from(self.char_matrix.len()) {
+    if let Ok(h) = u16::try_from(self.matrix.len()) {
       self.view.cap_height(h)
     } else {
       self.view
@@ -104,78 +104,78 @@ impl TextBox {
   ) -> Self 
   where F: Fn(&R) -> StyledText,
   {
-    self.styled_text = reference.iter().map(|i| to_styled_text(i)).collect();
-    self.char_matrix = MatrixCursor::new(&self.view, &self.styled_text);
-    self.cursor.update(&self.char_matrix);
+    self.text   = reference.iter().map(|i| to_styled_text(i)).collect();
+    self.matrix = MatrixCursor::new(&self.view, &self.text);
+    self.cursor.update(&self.matrix);
     self
   }
 
-  pub fn editor(mut self) -> Self {
-    self.char_matrix.make_editor();
-    self.cursor.update(&self.char_matrix);
+  pub fn as_editor(mut self) -> Self {
+    self.matrix.make_editor();
+    self.cursor.update(&self.matrix);
     self
   }
 
   pub fn set_reference<R, F>(&mut self, reference: &Vec<R>, to_styled_text: F)
   where F: Fn(&R) -> StyledText,
   {
-    self.styled_text = reference.iter().map(|i| to_styled_text(i)).collect();
-    self.char_matrix  = MatrixCursor::new(&self.view, &self.styled_text);
-    self.cursor.update(&self.char_matrix);
+    self.text   = reference.iter().map(|i| to_styled_text(i)).collect();
+    self.matrix = MatrixCursor::new(&self.view, &self.text);
+    self.cursor.update(&self.matrix);
   }
 
   pub fn restyle<R, F>(&mut self, reference: &Vec<R>, to_styled_text: F) 
   where F: Fn(&R) -> StyledText,
   {
-    let linear_head  = self.char_matrix.get_linear_head();
-    self.styled_text = reference.iter().map(|i| to_styled_text(i)).collect();
-    self.char_matrix  = MatrixCursor::new(&self.view, &self.styled_text);
-    self.char_matrix.set_linear_head(linear_head);
-    self.cursor.update(&self.char_matrix);
+    let linear_head = self.matrix.get_linear_head();
+    self.text       = reference.iter().map(|i| to_styled_text(i)).collect();
+    self.matrix     = MatrixCursor::new(&self.view, &self.text);
+    self.matrix.set_linear_head(linear_head);
+    self.cursor.update(&self.matrix);
     self.reset_state();
   }
 
   pub fn resize<V: ViewPort>(&mut self, view: V) {
-    let linear_head  = self.char_matrix.get_linear_head();
-    self.view        = view.get_view_port();
-    self.char_matrix = MatrixCursor::new(&view, &self.styled_text);
-    self.char_matrix.set_linear_head(linear_head);
-    self.cursor.resize(&self.char_matrix, &self.view);
+    let linear_head = self.matrix.get_linear_head();
+    self.view       = view.get_view_port();
+    self.matrix     = MatrixCursor::new(&view, &self.text);
+    self.matrix.set_linear_head(linear_head);
+    self.cursor.resize(&self.matrix, &view);
     self.reset_state();
   }
 
   pub fn get_current_string(&self) -> Option<String> {
-    self.char_matrix.use_current(|c| c.to_string())
+    self.matrix.use_current(|c| c.to_string())
   }
 
   pub fn delete(&mut self) -> bool {
-    if self.char_matrix
+    if self.matrix
       .use_current_mut(|c| c.delete())
       .unwrap_or(false) 
     {
-      self.cursor.update(&self.char_matrix);
+      self.cursor.update(&self.matrix);
       self.write = true;
       true
     } else {false}
   }
 
   pub fn backspace(&mut self) -> bool {
-    if self.char_matrix
+    if self.matrix
       .use_current_mut(|c| c.backspace())
       .unwrap_or(false) 
     {
-      self.cursor.update(&self.char_matrix);
+      self.cursor.update(&self.matrix);
       self.write = true;
       true
     } else {false}
   }
 
   pub fn insert(&mut self, ch: char) -> bool {
-    if self.char_matrix
+    if self.matrix
       .use_current_mut(|c| c.insert(ch))
       .unwrap_or(false) 
     {
-      self.cursor.update(&self.char_matrix);
+      self.cursor.update(&self.matrix);
       self.write = true;
       true
     } else {false}
@@ -197,29 +197,29 @@ impl TextBox {
   }
 
   pub fn move_left(&mut self, delta: usize) -> bool {
-    if self.char_matrix.move_left(delta) == 0 {
-      self.write = self.cursor.update(&self.char_matrix);
+    if self.matrix.move_left(delta) == 0 {
+      self.write = self.cursor.update(&self.matrix);
       true
     } else {false}
   }
 
   pub fn move_right(&mut self, delta: usize) -> bool {
-    if self.char_matrix.move_right(delta) == 0 {
-      self.write = self.cursor.update(&self.char_matrix);
+    if self.matrix.move_right(delta) == 0 {
+      self.write = self.cursor.update(&self.matrix);
       true
     } else {false}
   }
 
   pub fn move_down(&mut self, delta: usize) -> bool {
-    if self.char_matrix.move_down(delta) {
-      self.write = self.cursor.update(&self.char_matrix);
+    if self.matrix.move_down(delta) {
+      self.write = self.cursor.update(&self.matrix);
       true
     } else {false}
   }
 
   pub fn move_up(&mut self, delta: usize) -> bool {
-    if self.char_matrix.move_up(delta) {
-      self.write = self.cursor.update(&self.char_matrix);
+    if self.matrix.move_up(delta) {
+      self.write = self.cursor.update(&self.matrix);
       true
     } else {false}
   }
@@ -228,8 +228,8 @@ impl TextBox {
     match action {
       Action::PageDown  => {self.move_down(usize::from(self.view.h));}
       Action::PageUp    => {self.move_up(usize::from(self.view.h));}
-      Action::Bottom    => {self.move_down(self.char_matrix.len());}
-      Action::Top       => {self.move_up(self.char_matrix.len());}
+      Action::Bottom    => {self.move_down(self.matrix.len());}
+      Action::Top       => {self.move_up(self.matrix.len());}
       Action::MoveDown  => {self.move_down(1);}
       Action::MoveUp    => {self.move_up(1);}
       Action::MoveLeft  => {self.move_left(1);}
@@ -253,7 +253,7 @@ impl TextBox {
     let mut cursor = self.cursor.clone();
     if overlay > 0 {
       cursor.resize(
-        &self.char_matrix, &self.view.crop_north(overlay)
+        &self.matrix, &self.view.crop_north(overlay)
       );
     }
     let mut x = cursor.get_x_view().get_start();
@@ -262,8 +262,8 @@ impl TextBox {
       .queue(MoveTo(x, y))?
       .queue(SetAttribute(Attribute::Reset))?
       .queue(&self.style)?;
-    for (index, line) in self.char_matrix.get_view(cursor.get_y_view()) {
-      writer.queue(&self.styled_text[*index].style)?;
+    for (index, line) in self.matrix.get_view(cursor.get_y_view()) {
+      writer.queue(&self.text[*index].style)?;
       for c in util::get_weighted_view(
         &line, 
         |c| c.width().unwrap_or(0),

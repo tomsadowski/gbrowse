@@ -381,11 +381,16 @@ impl MatrixCursorView {
   pub fn get_x_scroll(&self) -> usize          {self.x.get_scroll()}
   pub fn get_y_scroll(&self) -> usize          {self.y.get_scroll()}
 
-  pub fn resize(&mut self, plane: &MatrixCursor<char>, rect: &Rect) {
-    self.y.resize(plane.head, rect.y, rect.h);
+  pub fn resize<V>(&mut self, matrix: &MatrixCursor<char>, view: &V)
+  where V: ViewPort,
+  {
+    let rect = view.get_view_port();
+    self.y.resize(matrix.head, rect.y, rect.h);
     self.x.resize(
-      plane.use_current(
-        |ch| util::get_weighted_head(ch, |ch| ch.width().unwrap_or(0))
+      matrix.use_current(
+        |y| util::get_weighted_head(
+          y, |x| x.width().unwrap_or(0)
+        )
       ).unwrap_or(0), 
       rect.x, 
       rect.w

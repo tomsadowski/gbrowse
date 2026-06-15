@@ -4,7 +4,6 @@ use crate::{
   ViewPort, 
   Rect,
   Cursor, 
-  MatrixCursor, 
   TextBox,
 };
 
