@@ -4,7 +4,6 @@ use crate::{
   ViewPort,
   StyledText,
   Rect,
-  util,
 };
 use std::ops::{Deref, DerefMut};
 use std::io::Write;
@@ -83,6 +82,15 @@ impl<T> Cursor<T> {
   pub fn get_unit_view(&self, axis: LineCursorView) -> Vec<&T> {
     self.data
       .iter()
+      .skip(axis.get_scroll())
+      .take(axis.get_size().into())
+      .collect() 
+  }
+
+  pub fn get_indexed_view(&self, axis: LineCursorView) -> Vec<(usize, &T)> {
+    self.data
+      .iter()
+      .enumerate()
       .skip(axis.get_scroll())
       .take(axis.get_size().into())
       .collect() 
@@ -217,6 +225,35 @@ impl<T> Cursor<T> {
       self.move_forward(1);
       true
     }
+  }
+}
+
+impl Cursor<char> {
+  pub fn get_weighted_head(&self) -> usize {
+    self
+      .iter()
+      .take(self.head)
+      .map(|c| c.width().unwrap_or(0))
+      .sum()
+  }
+
+  pub fn get_weighted_length(&self) -> usize {
+    self
+      .iter()
+      .map(|c| c.width().unwrap_or(0))
+      .sum()
+  }
+
+  pub fn get_weighted_view(&self, axis: LineCursorView) -> Vec<&char> {
+    let size         = usize::from(axis.get_size());  
+    let mut text     = self.iter().skip(axis.get_scroll());
+    let mut acc_size = 0;
+    let mut result   = vec![];
+    while let Some(c) = text.next() && acc_size < size {
+      acc_size += c.width().unwrap_or(0);
+      result.push(c);
+    }
+    result
   }
 }
 
@@ -384,11 +421,7 @@ impl MatrixCursorView {
     let rect = view.get_view_port();
     self.y.resize(matrix.head, rect.y, rect.h);
     self.x.resize(
-      matrix.use_current(
-        |y| util::get_weighted_head(
-          y, |x| x.width().unwrap_or(0)
-        )
-      ).unwrap_or(0), 
+      matrix.use_current(|c| c.get_weighted_head()).unwrap_or(0), 
       rect.x, 
       rect.w
     );
@@ -397,9 +430,7 @@ impl MatrixCursorView {
   pub fn update(&mut self, plane: &IndexedCursor<Cursor<char>>) -> bool {
     let y = self.y.update(plane.head);
     let x = self.x.update(
-      plane.use_current(
-        |ch| util::get_weighted_head(ch, |ch| ch.width().unwrap_or(0))
-      ).unwrap_or(0)
+      plane.use_current(|c| c.get_weighted_head()).unwrap_or(0)
     );
     x || y
   }
