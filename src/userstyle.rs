@@ -14,7 +14,6 @@ use crate::{
   Style,
   coreui as ui,
 };
-use toml::Value;
 
 
 #[derive(Copy, Clone, Default, Debug)]
@@ -64,7 +63,10 @@ impl UserStyle {
 
 impl Assign for UserStyle {
   type Field = StyleTableField;
-  fn assign(&mut self, f: Self::Field, v: Value) -> Result<(), String> {
+  fn assign(&mut self, f: Self::Field, v: toml::Value) 
+    -> Result<(), String> 
+  {
+    use toml::Value;
     match (f, v) {
       (StyleTableField::Border, Value::Table(v)) => {
         self.border = BorderStyle::default().read_table(v)?;
@@ -103,7 +105,10 @@ impl Assign for UserStyle {
 
 impl Assign for Style {
   type Field = StyleField;
-  fn assign(&mut self, f: Self::Field, v: Value) -> Result<(), String> {
+  fn assign(&mut self, f: Self::Field, v: toml::Value) 
+    -> Result<(), String> 
+  {
+    use toml::Value;
     match (f, v) {
       (StyleField::Color(f), v) => {
         let v = ui::parse_color(&v).map_err(|e| format!("{v:?} : {e}"))?;
@@ -128,7 +133,10 @@ impl Assign for Style {
 
 impl Assign for Margins {
   type Field = MarginField;
-  fn assign(&mut self, f: Self::Field, v: Value) -> Result<(), String> {
+  fn assign(&mut self, f: Self::Field, v: toml::Value) 
+    -> Result<(), String> 
+  {
+    use toml::Value;
     match (f, v) {
       (f, Value::Integer(v)) => {
         let v = u16::try_from(v).map_err(|e| format!("{v:?} : {e}"))?;
@@ -149,7 +157,10 @@ impl Assign for Margins {
 
 impl Assign for BorderStyle {
   type Field = BorderField;
-  fn assign(&mut self, f: Self::Field, v: Value) -> Result<(), String> {
+  fn assign(&mut self, f: Self::Field, v: toml::Value) 
+    -> Result<(), String> 
+  {
+    use toml::Value;
     match (f, v) {
       (BorderField::Style(f), v) => {
         self.style.assign(f, v)?;
@@ -210,7 +221,10 @@ impl Assign for BorderStyle {
 
 impl Assign for TextStyle {
   type Field = TextField;
-  fn assign(&mut self, f: Self::Field, v: Value) -> Result<(), String> {
+  fn assign(&mut self, f: Self::Field, v: toml::Value) 
+    -> Result<(), String> 
+  {
+    use toml::Value;
     match (f, v) {
       (TextField::Wrap, Value::Boolean(v)) => {
         self.wrap = v;
@@ -284,6 +298,7 @@ impl std::str::FromStr for StyleTableField {
 pub enum MarginField {
   North, South, East, West,
 }
+
 impl std::str::FromStr for MarginField {
   type Err = String;
   fn from_str(s: &str) -> Result<Self, Self::Err> {

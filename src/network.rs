@@ -1,26 +1,18 @@
 // src/network.rs
 
-use url::Url;
-use std::{
-  thread,
-  sync::mpsc,
-  time::Duration, 
-  io::{Write, Read},
-  net::{TcpStream, ToSocketAddrs},
-};
-
 
 pub struct Request {
-  pub url:    Url,
-  pub rx:     mpsc::Receiver<Result<(String, String), String>>,
-  pub handle: thread::JoinHandle<()>,
+  pub url:    url::Url,
+  pub rx:     std::sync::mpsc::Receiver<Result<(String, String), String>>,
+  pub handle: std::thread::JoinHandle<()>,
 }
 
 impl Request {
-  pub fn new(url: &Url, timeout: u64) -> Self {
+  pub fn new(url: &url::Url, timeout: u64) -> Self {
+    use std::sync::mpsc;
     let (tx, rx)  = mpsc::channel::<Result<(String, String), String>>();
     let url_clone = url.clone();
-    let handle = thread::spawn(
+    let handle = std::thread::spawn(
       move || {
         let result = get_data(&url_clone, timeout);
         tx.send(result).unwrap();
@@ -30,7 +22,14 @@ impl Request {
 }
 
 // returns response and content
-pub fn get_data(url: &Url, timeout: u64) -> Result<(String, String), String> {
+pub fn get_data(url: &url::Url, timeout: u64) 
+  -> Result<(String, String), String> 
+{
+  use std::{
+    time::Duration, 
+    io::{Write, Read},
+    net::{TcpStream, ToSocketAddrs},
+  };
   let host = url.host_str().unwrap_or("");
   let urlf = format!("{}:1965", host);
   // get connector

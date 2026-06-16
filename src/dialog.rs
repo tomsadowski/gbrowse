@@ -6,7 +6,6 @@ use crate::{
   Style, 
   ViewPort,
 };
-use std::io::Write;
 
 
 pub enum DlgInput {
@@ -141,7 +140,9 @@ impl Dialog {
     }
   }
 
-  pub fn write<W: Write>(&self, writer: &mut W) -> std::io::Result<()> {
+  pub fn write<W: std::io::Write>(&self, writer: &mut W) 
+    -> std::io::Result<()> 
+  {
     self.prompt.write(writer, 0)?;
     match &self.input {
       DlgInput::Ack(r) | 

@@ -10,8 +10,6 @@ use crate::{
   GemText,
 };
 use url::Url;
-use std::io::Write;
-use std::ops::{Deref, DerefMut};
 
 
 pub struct TabManager {
@@ -20,14 +18,14 @@ pub struct TabManager {
   pub tabs:  Cursor<Tab>,
 } 
 
-impl Deref for TabManager {
+impl std::ops::Deref for TabManager {
   type Target = Cursor<Tab>;
   fn deref(&self) -> &Self::Target {
     &self.tabs
   }
 }
 
-impl DerefMut for TabManager {
+impl std::ops::DerefMut for TabManager {
   fn deref_mut(&mut self) -> &mut Self::Target {
     &mut self.tabs
   }
@@ -140,7 +138,7 @@ impl TabManager {
     }
   }
 
-  pub fn write<W: Write>(&self, writer: &mut W, overlay: u16) 
+  pub fn write<W: std::io::Write>(&self, writer: &mut W, overlay: u16) 
     -> std::io::Result<()> 
   {
     if let Some(tab) = self.get_current() {

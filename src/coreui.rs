@@ -1,29 +1,10 @@
 // src/coreui.rs
 
-use crossterm::{
-  style::{SetStyle, ContentStyle, Attribute, Attributes, Color},
-};
-use toml::Value;
-use std::ops::Range;
+use crossterm::style::Color;
 
 
 pub trait ViewPort {
   fn get_view_port(&self) -> Rect;
-}
-
-#[derive(Copy, Clone, Default)]
-pub struct ViewAxis {
-  pub start: u16,
-  pub size:  u16,
-}
-
-impl ViewAxis {
-  pub fn range(&self) -> Range<u16> {
-    Range {
-      start: self.start, 
-      end:   self.start + self.size,
-    }
-  }
 }
 
 #[derive(Copy, Clone, Default)]
@@ -145,23 +126,15 @@ impl Rect {
      self.y_end().saturating_sub(1))
   }
 
-  pub fn x_axis(&self) -> ViewAxis {
-    ViewAxis {start: self.x, size: self.w}
-  }
-
-  pub fn y_axis(&self) -> ViewAxis {
-    ViewAxis {start: self.y, size: self.h}
-  }
-
-  pub fn x_range(&self) -> Range<u16> {
-    Range {
+  pub fn x_range(&self) -> std::ops::Range<u16> {
+    std::ops::Range {
       start: self.x, 
       end:   self.x_end()
     }
   }
 
-  pub fn y_range(&self) -> Range<u16> {
-    Range {
+  pub fn y_range(&self) -> std::ops::Range<u16> {
+    std::ops::Range {
       start: self.y, 
       end:   self.y_end()
     }
@@ -204,14 +177,17 @@ pub const CLOSE_INT: char = '\u{2321}';
 pub const OPEN_L:  char = '\u{2308}';
 pub const CLOSE_L: char = '\u{230B}';
 
-pub fn parse_color(v: &Value) -> Result<Color, String> {
+pub fn parse_color(v: &toml::Value) -> Result<Color, String> {
   match v {
-    Value::String(s) => if let Some('#') = s.chars().next() {
-      parse_hex_color(&s[1..])
-    } else {
-      parse_color_name(&s)
-    }
-    _ => Err(format!("could not parse color from value {v}")),
+    toml::Value::String(s) => 
+      if let Some('#') = s.chars().next() {
+        parse_hex_color(&s[1..])
+      } else {
+        parse_color_name(&s)
+      }
+    _ => Err(
+      format!("could not parse color from value {v}")
+    ),
   }
 }
 
@@ -294,6 +270,9 @@ impl From<TextStyle> for Style {
 
 impl crossterm::Command for Style {
   fn write_ansi(&self, f: &mut impl std::fmt::Write) -> std::fmt::Result {
+    use crossterm::{
+      style::{SetStyle, ContentStyle, Attribute, Attributes},
+    };
     let mut contentstyle = ContentStyle::new();
     contentstyle.foreground_color = self.fg;
     contentstyle.background_color = self.bg;

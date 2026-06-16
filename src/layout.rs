@@ -8,35 +8,45 @@ use crate::{
 };
 
 
-pub enum Orientation {
-  Horizontal, Vertical,
+pub enum Direction {
+  NorthSouth,
+  SouthNorth,
+  WestEast, 
+  EastWest,
 }
 
-pub struct Layout {
+pub struct ViewStack {
   pub view:        Rect,
-  pub head:        usize,
   pub windows:     Cursor<TextBox>,
-  pub orientation: Orientation,
+  pub orientation: Direction,
 }
 
-impl<V: ViewPort> From<V> for Layout {
+impl<V: ViewPort> From<V> for ViewStack {
   fn from(view: V) -> Self {
     Self {
       view:        view.get_view_port(),
-      head:        0,
       windows:     Cursor::default(),
-      orientation: Orientation::Horizontal,
+      orientation: Direction::NorthSouth,
     }
   }
 }
 
-impl Layout {
+impl ViewStack {
   fn get_weight(&self, window: &TextBox) -> usize {
     match self.orientation {
-      Orientation::Horizontal => 
+      Direction::WestEast | Direction::EastWest => 
         window.get_view_port().w.into(),
-      Orientation::Vertical => 
+      Direction::NorthSouth | Direction::SouthNorth => 
         window.get_view_port().h.into(),
     }
+  }
+
+  pub fn write<W: std::io::Write>(&self, writer: &mut W) 
+    -> std::io::Result<()> 
+  {
+    for textbox in self.windows.iter() {
+      textbox.write(writer, 0)?;
+    }
+    Ok(())
   }
 }

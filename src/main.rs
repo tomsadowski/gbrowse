@@ -53,7 +53,6 @@ pub use crate::coreui::{
   BorderStyle, 
   Margins, 
   ViewPort, 
-  ViewAxis,
   Rect, 
 };
 pub use crate::dialog::{
@@ -75,7 +74,6 @@ fn main() -> std::io::Result<()> {
   use std::{
     io::Write, time::Duration, env,
   };
-
   // initialize app
   let mut app = {
     let args = env::args().collect::<Vec<String>>();

@@ -7,12 +7,6 @@ use crate::{
   Margins, 
   BorderStyle,
 };
-use crossterm::{
-  QueueableCommand, 
-  cursor::{self, MoveTo}, 
-  style::{Print, SetAttribute, Attribute},
-};
-use std::io::Write;
 
 
 #[derive(Copy, Default, Clone)]
@@ -103,12 +97,21 @@ impl Frame {
     self.inner_rect  = self.text_margin.get_rect(self.outer_rect);
   }
 
-  pub fn write<W: Write>(&self, writer: &mut W) -> std::io::Result<()> {
+  pub fn write<W: std::io::Write>(&self, writer: &mut W) 
+    -> std::io::Result<()> 
+  {
     self.write_frame(writer)?;
     Ok(())
   }
 
-  pub fn write_frame<W: Write>(&self, writer: &mut W) -> std::io::Result<()> {
+  pub fn write_frame<W: std::io::Write>(&self, writer: &mut W) 
+    -> std::io::Result<()> 
+  {
+    use crossterm::{
+      QueueableCommand, 
+      cursor::MoveTo, 
+      style::{Print, SetAttribute, Attribute},
+    };
     // border
     let (ax, ay) = self.border_rect.a();
     let (bx, by) = self.border_rect.b();
@@ -155,9 +158,14 @@ impl Frame {
     Ok(())
   }
 
-  pub fn write_footer<W: Write>(&self, text: &str, writer: &mut W) 
+  pub fn write_footer<W: std::io::Write>(&self, text: &str, writer: &mut W) 
     -> std::io::Result<()> 
   {
+    use crossterm::{
+      QueueableCommand, 
+      cursor::{self, MoveTo}, 
+      style::{Print, SetAttribute, Attribute},
+    };
     let mut x = self.inner_rect.x_end().saturating_sub(1);
     let     y = self.border_rect.y_end().saturating_sub(1);
     writer
@@ -188,9 +196,14 @@ impl Frame {
     Ok(())
   }
 
-  pub fn write_banner<W: Write>(&self, text: &str, writer: &mut W) 
+  pub fn write_banner<W: std::io::Write>(&self, text: &str, writer: &mut W) 
     -> std::io::Result<()> 
   {
+    use crossterm::{
+      QueueableCommand, 
+      cursor::MoveTo, 
+      style::{Print, SetAttribute, Attribute},
+    };
     let mut x = self.inner_rect.x;
     let     y = self.border_rect.y;
     writer

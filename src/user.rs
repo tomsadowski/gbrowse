@@ -10,8 +10,6 @@ use crate::{
   GemText, 
   Rect,
 };
-use toml::Value;
-use std::io::Write;
 
 
 pub const DATA_PATH:   &str = "gdata";
@@ -61,7 +59,10 @@ impl Default for User {
 
 impl Assign for User {
   type Field = UserField;
-  fn assign(&mut self, f: Self::Field, v: Value) -> Result<(), String> {
+  fn assign(&mut self, f: Self::Field, v: toml::Value) 
+    -> Result<(), String> 
+  {
+    use toml::Value;
     match (f, v) {
       (UserField::InitUrl, Value::String(v)) => {
         self.init_url = v.into();
@@ -119,6 +120,7 @@ impl User {
           format!("could not create save file: {e}")
         ),
         Ok(mut f) => {
+          use std::io::Write;
           for url in self.urls.iter() {
             f.write(&format!("{url}\n").as_bytes());
           }

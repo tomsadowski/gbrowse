@@ -21,15 +21,7 @@ use crate::{
   TextBox,
   Frame,
 };
-use crossterm::{
-  QueueableCommand, cursor,
-  terminal::{Clear, ClearType},
-  event::{Event, KeyEvent, KeyEventKind, KeyCode, KeyModifiers},
-};
 use url::Url;
-use std::{
-  io::{Write, Stdout}
-};
 
 
 pub const MANUAL:        &str = "User manual";
@@ -80,6 +72,7 @@ pub struct App {
   pub tab_changed: bool,
   pub quit:        bool,
 } 
+
 impl App {
   pub fn init(path: &str, w: u16, h: u16) -> Self {
     let user_text = std::fs::read_to_string(path).unwrap_or_default();
@@ -531,7 +524,10 @@ impl App {
     }
   }
 
-  pub fn get_update(&self, event: Event) -> Option<Msg> {
+  pub fn get_update(&self, event: crossterm::event::Event) -> Option<Msg> {
+    use crossterm::{
+      event::{Event, KeyEvent, KeyEventKind, KeyCode, KeyModifiers},
+    };
     match event {
       Event::Resize(w, h) => {
         Some(Msg::Resize(w, h))
@@ -561,21 +557,26 @@ impl App {
     }
   }
 
-  pub fn write(&self, stdout: &mut Stdout) -> std::io::Result<()> {
-    stdout.queue(cursor::Hide)?;
+  pub fn write<W: std::io::Write>(&self, writer: &mut W) 
+    -> std::io::Result<()> 
+  {
+    use crossterm::{
+      QueueableCommand, cursor, terminal::{Clear, ClearType},
+    };
+    writer.queue(cursor::Hide)?;
     if self.clear {
-      stdout.queue(Clear(ClearType::All))?;
-      self.frame.write(stdout)?;
+      writer.queue(Clear(ClearType::All))?;
+      self.frame.write(writer)?;
     }
     let banner_text = self.tabs.get_banner_text();
-    self.frame.write_banner(&banner_text, stdout)?;
-    self.frame.write_footer(&self.guide, stdout)?;
+    self.frame.write_banner(&banner_text, writer)?;
+    self.frame.write_footer(&self.guide, writer)?;
     if let Focus::Dialog(_, dialog) = &self.focus {
       if self.new_dlg {
         let tb: TextBox = self.frame.get_view_port().into();
-        tb.empty(stdout)?;
+        tb.empty(writer)?;
       }
-      dialog.write(stdout)?;
+      dialog.write(writer)?;
     } else {
       if let Some(request) = &self.request {
         let tb: TextBox = TextBox::from(
@@ -584,12 +585,12 @@ impl App {
             &vec![format!("requesting {}", request.url)],
             |s| StyledText::from(s.clone())
           );
-        tb.write(stdout, 0)?;
-        self.tabs.write(stdout, 1)?;
+        tb.write(writer, 0)?;
+        self.tabs.write(writer, 1)?;
       } else {
-        self.tabs.write(stdout, 0)?;
+        self.tabs.write(writer, 0)?;
       }
     }
-    stdout.flush()
+    writer.flush()
   }
 }

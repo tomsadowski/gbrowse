@@ -3,20 +3,14 @@
 use crate::{
   ViewPort, 
   Rect,
+  Action, 
+  Style, 
+  StyledText, 
+  Cursor,
   IndexedCursor, 
   MatrixCursorView,
-  Style, 
-  Cursor,
-  StyledText, 
-  Action, 
 };
-use crossterm::{
-  QueueableCommand, 
-  cursor::{MoveTo}, 
-  style::{Print, SetAttribute, Attribute},
-};
-use unicode_width::UnicodeWidthChar;
-use std::io::Write;
+
 
 #[derive(Default)]
 pub struct TextBox {
@@ -83,19 +77,6 @@ impl TextBox {
 
   pub fn reset_state(&mut self) {
     self.write = true;
-  }
-
-  pub fn empty<W: Write>(&self, writer: &mut W) -> std::io::Result<()> {
-    writer
-      .queue(SetAttribute(Attribute::Reset))?
-      .queue(&self.style)?;
-    for y in self.view.y_range() {
-      for x in self.view.x_range() {
-        writer.queue(MoveTo(x, y))?.queue(Print(' '))?;
-      }
-    }
-    writer.queue(SetAttribute(Attribute::Reset))?;
-    Ok(())
   }
 
   pub fn reference<R, F>(
@@ -243,7 +224,7 @@ impl TextBox {
     }
   }
 
-  pub fn write<W: Write>(&self, writer: &mut W, overlay: u16) 
+  pub fn write<W: std::io::Write>(&self, writer: &mut W, overlay: u16) 
     -> std::io::Result<()> 
   {
     if self.write {
@@ -252,9 +233,35 @@ impl TextBox {
     Ok(())
   }
 
-  pub fn write_all<W: Write>(&self, writer: &mut W, overlay: u16) 
+  pub fn empty<W: std::io::Write>(&self, writer: &mut W) 
     -> std::io::Result<()> 
   {
+    use crossterm::{
+      QueueableCommand, 
+      cursor::{MoveTo}, 
+      style::{Print, SetAttribute, Attribute},
+    };
+    writer
+      .queue(SetAttribute(Attribute::Reset))?
+      .queue(&self.style)?;
+    for y in self.view.y_range() {
+      for x in self.view.x_range() {
+        writer.queue(MoveTo(x, y))?.queue(Print(' '))?;
+      }
+    }
+    writer.queue(SetAttribute(Attribute::Reset))?;
+    Ok(())
+  }
+
+  pub fn write_all<W: std::io::Write>(&self, writer: &mut W, overlay: u16) 
+    -> std::io::Result<()> 
+  {
+    use crossterm::{
+      QueueableCommand, 
+      cursor::{MoveTo}, 
+      style::{Print, SetAttribute, Attribute},
+    };
+    use unicode_width::UnicodeWidthChar;
     let mut cursor = self.cursor.clone();
     if overlay > 0 {
       cursor.resize(

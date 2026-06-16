@@ -5,9 +5,6 @@ use crate::{
   StyledText,
   Rect,
 };
-use std::ops::{Deref, DerefMut};
-use std::io::Write;
-use unicode_width::UnicodeWidthChar;
 
 
 #[derive(Clone, Debug, Default)]
@@ -17,14 +14,14 @@ pub struct Cursor<T> {
   buff:     bool,
 }
 
-impl<T> Deref for Cursor<T> {
+impl<T> std::ops::Deref for Cursor<T> {
   type Target = Vec<T>;
   fn deref(&self) -> &Self::Target {
     &self.data
   }
 }
 
-impl<T> DerefMut for Cursor<T> {
+impl<T> std::ops::DerefMut for Cursor<T> {
   fn deref_mut(&mut self) -> &mut Self::Target {
     &mut self.data
   }
@@ -221,6 +218,7 @@ impl<T> Cursor<T> {
 
 impl Cursor<char> {
   pub fn get_weighted_head(&self) -> usize {
+    use unicode_width::UnicodeWidthChar;
     self
       .iter()
       .take(self.head)
@@ -229,6 +227,7 @@ impl Cursor<char> {
   }
 
   pub fn get_weighted_length(&self) -> usize {
+    use unicode_width::UnicodeWidthChar;
     self
       .iter()
       .map(|c| c.width().unwrap_or(0))
@@ -236,6 +235,7 @@ impl Cursor<char> {
   }
 
   pub fn get_weighted_view(&self, axis: LineCursorView) -> Vec<&char> {
+    use unicode_width::UnicodeWidthChar;
     let size         = usize::from(axis.get_size());  
     let mut text     = self.iter().skip(axis.get_scroll());
     let mut acc_size = 0;
@@ -320,14 +320,14 @@ pub struct IndexedCursor<T> {
   pub indexes:  Vec<usize>,
 }
 
-impl<T> Deref for IndexedCursor<T> {
+impl<T> std::ops::Deref for IndexedCursor<T> {
   type Target = Cursor<T>;
   fn deref(&self) -> &Self::Target {
     &self.matrix
   }
 }
 
-impl<T> DerefMut for IndexedCursor<T> {
+impl<T> std::ops::DerefMut for IndexedCursor<T> {
   fn deref_mut(&mut self) -> &mut Self::Target {
     &mut self.matrix
   }
@@ -425,7 +425,9 @@ impl MatrixCursorView {
     x || y
   }
 
-  pub fn write<W: Write>(&self, writer: &mut W) -> std::io::Result<()> {
+  pub fn write<W: std::io::Write>(&self, writer: &mut W) 
+    -> std::io::Result<()> 
+  {
     use crossterm::{QueueableCommand, cursor};
     writer
       .queue(cursor::MoveTo(self.x.get_cursor(), self.y.get_cursor()))?
