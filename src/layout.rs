@@ -16,15 +16,15 @@ pub enum Direction {
   EastWest,
 }
 
-pub struct ViewStack<T> {
+pub struct ViewStack<'a, T> {
   pub view:        Rect,
-  pub windows:     Cursor<T>,
+  pub windows:     Cursor<&'a T>,
   pub orientation: Direction,
 }
 
-impl<T, V> From<V> for ViewStack<T> 
-where T: Default,
-      V: ViewPort,
+impl<'a, T, V> From<V> for ViewStack<'a, T> 
+where &'a T: Default,
+      V:     ViewPort,
 {
   fn from(view: V) -> Self {
     Self {
@@ -35,9 +35,7 @@ where T: Default,
   }
 }
 
-impl<T> ViewStack<T> 
-where T: Draw,
-{
+impl<'a, T> ViewStack<'a, T> {
   fn get_weight(&self, window: &TextBox) -> usize {
     match self.orientation {
       Direction::WestEast | Direction::EastWest => 
@@ -46,8 +44,10 @@ where T: Draw,
         window.get_view_port().h.into(),
     }
   }
+}
 
-  pub fn write<W: std::io::Write>(&self, writer: &mut W) 
+impl<'a, T: Draw> Draw for ViewStack<'a, T> {
+  fn draw<W: std::io::Write>(&self, writer: &mut W) 
     -> std::io::Result<()> 
   {
     for textbox in self.windows.iter() {
