@@ -7,6 +7,10 @@ pub trait ViewPort {
   fn get_view_port(&self) -> Rect;
 }
 
+pub trait Draw {
+  fn draw<W: std::io::Write>(&self, writer: &mut W) -> std::io::Result<()>;
+}
+
 #[derive(Copy, Clone, Default)]
 pub struct Rect {
   pub x: u16,

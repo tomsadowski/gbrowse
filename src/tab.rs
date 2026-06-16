@@ -8,6 +8,7 @@ use crate::{
   ViewPort, 
   TextBox, 
   GemText,
+  Draw,
 };
 use url::Url;
 
@@ -138,16 +139,13 @@ impl TabManager {
     }
   }
 
-  pub fn write<W: std::io::Write>(&self, writer: &mut W, overlay: u16) 
+  pub fn write<W: std::io::Write>(&self, writer: &mut W) 
     -> std::io::Result<()> 
   {
     if let Some(tab) = self.get_current() {
-      tab.get_textbox().write(writer, overlay)?;
+      tab.get_textbox().draw(writer)?;
       tab.get_textbox().cursor.write(writer)?;
-    } else {
-      let tb: TextBox = self.view.into();
-      tb.empty(writer)?;
-    }
+    } 
     Ok(())
   }
 }

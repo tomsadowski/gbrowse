@@ -48,6 +48,7 @@ pub use crate::tab::{
 };
 pub use crate::coreui::{
   Action,
+  Draw,
   Style, 
   TextStyle, 
   BorderStyle, 

@@ -9,6 +9,7 @@ use crate::{
   Cursor,
   IndexedCursor, 
   MatrixCursorView,
+  Draw,
 };
 
 
@@ -223,39 +224,13 @@ impl TextBox {
       _ => {}
     }
   }
+}
 
-  pub fn write<W: std::io::Write>(&self, writer: &mut W, overlay: u16) 
+impl Draw for TextBox {
+  fn draw<W: std::io::Write>(&self, writer: &mut W) 
     -> std::io::Result<()> 
   {
-    if self.write {
-      self.write_all(writer, overlay)?;
-    }
-    Ok(())
-  }
-
-  pub fn empty<W: std::io::Write>(&self, writer: &mut W) 
-    -> std::io::Result<()> 
-  {
-    use crossterm::{
-      QueueableCommand, 
-      cursor::{MoveTo}, 
-      style::{Print, SetAttribute, Attribute},
-    };
-    writer
-      .queue(SetAttribute(Attribute::Reset))?
-      .queue(&self.style)?;
-    for y in self.view.y_range() {
-      for x in self.view.x_range() {
-        writer.queue(MoveTo(x, y))?.queue(Print(' '))?;
-      }
-    }
-    writer.queue(SetAttribute(Attribute::Reset))?;
-    Ok(())
-  }
-
-  pub fn write_all<W: std::io::Write>(&self, writer: &mut W, overlay: u16) 
-    -> std::io::Result<()> 
-  {
+    if !self.write {return Ok(())}
     use crossterm::{
       QueueableCommand, 
       cursor::{MoveTo}, 
@@ -263,11 +238,6 @@ impl TextBox {
     };
     use unicode_width::UnicodeWidthChar;
     let mut cursor = self.cursor.clone();
-    if overlay > 0 {
-      cursor.resize(
-        &self.matrix, &self.view.crop_north(overlay)
-      );
-    }
     let mut x = cursor.get_x_view().get_start();
     let mut y = cursor.get_y_view().get_start();
     writer

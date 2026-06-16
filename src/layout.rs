@@ -5,6 +5,7 @@ use crate::{
   Rect,
   Cursor, 
   TextBox,
+  Draw,
 };
 
 
@@ -15,13 +16,16 @@ pub enum Direction {
   EastWest,
 }
 
-pub struct ViewStack {
+pub struct ViewStack<T> {
   pub view:        Rect,
-  pub windows:     Cursor<TextBox>,
+  pub windows:     Cursor<T>,
   pub orientation: Direction,
 }
 
-impl<V: ViewPort> From<V> for ViewStack {
+impl<T, V> From<V> for ViewStack<T> 
+where T: Default,
+      V: ViewPort,
+{
   fn from(view: V) -> Self {
     Self {
       view:        view.get_view_port(),
@@ -31,7 +35,9 @@ impl<V: ViewPort> From<V> for ViewStack {
   }
 }
 
-impl ViewStack {
+impl<T> ViewStack<T> 
+where T: Draw,
+{
   fn get_weight(&self, window: &TextBox) -> usize {
     match self.orientation {
       Direction::WestEast | Direction::EastWest => 
@@ -45,7 +51,7 @@ impl ViewStack {
     -> std::io::Result<()> 
   {
     for textbox in self.windows.iter() {
-      textbox.write(writer, 0)?;
+      textbox.draw(writer)?;
     }
     Ok(())
   }

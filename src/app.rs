@@ -12,6 +12,7 @@ use crate::{
   StyledText,
   ViewPort,
   DlgInput, 
+  Draw,
   Dialog,
   Action,
   Rect, 
@@ -566,17 +567,13 @@ impl App {
     writer.queue(cursor::Hide)?;
     if self.clear {
       writer.queue(Clear(ClearType::All))?;
-      self.frame.write(writer)?;
+      self.frame.draw(writer)?;
     }
     let banner_text = self.tabs.get_banner_text();
     self.frame.write_banner(&banner_text, writer)?;
     self.frame.write_footer(&self.guide, writer)?;
     if let Focus::Dialog(_, dialog) = &self.focus {
-      if self.new_dlg {
-        let tb: TextBox = self.frame.get_view_port().into();
-        tb.empty(writer)?;
-      }
-      dialog.write(writer)?;
+      dialog.draw(writer)?;
     } else {
       if let Some(request) = &self.request {
         let tb: TextBox = TextBox::from(
@@ -585,10 +582,10 @@ impl App {
             &vec![format!("requesting {}", request.url)],
             |s| StyledText::from(s.clone())
           );
-        tb.write(writer, 0)?;
-        self.tabs.write(writer, 1)?;
+        tb.draw(writer)?;
+        self.tabs.write(writer)?;
       } else {
-        self.tabs.write(writer, 0)?;
+        self.tabs.write(writer)?;
       }
     }
     writer.flush()

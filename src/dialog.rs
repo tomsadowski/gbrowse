@@ -5,6 +5,7 @@ use crate::{
   StyledText, 
   Style, 
   ViewPort,
+  Draw,
 };
 
 
@@ -139,22 +140,24 @@ impl Dialog {
       }
     }
   }
+}
 
-  pub fn write<W: std::io::Write>(&self, writer: &mut W) 
+impl Draw for Dialog {
+  fn draw<W: std::io::Write>(&self, writer: &mut W) 
     -> std::io::Result<()> 
   {
-    self.prompt.write(writer, 0)?;
+    self.prompt.draw(writer)?;
     match &self.input {
       DlgInput::Ack(r) | 
       DlgInput::Ask(r) => { 
-        r.write(writer, 0)?;
+        r.draw(writer)?;
       }
       DlgInput::Edit(r) => {
-        r.write(writer, 0)?;
+        r.draw(writer)?;
         r.cursor.write(writer)?;
       }
       DlgInput::Select(r) => {
-        r.write(writer, 0)?;
+        r.draw(writer)?;
         r.cursor.write(writer)?;
       }
     }
