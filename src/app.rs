@@ -194,7 +194,7 @@ impl App {
       }
       _ => {
         self.tabs.add_gem_tab(
-          url, 
+          &url, 
           gemini::parse_doc(&content), 
           |g| self.user.get_gem_style(g),
         );
@@ -217,9 +217,9 @@ impl App {
         true
       }
       Ok((r, c)) => {
-        let url      = request.url.clone();
-        self.request = None;
+        let url = request.url.clone();
         self.join_gemdoc(url, r, c);
+        self.request = None;
         true
       }
     }
