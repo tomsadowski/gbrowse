@@ -14,7 +14,6 @@ mod usertraits;
 mod tab;
 mod coreui;
 mod frame;
-mod styledtext;
 mod textbox;
 mod dialog;
 mod network;
@@ -27,7 +26,6 @@ pub use crate::user::User;
 pub use crate::userkeys::UserKeys;
 pub use crate::userstyle::UserStyle;
 pub use crate::frame::Frame;
-pub use crate::styledtext::StyledText;
 pub use crate::textbox::TextBox;
 pub use crate::network::Request;
 pub use crate::layout::ViewStack;
@@ -39,7 +37,7 @@ pub use crate::usertraits::{
 pub use crate::cursor::{
   Cursor, 
   IndexedCursor,
-  MatrixCursorView,
+  ScreenCursor,
   LineCursorView,
 };
 pub use crate::tab::{

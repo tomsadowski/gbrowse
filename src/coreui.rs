@@ -297,6 +297,25 @@ impl crossterm::Command for Style {
   }
 }
 
+impl TextStyle {
+  // split at spaces within width and split at lines
+  pub fn print(&self, width: usize, text: &str) -> Vec<Vec<char>> {
+    if text.len() == 0 {
+      vec![vec![]]
+    } else if self.wrap {
+      text
+        .lines()
+        .flat_map(|line| crate::util::get_wrapped_text(line, width))
+        .collect()
+    } else {
+      text
+        .lines()
+        .map(|line| line.chars().collect())
+        .collect()
+    }
+  }
+}
+
 #[derive(Copy, Debug, Clone)]
 pub struct Margins {
   pub north: u16,
@@ -370,6 +389,14 @@ impl Default for TextStyle {
     }
   }
 }
+
+impl std::ops::Deref for TextStyle {
+  type Target = Style;
+  fn deref(&self) -> &Self::Target {
+    &self.style
+  }
+}
+
 
 #[derive(Copy, Clone, Debug)]
 pub enum Action {

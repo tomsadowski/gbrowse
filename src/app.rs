@@ -196,7 +196,7 @@ impl App {
         self.tabs.add_gem_tab(
           url, 
           gemini::parse_doc(&content), 
-          |g| self.user.get_styled_gemtext(g),
+          |g| self.user.get_gem_style(g),
         );
         self.tab_changed = true;
       }
@@ -255,7 +255,7 @@ impl App {
     self.push_size();
     self.tabs.push_style(self.user.style.general);
     self.tabs.push_gem_style(
-      |gem| self.user.get_styled_gemtext(gem)
+      |gem| self.user.get_gem_style(gem)
     );
   }
 

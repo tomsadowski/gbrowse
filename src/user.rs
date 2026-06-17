@@ -5,9 +5,9 @@ use crate::{
   UserTable,
   UserKeys,
   UserStyle,
-  StyledText,
   Frame, 
-  GemText, 
+  GemTag, 
+  TextStyle,
   Rect,
 };
 
@@ -134,8 +134,8 @@ impl User {
     self.style.get_frame(screen)
   }
 
-  pub fn get_styled_gemtext(&self, gemtext: &GemText) -> StyledText {
-    self.style.get_styled_gemtext(gemtext)
+  pub fn get_gem_style(&self, gemtext: &GemTag) -> TextStyle {
+    self.style.get_gem_style(gemtext)
   }
 }
 

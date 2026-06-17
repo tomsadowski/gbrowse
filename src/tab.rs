@@ -1,13 +1,14 @@
 // src/tab.rs
 
 use crate::{
-  StyledText, 
+  TextStyle, 
   Cursor, 
   Style, 
   Rect, 
   ViewPort, 
   TextBox, 
   GemText,
+  GemTag,
   Draw,
 };
 use url::Url;
@@ -63,12 +64,12 @@ impl TabManager {
   }
 
   pub fn push_gem_style<F>(&mut self, func: F)
-  where F: Fn(&GemText) -> StyledText,
+  where F: Fn(&GemTag) -> TextStyle,
   {
     for tab in self.tabs.iter_mut() {
       if let Tab::Gem(gem_tab) = tab {
-        let source = &gem_tab.source;
-        gem_tab.textbox.restyle(source, |gem| func(gem));
+        let styles = gem_tab.tags.iter().map(|t| func(t)).collect();
+        gem_tab.textbox.set_styles(styles);
         gem_tab.textbox.style = self.style;
       }
     }
@@ -119,8 +120,9 @@ impl TabManager {
     source: Vec<GemText>, 
     func:   F
   ) 
-  where F: Fn(&GemText) -> StyledText,
+  where F: Fn(&GemTag) -> TextStyle,
   {
+    let tags    = source.iter().map(|g| g.tag).collect();
     let new_tab = Tab::Gem(UrlTab::new(url, self.view, source, func));
     self.insert_or_move(|tab| tab.get_url() == Some(url), new_tab);
     self.reset_state();
@@ -153,8 +155,8 @@ impl Draw for TabManager {
 }
 
 pub enum Tab {
-  Text(String, TextBox),
-  Gem(UrlTab<GemText>),
+  Text(  String, TextBox),
+  Gem(   UrlTab<GemTag>),
   Gopher(UrlTab<String>),
 }
 
@@ -181,7 +183,7 @@ impl Tab {
     }
   }
 
-  pub fn get_gem_tab(&self) ->  Option<&UrlTab<GemText>> {
+  pub fn get_gem_tab(&self) ->  Option<&UrlTab<GemTag>> {
     if let Tab::Gem(tab) = self {
       Some(tab)
     } else {None}
@@ -199,8 +201,10 @@ impl Tab {
     } else {None}
   }
 
-  pub fn get_gem_source(&self) ->  Option<&Vec<GemText>> {
-    self.get_gem_tab().map(|gem_tab| &gem_tab.source)
+  pub fn get_gem_tag(&self) -> Option<&GemTag> {
+    self
+      .get_gem_tab()
+      .and_then(|gem_tab| gem_tab.get_current_source())
   }
 
   pub fn get_gem_text(&self) -> Option<&GemText> {
@@ -228,7 +232,7 @@ impl Tab {
 
 pub struct UrlTab<T> {
   pub url:     Url,
-  pub source:  Vec<T>,
+  pub tags:    Vec<T>,
   pub textbox: TextBox,
 } 
 
@@ -236,23 +240,23 @@ impl<T> UrlTab<T> {
   pub fn new<V, F>(
     url:            &Url, 
     view:           V, 
-    source:         Vec<T>, 
+    tags:           Vec<T>, 
     to_styled_text: F
   ) -> Self
   where 
     V: ViewPort, 
-    F: Fn(&T) -> StyledText
+    F: Fn(&T) -> TextStyle
   {
     Self {
       url:     url.clone(),
       textbox: TextBox::from(view.get_view_port())
-        .reference(&source, to_styled_text),
-      source,
+        .text(&tags, to_styled_text),
+      tags,
     }
   }
 
   pub fn get_current_source(&self) -> Option<&T> {
-    self.source.get(
+    self.tags.get(
       self.textbox.get_current_reference_index()
     )
   }

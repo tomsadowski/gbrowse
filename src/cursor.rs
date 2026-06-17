@@ -2,7 +2,7 @@
 
 use crate::{
   ViewPort,
-  StyledText,
+  TextStyle,
   Rect,
 };
 
@@ -350,12 +350,20 @@ impl<T> IndexedCursor<T> {
 }
 
 impl IndexedCursor<Cursor<char>> {
-  pub fn new<V: ViewPort>(view: &V, input: &Vec<StyledText>) -> Self {
+  pub fn new<V: ViewPort>(
+    view:   &V, 
+    text:   &Vec<String>,
+    styles: &Vec<TextStyle>
+  ) -> Self {
     let width    = usize::from(view.get_view_port().w);
-    let rendered = input.iter().enumerate().flat_map(
-      |(idx, styled)| 
-        styled
-          .print(width)
+    let rendered = styles
+      .iter()
+      .zip(text.iter())
+      .enumerate()
+      .flat_map(
+      |(idx, (style, text))| 
+        style
+          .print(width, text)
           .into_iter()
           .map(move |text| (idx, text.into()))
       );
@@ -368,12 +376,12 @@ impl IndexedCursor<Cursor<char>> {
 }
 
 #[derive(Copy, Clone, Debug, Default)]
-pub struct MatrixCursorView {
+pub struct ScreenCursor {
   x: LineCursorView,
   y: LineCursorView,
 }
 
-impl<V: ViewPort> From<&V> for MatrixCursorView {
+impl<V: ViewPort> From<&V> for ScreenCursor {
   fn from(view: &V) -> Self {
     let view = view.get_view_port();
     Self {
@@ -383,7 +391,7 @@ impl<V: ViewPort> From<&V> for MatrixCursorView {
   }
 }
 
-impl ViewPort for MatrixCursorView {
+impl ViewPort for ScreenCursor {
   fn get_view_port(&self) -> Rect {
     Rect {
       x: self.x.get_start(),
@@ -394,7 +402,7 @@ impl ViewPort for MatrixCursorView {
   }
 }
 
-impl MatrixCursorView {
+impl ScreenCursor {
   pub fn get_x_view(&self)   -> LineCursorView {self.x}
   pub fn get_y_view(&self)   -> LineCursorView {self.y}
   pub fn get_x_cursor(&self) -> u16            {self.x.get_cursor()}

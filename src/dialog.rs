@@ -2,7 +2,6 @@
 
 use crate::{
   TextBox, 
-  StyledText, 
   Style, 
   ViewPort,
   Draw,
@@ -29,7 +28,7 @@ impl Dialog {
     let prompt_box = TextBox::from(
         view.get_view_port().crop_south(2)
       )
-      .reference(
+      .text(
         &vec![prompt], 
         |p| StyledText::from(*p).style(style)
       )
@@ -37,7 +36,7 @@ impl Dialog {
     let response_box = TextBox::from(
         prompt_box.used_rect().bottom_row()
       )
-      .reference(
+      .text(
         &vec![input], 
         |i| StyledText::from(*i).style(style)
       )
@@ -55,7 +54,7 @@ impl Dialog {
     let prompt_box = TextBox::from(
         view.get_view_port().crop_south(2)
       )
-      .reference(
+      .text(
         &vec![prompt], 
         |p| StyledText::from(*p).style(style)
       )
@@ -63,7 +62,7 @@ impl Dialog {
     let response_box = TextBox::from(
         prompt_box.used_rect().bottom_row()
       )
-      .reference(
+      .text(
         &vec![input], 
         |i| StyledText::from(*i).style(style)
       )
@@ -82,7 +81,7 @@ impl Dialog {
     let prompt_box = TextBox::from(
         view.get_view_port().crop_south(2)
       )
-      .reference(
+      .text(
         &vec![prompt], 
         |p| StyledText::from(*p).style(style)
       )
@@ -90,7 +89,7 @@ impl Dialog {
     let response_box = TextBox::from(
         view.get_view_port().crop_north(prompt_box.used_rect().h)
       )
-      .reference(
+      .text(
         &input, |s| StyledText::from(s.as_str()).style(style)
       )
       .style(style);
@@ -107,7 +106,7 @@ impl Dialog {
     let prompt_box = TextBox::from(
         view.get_view_port().crop_south(2)
       )
-      .reference(
+      .text(
         &vec![prompt], 
         |p| StyledText::from(*p).style(style)
       )
@@ -115,7 +114,7 @@ impl Dialog {
     let response_box = TextBox::from(
         prompt_box.used_rect().bottom_row()
       )
-      .reference(
+      .text(
         &vec![text], 
         |p| StyledText::from(*p).style(style)
       )

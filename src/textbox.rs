@@ -5,50 +5,50 @@ use crate::{
   Rect,
   Action, 
   Style, 
-  StyledText, 
+  TextStyle,
   Cursor,
   IndexedCursor, 
-  MatrixCursorView,
+  ScreenCursor,
   Draw,
 };
 
 
 #[derive(Default)]
-pub struct TextBox<T> {
+pub struct TextBox {
   pub view:           Rect,
   pub style:          Style,
-  pub data:           Vec<T>,
-  pub styles:         Vec<Style>,
+  pub text:           Vec<String>,
+  pub styles:         Vec<TextStyle>,
   pub matrix:         IndexedCursor<Cursor<char>>,
-  pub cursor:         MatrixCursorView,
+  pub cursor:         ScreenCursor,
   pub pref_x:         usize,
   pub write:          bool,
   pub show_cursor:    bool,
 }
 
-impl<T> ViewPort for TextBox<T> {
+impl ViewPort for TextBox {
   fn get_view_port(&self) -> Rect {self.view}
 }
 
-impl<T> From<Rect> for TextBox<T> {
+impl From<Rect> for TextBox {
   fn from(view: Rect) -> Self {
     Self {
       write:          true,
       show_cursor:    false,
       pref_x:         0,
       style:          Style::default(),
-      data:           vec![],
+      text:           vec![],
       styles:         vec![],
-      cursor:         MatrixCursorView::from(&view), 
+      cursor:         ScreenCursor::from(&view), 
       matrix:         IndexedCursor::default(),
       view:           view.get_view_port(),
     }
   }
 }
 
-impl<T: std::fmt::Display> TextBox<T> {
+impl TextBox {
   pub fn get_current_display_ref(&self) -> String {
-    self.data
+    self.text
       .get(self.matrix.head)
       .map(|t| t.to_string())
       .unwrap_or("empty".into())
@@ -82,15 +82,10 @@ impl<T: std::fmt::Display> TextBox<T> {
     self.write = true;
   }
 
-  pub fn reference<F>(
-    mut self, 
-    reference:      &Vec<T>, 
-    get_style: F
-  ) -> Self 
-  where F: Fn(&T) -> Style,
-  {
-    self.styles  = reference.iter().map(|i| get_style(i)).collect();
-    self.matrix = IndexedCursor::new(&self.view, &self.data);
+  pub fn text(mut self, text: Vec<String>, styles: Vec<TextStyle>) -> Self {
+    self.text   = text;
+    self.styles = styles;
+    self.matrix = IndexedCursor::new(&self.view, &self.text, &self.styles);
     self.cursor.update(&self.matrix);
     self
   }
@@ -101,20 +96,17 @@ impl<T: std::fmt::Display> TextBox<T> {
     self
   }
 
-  pub fn set_reference<R, F>(&mut self, reference: &Vec<R>, to_styled_text: F)
-  where F: Fn(&R) -> StyledText,
-  {
-    self.data   = reference.iter().map(|i| to_styled_text(i)).collect();
-    self.matrix = IndexedCursor::new(&self.view, &self.data);
+  pub fn set_text(&mut self, text: Vec<String>, styles: Vec<TextStyle>) {
+    self.text   = text;
+    self.styles = styles;
+    self.matrix = IndexedCursor::new(&self.view, &self.text, &self.styles);
     self.cursor.update(&self.matrix);
   }
 
-  pub fn restyle<R, F>(&mut self, reference: &Vec<R>, to_styled_text: F) 
-  where F: Fn(&R) -> StyledText,
-  {
+  pub fn set_styles(&mut self, styles: Vec<TextStyle>) {
     let linear_head = self.matrix.get_linear_head();
-    self.data       = reference.iter().map(|i| to_styled_text(i)).collect();
-    self.matrix     = IndexedCursor::new(&self.view, &self.data);
+    self.styles     = styles;
+    self.matrix     = IndexedCursor::new(&self.view, &self.text, &self.styles);
     self.matrix.set_linear_head(linear_head);
     self.cursor.update(&self.matrix);
     self.reset_state();
@@ -123,7 +115,7 @@ impl<T: std::fmt::Display> TextBox<T> {
   pub fn resize<V: ViewPort>(&mut self, view: V) {
     let linear_head = self.matrix.get_linear_head();
     self.view       = view.get_view_port();
-    self.matrix     = IndexedCursor::new(&view, &self.data);
+    self.matrix     = IndexedCursor::new(&view, &self.text, &self.styles);
     self.matrix.set_linear_head(linear_head);
     self.cursor.resize(&self.matrix, &view);
     self.reset_state();
@@ -228,7 +220,7 @@ impl<T: std::fmt::Display> TextBox<T> {
   }
 }
 
-impl<T> Draw for TextBox<T> {
+impl Draw for TextBox {
   fn draw<W: std::io::Write>(&self, writer: &mut W) 
     -> std::io::Result<()> 
   {
@@ -247,7 +239,7 @@ impl<T> Draw for TextBox<T> {
       .queue(SetAttribute(Attribute::Reset))?
       .queue(&self.style)?;
     for (index, line) in self.matrix.get_view(cursor.get_y_view()) {
-      writer.queue(&self.styles[*index])?;
+      writer.queue(*self.styles[*index])?;
       for c in line.get_weighted_view(cursor.get_x_view()) {
         writer.queue(Print(c))?;
         x += u16::try_from(c.width().unwrap_or(0)).unwrap();

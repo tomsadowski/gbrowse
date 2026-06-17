@@ -7,9 +7,7 @@ use crate::{
   Margins,
   BorderStyle,
   TextStyle,
-  StyledText,
   GemTag,
-  GemText,
   Frame,
   Style,
   coreui as ui,
@@ -46,8 +44,8 @@ impl UserStyle {
       .border_style(self.border)
   }
 
-  pub fn get_styled_gemtext(&self, gemtext: &GemText) -> StyledText {
-    let mut text: StyledText = match gemtext.tag {
+  pub fn get_gem_style(&self, tag: &GemTag) -> TextStyle {
+    match tag {
       GemTag::HeadingOne   => self.heading1.into(),
       GemTag::HeadingTwo   => self.heading2.into(),
       GemTag::HeadingThree => self.heading3.into(),
@@ -56,8 +54,7 @@ impl UserStyle {
       GemTag::Link(_)      => self.link.into(),
       GemTag::ListItem     => self.list.into(),
       GemTag::Quote        => self.quote.into(),
-    };
-    text.text(&gemtext.to_string())
+    }
   }
 }
 
