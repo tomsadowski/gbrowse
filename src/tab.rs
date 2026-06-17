@@ -138,8 +138,10 @@ impl TabManager {
       Some(s) => format!("{}/{} - {s}", self.head + 1, self.data.len()),
     }
   }
+}
 
-  pub fn write<W: std::io::Write>(&self, writer: &mut W) 
+impl Draw for TabManager {
+  fn draw<W: std::io::Write>(&self, writer: &mut W) 
     -> std::io::Result<()> 
   {
     if let Some(tab) = self.get_current() {

@@ -30,6 +30,10 @@ impl Rect {
     Self {x: 0, y: 0, w, h}
   }
 
+  pub fn get_position_str(&self) -> String {
+    format!("{}{}", self.x, self.y)
+  }
+
   pub fn crop_north(&self, delta: u16) -> Self {
     let mut rect = self.clone();
     if delta * 2 < rect.h {

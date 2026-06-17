@@ -311,7 +311,6 @@ impl<T> Cursor<Cursor<T>> {
       remainder
     }
   }
-
 }
 
 #[derive(Clone, Debug, Default)]

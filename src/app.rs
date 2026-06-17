@@ -9,8 +9,6 @@ use crate::{
   UserFromStr,
   TabManager,
   Request,
-  StyledText,
-  ViewPort,
   DlgInput, 
   Draw,
   Dialog,
@@ -19,8 +17,8 @@ use crate::{
   GemTag, 
   Status, 
   StatusText,
-  TextBox,
   Frame,
+  ViewStack,
 };
 use url::Url;
 
@@ -68,6 +66,7 @@ pub struct App {
   pub focus:       Focus,
   pub request:     Option<Request>,
   pub guide:       String,
+  pub viewstack:   ViewStack,
   pub new_dlg:     bool,
   pub clear:       bool,
   pub tab_changed: bool,
@@ -82,6 +81,7 @@ impl App {
     let mut app = Self {
       guide:       "".into(),
       tabs:        TabManager::from(frame).with_style(user.style.general),
+      viewstack:   ViewStack::from(frame),
       request:     None,
       focus:       Focus::Tab,
       new_dlg:     false,
@@ -304,7 +304,7 @@ impl App {
         (DlgInput::Select(textbox), Action::Select, Task::ChangeKeys) => {
           match std::fs::read_to_string(
             user::get_keys_file(
-              &textbox.get_current_reference_string()
+              &textbox.get_current_display_ref()
             )
           ) {
             Err(e) => self.focus_ack_dialog(format!("Problem: {e}")),
@@ -318,7 +318,7 @@ impl App {
         (DlgInput::Select(textbox), Action::Select, Task::ChangeStyle) => {
           match std::fs::read_to_string(
             user::get_styles_file(
-              &textbox.get_current_reference_string()
+              &textbox.get_current_display_ref()
             )
           ) {
             Err(e) => self.focus_ack_dialog(e.to_string()),
@@ -473,8 +473,7 @@ impl App {
       (Msg::Action(Action::Select), Focus::Tab) => {
         match self.tabs.use_gem_text(
           |gem_text| gem_text.tag.clone()
-        )
-        {
+        ) {
           None => self.focus_ack_dialog(
             format!("You've selected nothing")
           ),
@@ -526,25 +525,23 @@ impl App {
   }
 
   pub fn get_update(&self, event: crossterm::event::Event) -> Option<Msg> {
-    use crossterm::{
-      event::{Event, KeyEvent, KeyEventKind, KeyCode, KeyModifiers},
-    };
+    use crossterm::event;
     match event {
-      Event::Resize(w, h) => {
+      event::Event::Resize(w, h) => {
         Some(Msg::Resize(w, h))
       }
-      Event::Key(
-        KeyEvent {
-          modifiers: KeyModifiers::CONTROL, 
-          code:      KeyCode::Char('c'), 
+      event::Event::Key(
+        event::KeyEvent {
+          modifiers: event::KeyModifiers::CONTROL, 
+          code:      event::KeyCode::Char('c'), 
           ..
         }
       ) => {
         Some(Msg::Quit)
       }
-      Event::Key(
-        KeyEvent {
-          kind: KeyEventKind::Press, 
+      event::Event::Key(
+        event::KeyEvent {
+          kind: event::KeyEventKind::Press, 
           code: kc, 
           ..
         }
@@ -558,36 +555,32 @@ impl App {
     }
   }
 
-  pub fn write<W: std::io::Write>(&self, writer: &mut W) 
-    -> std::io::Result<()> 
-  {
-    use crossterm::{
-      QueueableCommand, cursor, terminal::{Clear, ClearType},
-    };
-    writer.queue(cursor::Hide)?;
+  pub fn draw<W: std::io::Write>(&self, w: &mut W) -> std::io::Result<()> {
+    use crossterm::{QueueableCommand, cursor, terminal};
+    w.queue(cursor::Hide)?;
     if self.clear {
-      writer.queue(Clear(ClearType::All))?;
-      self.frame.draw(writer)?;
+      w.queue(terminal::Clear(terminal::ClearType::All))?;
+      self.frame.draw(w)?;
     }
     let banner_text = self.tabs.get_banner_text();
-    self.frame.write_banner(&banner_text, writer)?;
-    self.frame.write_footer(&self.guide, writer)?;
+    self.frame.write_banner(&banner_text, w)?;
+    self.frame.write_footer(&self.guide, w)?;
     if let Focus::Dialog(_, dialog) = &self.focus {
-      dialog.draw(writer)?;
+      dialog.draw(w)?;
     } else {
       if let Some(request) = &self.request {
-        let tb: TextBox = TextBox::from(
-            self.frame.get_view_port().top_row()
-          ).reference(
-            &vec![format!("requesting {}", request.url)],
-            |s| StyledText::from(s.clone())
-          );
-        tb.draw(writer)?;
-        self.tabs.write(writer)?;
+    //  let tb: TextBox = TextBox::from(
+    //      self.frame.get_view_port().top_row()
+    //    ).reference(
+    //      &vec![format!("requesting {}", request.url)],
+    //      |s| StyledText::from(s.clone())
+    //    );
+    //  tb.draw(writer)?;
+        self.tabs.draw(w)?;
       } else {
-        self.tabs.write(writer)?;
+        self.tabs.draw(w)?;
       }
     }
-    writer.flush()
+    w.flush()
   }
 }

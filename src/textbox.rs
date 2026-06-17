@@ -14,41 +14,41 @@ use crate::{
 
 
 #[derive(Default)]
-pub struct TextBox {
+pub struct TextBox<T> {
   pub view:           Rect,
   pub style:          Style,
-  pub text:           Vec<StyledText>,
-  pub matrix:         IndexedCursor<Cursor<char>>,
+  pub text:           Vec<(T, Style)>,
+  pub matrix:         Cursor<Cursor<char>>,
   pub cursor:         MatrixCursorView,
   pub pref_x:         usize,
   pub write:          bool,
   pub show_cursor:    bool,
 }
 
-impl ViewPort for TextBox {
+impl<T> ViewPort for TextBox<T> {
   fn get_view_port(&self) -> Rect {self.view}
 }
 
-impl From<Rect> for TextBox {
+impl<T> From<Rect> for TextBox<T> {
   fn from(view: Rect) -> Self {
     Self {
       write:          true,
       show_cursor:    false,
       pref_x:         0,
       style:          Style::default(),
-      text:           vec![StyledText::default()],
+      text:           vec![],
       cursor:         MatrixCursorView::from(&view), 
-      matrix:         IndexedCursor::default(),
+      matrix:         Cursor::default(),
       view:           view.get_view_port(),
     }
   }
 }
 
-impl TextBox {
-  pub fn get_current_reference_string(&self) -> String {
+impl<T: std::fmt::Display> TextBox<T> {
+  pub fn get_current_display_ref(&self) -> String {
     self.text
-      .get(self.matrix.get_current_reference_index())
-      .map(|t| t.text.clone())
+      .get(self.matrix.head)
+      .map(|t| t.0.to_string())
       .unwrap_or("empty".into())
   }
 
@@ -80,14 +80,14 @@ impl TextBox {
     self.write = true;
   }
 
-  pub fn reference<R, F>(
+  pub fn reference<F>(
     mut self, 
-    reference:      &Vec<R>, 
-    to_styled_text: F
+    reference:      &Vec<T>, 
+    get_style: F
   ) -> Self 
-  where F: Fn(&R) -> StyledText,
+  where F: Fn(&T) -> Style,
   {
-    self.text   = reference.iter().map(|i| to_styled_text(i)).collect();
+    self.text   = reference.iter().map(|i| get_style(i)).collect();
     self.matrix = IndexedCursor::new(&self.view, &self.text);
     self.cursor.update(&self.matrix);
     self

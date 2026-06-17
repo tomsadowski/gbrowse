@@ -30,6 +30,7 @@ pub use crate::frame::Frame;
 pub use crate::styledtext::StyledText;
 pub use crate::textbox::TextBox;
 pub use crate::network::Request;
+pub use crate::layout::ViewStack;
 pub use crate::usertraits::{
   Assign,
   UserTable,
@@ -93,16 +94,16 @@ fn main() -> std::io::Result<()> {
     .queue(terminal::EnterAlternateScreen)?
     .queue(terminal::DisableLineWrap)?;
   // initial display
-  app.write(&mut stdout)?;
+  app.draw(&mut stdout)?;
   // break on control-c
   while !app.quit {
     if app.join_request() {
-      app.write(&mut stdout)?;
+      app.draw(&mut stdout)?;
     } 
     if event::poll(Duration::from_millis(16))? {
       if let Some(message) = app.get_update(event::read()?) {
         app.update(&message);
-        app.write(&mut stdout)?;
+        app.draw(&mut stdout)?;
       } 
     } 
   }
