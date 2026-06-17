@@ -69,15 +69,11 @@ impl Rect {
   }
 
   pub fn crop_y(&self, delta: u16) -> Self {
-    self
-      .crop_north(delta)
-      .crop_south(delta)
+    self.crop_north(delta).crop_south(delta)
   }
 
   pub fn crop_x(&self, delta: u16) -> Self {
-    self
-      .crop_east(delta)
-      .crop_west(delta)
+    self.crop_east(delta).crop_west(delta)
   }
 
   pub fn row(&self, y: u16) -> Self {
@@ -193,9 +189,7 @@ pub fn parse_color(v: &toml::Value) -> Result<Color, String> {
       } else {
         parse_color_name(&s)
       }
-    _ => Err(
-      format!("could not parse color from value {v}")
-    ),
+    _ => Err(format!("could not parse color from value {v}")),
   }
 }
 

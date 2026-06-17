@@ -191,9 +191,7 @@ impl TextBox {
 }
 
 impl Draw for TextBox {
-  fn draw<W: std::io::Write>(&self, writer: &mut W) 
-    -> std::io::Result<()> 
-  {
+  fn draw<W: std::io::Write>(&self, w: &mut W) -> std::io::Result<()> {
     if !self.write {return Ok(())}
     use crossterm::{
       QueueableCommand, 
@@ -204,28 +202,26 @@ impl Draw for TextBox {
     let mut cursor = self.cursor.clone();
     let mut x = cursor.get_x_view().get_start();
     let mut y = cursor.get_y_view().get_start();
-    writer
+    w
       .queue(MoveTo(x, y))?
       .queue(SetAttribute(Attribute::Reset))?
       .queue(&self.style)?;
     for (index, line) in self.matrix.get_view(cursor.get_y_view()) {
-      writer.queue(*self.styles[*index])?;
+      w.queue(Style::from(
+          *self.styles.get(*index).unwrap_or(&TextStyle::default())
+        ))?;
       for c in line.get_weighted_view(cursor.get_x_view()) {
-        writer.queue(Print(c))?;
+        w.queue(Print(c))?;
         x += u16::try_from(c.width().unwrap_or(0)).unwrap();
       }
-      writer
-        .queue(SetAttribute(Attribute::Reset))?
-        .queue(&self.style)?;
+      w.queue(SetAttribute(Attribute::Reset))?.queue(&self.style)?;
       for _ in x..self.view.x_end() {
-        writer.queue(Print(' '))?;
+        w.queue(Print(' '))?;
       }
-      x = self.view.x; y += 1; writer.queue(MoveTo(x, y))?;
+      x = self.view.x; y += 1; w.queue(MoveTo(x, y))?;
     }
-    writer
-      .queue(SetAttribute(Attribute::Reset))?
-      .queue(&self.style)?;
-    writer.queue(SetAttribute(Attribute::Reset))?;
+    w.queue(SetAttribute(Attribute::Reset))?.queue(&self.style)?;
+    w.queue(SetAttribute(Attribute::Reset))?;
     Ok(())
   }
 }
