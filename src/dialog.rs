@@ -5,7 +5,6 @@ use crate::{
   Style, 
   TextStyle,
   ViewPort,
-  Draw,
 };
 
 
@@ -144,7 +143,7 @@ impl Dialog {
   }
 }
 
-impl Draw for Dialog {
+impl crate::Draw for Dialog {
   fn draw<W: std::io::Write>(&self, writer: &mut W) 
     -> std::io::Result<()> 
   {

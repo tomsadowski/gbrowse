@@ -8,7 +8,6 @@ use crate::{
   Cursor,
   IndexedCursor, 
   ScreenCursor,
-  Draw,
 };
 
 
@@ -190,7 +189,7 @@ impl TextBox {
   }
 }
 
-impl Draw for TextBox {
+impl crate::Draw for TextBox {
   fn draw<W: std::io::Write>(&self, w: &mut W) -> std::io::Result<()> {
     if !self.write {return Ok(())}
     use crossterm::{

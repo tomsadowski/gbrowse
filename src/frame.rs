@@ -6,7 +6,6 @@ use crate::{
   Style, 
   Margins, 
   BorderStyle,
-  Draw,
 };
 
 
@@ -170,7 +169,7 @@ impl Frame {
   }
 }
 
-impl Draw for Frame {
+impl crate::Draw for Frame {
   fn draw<W: std::io::Write>(&self, writer: &mut W) 
     -> std::io::Result<()> 
   {

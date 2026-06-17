@@ -1,7 +1,5 @@
 // src/action.rs
 
-use crate::TextBox;
-
 
 #[derive(Copy, Clone, Debug)]
 pub enum Action {
@@ -36,7 +34,7 @@ pub enum Action {
 }
 
 impl Action {
-  pub fn update(&self, textbox: &mut TextBox) {
+  pub fn update(&self, textbox: &mut crate::TextBox) {
     match self {
       Action::PageDown  => {textbox.move_down(usize::from(textbox.view.h));}
       Action::PageUp    => {textbox.move_up(usize::from(textbox.view.h));}
@@ -50,7 +48,7 @@ impl Action {
     }
   }
 
-  pub fn update_edit(&self, textbox: &mut TextBox) {
+  pub fn update_edit(&self, textbox: &mut crate::TextBox) {
     match self {
       Action::PageDown  => {textbox.move_left(usize::from(textbox.view.w));}
       Action::PageUp    => {textbox.move_right(usize::from(textbox.view.w));}

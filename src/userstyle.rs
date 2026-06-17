@@ -10,7 +10,7 @@ use crate::{
   GemTag,
   Frame,
   Style,
-  coreui as ui,
+  coreui,
 };
 
 
@@ -108,7 +108,7 @@ impl Assign for Style {
     use toml::Value;
     match (f, v) {
       (StyleField::Color(f), v) => {
-        let v = ui::parse_color(&v).map_err(|e| format!("{v:?} : {e}"))?;
+        let v = coreui::parse_color(&v).map_err(|e| format!("{v:?} : {e}"))?;
         match f {
           ColorField::Fg => self.fg = Some(v),
           ColorField::Bg => self.bg = Some(v),
@@ -165,16 +165,16 @@ impl Assign for BorderStyle {
       (BorderField::Corner, Value::String(v)) => {
         match v.as_str() {
           "square" => {
-            self.a = ui::A_SQR;
-            self.b = ui::B_SQR;
-            self.c = ui::C_SQR;
-            self.d = ui::D_SQR;
+            self.a = coreui::A_SQR;
+            self.b = coreui::B_SQR;
+            self.c = coreui::C_SQR;
+            self.d = coreui::D_SQR;
           }
           "round" => {
-            self.a = ui::A_RND;
-            self.b = ui::B_RND;
-            self.c = ui::C_RND;
-            self.d = ui::D_RND;
+            self.a = coreui::A_RND;
+            self.b = coreui::B_RND;
+            self.c = coreui::C_RND;
+            self.d = coreui::D_RND;
           }
           s => return Err(
             format!("Corner field does not contain {s}")
@@ -188,20 +188,20 @@ impl Assign for BorderStyle {
             self.close = ' ';
           }
           "tortoise" | "tort" | "t" => {
-            self.open  = ui::OPEN_TORT;
-            self.close = ui::CLOSE_TORT;
+            self.open  = coreui::OPEN_TORT;
+            self.close = coreui::CLOSE_TORT;
           }
           "integral" | "int"  | "i" | "j" | "J" => {
-            self.open  = ui::OPEN_INT;
-            self.close = ui::CLOSE_INT;
+            self.open  = coreui::OPEN_INT;
+            self.close = coreui::CLOSE_INT;
           }
           "square" | "sqr" => {
-            self.open  = ui::OPEN_SQR;
-            self.close = ui::CLOSE_SQR;
+            self.open  = coreui::OPEN_SQR;
+            self.close = coreui::CLOSE_SQR;
           }
           "E" | "e" => {
-            self.open  = ui::OPEN_E;
-            self.close = ui::CLOSE_E;
+            self.open  = coreui::OPEN_E;
+            self.close = coreui::CLOSE_E;
           }
           s => return Err(
             format!("Bracket field does not contain {s}")

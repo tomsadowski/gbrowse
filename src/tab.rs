@@ -9,7 +9,6 @@ use crate::{
   TextBox, 
   GemText,
   GemTag,
-  Draw,
 };
 use url::Url;
 
@@ -141,7 +140,7 @@ impl TabManager {
   }
 }
 
-impl Draw for TabManager {
+impl crate::Draw for TabManager {
   fn draw<W: std::io::Write>(&self, w: &mut W) -> std::io::Result<()> {
     if let Some(tab) = self.get_current() {
       tab.get_textbox().draw(w)?;
