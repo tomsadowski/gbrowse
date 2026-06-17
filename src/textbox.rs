@@ -3,7 +3,6 @@
 use crate::{
   ViewPort, 
   Rect,
-  Action, 
   Style, 
   TextStyle,
   Cursor,
@@ -158,21 +157,6 @@ impl TextBox {
     } else {false}
   }
 
-  pub fn update_edit(&mut self, action: &Action) {
-    match action {
-      Action::PageDown  => {self.move_left(usize::from(self.view.w));}
-      Action::PageUp    => {self.move_right(usize::from(self.view.w));}
-      Action::Backspace => {self.backspace();}
-      Action::Delete    => {self.delete();}
-      Action::Insert(c) => {self.insert(*c);}
-      Action::MoveLeft  => {self.move_left(1);}
-      Action::MoveRight => {self.move_right(1);}
-      Action::MoveDown  => {self.move_down(1);}
-      Action::MoveUp    => {self.move_up(1);}
-      _ => {}
-    }
-  }
-
   pub fn move_left(&mut self, delta: usize) -> bool {
     if self.matrix.move_left(delta) == 0 {
       self.pref_x = self.matrix.use_current(|c| c.head).unwrap_or(0);
@@ -203,20 +187,6 @@ impl TextBox {
       self.write = self.cursor.update(&self.matrix);
       true
     } else {false}
-  }
-
-  pub fn update(&mut self, action: &Action) {
-    match action {
-      Action::PageDown  => {self.move_down(usize::from(self.view.h));}
-      Action::PageUp    => {self.move_up(usize::from(self.view.h));}
-      Action::Bottom    => {self.move_down(self.matrix.len());}
-      Action::Top       => {self.move_up(self.matrix.len());}
-      Action::MoveDown  => {self.move_down(1);}
-      Action::MoveUp    => {self.move_up(1);}
-      Action::MoveLeft  => {self.move_left(1);}
-      Action::MoveRight => {self.move_right(1);}
-      _ => {}
-    }
   }
 }
 

@@ -447,10 +447,10 @@ impl App {
           self.focus_tabs();
         }
         (DlgInput::Select(textbox), action, _) => {
-          textbox.update(action);
+          action.update(textbox);
         }
         (DlgInput::Edit(editbox),   action, _) => {
-          editbox.update_edit(action);
+          action.update_edit(editbox);
         }
         (_, _, _) => {
           self.focus_tabs();
@@ -512,7 +512,7 @@ impl App {
       }
       (Msg::Action(action), Focus::Tab) => {
         self.tabs.use_textbox_mut(
-          |textbox| textbox.update(action)
+          |textbox| action.update(textbox)
         );
       }
     }

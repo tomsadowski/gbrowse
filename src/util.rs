@@ -14,9 +14,7 @@ pub fn join_if_relative(base: &url::Url, url_str: &str)
   url::Url::parse(url_str).or_else(|e|
     if let url::ParseError::RelativeUrlWithoutBase = e {
       base.join(url_str)
-    } else {
-      Err(e)
-    }
+    } else {Err(e)}
   )
 }
 

@@ -19,6 +19,7 @@ mod dialog;
 mod network;
 mod gemini;
 mod app;
+mod action;
 mod util;
 mod layout;
 
@@ -29,6 +30,7 @@ pub use crate::frame::Frame;
 pub use crate::textbox::TextBox;
 pub use crate::network::Request;
 pub use crate::layout::ViewStack;
+pub use crate::action::Action;
 pub use crate::usertraits::{
   Assign,
   UserTable,
@@ -46,7 +48,6 @@ pub use crate::tab::{
   TabManager,
 };
 pub use crate::coreui::{
-  Action,
   Draw,
   Style, 
   TextStyle, 
