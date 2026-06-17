@@ -111,17 +111,18 @@ impl TabManager {
 
   pub fn add_gem_tab<F>(
     &mut self, 
-    url:    &Url, 
-    source: Vec<GemText>, 
-    func:   F
+    url:            Url, 
+    source:         Vec<GemText>, 
+    get_text_style: F
   ) 
   where F: Fn(&GemTag) -> TextStyle,
   {
+    let new_url = url.clone();
     let text    = source.iter().map(|g| g.text.clone()).collect();
     let tags    = source.iter().map(|g| g.tag.clone()).collect::<Vec<_>>();
-    let styles  = tags.iter().map(|tag| func(tag)).collect();
+    let styles  = tags.iter().map(|tag| get_text_style(tag)).collect();
     let new_tab = Tab::Gem(UrlTab::new(self.view, url, tags, text, styles));
-    self.insert_or_move(|tab| tab.get_url() == Some(url), new_tab);
+    self.insert_or_move(|tab| tab.get_url() == Some(&new_url), new_tab);
     self.reset_state();
   }
 
@@ -224,14 +225,14 @@ pub struct UrlTab<T> {
 impl<T> UrlTab<T> {
   pub fn new<V: ViewPort>(
     view:   V, 
-    url:    &Url, 
+    url:    Url, 
     tags:   Vec<T>, 
     text:   Vec<String>,
     styles: Vec<TextStyle>,
   ) -> Self {
     Self {
-      url:     url.clone(),
       textbox: TextBox::from(view.get_view_port()).text(text, styles),
+      url,
       tags,
     }
   }

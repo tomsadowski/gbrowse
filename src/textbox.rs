@@ -208,8 +208,8 @@ impl Draw for TextBox {
       .queue(&self.style)?;
     for (index, line) in self.matrix.get_view(cursor.get_y_view()) {
       w.queue(Style::from(
-          *self.styles.get(*index).unwrap_or(&TextStyle::default())
-        ))?;
+        *self.styles.get(*index).unwrap_or(&TextStyle::default())
+      ))?;
       for c in line.get_weighted_view(cursor.get_x_view()) {
         w.queue(Print(c))?;
         x += u16::try_from(c.width().unwrap_or(0)).unwrap();

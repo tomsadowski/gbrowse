@@ -162,7 +162,7 @@ impl App {
     self.new_dlg = true;
   }
 
-  fn join_gemdoc(&mut self, url: &Url, response: String, content: String) {
+  fn join_gemdoc(&mut self, url: Url, response: String, content: String) {
     let Ok(status) = StatusText::try_from(response.as_str()) else {
       self.focus_ack_dialog(
         format!("Response {response} is not valid for gemini protocol")
@@ -217,9 +217,9 @@ impl App {
         true
       }
       Ok((r, c)) => {
-        let url = request.url.clone();
-        self.join_gemdoc(&url, r, c);
+        let url      = request.url.clone();
         self.request = None;
+        self.join_gemdoc(url, r, c);
         true
       }
     }

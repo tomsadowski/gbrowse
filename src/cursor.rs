@@ -355,8 +355,8 @@ impl IndexedCursor<Cursor<char>> {
     text:   &Vec<String>,
     styles: &Vec<TextStyle>
   ) -> Self {
-    let width    = usize::from(view.get_view_port().w);
-    let rendered = styles
+    let width = usize::from(view.get_view_port().w);
+    let (indexes, cursors): (Vec<usize>, Vec<Cursor<char>>) = styles
       .iter()
       .zip(text.iter())
       .enumerate()
@@ -366,8 +366,7 @@ impl IndexedCursor<Cursor<char>> {
           .print(width, text)
           .into_iter()
           .map(move |text| (idx, text.into()))
-      );
-    let (indexes, cursors): (Vec<usize>, Vec<Cursor<char>>) = rendered.unzip();
+      ).unzip();
     Self {
       matrix: cursors.into(), 
       indexes,
