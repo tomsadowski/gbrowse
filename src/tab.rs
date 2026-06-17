@@ -131,8 +131,8 @@ impl TabManager {
         Tab::Gem(   UrlTab {url, ..}) | 
         Tab::Gopher(UrlTab {url, ..}) => url.to_string(),
         Tab::Text(heading, _)         => heading.to_string(),
-      }) 
-    {
+      }
+    ) {
       None    => format!("Empty"),
       Some(s) => format!("{}/{} - {s}", self.head + 1, self.data.len()),
     }
@@ -140,12 +140,10 @@ impl TabManager {
 }
 
 impl Draw for TabManager {
-  fn draw<W: std::io::Write>(&self, writer: &mut W) 
-    -> std::io::Result<()> 
-  {
+  fn draw<W: std::io::Write>(&self, w: &mut W) -> std::io::Result<()> {
     if let Some(tab) = self.get_current() {
-      tab.get_textbox().draw(writer)?;
-      tab.get_textbox().cursor.write(writer)?;
+      tab.get_textbox().draw(w)?;
+      tab.get_textbox().cursor.write(w)?;
     } 
     Ok(())
   }
@@ -225,11 +223,11 @@ pub struct UrlTab<T> {
 
 impl<T> UrlTab<T> {
   pub fn new<V: ViewPort>(
-    view:           V, 
-    url:            &Url, 
-    tags:           Vec<T>, 
-    text:           Vec<String>,
-    styles:         Vec<TextStyle>,
+    view:   V, 
+    url:    &Url, 
+    tags:   Vec<T>, 
+    text:   Vec<String>,
+    styles: Vec<TextStyle>,
   ) -> Self {
     Self {
       url:     url.clone(),
