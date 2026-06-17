@@ -47,15 +47,15 @@ impl From<Rect> for TextBox {
 }
 
 impl TextBox {
-  pub fn get_current_display_ref(&self) -> String {
+  pub fn get_current_text(&self) -> String {
     self.text
       .get(self.matrix.head)
       .map(|t| t.to_string())
       .unwrap_or("empty".into())
   }
 
-  pub fn get_current_reference_index(&self) -> usize {
-    self.matrix.get_current_reference_index()
+  pub fn get_current_index(&self) -> usize {
+    self.matrix.get_current_index()
   }
 
   pub fn style<S>(mut self, style: S) -> Self 

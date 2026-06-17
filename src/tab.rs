@@ -84,9 +84,7 @@ impl TabManager {
 
   pub fn reset_state(&mut self) {
     self.tabs.use_current_mut(
-      |tab| {
-        tab.get_textbox_mut().reset_state();
-      }
+      |tab| tab.get_textbox_mut().reset_state()
     );
   }
 
@@ -96,13 +94,10 @@ impl TabManager {
       .and_then(|tab| tab.get_url())
   }
 
-  pub fn use_gem_text<F, T>(&self, func: F) -> Option<T>
-  where F: Fn(&GemText) -> T
-  {
+  pub fn get_gem_tag(&self) -> Option<&GemTag> {
     self.tabs
       .get_current()
-      .and_then(|tab| tab.get_gem_text())
-      .map(|gem_text| func(gem_text))
+      .and_then(|tab| tab.get_gem_tag())
   }
 
   pub fn use_textbox_mut<F, T>(&mut self, func: F) -> Option<T>
@@ -122,8 +117,10 @@ impl TabManager {
   ) 
   where F: Fn(&GemTag) -> TextStyle,
   {
-    let tags    = source.iter().map(|g| g.tag).collect();
-    let new_tab = Tab::Gem(UrlTab::new(url, self.view, source, func));
+    let text    = source.iter().map(|g| g.text.clone()).collect();
+    let tags    = source.iter().map(|g| g.tag.clone()).collect::<Vec<_>>();
+    let styles  = tags.iter().map(|tag| func(tag)).collect();
+    let new_tab = Tab::Gem(UrlTab::new(self.view, url, tags, text, styles));
     self.insert_or_move(|tab| tab.get_url() == Some(url), new_tab);
     self.reset_state();
   }
@@ -184,15 +181,11 @@ impl Tab {
   }
 
   pub fn get_gem_tab(&self) ->  Option<&UrlTab<GemTag>> {
-    if let Tab::Gem(tab) = self {
-      Some(tab)
-    } else {None}
+    if let Tab::Gem(tab) = self {Some(tab)} else {None}
   }
 
   pub fn get_gopher_tab(&self) ->  Option<&UrlTab<String>> {
-    if let Tab::Gopher(tab) = self {
-      Some(tab)
-    } else {None}
+    if let Tab::Gopher(tab) = self {Some(tab)} else {None}
   }
 
   pub fn get_text_tab(&self) ->  Option<(&str, &TextBox)> {
@@ -204,13 +197,7 @@ impl Tab {
   pub fn get_gem_tag(&self) -> Option<&GemTag> {
     self
       .get_gem_tab()
-      .and_then(|gem_tab| gem_tab.get_current_source())
-  }
-
-  pub fn get_gem_text(&self) -> Option<&GemText> {
-    self
-      .get_gem_tab()
-      .and_then(|gem_tab| gem_tab.get_current_source())
+      .and_then(|gem_tab| gem_tab.get_current_tag())
   }
 
   pub fn get_textbox(&self) -> &TextBox {
@@ -237,27 +224,23 @@ pub struct UrlTab<T> {
 } 
 
 impl<T> UrlTab<T> {
-  pub fn new<V, F>(
-    url:            &Url, 
+  pub fn new<V: ViewPort>(
     view:           V, 
+    url:            &Url, 
     tags:           Vec<T>, 
-    to_styled_text: F
-  ) -> Self
-  where 
-    V: ViewPort, 
-    F: Fn(&T) -> TextStyle
-  {
+    text:           Vec<String>,
+    styles:         Vec<TextStyle>,
+  ) -> Self {
     Self {
       url:     url.clone(),
-      textbox: TextBox::from(view.get_view_port())
-        .text(&tags, to_styled_text),
+      textbox: TextBox::from(view.get_view_port()).text(text, styles),
       tags,
     }
   }
 
-  pub fn get_current_source(&self) -> Option<&T> {
+  pub fn get_current_tag(&self) -> Option<&T> {
     self.tags.get(
-      self.textbox.get_current_reference_index()
+      self.textbox.get_current_index()
     )
   }
 }

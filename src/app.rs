@@ -293,7 +293,7 @@ impl App {
       {
         (DlgInput::Select(textbox), Action::Select, Task::NewTab) => {
           if let Some(link) = self.user.urls.get(
-            textbox.get_current_reference_index()
+            textbox.get_current_index()
           ) {
             let link = link.clone();
             self.select_link(&link);
@@ -303,9 +303,7 @@ impl App {
         }
         (DlgInput::Select(textbox), Action::Select, Task::ChangeKeys) => {
           match std::fs::read_to_string(
-            user::get_keys_file(
-              &textbox.get_current_display_ref()
-            )
+            user::get_keys_file(&textbox.get_current_text())
           ) {
             Err(e) => self.focus_ack_dialog(format!("Problem: {e}")),
             Ok(s)  => if let Err(e) = self.user.keys.update_from_str(&s) {
@@ -317,9 +315,7 @@ impl App {
         }
         (DlgInput::Select(textbox), Action::Select, Task::ChangeStyle) => {
           match std::fs::read_to_string(
-            user::get_styles_file(
-              &textbox.get_current_display_ref()
-            )
+            user::get_styles_file(&textbox.get_current_text())
           ) {
             Err(e) => self.focus_ack_dialog(e.to_string()),
             Ok(s)  => if let Err(e) = self.user.style.update_from_str(&s) {
@@ -332,7 +328,7 @@ impl App {
           }
         }
         (DlgInput::Select(textbox), Action::Select, Task::Menu) => {
-          match MENU[textbox.get_current_reference_index()] {
+          match MENU[textbox.get_current_index()] {
             MANUAL => {
               self.focus_ack_dialog("View manual".into());
             }
@@ -471,9 +467,7 @@ impl App {
         }
       }
       (Msg::Action(Action::Select), Focus::Tab) => {
-        match self.tabs.use_gem_text(
-          |gem_text| gem_text.tag.clone()
-        ) {
+        match self.tabs.get_gem_tag() {
           None => self.focus_ack_dialog(
             format!("You've selected nothing")
           ),

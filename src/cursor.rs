@@ -333,7 +333,7 @@ impl<T> std::ops::DerefMut for IndexedCursor<T> {
 }
 
 impl<T> IndexedCursor<T> {
-  pub fn get_current_reference_index(&self) -> usize {
+  pub fn get_current_index(&self) -> usize {
     self.indexes.get(self.matrix.head)
       .map(|u| u.clone())
       .unwrap_or(usize::MIN)
