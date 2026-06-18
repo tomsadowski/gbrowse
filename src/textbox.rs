@@ -21,7 +21,6 @@ pub struct TextBox {
   pub cursor:         ScreenCursor,
   pub pref_x:         usize,
   pub write:          bool,
-  pub show_cursor:    bool,
 }
 
 impl ViewPort for TextBox {
@@ -32,7 +31,6 @@ impl From<Rect> for TextBox {
   fn from(view: Rect) -> Self {
     Self {
       write:          true,
-      show_cursor:    false,
       pref_x:         0,
       style:          Style::default(),
       text:           vec![],
@@ -45,46 +43,8 @@ impl From<Rect> for TextBox {
 }
 
 impl TextBox {
-  pub fn get_current_text(&self) -> String {
-    self.text
-      .get(self.matrix.head)
-      .map(|t| t.to_string())
-      .unwrap_or("empty".into())
-  }
-
-  pub fn get_current_index(&self) -> usize {
-    self.matrix.get_current_index()
-  }
-
-  pub fn style<S>(mut self, style: S) -> Self 
-  where S: Into<Style> + Copy
-  {
+  pub fn style<S: Into<Style> + Copy>(mut self, style: S) -> Self {
     self.style = style.into();
-    self
-  }
-
-  pub fn show_cursor(mut self, b: bool) -> Self {
-    self.show_cursor = b;
-    self
-  }
-
-  pub fn used_rect(&self) -> Rect {
-    if let Ok(h) = u16::try_from(self.matrix.len()) {
-      self.view.cap_height(h)
-    } else {
-      self.view
-    }
-  }
-
-  pub fn reset_state(&mut self) {
-    self.write = true;
-  }
-
-  pub fn text(mut self, text: Vec<String>, styles: Vec<TextStyle>) -> Self {
-    self.text   = text;
-    self.styles = styles;
-    self.matrix = IndexedCursor::new(&self.view, &self.text, &self.styles);
-    self.cursor.update(&self.matrix);
     self
   }
 
@@ -94,36 +54,65 @@ impl TextBox {
     self
   }
 
+  pub fn text(mut self, text: Vec<String>, styles: Vec<TextStyle>) -> Self {
+    self.set_text(text, styles);
+    self
+  }
+
   pub fn set_text(&mut self, text: Vec<String>, styles: Vec<TextStyle>) {
-    self.text   = text;
-    self.styles = styles;
-    self.matrix = IndexedCursor::new(&self.view, &self.text, &self.styles);
-    self.cursor.update(&self.matrix);
+    self.text = text;
+    self.set_styles(styles);
   }
 
   pub fn set_styles(&mut self, styles: Vec<TextStyle>) {
-    let linear_head = self.matrix.get_linear_head();
-    self.styles     = styles;
-    self.matrix     = IndexedCursor::new(&self.view, &self.text, &self.styles);
-    self.matrix.set_linear_head(linear_head);
+    self.styles = styles;
+    self.reset_matrix();
     self.cursor.update(&self.matrix);
+    self.view = self.used_rect();
+    self.cursor.resize(&self.matrix, &self.view);
     self.reset_state();
+  }
+
+  pub fn reset_matrix(&mut self) {
+    let linear_head = self.matrix.get_linear_head();
+    self.matrix = IndexedCursor::new(&self.view, &self.text, &self.styles);
+    self.matrix.set_linear_head(linear_head);
   }
 
   pub fn resize<V: ViewPort>(&mut self, view: V) {
     let old_view = self.view;
     self.view    = view.get_view_port();
-    if old_view.w == self.view.w {
-      let linear_head = self.matrix.get_linear_head();
-      self.matrix     = IndexedCursor::new(&view, &self.text, &self.styles);
-      self.matrix.set_linear_head(linear_head);
+    if old_view.w != self.view.w {
+      self.reset_matrix();
     }
-    self.cursor.resize(&self.matrix, &view);
+    self.view = self.used_rect();
+    self.cursor.resize(&self.matrix, &self.view);
     self.reset_state();
+  }
+
+  pub fn reset_state(&mut self) {
+    self.write = true;
+  }
+
+  pub fn used_rect(&self) -> Rect {
+    if let Ok(h) = u16::try_from(self.matrix.len()) {
+      self.view.cap_height(h)
+    } else {self.view}
   }
 
   pub fn get_current_string(&self) -> Option<String> {
     self.matrix.use_current(|c| c.to_string())
+  }
+
+  pub fn get_current_text(&self) -> String {
+    self.text
+      .get(self.matrix.head)
+      .map(|t| t.to_string())
+      .unwrap_or("empty".into())
+  }
+
+  pub fn get_current_index(&self) -> usize {
+    self.matrix.get_current_index()
   }
 
   pub fn delete(&mut self) -> bool {
