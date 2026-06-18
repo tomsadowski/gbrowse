@@ -8,40 +8,31 @@ use crate::{
 };
 
 
-pub enum Direction {
-  NorthSouth,
-  SouthNorth,
-  WestEast, 
-  EastWest,
+pub struct Layout {
+  pub view: Rect,
+  pub base: Rect,
+  pub temp: IndexedCursor<Rect>,
 }
 
-pub struct ViewStack {
-  pub view:        Rect,
-  pub windows:     IndexedCursor<Rect>,
-  pub orientation: Direction,
-}
-
-impl<V: ViewPort> From<V> for ViewStack {
+impl<V: ViewPort> From<V> for Layout {
   fn from(view: V) -> Self {
     Self {
-      windows: {
+      temp: {
         let mut c = IndexedCursor::default();
         c.insert(view.get_view_port());
         c
       },
-      view:        view.get_view_port(),
-      orientation: Direction::NorthSouth,
+      base: view.get_view_port(),
+      view: view.get_view_port(),
     }
   }
 }
 
-impl ViewStack {
-  fn get_weight(&self, window: &TextBox) -> usize {
-    match self.orientation {
-      Direction::WestEast | Direction::EastWest => 
-        window.get_view_port().w.into(),
-      Direction::NorthSouth | Direction::SouthNorth => 
-        window.get_view_port().h.into(),
-    }
+impl Layout {
+  pub fn update_base(&mut self) {
+
+  }
+  pub fn size_base(&self, textbox: &mut TextBox) {
+    textbox.resize(self.base)
   }
 }

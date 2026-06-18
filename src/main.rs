@@ -29,7 +29,7 @@ pub use crate::userstyle::UserStyle;
 pub use crate::frame::Frame;
 pub use crate::textbox::TextBox;
 pub use crate::network::Request;
-pub use crate::layout::ViewStack;
+pub use crate::layout::Layout;
 pub use crate::action::Action;
 pub use crate::usertraits::{
   Assign,

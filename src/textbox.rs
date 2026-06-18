@@ -111,10 +111,13 @@ impl TextBox {
   }
 
   pub fn resize<V: ViewPort>(&mut self, view: V) {
-    let linear_head = self.matrix.get_linear_head();
-    self.view       = view.get_view_port();
-    self.matrix     = IndexedCursor::new(&view, &self.text, &self.styles);
-    self.matrix.set_linear_head(linear_head);
+    let old_view = self.view;
+    self.view    = view.get_view_port();
+    if old_view.w == self.view.w {
+      let linear_head = self.matrix.get_linear_head();
+      self.matrix     = IndexedCursor::new(&view, &self.text, &self.styles);
+      self.matrix.set_linear_head(linear_head);
+    }
     self.cursor.resize(&self.matrix, &view);
     self.reset_state();
   }
