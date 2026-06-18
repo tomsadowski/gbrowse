@@ -110,26 +110,8 @@ impl From<(GemTag, String)> for GemText {
 }
 
 impl GemText {
-  pub fn text(s: String) -> Self {
-    Self {tag: GemTag::Text, text: s}
-  }
-  pub fn heading3(s: String) -> Self {
-    Self {tag: GemTag::HeadingThree, text: s}
-  }
-  pub fn heading2(s: String) -> Self {
-    Self {tag: GemTag::HeadingTwo, text: s}
-  }
-  pub fn heading1(s: String) -> Self {
-    Self {tag: GemTag::HeadingOne, text: s}
-  }
   pub fn preformat(s: String) -> Self {
     Self {tag: GemTag::PreFormat, text: s}
-  }
-  pub fn quote(s: String) -> Self {
-    Self {tag: GemTag::Quote, text: s}
-  }
-  pub fn list_item(s: String) -> Self {
-    Self {tag: GemTag::ListItem, text: s}
   }
 
   pub fn parse_line(line: &str) -> (GemTag, String) {

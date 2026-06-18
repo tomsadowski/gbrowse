@@ -198,6 +198,11 @@ impl App {
           gemini::parse_doc(&content), 
           |g| self.user.get_gem_style(g),
         );
+        self.tabs.use_textbox_mut(
+          |textbox| {
+            textbox.style = self.user.style.general.into();
+          }
+        );
         self.tab_changed = true;
       }
     };
