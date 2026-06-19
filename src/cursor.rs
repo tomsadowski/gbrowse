@@ -16,15 +16,15 @@ pub struct Cursor<T> {
 
 impl<T> std::ops::Deref for Cursor<T> {
   type Target = Vec<T>;
-  fn deref(&self) -> &Self::Target {
-    &self.data
-  }
+  fn deref(&self) -> &Self::Target {&self.data}
 }
 
 impl<T> std::ops::DerefMut for Cursor<T> {
-  fn deref_mut(&mut self) -> &mut Self::Target {
-    &mut self.data
-  }
+  fn deref_mut(&mut self) -> &mut Self::Target {&mut self.data}
+}
+
+impl ToString for Cursor<char> {
+  fn to_string(&self) -> String {self.data.iter().collect()}
 }
 
 impl<T> From<Vec<T>> for Cursor<T> {
@@ -34,12 +34,6 @@ impl<T> From<Vec<T>> for Cursor<T> {
       buff:  false,
       data:  item
     }
-  }
-}
-
-impl ToString for Cursor<char> {
-  fn to_string(&self) -> String {
-    self.data.iter().collect()
   }
 }
 
@@ -321,15 +315,11 @@ pub struct IndexedCursor<T> {
 
 impl<T> std::ops::Deref for IndexedCursor<T> {
   type Target = Cursor<T>;
-  fn deref(&self) -> &Self::Target {
-    &self.matrix
-  }
+  fn deref(&self) -> &Self::Target {&self.matrix}
 }
 
 impl<T> std::ops::DerefMut for IndexedCursor<T> {
-  fn deref_mut(&mut self) -> &mut Self::Target {
-    &mut self.matrix
-  }
+  fn deref_mut(&mut self) -> &mut Self::Target {&mut self.matrix}
 }
 
 impl<T> IndexedCursor<T> {
@@ -350,12 +340,11 @@ impl<T> IndexedCursor<T> {
 }
 
 impl IndexedCursor<Cursor<char>> {
-  pub fn new<V: ViewPort>(
-    view:   &V, 
+  pub fn print(
+    width:  usize, 
     text:   &Vec<String>,
     styles: &Vec<TextStyle>
   ) -> Self {
-    let width = usize::from(view.get_view_port().w);
     let (indexes, cursors): (Vec<usize>, Vec<Cursor<char>>) = styles
       .iter()
       .zip(text.iter())
@@ -371,6 +360,15 @@ impl IndexedCursor<Cursor<char>> {
       matrix: cursors.into(), 
       indexes,
     }
+  }
+
+  pub fn print_from<V: ViewPort>(
+    view:   &V, 
+    text:   &Vec<String>,
+    styles: &Vec<TextStyle>
+  ) -> Self {
+    let width = usize::from(view.get_view_port().w);
+    Self::print(width, text, styles)
   }
 }
 
@@ -430,12 +428,12 @@ impl ScreenCursor {
     );
     x || y
   }
+}
 
-  pub fn write<W: std::io::Write>(&self, writer: &mut W) 
-    -> std::io::Result<()> 
-  {
+impl crate::Draw for ScreenCursor {
+  fn draw<W: std::io::Write>(&self, w: &mut W) -> std::io::Result<()> {
     use crossterm::{QueueableCommand, cursor};
-    writer
+    w
       .queue(cursor::MoveTo(self.x.get_cursor(), self.y.get_cursor()))?
       .queue(cursor::Show)?;
     Ok(())
@@ -444,16 +442,11 @@ impl ScreenCursor {
 
 #[derive(Copy, Clone, Debug, Default)]
 pub struct LineCursorView {
-  // data head
-  head:    usize,
-  // start of displayable data
-  scroll:  usize,
-  // on-screen cursor
-  cursor:  u16,
-  // x or y
-  start:   u16,
-  // width or height of rectangle
-  size:    u16,
+  head:   usize, // data head
+  scroll: usize, // start of displayable data
+  cursor: u16,   // on-screen cursor
+  start:  u16,   // x or y
+  size:   u16,   // width or height of rectangle
 }
 
 impl LineCursorView {

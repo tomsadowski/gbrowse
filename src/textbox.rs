@@ -13,14 +13,14 @@ use crate::{
 
 #[derive(Default)]
 pub struct TextBox {
-  pub view:           Rect,
-  pub style:          Style,
-  pub text:           Vec<String>,
-  pub styles:         Vec<TextStyle>,
-  pub matrix:         IndexedCursor<Cursor<char>>,
-  pub cursor:         ScreenCursor,
-  pub pref_x:         usize,
-  pub write:          bool,
+  pub view:   Rect,
+  pub style:  Style,
+  pub text:   Vec<String>,
+  pub styles: Vec<TextStyle>,
+  pub matrix: IndexedCursor<Cursor<char>>,
+  pub cursor: ScreenCursor,
+  pub pref_x: usize,
+  pub write:  bool,
 }
 
 impl ViewPort for TextBox {
@@ -30,14 +30,14 @@ impl ViewPort for TextBox {
 impl From<Rect> for TextBox {
   fn from(view: Rect) -> Self {
     Self {
-      write:          true,
-      pref_x:         0,
-      style:          Style::default(),
-      text:           vec![],
-      styles:         vec![],
-      cursor:         ScreenCursor::from(&view), 
-      matrix:         IndexedCursor::default(),
-      view:           view.get_view_port(),
+      write:  true,
+      pref_x: 0,
+      style:  Style::default(),
+      text:   vec![],
+      styles: vec![],
+      cursor: ScreenCursor::from(&view), 
+      matrix: IndexedCursor::default(),
+      view:   view.get_view_port(),
     }
   }
 }
@@ -48,7 +48,7 @@ impl TextBox {
     self
   }
 
-  pub fn as_editor(mut self) -> Self {
+  pub fn editor(mut self) -> Self {
     self.matrix.make_editor_lines();
     self.cursor.update(&self.matrix);
     self
@@ -75,7 +75,7 @@ impl TextBox {
 
   pub fn reset_matrix(&mut self) {
     let linear_head = self.matrix.get_linear_head();
-    self.matrix = IndexedCursor::new(&self.view, &self.text, &self.styles);
+    self.matrix = IndexedCursor::print_from(&self.view, &self.text, &self.styles);
     self.matrix.set_linear_head(linear_head);
   }
 

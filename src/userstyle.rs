@@ -60,9 +60,7 @@ impl UserStyle {
 
 impl Assign for UserStyle {
   type Field = StyleTableField;
-  fn assign(&mut self, f: Self::Field, v: toml::Value) 
-    -> Result<(), String> 
-  {
+  fn assign(&mut self, f: Self::Field, v: toml::Value) -> Result<(), String> {
     use toml::Value;
     match (f, v) {
       (StyleTableField::Border, Value::Table(v)) => {
@@ -102,9 +100,7 @@ impl Assign for UserStyle {
 
 impl Assign for Style {
   type Field = StyleField;
-  fn assign(&mut self, f: Self::Field, v: toml::Value) 
-    -> Result<(), String> 
-  {
+  fn assign(&mut self, f: Self::Field, v: toml::Value) -> Result<(), String> {
     use toml::Value;
     match (f, v) {
       (StyleField::Color(f), v) => {
@@ -130,9 +126,7 @@ impl Assign for Style {
 
 impl Assign for Margins {
   type Field = MarginField;
-  fn assign(&mut self, f: Self::Field, v: toml::Value) 
-    -> Result<(), String> 
-  {
+  fn assign(&mut self, f: Self::Field, v: toml::Value) -> Result<(), String> {
     use toml::Value;
     match (f, v) {
       (f, Value::Integer(v)) => {
@@ -154,9 +148,7 @@ impl Assign for Margins {
 
 impl Assign for BorderStyle {
   type Field = BorderField;
-  fn assign(&mut self, f: Self::Field, v: toml::Value) 
-    -> Result<(), String> 
-  {
+  fn assign(&mut self, f: Self::Field, v: toml::Value) -> Result<(), String> {
     use toml::Value;
     match (f, v) {
       (BorderField::Style(f), v) => {
@@ -218,9 +210,7 @@ impl Assign for BorderStyle {
 
 impl Assign for TextStyle {
   type Field = TextField;
-  fn assign(&mut self, f: Self::Field, v: toml::Value) 
-    -> Result<(), String> 
-  {
+  fn assign(&mut self, f: Self::Field, v: toml::Value) -> Result<(), String> {
     use toml::Value;
     match (f, v) {
       (TextField::Wrap, Value::Boolean(v)) => {
@@ -292,9 +282,7 @@ impl std::str::FromStr for StyleTableField {
 }
 
 #[derive(Debug)]
-pub enum MarginField {
-  North, South, East, West,
-}
+pub enum MarginField {North, South, East, West}
 
 impl std::str::FromStr for MarginField {
   type Err = String;
@@ -310,9 +298,7 @@ impl std::str::FromStr for MarginField {
 }
 
 #[derive(Debug)]
-pub enum StyleField {
-  Color(ColorField), Attribute(AttributeField),
-}
+pub enum StyleField {Color(ColorField), Attribute(AttributeField)}
 
 impl std::str::FromStr for StyleField {
   type Err = String;
@@ -328,9 +314,7 @@ impl std::str::FromStr for StyleField {
 }
 
 #[derive(Debug)]
-pub enum TextField {
-  Wrap, Style(StyleField)
-}
+pub enum TextField {Wrap, Style(StyleField)}
 
 impl std::str::FromStr for TextField {
   type Err = String;
@@ -343,9 +327,8 @@ impl std::str::FromStr for TextField {
 }
 
 #[derive(Debug)]
-pub enum BorderField {
-  Style(StyleField), Corner, Bracket,
-}
+pub enum BorderField {Style(StyleField), Corner, Bracket}
+
 impl std::str::FromStr for BorderField {
   type Err = String;
   fn from_str(s: &str) -> Result<Self, Self::Err> {

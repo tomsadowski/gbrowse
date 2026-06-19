@@ -3,20 +3,14 @@
 
 pub trait Assign {
   type Field;
-
   fn assign(&mut self, field: Self::Field, value: toml::Value) 
     -> Result<(), String>;
 }
 
 pub trait UserTable: Sized {
-  fn read_table(self, table: toml::Table) 
-    -> Result<Self, String>;
-
-  fn update_from_table(&mut self, table: toml::Table) 
-    -> Result<(), String>;
-
-  fn update_from_str(&mut self, s: &str) 
-    -> Result<(), String>;
+  fn read_table(self, table: toml::Table) -> Result<Self, String>;
+  fn update_from_table(&mut self, table: toml::Table) -> Result<(), String>;
+  fn update_from_str(&mut self, s: &str) -> Result<(), String>;
 }
 
 impl<T, F> UserTable for T
@@ -46,15 +40,7 @@ where T: Assign<Field = F>,
   }
 }
 
-pub trait UserFromStr: Sized {
-  fn user_from_str(s: &str) -> Result<Self, String>;
-}
-
-impl<T> UserFromStr for T
-where T: UserTable + Default,
-{
-  fn user_from_str(s: &str) -> Result<Self, String> {
-    let table = s.parse::<toml::Table>().map_err(|e| e.to_string())?;
-    Self::default().read_table(table)
-  }
+pub fn user_from_str<T: UserTable + Default>(s: &str) -> Result<T, String> {
+  let table = s.parse::<toml::Table>().map_err(|e| e.to_string())?;
+  T::default().read_table(table)
 }

@@ -8,7 +8,7 @@ pub trait ViewPort {
 }
 
 pub trait Draw {
-  fn draw<W: std::io::Write>(&self, writer: &mut W) -> std::io::Result<()>;
+  fn draw<W: std::io::Write>(&self, w: &mut W) -> std::io::Result<()>;
 }
 
 #[derive(Copy, Clone, Default)]
@@ -20,9 +20,7 @@ pub struct Rect {
 }
 
 impl ViewPort for Rect {
-  fn get_view_port(&self) -> Rect {
-    self.clone()
-  }
+  fn get_view_port(&self) -> Rect {self.clone()}
 }
 
 impl Rect {
@@ -291,25 +289,6 @@ impl crossterm::Command for Style {
   }
 }
 
-impl TextStyle {
-  // split at spaces within width and split at lines
-  pub fn print(&self, width: usize, text: &str) -> Vec<Vec<char>> {
-    if text.len() == 0 {
-      vec![vec![]]
-    } else if self.wrap {
-      text
-        .lines()
-        .flat_map(|line| crate::util::get_wrapped_text(line, width))
-        .collect()
-    } else {
-      text
-        .lines()
-        .map(|line| line.chars().collect())
-        .collect()
-    }
-  }
-}
-
 #[derive(Copy, Debug, Clone)]
 pub struct Margins {
   pub north: u16,
@@ -386,7 +365,24 @@ impl Default for TextStyle {
 
 impl std::ops::Deref for TextStyle {
   type Target = Style;
-  fn deref(&self) -> &Self::Target {
-    &self.style
+  fn deref(&self) -> &Self::Target {&self.style}
+}
+
+impl TextStyle {
+  // split at spaces within width and split at lines
+  pub fn print(&self, width: usize, text: &str) -> Vec<Vec<char>> {
+    if text.len() == 0 {
+      vec![vec![]]
+    } else if self.wrap {
+      text
+        .lines()
+        .flat_map(|line| crate::util::get_wrapped_text(line, width))
+        .collect()
+    } else {
+      text
+        .lines()
+        .map(|line| line.chars().collect())
+        .collect()
+    }
   }
 }

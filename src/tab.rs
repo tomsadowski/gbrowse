@@ -10,7 +10,6 @@ use crate::{
   GemText,
   GemTag,
 };
-use url::Url;
 
 
 pub struct TabManager {
@@ -87,7 +86,7 @@ impl TabManager {
     );
   }
 
-  pub fn get_url(&self) -> Option<&Url> {
+  pub fn get_url(&self) -> Option<&url::Url> {
     self.tabs
       .get_current()
       .and_then(|tab| tab.get_url())
@@ -110,7 +109,7 @@ impl TabManager {
 
   pub fn add_gem_tab<F>(
     &mut self, 
-    url:            &Url, 
+    url:            &url::Url, 
     source:         Vec<GemText>, 
     get_text_style: F
   ) 
@@ -144,7 +143,7 @@ impl crate::Draw for TabManager {
   fn draw<W: std::io::Write>(&self, w: &mut W) -> std::io::Result<()> {
     if let Some(tab) = self.get_current() {
       tab.get_textbox().draw(w)?;
-      tab.get_textbox().cursor.write(w)?;
+      tab.get_textbox().cursor.draw(w)?;
     } 
     Ok(())
   }
@@ -171,7 +170,7 @@ impl Tab {
     }
   }
 
-  pub fn get_url(&self) -> Option<&Url> {
+  pub fn get_url(&self) -> Option<&url::Url> {
     match self {
       Tab::Gem(   UrlTab {url, ..}) | 
       Tab::Gopher(UrlTab {url, ..}) => Some(url),
@@ -217,7 +216,7 @@ impl Tab {
 }
 
 pub struct UrlTab<T> {
-  pub url:     Url,
+  pub url:     url::Url,
   pub tags:    Vec<T>,
   pub textbox: TextBox,
 } 
@@ -225,7 +224,7 @@ pub struct UrlTab<T> {
 impl<T> UrlTab<T> {
   pub fn new<V: ViewPort>(
     view:   V, 
-    url:    &Url, 
+    url:    &url::Url, 
     tags:   Vec<T>, 
     text:   Vec<String>,
     styles: Vec<TextStyle>,

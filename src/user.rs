@@ -59,9 +59,7 @@ impl Default for User {
 
 impl Assign for User {
   type Field = UserField;
-  fn assign(&mut self, f: Self::Field, v: toml::Value) 
-    -> Result<(), String> 
-  {
+  fn assign(&mut self, f: Self::Field, v: toml::Value) -> Result<(), String> {
     use toml::Value;
     match (f, v) {
       (UserField::InitUrl, Value::String(v)) => {

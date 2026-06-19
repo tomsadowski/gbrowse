@@ -97,9 +97,8 @@ impl Frame {
     self.inner_rect  = self.text_margin.get_rect(self.outer_rect);
   }
 
-  pub fn write_footer<W: std::io::Write>(&self, text: &str, writer: &mut W) 
-    -> std::io::Result<()> 
-  {
+  pub fn draw_footer<W: std::io::Write>(&self, text: &str, w: &mut W) 
+  -> std::io::Result<()> {
     use crossterm::{
       QueueableCommand, 
       cursor::{self, MoveTo}, 
@@ -107,7 +106,7 @@ impl Frame {
     };
     let mut x = self.inner_rect.x_end().saturating_sub(1);
     let     y = self.border_rect.y_end().saturating_sub(1);
-    writer
+    w
       .queue(MoveTo(x, y))?
       .queue(&self.border_style.style)?
       .queue(Print(self.border_style.close))?
@@ -116,10 +115,10 @@ impl Frame {
       .queue(&self.footer_style)?;
     x -= 2;
     for c in text.chars().rev().take(self.inner_rect.crop_x(2).w.into()) {
-      writer.queue(cursor::MoveLeft(2))?.queue(Print(c))?;
+      w.queue(cursor::MoveLeft(2))?.queue(Print(c))?;
       x -= 1;
     }
-    writer
+    w
       .queue(cursor::MoveLeft(2))?
       .queue(Print(' '))?
       .queue(&self.border_style.style)?
@@ -127,17 +126,16 @@ impl Frame {
       .queue(Print(self.border_style.open))?;
     x -= 2;
     for _ in self.inner_rect.x..x {
-      writer
+      w
         .queue(cursor::MoveLeft(2))?
         .queue(Print(self.border_style.x))?;
     }
-    writer.queue(SetAttribute(Attribute::Reset))?;
+    w.queue(SetAttribute(Attribute::Reset))?;
     Ok(())
   }
 
-  pub fn write_banner<W: std::io::Write>(&self, text: &str, writer: &mut W) 
-    -> std::io::Result<()> 
-  {
+  pub fn draw_banner<W: std::io::Write>(&self, text: &str, w: &mut W) 
+  -> std::io::Result<()> {
     use crossterm::{
       QueueableCommand, 
       cursor::MoveTo, 
@@ -145,7 +143,7 @@ impl Frame {
     };
     let mut x = self.inner_rect.x;
     let     y = self.border_rect.y;
-    writer
+    w
       .queue(MoveTo(x, y))?
       .queue(&self.border_style.style)?
       .queue(Print(self.border_style.open))?
@@ -153,26 +151,24 @@ impl Frame {
       .queue(&self.banner_style)?;
     x += 2;
     for c in text.chars().take(self.inner_rect.crop_x(2).w.into()) {
-      writer.queue(Print(c))?;
+      w.queue(Print(c))?;
       x += 1;
     }
-    writer
+    w
       .queue(&self.border_style.style)?
       .queue(Print(' '))?
       .queue(Print(self.border_style.close))?;
     x += 2;
     for _ in x..self.inner_rect.x_end() {
-      writer.queue(Print(self.border_style.x))?;
+      w.queue(Print(self.border_style.x))?;
     }
-    writer.queue(SetAttribute(Attribute::Reset))?;
+    w.queue(SetAttribute(Attribute::Reset))?;
     Ok(())
   }
 }
 
 impl crate::Draw for Frame {
-  fn draw<W: std::io::Write>(&self, writer: &mut W) 
-    -> std::io::Result<()> 
-  {
+  fn draw<W: std::io::Write>(&self, w: &mut W) -> std::io::Result<()> {
     use crossterm::{
       QueueableCommand, 
       cursor::MoveTo, 
@@ -183,7 +179,7 @@ impl crate::Draw for Frame {
     let (bx, by) = self.border_rect.b();
     let (cx, cy) = self.border_rect.c();
     let (dx, dy) = self.border_rect.d();
-    writer
+    w
       .queue(SetAttribute(Attribute::Reset))?
       .queue(&self.border_style.style)?
       .queue(MoveTo(ax, ay))?.queue(Print(self.border_style.a))?
@@ -191,36 +187,36 @@ impl crate::Draw for Frame {
       .queue(MoveTo(cx, cy))?.queue(Print(self.border_style.c))?
       .queue(MoveTo(dx, dy))?.queue(Print(self.border_style.d))?;
     for x in self.border_rect.crop_x(1).x_range() {
-      writer
+      w
         .queue(MoveTo(x, ay))?.queue(Print(self.border_style.x))?
         .queue(MoveTo(x, cy))?.queue(Print(self.border_style.x))?;
     }
     for y in self.border_rect.crop_y(1).y_range() {
-      writer
+      w
         .queue(MoveTo(ax, y))?.queue(Print(self.border_style.y))?
         .queue(MoveTo(bx, y))?.queue(Print(self.border_style.y))?;
     }
     // margin
-    writer
+    w
       .queue(SetAttribute(Attribute::Reset))?
       .queue(&self.margin_style)?;
     for x in self.outer_rect.x_range() {
       for y in self.outer_rect.y..self.inner_rect.y {
-        writer.queue(MoveTo(x, y))?.queue(Print(' '))?;
+        w.queue(MoveTo(x, y))?.queue(Print(' '))?;
       }
       for y in self.inner_rect.y_end()..self.outer_rect.y_end() {
-        writer.queue(MoveTo(x, y))?.queue(Print(' '))?;
+        w.queue(MoveTo(x, y))?.queue(Print(' '))?;
       }
     }
     for y in self.inner_rect.y_range() {
       for x in self.outer_rect.x..self.inner_rect.x {
-        writer.queue(MoveTo(x, y))?.queue(Print(' '))?;
+        w.queue(MoveTo(x, y))?.queue(Print(' '))?;
       }
       for x in self.inner_rect.x_end()..self.outer_rect.x_end() {
-        writer.queue(MoveTo(x, y))?.queue(Print(' '))?;
+        w.queue(MoveTo(x, y))?.queue(Print(' '))?;
       }
     }
-    writer.queue(SetAttribute(Attribute::Reset))?;
+    w.queue(SetAttribute(Attribute::Reset))?;
     Ok(())
   }
 }

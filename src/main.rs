@@ -32,7 +32,7 @@ pub use crate::action::Action;
 pub use crate::usertraits::{
   Assign,
   UserTable,
-  UserFromStr,
+  user_from_str
 };
 pub use crate::cursor::{
   Cursor, 

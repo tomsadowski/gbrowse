@@ -60,9 +60,7 @@ impl Default for UserKeys {
 
 impl Assign for UserKeys {
   type Field = Action;
-  fn assign(&mut self, f: Self::Field, v: toml::Value) 
-    -> Result<(), String> 
-  {
+  fn assign(&mut self, f: Self::Field, v: toml::Value) -> Result<(), String> {
     let get_keycode = || -> Result<KeyCode, String> {
       if let toml::Value::String(s) = v {
         match s.as_str() {

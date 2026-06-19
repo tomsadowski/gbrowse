@@ -3,16 +3,15 @@
 use crate::{
   TextBox, 
   Style, 
-  TextStyle,
   ViewPort,
 };
 
 
 pub enum DlgInput {
-  Ack(   TextBox),
-  Ask(   TextBox),
+  Ack   (TextBox),
+  Ask   (TextBox),
   Select(TextBox),
-  Edit(  TextBox),
+  Edit  (TextBox),
 }
 
 pub struct Dialog {
@@ -30,7 +29,7 @@ impl Dialog {
       )
       .text(
         vec![prompt.into()], 
-        vec![TextStyle::default()]
+        vec![]
       )
       .style(style);
     let response_box = TextBox::from(
@@ -38,7 +37,7 @@ impl Dialog {
       )
       .text(
         vec![input.into()], 
-        vec![TextStyle::default()]
+        vec![]
       )
       .style(style);
     Dialog {
@@ -56,7 +55,7 @@ impl Dialog {
       )
       .text(
         vec![prompt.into()], 
-        vec![TextStyle::default()]
+        vec![]
       )
       .style(style);
     let response_box = TextBox::from(
@@ -64,7 +63,7 @@ impl Dialog {
       )
       .text(
         vec![input.into()], 
-        vec![TextStyle::default()]
+        vec![]
       )
       .style(style);
     Dialog {
@@ -83,16 +82,15 @@ impl Dialog {
       )
       .text(
         vec![prompt.into()], 
-        vec![TextStyle::default()]
+        vec![]
       )
       .style(style);
-    let styles = input.iter().map(|_| TextStyle::default()).collect();
     let response_box = TextBox::from(
         view.get_view_port().crop_north(prompt_box.used_rect().h)
       )
       .text(
         input, 
-        styles,
+        vec![]
       )
       .style(style);
     Dialog {
@@ -110,7 +108,7 @@ impl Dialog {
       )
       .text(
         vec![prompt.into()], 
-        vec![TextStyle::default()]
+        vec![]
       )
       .style(style);
     let response_box = TextBox::from(
@@ -118,10 +116,10 @@ impl Dialog {
       )
       .text(
         vec![text.into()], 
-        vec![TextStyle::default()]
+        vec![]
       )
       .style(style)
-      .as_editor();
+      .editor();
     Dialog {
       prompt: prompt_box,
       input:  DlgInput::Edit(response_box),
@@ -144,22 +142,20 @@ impl Dialog {
 }
 
 impl crate::Draw for Dialog {
-  fn draw<W: std::io::Write>(&self, writer: &mut W) 
-    -> std::io::Result<()> 
-  {
-    self.prompt.draw(writer)?;
+  fn draw<W: std::io::Write>(&self, w: &mut W) -> std::io::Result<()> {
+    self.prompt.draw(w)?;
     match &self.input {
       DlgInput::Ack(r) | 
       DlgInput::Ask(r) => { 
-        r.draw(writer)?;
+        r.draw(w)?;
       }
       DlgInput::Edit(r) => {
-        r.draw(writer)?;
-        r.cursor.write(writer)?;
+        r.draw(w)?;
+        r.cursor.draw(w)?;
       }
       DlgInput::Select(r) => {
-        r.draw(writer)?;
-        r.cursor.write(writer)?;
+        r.draw(w)?;
+        r.cursor.draw(w)?;
       }
     }
     Ok(())

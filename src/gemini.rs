@@ -97,8 +97,7 @@ pub struct GemText {
 
 impl std::fmt::Display for GemText {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) 
-    -> Result<(), std::fmt::Error> 
-  {
+  -> Result<(), std::fmt::Error> {
     write!(f, "{}", self.text)
   }
 }

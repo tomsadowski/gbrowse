@@ -40,10 +40,7 @@ pub fn get_wrapped_text(input: &str, width: usize) -> Vec<Vec<char>> {
     let mut accum_width  = 0;
     let mut text: Vec<_> = vec![];
     let mut chars        = input[start..].iter();
-    while let 
-      Some(c) = chars.next() && 
-      accum_width < width 
-    {
+    while let Some(c) = chars.next() && accum_width < width {
       accum_width += &c.width().unwrap_or(0);
       text.push(c.clone());
     }
@@ -70,8 +67,7 @@ mod util_test {
   use super::*;
   #[test]
   fn wrap_text() {
-    let input = 
-      "The bicycle feels good to ride so far, but I'll have to practice.";
+    let input  = "Each line should be at most 5 characters long.";
     let output = get_wrapped_text(&input, 5);
     println!("{:?}", output);
   }

@@ -6,11 +6,10 @@ use crate::{
   user,
   User, 
   UserTable,
-  UserFromStr,
+  user_from_str,
   TabManager,
   Request,
   DlgInput, 
-  Draw,
   Dialog,
   Action,
   Rect, 
@@ -19,7 +18,6 @@ use crate::{
   StatusText,
   Frame,
 };
-use url::Url;
 
 
 pub const MANUAL:        &str = "User manual";
@@ -43,8 +41,8 @@ pub enum Task {
   ChangeStyle,
   ChangeKeys,
   Init(String),
-  Reply(Url),
-  Go(Url), 
+  Reply(url::Url),
+  Go(url::Url), 
 }
 
 #[derive(Copy, Clone, Debug)]
@@ -73,9 +71,9 @@ pub struct App {
 
 impl App {
   pub fn init(path: &str, w: u16, h: u16) -> Self {
-    let user_text = std::fs::read_to_string(path).unwrap_or_default();
-    let user      = User::user_from_str(&user_text).unwrap_or_default();
-    let frame     = user.get_frame(Rect::new(w, h));
+    let user_text  = std::fs::read_to_string(path).unwrap_or_default();
+    let user: User = user_from_str(&user_text).unwrap_or_default();
+    let frame      = user.get_frame(Rect::new(w, h));
     let mut app = Self {
       guide:       "".into(),
       tabs:        TabManager::from(frame).with_style(user.style.general),
@@ -88,7 +86,7 @@ impl App {
       frame,
       user,
     };
-    match Url::parse(&app.user.init_url) {
+    match url::Url::parse(&app.user.init_url) {
       Err(e) => app.focus_edit_dialog(
         Task::Init(app.user.init_url.clone()), 
         &format!("Try again: {e}"), 
@@ -159,7 +157,7 @@ impl App {
     self.new_dlg = true;
   }
 
-  fn join_gemdoc(&mut self, url: Url, response: String, content: String) {
+  fn join_gemdoc(&mut self, url: url::Url, response: String, content: String) {
     let Ok(status) = StatusText::try_from(response.as_str()) else {
       self.focus_ack_dialog(
         format!("Response {response} is not valid for gemini protocol")
@@ -175,7 +173,7 @@ impl App {
         );
       }
       Status::RedirectTemporary | 
-      Status::RedirectPermanent => match Url::parse(&status.text) {
+      Status::RedirectPermanent => match url::Url::parse(&status.text) {
         Err(e) => self.focus_ack_dialog(
           format!("Redirects to invalid URL. {e}")
         ),
@@ -227,7 +225,7 @@ impl App {
     }
   }
 
-  pub fn spawn_request(&mut self, url: &Url) {
+  pub fn spawn_request(&mut self, url: &url::Url) {
     match (&mut self.request, url.scheme()) {
       (None, "gemini") => self.request = Some(
         Request::new(&url, self.user.timeout)
@@ -360,7 +358,7 @@ impl App {
         }
         (DlgInput::Edit(editbox), Action::Enter, Task::Init(_)) => {
           let url_str = editbox.get_current_string().unwrap();
-          match Url::parse(&url_str) {
+          match url::Url::parse(&url_str) {
             Err(e) => 
               self.focus_edit_dialog(
                 Task::Init(url_str.clone()),
@@ -398,7 +396,7 @@ impl App {
           }
         }
         (DlgInput::Edit(editbox), Action::Enter, Task::NewTab) => {
-          match Url::parse(
+          match url::Url::parse(
             &editbox.get_current_string().unwrap()
           ) {
             Err(e) => 
@@ -550,8 +548,10 @@ impl App {
       _ => None,
     }
   }
+}
 
-  pub fn draw<W: std::io::Write>(&self, w: &mut W) -> std::io::Result<()> {
+impl crate::Draw for App {
+  fn draw<W: std::io::Write>(&self, w: &mut W) -> std::io::Result<()> {
     use crossterm::{QueueableCommand, cursor, terminal};
     w.queue(cursor::Hide)?;
     if self.clear {
@@ -559,8 +559,8 @@ impl App {
       self.frame.draw(w)?;
     }
     let banner_text = self.tabs.get_banner_text();
-    self.frame.write_banner(&banner_text, w)?;
-    self.frame.write_footer(&self.guide, w)?;
+    self.frame.draw_banner(&banner_text, w)?;
+    self.frame.draw_footer(&self.guide, w)?;
     if let Focus::Dialog(_, dialog) = &self.focus {
       dialog.draw(w)?;
     } else {
