@@ -18,7 +18,6 @@ use crate::{
   Status, 
   StatusText,
   Frame,
-  Layout,
 };
 use url::Url;
 
@@ -66,7 +65,6 @@ pub struct App {
   pub focus:       Focus,
   pub request:     Option<Request>,
   pub guide:       String,
-  pub viewstack:   Layout,
   pub new_dlg:     bool,
   pub clear:       bool,
   pub tab_changed: bool,
@@ -81,7 +79,6 @@ impl App {
     let mut app = Self {
       guide:       "".into(),
       tabs:        TabManager::from(frame).with_style(user.style.general),
-      viewstack:   Layout::from(frame),
       request:     None,
       focus:       Focus::Tab,
       new_dlg:     false,
