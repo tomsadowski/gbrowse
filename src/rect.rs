@@ -64,10 +64,6 @@ impl Rect {
     self.crop_east(delta).crop_west(delta)
   }
 
-  pub fn get_compliment(&self, container: &Self) -> Self {
-    self.clone()
-  }
-
   pub fn row(&self, y: u16) -> Self {
     Self {
       x: self.x, 
