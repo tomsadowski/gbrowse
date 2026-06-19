@@ -60,8 +60,13 @@ impl TextBox {
   }
 
   pub fn set_text(&mut self, text: Vec<String>, styles: Vec<TextStyle>) {
+    let buffed_styles: Vec<_> = if styles.len() < text.len() {
+      text.iter().map(|_| TextStyle::default()).collect()
+    } else {
+      styles
+    };
     self.text = text;
-    self.set_styles(styles);
+    self.set_styles(buffed_styles);
   }
 
   pub fn set_styles(&mut self, styles: Vec<TextStyle>) {
@@ -75,7 +80,9 @@ impl TextBox {
 
   pub fn reset_matrix(&mut self) {
     let linear_head = self.matrix.get_linear_head();
-    self.matrix = IndexedCursor::print_from(&self.view, &self.text, &self.styles);
+    self.matrix = IndexedCursor::print_from(
+      &self.view, &self.text, &self.styles
+    );
     self.matrix.set_linear_head(linear_head);
   }
 

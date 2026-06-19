@@ -25,7 +25,7 @@ impl Dialog {
         S: Into<Style> + Copy
   {
     let prompt_box = TextBox::from(
-        view.get_view_port().crop_south(2)
+        view.get_view_port()
       )
       .text(
         vec![prompt.into()], 
@@ -33,7 +33,7 @@ impl Dialog {
       )
       .style(style);
     let response_box = TextBox::from(
-        prompt_box.used_rect().bottom_row()
+        view.get_view_port()
       )
       .text(
         vec![input.into()], 
@@ -51,7 +51,7 @@ impl Dialog {
         S: Into<Style> + Copy
   {
     let prompt_box = TextBox::from(
-        view.get_view_port().crop_south(2)
+        view.get_view_port()
       )
       .text(
         vec![prompt.into()], 
@@ -59,7 +59,7 @@ impl Dialog {
       )
       .style(style);
     let response_box = TextBox::from(
-        prompt_box.used_rect().bottom_row()
+        view.get_view_port()
       )
       .text(
         vec![input.into()], 
@@ -78,7 +78,7 @@ impl Dialog {
         S: Into<Style> + Copy
   {
     let prompt_box = TextBox::from(
-        view.get_view_port().crop_south(2)
+        view.get_view_port()
       )
       .text(
         vec![prompt.into()], 
@@ -86,7 +86,7 @@ impl Dialog {
       )
       .style(style);
     let response_box = TextBox::from(
-        view.get_view_port().crop_north(prompt_box.used_rect().h)
+        view.get_view_port()
       )
       .text(
         input, 
@@ -104,7 +104,7 @@ impl Dialog {
         S: Into<Style> + Copy
   {
     let prompt_box = TextBox::from(
-        view.get_view_port().crop_south(2)
+        view.get_view_port()
       )
       .text(
         vec![prompt.into()], 
@@ -112,7 +112,7 @@ impl Dialog {
       )
       .style(style);
     let response_box = TextBox::from(
-        prompt_box.used_rect().bottom_row()
+        view.get_view_port()
       )
       .text(
         vec![text.into()], 
@@ -126,8 +126,8 @@ impl Dialog {
     }
   }
 
-  pub fn resize<V: ViewPort>(&mut self, rect: V) {
-    self.prompt.resize(rect.get_view_port().crop_south(2));
+  pub fn resize<V: ViewPort>(&mut self, view: V) {
+    self.prompt.resize(view.get_view_port());
     match &mut self.input {
       DlgInput::Ack(r) | 
       DlgInput::Ask(r) |
@@ -135,7 +135,7 @@ impl Dialog {
         r.resize(self.prompt.used_rect().bottom_row());
       }
       DlgInput::Select(r) => {
-        r.resize(rect.get_view_port().crop_north(self.prompt.used_rect().h));
+        r.resize(view.get_view_port().crop_north(self.prompt.used_rect().h));
       }
     }
   }
