@@ -10,9 +10,9 @@ mod user;
 mod userkeys;
 mod userstyle;
 mod cursor;
-mod usertraits;
 mod tab;
-mod coreui;
+mod draw;
+mod rect;
 mod frame;
 mod textbox;
 mod dialog;
@@ -22,17 +22,17 @@ mod app;
 mod action;
 mod util;
 
-pub use crate::user::User;
 pub use crate::userkeys::UserKeys;
 pub use crate::userstyle::UserStyle;
 pub use crate::frame::Frame;
 pub use crate::textbox::TextBox;
 pub use crate::network::Request;
 pub use crate::action::Action;
-pub use crate::usertraits::{
+pub use crate::user::{
+  User,
   Assign,
   UserTable,
-  user_from_str
+  user_from_str,
 };
 pub use crate::cursor::{
   Cursor, 
@@ -45,14 +45,16 @@ pub use crate::tab::{
   UrlTab, 
   TabManager,
 };
-pub use crate::coreui::{
+pub use crate::rect::{
+  ViewPort, 
+  Rect, 
+};
+pub use crate::draw::{
   Draw,
   Style, 
   TextStyle, 
   BorderStyle, 
   Margins, 
-  ViewPort, 
-  Rect, 
 };
 pub use crate::dialog::{
   Dialog, 
