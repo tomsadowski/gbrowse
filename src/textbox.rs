@@ -1,7 +1,7 @@
 // src/textbox.rs
 
 use crate::{
-  ViewPort, 
+  GetRect, 
   Rect,
   Style, 
   TextStyle,
@@ -23,8 +23,8 @@ pub struct TextBox {
   pub write:  bool,
 }
 
-impl ViewPort for TextBox {
-  fn get_view_port(&self) -> Rect {self.view}
+impl GetRect for TextBox {
+  fn get_rect(&self) -> Rect {self.view}
 }
 
 impl From<Rect> for TextBox {
@@ -37,7 +37,7 @@ impl From<Rect> for TextBox {
       styles: vec![],
       cursor: ScreenCursor::from(&view), 
       matrix: IndexedCursor::default(),
-      view:   view.get_view_port(),
+      view:   view.get_rect(),
     }
   }
 }
@@ -86,9 +86,9 @@ impl TextBox {
     self.matrix.set_linear_head(linear_head);
   }
 
-  pub fn resize<V: ViewPort>(&mut self, view: V) {
+  pub fn resize<V: GetRect>(&mut self, view: V) {
     let old_view = self.view;
-    self.view    = view.get_view_port();
+    self.view    = view.get_rect();
     if old_view.w != self.view.w {
       self.reset_matrix();
     }

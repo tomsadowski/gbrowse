@@ -1,7 +1,7 @@
 // src/cursor.rs
 
 use crate::{
-  ViewPort,
+  GetRect,
   TextStyle,
   Rect,
 };
@@ -362,12 +362,12 @@ impl IndexedCursor<Cursor<char>> {
     }
   }
 
-  pub fn print_from<V: ViewPort>(
+  pub fn print_from<V: GetRect>(
     view:   &V, 
     text:   &Vec<String>,
     styles: &Vec<TextStyle>
   ) -> Self {
-    let width = usize::from(view.get_view_port().w);
+    let width = usize::from(view.get_rect().w);
     Self::print(width, text, styles)
   }
 }
@@ -378,9 +378,9 @@ pub struct ScreenCursor {
   y: LineCursorView,
 }
 
-impl<V: ViewPort> From<&V> for ScreenCursor {
+impl<V: GetRect> From<&V> for ScreenCursor {
   fn from(view: &V) -> Self {
-    let view = view.get_view_port();
+    let view = view.get_rect();
     Self {
       x: LineCursorView::new(view.x, view.w),
       y: LineCursorView::new(view.y, view.h),
@@ -388,8 +388,8 @@ impl<V: ViewPort> From<&V> for ScreenCursor {
   }
 }
 
-impl ViewPort for ScreenCursor {
-  fn get_view_port(&self) -> Rect {
+impl GetRect for ScreenCursor {
+  fn get_rect(&self) -> Rect {
     Rect {
       x: self.x.get_start(),
       y: self.y.get_start(),
@@ -410,9 +410,9 @@ impl ScreenCursor {
   pub fn get_y_scroll(&self) -> usize          {self.y.get_scroll()}
 
   pub fn resize<V>(&mut self, matrix: &Cursor<Cursor<char>>, view: &V)
-  where V: ViewPort,
+  where V: GetRect,
   {
-    let rect = view.get_view_port();
+    let rect = view.get_rect();
     self.y.resize(matrix.head, rect.y, rect.h);
     self.x.resize(
       matrix.use_current(|c| c.get_weighted_head()).unwrap_or(0), 

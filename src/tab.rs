@@ -5,7 +5,7 @@ use crate::{
   Cursor, 
   Style, 
   Rect, 
-  ViewPort, 
+  GetRect, 
   TextBox, 
   GemText,
   GemTag,
@@ -31,10 +31,10 @@ impl std::ops::DerefMut for TabManager {
   }
 }
 
-impl<V: ViewPort> From<V> for TabManager {
+impl<V: GetRect> From<V> for TabManager {
   fn from(view: V) -> Self {
     Self {
-      view:  view.get_view_port(),
+      view:  view.get_rect(),
       style: Style::default(),
       tabs:  Cursor::default(),
     }
@@ -73,8 +73,8 @@ impl TabManager {
     }
   }
 
-  pub fn resize<V: ViewPort + Copy>(&mut self, view: V) {
-    self.view = view.get_view_port();
+  pub fn resize<V: GetRect + Copy>(&mut self, view: V) {
+    self.view = view.get_rect();
     for tab in self.tabs.iter_mut() {
       tab.get_textbox_mut().resize(self.view);
     }
@@ -222,7 +222,7 @@ pub struct UrlTab<T> {
 } 
 
 impl<T> UrlTab<T> {
-  pub fn new<V: ViewPort>(
+  pub fn new<V: GetRect>(
     view:   V, 
     url:    &url::Url, 
     tags:   Vec<T>, 
@@ -230,7 +230,7 @@ impl<T> UrlTab<T> {
     styles: Vec<TextStyle>,
   ) -> Self {
     Self {
-      textbox: TextBox::from(view.get_view_port()).text(text, styles),
+      textbox: TextBox::from(view.get_rect()).text(text, styles),
       url:     url.clone(),
       tags,
     }

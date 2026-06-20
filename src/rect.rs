@@ -1,10 +1,6 @@
 // src/rect.rs
 
 
-pub trait ViewPort {
-  fn get_view_port(&self) -> Rect;
-}
-
 #[derive(Copy, Clone, Default)]
 pub struct Rect {
   pub x: u16,
@@ -13,8 +9,66 @@ pub struct Rect {
   pub h: u16,
 }
 
-impl ViewPort for Rect {
-  fn get_view_port(&self) -> Rect {self.clone()}
+pub trait GetRect {
+  fn get_rect(&self) -> Rect;
+}
+
+impl GetRect for Rect {
+  fn get_rect(&self) -> Rect {self.clone()}
+}
+
+#[derive(Clone, Copy, Default)]
+pub struct Width(pub u16);
+impl From<u16> for Width {
+  fn from(u: u16) -> Self { Self(u) }
+}
+impl std::ops::Deref for Width {
+  type Target = u16;
+  fn deref(&self) -> &u16 {
+    &self.0
+  }
+}
+#[derive(Clone, Copy, Default)]
+pub struct Height(pub u16);
+impl From<u16> for Height {
+  fn from(u: u16) -> Self { Self(u) }
+}
+impl std::ops::Deref for Height {
+  type Target = u16;
+  fn deref(&self) -> &u16 {
+    &self.0
+  }
+}
+#[derive(Clone, Copy, Default)]
+pub struct Dim(pub Width, pub Height);
+impl From<(u16, u16)> for Dim {
+  fn from((w, h): (u16, u16)) -> Self { Self(w.into(), h.into()) }
+}
+impl Dim {
+  pub fn width(&self)   -> Width    { self.0 }
+  pub fn w(&self)       -> u16      { *self.0 }
+  pub fn height(&self)  -> Height   { self.1 }
+  pub fn h(&self)       -> u16      { *self.1 }
+}
+
+pub struct Pos(pub u16, pub u16);
+impl From<(u16, u16)> for Pos {
+  fn from((x, y): (u16, u16)) -> Self { Self(x, y) }
+}
+impl Pos {
+  pub fn x(&self) -> u16      { self.0 }
+  pub fn y(&self) -> u16      { self.1 }
+}
+
+impl From<Dim> for Rect {
+  fn from(d: Dim) -> Self {
+    Self {x: 0, y: 0, w: d.w(), h: d.h()}
+  }
+}
+impl From<Pos> for Rect {
+  fn from(p: Pos) -> Self {
+    Self {x: p.0, y: p.1, w: 0, h: 0}
+  }
 }
 
 impl Rect {
@@ -24,6 +78,34 @@ impl Rect {
 
   pub fn init_points(x: u16, y: u16) -> Self {
     Self {x, y, w: 0, h: 0}
+  }
+
+  pub fn dim(&self) -> Dim {
+    (self.w, self.h).into()
+  }
+
+  pub fn pos(&self) -> Pos {
+    (self.x, self.y).into()
+  }
+
+  pub fn with_dim(mut self, dim: Dim) -> Self {
+    self.set_dim(dim);
+    self
+  }
+
+  pub fn set_dim(&mut self, dim: Dim) {
+    self.w = dim.w(); 
+    self.h = dim.h();
+  }
+
+  pub fn with_pos(mut self, pos: Pos) -> Self {
+    self.set_pos(pos);
+    self
+  }
+
+  pub fn set_pos(&mut self, pos: Pos) {
+    self.x = pos.x(); 
+    self.y = pos.y();
   }
 
   pub fn append_below(&mut self, above: &Rect) {
@@ -99,21 +181,20 @@ impl Rect {
 
   pub fn y_end(&self) -> u16 {self.y + self.h}
 
-  pub fn a(&self) -> (u16, u16) {
-    (self.x, self.y)
+  pub fn a(&self) -> Pos {
+    (self.x, self.y).into()
   }
 
-  pub fn b(&self) -> (u16, u16) {
-    (self.x_end().saturating_sub(1), self.y)
+  pub fn b(&self) -> Pos {
+    (self.x_end().saturating_sub(1), self.y).into()
   }
 
-  pub fn c(&self) -> (u16, u16) {
-    (self.x, self.y_end().saturating_sub(1))
+  pub fn c(&self) -> Pos {
+    (self.x, self.y_end().saturating_sub(1)).into()
   }
 
-  pub fn d(&self) -> (u16, u16) {
-    (self.x_end().saturating_sub(1), 
-     self.y_end().saturating_sub(1))
+  pub fn d(&self) -> Pos {
+    (self.x_end().saturating_sub(1), self.y_end().saturating_sub(1)).into()
   }
 
   pub fn x_range(&self) -> std::ops::Range<u16> {

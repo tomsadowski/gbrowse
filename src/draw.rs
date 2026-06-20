@@ -1,7 +1,7 @@
 // src/coreui.rs
 
 use crate::{
-  ViewPort, Rect,
+  GetRect, Rect,
 };
 use crossterm::style::Color;
 
@@ -171,9 +171,9 @@ impl Default for Margins {
 }
 
 impl Margins {
-  pub fn get_rect<V: ViewPort>(&self, view: V) -> Rect {
+  pub fn get_rect<V: GetRect>(&self, view: V) -> Rect {
     view
-      .get_view_port()
+      .get_rect()
       .crop_north(self.north)
       .crop_south(self.south)
       .crop_east(self.east)

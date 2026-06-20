@@ -3,6 +3,7 @@ name = "gbrowse"
 version = "0.1.0"
 edition = "2024"
 
+
 [dependencies]
 crossterm = "0.29.0"
 url = "2.5.7"
@@ -10,6 +11,7 @@ native-tls = "0.2.14"
 toml = "0.9.10"
 serde = "1.0.228"
 unicode-width = "0.2.2"
+derive_more = { version = "2.1.1", features = ["from"] }
 
 #[profile.release]
 #opt-level = "z"

@@ -1,11 +1,12 @@
 // src/frame.rs
 
 use crate::{
-  ViewPort, 
+  GetRect, 
   Rect, 
   Style, 
   Margins, 
   BorderStyle,
+  Pos,
 };
 
 
@@ -23,8 +24,8 @@ pub struct Frame {
   pub footer_style:  Style,
 }
 
-impl ViewPort for Frame {
-  fn get_view_port(&self) -> Rect {self.inner_rect}
+impl GetRect for Frame {
+  fn get_rect(&self) -> Rect {self.inner_rect}
 }
 
 impl From<Rect> for Frame {
@@ -175,10 +176,10 @@ impl crate::Draw for Frame {
       style::{Print, SetAttribute, Attribute},
     };
     // border
-    let (ax, ay) = self.border_rect.a();
-    let (bx, by) = self.border_rect.b();
-    let (cx, cy) = self.border_rect.c();
-    let (dx, dy) = self.border_rect.d();
+    let Pos(ax, ay) = self.border_rect.a();
+    let Pos(bx, by) = self.border_rect.b();
+    let Pos(cx, cy) = self.border_rect.c();
+    let Pos(dx, dy) = self.border_rect.d();
     w
       .queue(SetAttribute(Attribute::Reset))?
       .queue(&self.border_style.style)?

@@ -48,7 +48,9 @@ pub use crate::tab::{
   TabManager,
 };
 pub use crate::rect::{
-  ViewPort, 
+  Pos, 
+  Dim,
+  GetRect, 
   Rect, 
 };
 pub use crate::draw::{
