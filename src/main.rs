@@ -20,6 +20,7 @@ mod network;
 mod gemini;
 mod app;
 mod action;
+mod layout;
 mod util;
 
 pub use crate::userkeys::UserKeys;
@@ -28,6 +29,7 @@ pub use crate::frame::Frame;
 pub use crate::textbox::TextBox;
 pub use crate::network::Request;
 pub use crate::action::Action;
+pub use crate::layout::Layout;
 pub use crate::user::{
   User,
   Assign,

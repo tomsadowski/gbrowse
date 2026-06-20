@@ -18,8 +18,16 @@ impl ViewPort for Rect {
 }
 
 impl Rect {
-  pub fn new(w: u16, h: u16) -> Self {
+  pub fn init_size(w: u16, h: u16) -> Self {
     Self {x: 0, y: 0, w, h}
+  }
+
+  pub fn init_points(x: u16, y: u16) -> Self {
+    Self {x, y, w: 0, h: 0}
+  }
+
+  pub fn append_below(&mut self, above: &Rect) {
+    self.y = above.y + self.h
   }
 
   pub fn crop_north(&self, delta: u16) -> Self {
