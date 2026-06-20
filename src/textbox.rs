@@ -5,7 +5,7 @@ use crate::{
   Rect,
   Style, 
   TextStyle,
-  Cursor,
+  Gursor,
   IndexedCursor, 
   ScreenCursor,
 };
@@ -17,7 +17,7 @@ pub struct TextBox {
   pub style:  Style,
   pub text:   Vec<String>,
   pub styles: Vec<TextStyle>,
-  pub matrix: IndexedCursor<Cursor<char>>,
+  pub matrix: IndexedCursor<Gursor<char>>,
   pub cursor: ScreenCursor,
   pub pref_x: usize,
   pub write:  bool,
@@ -197,18 +197,16 @@ impl crate::Draw for TextBox {
       style::{Print, SetAttribute, Attribute},
     };
     use unicode_width::UnicodeWidthChar;
-    let mut cursor = self.cursor.clone();
-    let mut x = cursor.get_x_view().get_start();
-    let mut y = cursor.get_y_view().get_start();
+    let crate::Pos(mut x, mut y) = self.view.pos();
     w
       .queue(MoveTo(x, y))?
       .queue(SetAttribute(Attribute::Reset))?
       .queue(&self.style)?;
-    for (index, line) in self.matrix.get_view(cursor.get_y_view()) {
+    for (index, line) in self.matrix.get_view(self.cursor.get_y_view()) {
       w.queue(Style::from(
         *self.styles.get(*index).unwrap_or(&TextStyle::default())
       ))?;
-      for c in line.get_weighted_view(cursor.get_x_view()) {
+      for c in line.get_weighted_view(self.cursor.get_x_view()) {
         w.queue(Print(c))?;
         x += u16::try_from(c.width().unwrap_or(0)).unwrap();
       }
@@ -216,7 +214,9 @@ impl crate::Draw for TextBox {
       for _ in x..self.view.x_end() {
         w.queue(Print(' '))?;
       }
-      x = self.view.x; y += 1; w.queue(MoveTo(x, y))?;
+      x = self.view.x; 
+      y += 1; 
+      w.queue(MoveTo(x, y))?;
     }
     w.queue(SetAttribute(Attribute::Reset))?.queue(&self.style)?;
     w.queue(SetAttribute(Attribute::Reset))?;

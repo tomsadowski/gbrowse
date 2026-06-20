@@ -37,7 +37,7 @@ pub use crate::user::{
   user_from_str,
 };
 pub use crate::cursor::{
-  Cursor, 
+  Gursor, 
   IndexedCursor,
   ScreenCursor,
   LineCursorView,

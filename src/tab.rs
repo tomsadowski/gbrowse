@@ -2,7 +2,7 @@
 
 use crate::{
   TextStyle, 
-  Cursor, 
+  Gursor, 
   Style, 
   Rect, 
   GetRect, 
@@ -15,11 +15,11 @@ use crate::{
 pub struct TabManager {
   pub view:  Rect,
   pub style: Style,
-  pub tabs:  Cursor<Tab>,
+  pub tabs:  Gursor<Tab>,
 } 
 
 impl std::ops::Deref for TabManager {
-  type Target = Cursor<Tab>;
+  type Target = Gursor<Tab>;
   fn deref(&self) -> &Self::Target {
     &self.tabs
   }
@@ -36,15 +36,13 @@ impl<V: GetRect> From<V> for TabManager {
     Self {
       view:  view.get_rect(),
       style: Style::default(),
-      tabs:  Cursor::default(),
+      tabs:  Gursor::default(),
     }
   }
 }
 
 impl TabManager {
-  pub fn with_style<T>(mut self, style: T) -> Self 
-  where T: Into<Style> + Copy
-  {
+  pub fn with_style<T: Into<Style> + Copy>(mut self, style: T) -> Self {
     self.style = style.into();
     for tab in self.tabs.iter_mut() {
       tab.get_textbox_mut().style = self.style;
@@ -128,9 +126,9 @@ impl TabManager {
   pub fn get_banner_text(&self) -> String {
     match self.use_current(
       |tab| match tab {
-        Tab::Gem(   UrlTab {url, ..}) | 
+        Tab::Gem   (UrlTab {url, ..}) | 
         Tab::Gopher(UrlTab {url, ..}) => url.to_string(),
-        Tab::Text(heading, _)         => heading.to_string(),
+        Tab::Text  (heading, _)       => heading.to_string(),
       }
     ) {
       None    => format!("Empty"),
@@ -150,8 +148,8 @@ impl crate::Draw for TabManager {
 }
 
 pub enum Tab {
-  Text(  String, TextBox),
-  Gem(   UrlTab<GemTag>),
+  Text  (String, TextBox),
+  Gem   (UrlTab<GemTag>),
   Gopher(UrlTab<String>),
 }
 

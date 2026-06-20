@@ -45,9 +45,7 @@ impl From<(u16, u16)> for Dim {
   fn from((w, h): (u16, u16)) -> Self { Self(w.into(), h.into()) }
 }
 impl Dim {
-  pub fn width(&self)   -> Width    { self.0 }
   pub fn w(&self)       -> u16      { *self.0 }
-  pub fn height(&self)  -> Height   { self.1 }
   pub fn h(&self)       -> u16      { *self.1 }
 }
 

@@ -28,3 +28,6 @@ pub struct LayoutBuilder {
 pub struct Layout {
   pub views: HashMap<String, Rect>,
 }
+
+pub trait Negotiator {
+}

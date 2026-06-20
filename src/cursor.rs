@@ -6,28 +6,234 @@ use crate::{
   Rect,
 };
 
+#[derive(Clone, Copy, Debug, Default)]
+pub struct Cursor {
+  head: usize,
+  buff: bool,
+}
+
+impl std::ops::Deref for Cursor {
+  type Target = usize;
+  fn deref(&self) -> &Self::Target {&self.head}
+}
+
+impl std::ops::DerefMut for Cursor {
+  fn deref_mut(&mut self) -> &mut Self::Target {&mut self.head}
+}
+
+impl<T> std::ops::Index<Cursor> for Vec<T> {
+  type Output = T;
+  fn index(&self, cursor: Cursor) -> &Self::Output {
+    &self[*cursor]
+  }
+}
+
+impl<T> std::ops::IndexMut<Cursor> for Vec<T> {
+  fn index_mut(&mut self, cursor: Cursor) -> &mut Self::Output {
+    &mut self[*cursor]
+  }
+}
+
+impl Cursor {
+  pub fn editor(mut self) -> Self {
+    self.make_editor();
+    self
+  }
+
+  pub fn make_editor(&mut self) {
+    self.buff = true;
+  }
+
+  pub fn get_max<T>(&self, vec: &Vec<T>) -> usize {
+    match self.buff {
+      true  => vec.len(),
+      false => vec.len().saturating_sub(1),
+    }
+  }
+
+  pub fn use_current<T, F, S>(&self, vec: &Vec<T>, func: F) -> Option<S>
+  where F: Fn(&T) -> S
+  {
+    vec.get(self.head).map(|u| func(u))
+  }
+
+  pub fn if_current<T, F, S>(&self, vec: &Vec<T>, func: &mut F) -> Option<S>
+  where F: FnMut(&T) -> S
+  {
+    vec.get(self.head).map(|u| func(u))
+  }
+
+  pub fn use_current_mut<T, F, S>(&self, vec: &mut Vec<T>, func: F) 
+    -> Option<S>
+  where F: Fn(&mut T) -> S
+  {
+    vec.get_mut(self.head).map(|u| func(u))
+  }
+
+//pub fn get_unit_view(&self, vec: Vec<T>, axis: LineCursorView) -> Vec<&T> {
+//  self.data
+//    .iter()
+//    .skip(axis.get_scroll())
+//    .take(axis.get_size().into())
+//    .collect() 
+//}
+
+  pub fn peek_backward(&self, delta: usize) -> usize {
+    if delta > self.head {
+      delta - self.head
+    } else {0}
+  }
+
+  pub fn peek_forward<T>(&self, vec: &Vec<T>, delta: usize) -> usize {
+    let max_head = self.get_max(vec);
+    if self.head + delta > max_head {
+      self.head + delta - max_head
+    } else {0}
+  }
+
+  pub fn fit<T>(&mut self, vec: &Vec<T>) {
+    self.head = self.get_max(vec).min(self.head);
+  }
+
+  pub fn move_to_start(&mut self) {
+    self.head = 0;
+  }
+
+  pub fn move_to_end<T>(&mut self, vec: &Vec<T>) {
+    self.head = self.get_max(vec);
+  }
+
+  pub fn move_backward(&mut self, mut delta: usize) -> usize {
+    if delta > self.head {
+      delta -= self.head; 
+      self.head = 0; 
+      delta
+    } else {
+      self.head -= delta; 
+      0
+    }
+  }
+
+  pub fn move_forward<T>(&mut self, vec: &Vec<T>, mut delta: usize) -> usize {
+    if self.head + delta > self.get_max(vec) {
+      delta     = self.head + delta - self.get_max(vec);
+      self.head = self.get_max(vec);
+      delta
+    } else {
+      self.head += delta;
+      0
+    }
+  }
+
+  pub fn move_backward_wrapped<T>(&mut self, vec: &Vec<T>, delta: usize) 
+    -> bool 
+  {
+    if vec.len() <= 1 {
+      false
+    } else if delta > self.head {
+      self.move_to_end(vec);
+      true
+    } else {
+      self.head -= delta;
+      true
+    }
+  }
+
+  pub fn move_forward_wrapped<T>(&mut self, vec: &Vec<T>, delta: usize) -> bool {
+    if vec.len() <= 1 {
+      false
+    } else if self.head + delta > self.get_max(vec) {
+      self.move_to_start();
+      true
+    } else {
+      self.head += delta;
+      true
+    }
+  }
+
+  pub fn remove<T>(&mut self, vec: &mut Vec<T>) -> usize {
+    if self.head < vec.len() {
+      vec.remove(self.head);
+      self.move_backward_wrapped(vec, 1);
+    }
+    vec.len()
+  }
+
+  pub fn insert_or_move<T, F>(&mut self, vec: &mut Vec<T>, func: F, unit: T) 
+    -> bool
+  where F: Fn(&T) -> bool,
+  {
+    if let Some((idx, _)) = vec
+      .iter_mut()
+      .enumerate()
+      .find(|(_, u)| func(u))
+    {
+      self.head = idx;
+      false
+    } else if vec.len() == 0 {
+      vec.push(unit);
+      true
+    } else if self.head + 1 == vec.len() {
+      vec.push(unit);
+      self.head += 1;
+      true
+    }
+    else {
+      self.head += 1;
+      vec.insert(self.head, unit);
+      true
+    }
+  }
+
+  pub fn delete<T>(&mut self, vec: &mut Vec<T>) -> bool {
+    if self.head < vec.len() {
+      vec.remove(self.head);
+      true
+    } else {false}
+  }
+
+  pub fn backspace<T>(&mut self, vec: &mut Vec<T>) -> bool {
+    if self.peek_backward(1) == 0 {
+      self.move_backward(1);
+      vec.remove(self.head);
+      true
+    } else {false}
+  }
+
+  pub fn insert<T>(&mut self, vec: &mut Vec<T>, c: T) -> bool {
+    if self.head + 1 == vec.len() || vec.len() == 0 {
+      vec.push(c);
+      self.move_forward(vec, 1);
+      true
+    } else {
+      vec.insert(self.head, c);
+      self.move_forward(vec, 1);
+      true
+    }
+  }
+}
 
 #[derive(Clone, Debug, Default)]
-pub struct Cursor<T> {
+pub struct Gursor<T> {
   pub head: usize,
   pub data: Vec<T>,
   buff:     bool,
 }
 
-impl<T> std::ops::Deref for Cursor<T> {
+impl<T> std::ops::Deref for Gursor<T> {
   type Target = Vec<T>;
   fn deref(&self) -> &Self::Target {&self.data}
 }
 
-impl<T> std::ops::DerefMut for Cursor<T> {
+impl<T> std::ops::DerefMut for Gursor<T> {
   fn deref_mut(&mut self) -> &mut Self::Target {&mut self.data}
 }
 
-impl ToString for Cursor<char> {
+impl ToString for Gursor<char> {
   fn to_string(&self) -> String {self.data.iter().collect()}
 }
 
-impl<T> From<Vec<T>> for Cursor<T> {
+impl<T> From<Vec<T>> for Gursor<T> {
   fn from(item: Vec<T>) -> Self {
     Self {
       head:  0, 
@@ -37,7 +243,7 @@ impl<T> From<Vec<T>> for Cursor<T> {
   }
 }
 
-impl<T> Cursor<T> {
+impl<T> Gursor<T> {
   pub fn make_editor(&mut self) {
     self.buff = true;
     self.move_to_end();
@@ -210,7 +416,7 @@ impl<T> Cursor<T> {
   }
 }
 
-impl Cursor<char> {
+impl Gursor<char> {
   pub fn get_weighted_head(&self) -> usize {
     use unicode_width::UnicodeWidthChar;
     self
@@ -242,7 +448,79 @@ impl Cursor<char> {
   }
 }
 
-impl<T> Cursor<Cursor<T>> {
+#[derive(Clone, Copy, Debug, Default)]
+pub struct CursorPlane {
+  pub x: Cursor,
+  pub y: Cursor,
+}
+
+impl CursorPlane {
+  pub fn editor(mut self) -> Self {
+    self.make_editor();
+    self
+  }
+
+  pub fn make_editor(&mut self) {
+    self.x.make_editor();
+  }
+
+  pub fn get_linear_head(&self) -> usize {
+    match self.use_current(|c| c.head) {
+      None         => 0,
+      Some(x_head) => self.data[..self.head]
+        .iter()
+        .map(|line| line.data.len().max(1))
+        .chain(std::iter::once(x_head))
+        .sum(),
+    }
+  }
+
+  pub fn set_linear_head(&mut self, idx: usize) {
+    self.y.move_to_start();
+    self.use_current_mut(|c| c.move_to_start());
+    self.move_right(idx);
+  }
+
+  pub fn move_up(&mut self, delta: usize) -> bool {
+    let pref_x = self.use_current_mut(|current| current.head).unwrap_or(0);
+    if self.move_backward(delta) != delta {
+      self.use_current_mut(|current| current.fit(pref_x));
+      true
+    } else {false}
+  }
+
+  pub fn move_down(&mut self, delta: usize) -> bool {
+    let pref_x = self.use_current_mut(|current| current.head).unwrap_or(0);
+    if self.move_forward(delta) != delta {
+      self.use_current_mut(|current| current.fit(pref_x));
+      true
+    } else {false}
+  }
+
+  pub fn move_left<T>(&mut self, vec: &Vec<Vec<T>>, delta: usize) -> usize {
+    let Some(remainder) = 
+      vec.get(*self.y).map(|_| self.x.move_backward(delta)) 
+      else {return delta};
+    if remainder != 0 && self.y.move_backward(1) == 0 {
+      let Some(_) = 
+        vec.get(*self.y).map(|v| self.x.move_to_end(v)) 
+        else {return remainder};
+      self.move_left(vec, remainder.saturating_sub(1))
+    } else {remainder}
+  }
+
+  pub fn move_right<T>(&mut self, vec: &Vec<Vec<T>>, delta: usize) -> usize {
+    let Some(remainder) = 
+      vec.get(*self.y).map(|v| self.x.move_forward(v, delta)) 
+      else {return delta};
+    if remainder != 0 && self.y.move_forward(vec, 1) == 0 {
+      self.x.move_to_start();
+      self.move_right(vec, remainder.saturating_sub(1))
+    } else {remainder}
+  }
+}
+
+impl<T> Gursor<Gursor<T>> {
   pub fn make_editor_lines(&mut self) {
     for cursor in self.data.iter_mut() {
       cursor.make_editor();
@@ -309,12 +587,12 @@ impl<T> Cursor<Cursor<T>> {
 
 #[derive(Clone, Debug, Default)]
 pub struct IndexedCursor<T> {
-  pub matrix:   Cursor<T>, 
+  pub matrix:   Gursor<T>, 
   pub indexes:  Vec<usize>,
 }
 
 impl<T> std::ops::Deref for IndexedCursor<T> {
-  type Target = Cursor<T>;
+  type Target = Gursor<T>;
   fn deref(&self) -> &Self::Target {&self.matrix}
 }
 
@@ -339,13 +617,13 @@ impl<T> IndexedCursor<T> {
   }
 }
 
-impl IndexedCursor<Cursor<char>> {
+impl IndexedCursor<Gursor<char>> {
   pub fn print(
     width:  usize, 
     text:   &Vec<String>,
     styles: &Vec<TextStyle>
   ) -> Self {
-    let (indexes, cursors): (Vec<usize>, Vec<Cursor<char>>) = styles
+    let (indexes, cursors): (Vec<usize>, Vec<Gursor<char>>) = styles
       .iter()
       .zip(text.iter())
       .enumerate()
@@ -409,7 +687,7 @@ impl ScreenCursor {
   pub fn get_x_scroll(&self) -> usize          {self.x.get_scroll()}
   pub fn get_y_scroll(&self) -> usize          {self.y.get_scroll()}
 
-  pub fn resize<V>(&mut self, matrix: &Cursor<Cursor<char>>, view: &V)
+  pub fn resize<V>(&mut self, matrix: &Gursor<Gursor<char>>, view: &V)
   where V: GetRect,
   {
     let rect = view.get_rect();
@@ -421,7 +699,7 @@ impl ScreenCursor {
     );
   }
 
-  pub fn update(&mut self, matrix: &Cursor<Cursor<char>>) -> bool {
+  pub fn update(&mut self, matrix: &Gursor<Gursor<char>>) -> bool {
     let y = self.y.update(matrix.head);
     let x = self.x.update(
       matrix.use_current(|c| c.get_weighted_head()).unwrap_or(0)
