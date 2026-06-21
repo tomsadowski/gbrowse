@@ -9,6 +9,7 @@
 mod user;
 mod userkeys;
 mod userstyle;
+mod gursor;
 mod cursor;
 mod tab;
 mod draw;
@@ -36,7 +37,7 @@ pub use crate::user::{
   UserTable,
   user_from_str,
 };
-pub use crate::cursor::{
+pub use crate::gursor::{
   Gursor, 
   IndexedCursor,
   ScreenCursor,
@@ -118,3 +119,16 @@ fn main() -> std::io::Result<()> {
     .flush()?;
   terminal::disable_raw_mode()
 }
+
+//impl<T> std::ops::Index<Cursor> for Vec<T> {
+//  type Output = T;
+//  fn index(&self, cursor: Cursor) -> &Self::Output {
+//    &self[*cursor]
+//  }
+//}
+
+//impl<T> std::ops::IndexMut<Cursor> for Vec<T> {
+//  fn index_mut(&mut self, cursor: Cursor) -> &mut Self::Output {
+//    &mut self[*cursor]
+//  }
+//}
