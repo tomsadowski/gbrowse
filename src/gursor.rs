@@ -70,7 +70,7 @@ impl<T> Gursor<T> {
     self.get_current_mut().map(|u| func(u))
   }
 
-  pub fn get_unit_view(&self, axis: LineCursorView) -> Vec<&T> {
+  pub fn get_unit_view(&self, axis: LineGursorView) -> Vec<&T> {
     self.data
       .iter()
       .skip(axis.get_scroll())
@@ -228,7 +228,7 @@ impl Gursor<char> {
       .sum()
   }
 
-  pub fn get_weighted_view(&self, axis: LineCursorView) -> Vec<&char> {
+  pub fn get_weighted_view(&self, axis: LineGursorView) -> Vec<&char> {
     use unicode_width::UnicodeWidthChar;
     let size         = usize::from(axis.get_size());  
     let mut text     = self.iter().skip(axis.get_scroll());
@@ -308,28 +308,28 @@ impl<T> Gursor<Gursor<T>> {
 }
 
 #[derive(Clone, Debug, Default)]
-pub struct IndexedCursor<T> {
+pub struct IndexedGursor<T> {
   pub matrix:   Gursor<T>, 
   pub indexes:  Vec<usize>,
 }
 
-impl<T> std::ops::Deref for IndexedCursor<T> {
+impl<T> std::ops::Deref for IndexedGursor<T> {
   type Target = Gursor<T>;
   fn deref(&self) -> &Self::Target {&self.matrix}
 }
 
-impl<T> std::ops::DerefMut for IndexedCursor<T> {
+impl<T> std::ops::DerefMut for IndexedGursor<T> {
   fn deref_mut(&mut self) -> &mut Self::Target {&mut self.matrix}
 }
 
-impl<T> IndexedCursor<T> {
+impl<T> IndexedGursor<T> {
   pub fn get_current_index(&self) -> usize {
     self.indexes.get(self.matrix.head)
       .map(|u| u.clone())
       .unwrap_or(usize::MIN)
   }
 
-  pub fn get_view(&self, axis: LineCursorView) -> Vec<(&usize, &T)> {
+  pub fn get_view(&self, axis: LineGursorView) -> Vec<(&usize, &T)> {
     self.indexes
       .iter()
       .zip(self.matrix.iter())
@@ -339,7 +339,7 @@ impl<T> IndexedCursor<T> {
   }
 }
 
-impl IndexedCursor<Gursor<char>> {
+impl IndexedGursor<Gursor<char>> {
   pub fn print(
     width:  usize, 
     text:   &Vec<String>,
@@ -373,22 +373,22 @@ impl IndexedCursor<Gursor<char>> {
 }
 
 #[derive(Copy, Clone, Debug, Default)]
-pub struct ScreenCursor {
-  x: LineCursorView,
-  y: LineCursorView,
+pub struct ScreenGursor {
+  x: LineGursorView,
+  y: LineGursorView,
 }
 
-impl<V: GetRect> From<&V> for ScreenCursor {
+impl<V: GetRect> From<&V> for ScreenGursor {
   fn from(view: &V) -> Self {
     let view = view.get_rect();
     Self {
-      x: LineCursorView::new(view.x, view.w),
-      y: LineCursorView::new(view.y, view.h),
+      x: LineGursorView::new(view.x, view.w),
+      y: LineGursorView::new(view.y, view.h),
     }
   }
 }
 
-impl GetRect for ScreenCursor {
+impl GetRect for ScreenGursor {
   fn get_rect(&self) -> Rect {
     Rect {
       x: self.x.get_start(),
@@ -399,9 +399,9 @@ impl GetRect for ScreenCursor {
   }
 }
 
-impl ScreenCursor {
-  pub fn get_x_view(&self)   -> LineCursorView {self.x}
-  pub fn get_y_view(&self)   -> LineCursorView {self.y}
+impl ScreenGursor {
+  pub fn get_x_view(&self)   -> LineGursorView {self.x}
+  pub fn get_y_view(&self)   -> LineGursorView {self.y}
   pub fn get_x_cursor(&self) -> u16            {self.x.get_cursor()}
   pub fn get_y_cursor(&self) -> u16            {self.y.get_cursor()}
   pub fn get_width(&self)    -> u16            {self.x.get_size()}
@@ -430,7 +430,7 @@ impl ScreenCursor {
   }
 }
 
-impl crate::Draw for ScreenCursor {
+impl crate::Draw for ScreenGursor {
   fn draw<W: std::io::Write>(&self, w: &mut W) -> std::io::Result<()> {
     use crossterm::{QueueableCommand, cursor};
     w
@@ -449,7 +449,7 @@ pub fn get_weighted_length(vec: &Vec<char>) -> usize {
 }
 
 #[derive(Copy, Clone, Debug, Default)]
-pub struct LineCursorView {
+pub struct LineGursorView {
   head:   usize, // data head
   scroll: usize, // start of displayable data
   cursor: u16,   // on-screen cursor
@@ -457,7 +457,7 @@ pub struct LineCursorView {
   size:   u16,   // width or height of rectangle
 }
 
-impl LineCursorView {
+impl LineGursorView {
   pub fn new(start: u16, size: u16) -> Self {
     Self {
       scroll:     0, 

@@ -39,9 +39,9 @@ pub use crate::user::{
 };
 pub use crate::gursor::{
   Gursor, 
-  IndexedCursor,
-  ScreenCursor,
-  LineCursorView,
+  IndexedGursor,
+  ScreenGursor,
+  LineGursorView,
 };
 pub use crate::tab::{
   Tab, 

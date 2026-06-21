@@ -49,6 +49,7 @@ impl Dim {
   pub fn h(&self)       -> u16      { *self.1 }
 }
 
+#[derive(Copy, Clone, Debug, Default)]
 pub struct Pos(pub u16, pub u16);
 impl From<(u16, u16)> for Pos {
   fn from((x, y): (u16, u16)) -> Self { Self(x, y) }

@@ -1,5 +1,9 @@
 // src/cursor.rs
 
+use crate::{
+  GetRect, Rect, Pos,
+};
+
 
 #[derive(Clone, Copy, Debug, Default)]
 pub struct Cursor {
@@ -180,12 +184,12 @@ impl Cursor {
 }
 
 #[derive(Clone, Copy, Debug, Default)]
-pub struct CursorPlane {
+pub struct Point {
   pub x: Cursor,
   pub y: Cursor,
 }
 
-impl CursorPlane {
+impl Point {
   pub fn editor(mut self) -> Self {
     self.make_editor();
     self
@@ -249,10 +253,76 @@ impl CursorPlane {
 
 pub fn get_weighted_length(vec: &Vec<char>) -> usize {
   use unicode_width::UnicodeWidthChar;
-  vec
-    .iter()
-    .map(|c| c.width().unwrap_or(0))
-    .sum()
+  vec.iter().map(|c| c.width().unwrap_or(0)).sum()
+}
+
+#[derive(Copy, Clone, Debug, Default)]
+pub struct ScreenCursor {
+  pos: Pos,
+  x: LineCursorView,
+  y: LineCursorView,
+}
+
+impl<V: GetRect> From<&V> for ScreenCursor {
+  fn from(view: &V) -> Self {
+    let rect = view.get_rect();
+    Self {
+      x: LineCursorView::from_size(rect.w),
+      y: LineCursorView::from_size(rect.h),
+      pos: rect.pos(),
+    }
+  }
+}
+
+impl GetRect for ScreenCursor {
+  fn get_rect(&self) -> Rect {
+    Rect {
+      x: self.pos.x(),
+      y: self.pos.y(),
+      w: self.x.size,
+      h: self.y.size,
+    }
+  }
+}
+
+impl ScreenCursor {
+  pub fn get_x_view(&self)   -> LineCursorView {self.x}
+  pub fn get_y_view(&self)   -> LineCursorView {self.y}
+  pub fn get_x_cursor(&self) -> u16            {
+    self.pos.x() + self.x.cursor
+  }
+  pub fn get_y_cursor(&self) -> u16            {
+    self.pos.y() + self.y.cursor
+  }
+  pub fn get_width(&self)    -> u16            {self.x.size}
+  pub fn get_height(&self)   -> u16            {self.y.size}
+  pub fn get_x_scroll(&self) -> usize          {self.x.scroll}
+  pub fn get_y_scroll(&self) -> usize          {self.y.scroll}
+
+  pub fn resize<V>(&mut self, point: &Point, view: &V)
+  where V: GetRect,
+  {
+    let rect = view.get_rect();
+    self.pos = rect.pos();
+    self.y.resize(*point.y, rect.h);
+    self.x.resize(*point.x, rect.w);
+  }
+
+  pub fn update(&mut self, point: &Point) -> bool {
+    let y = self.y.update(*point.y);
+    let x = self.x.update(*point.x);
+    x || y
+  }
+}
+
+impl crate::Draw for ScreenCursor {
+  fn draw<W: std::io::Write>(&self, w: &mut W) -> std::io::Result<()> {
+    use crossterm::{QueueableCommand, cursor};
+    w
+      .queue(cursor::MoveTo(self.get_x_cursor(), self.get_y_cursor()))?
+      .queue(cursor::Show)?;
+    Ok(())
+  }
 }
 
 #[derive(Copy, Clone, Debug, Default)]
@@ -260,38 +330,31 @@ pub struct LineCursorView {
   head:   usize, // data head
   scroll: usize, // start of displayable data
   cursor: u16,   // on-screen cursor
-  start:  u16,   // x or y
   size:   u16,   // width or height of rectangle
 }
 
 impl LineCursorView {
-  pub fn new(start: u16, size: u16) -> Self {
+  pub fn from_size(size: u16) -> Self {
     Self {
-      scroll:     0, 
-      head:       0, 
-      cursor: start, 
-      start, 
+      scroll: 0, 
+      head:   0, 
+      cursor: 0, 
       size,
     }
   }
 
-  pub fn get_scroll(&self) -> usize {self.scroll}
-  pub fn get_cursor(&self) -> u16   {self.cursor}
-  pub fn get_size(&self)   -> u16   {self.size}
-  pub fn get_start(&self)  -> u16   {self.start}
-
   pub fn get_unit_view<T>(self, vec: &Vec<T>) -> Vec<&T> {
     vec
       .iter()
-      .skip(self.get_scroll())
-      .take(self.get_size().into())
+      .skip(self.scroll)
+      .take(self.size.into())
       .collect() 
   }
 
   pub fn get_weighted_view(self, vec: &Vec<char>) -> Vec<&char> {
     use unicode_width::UnicodeWidthChar;
-    let size         = usize::from(self.get_size());  
-    let mut text     = vec.iter().skip(self.get_scroll());
+    let size         = usize::from(self.size);  
+    let mut text     = vec.iter().skip(self.scroll);
     let mut acc_size = 0;
     let mut result   = vec![];
     while let Some(c) = text.next() && acc_size < size {
@@ -305,26 +368,22 @@ impl LineCursorView {
   pub fn resize(
     &mut self, 
     new_head:  usize, 
-    new_start: u16, 
     new_size:  u16
   ) {
     // position of cursor on screen
-    let position = self.cursor - self.start;
-    self.start = new_start;
     self.size  = new_size;
     self.head  = new_head;
     // go to beginning of line
     if new_head < usize::from(new_size) {
       self.scroll = 0;
-      self.cursor = self.start + u16::try_from(self.head).unwrap();
+      self.cursor = u16::try_from(self.head).unwrap();
     // position must be lowered to fit within new bounds
-    } else if position > new_size - 1 {
-      self.cursor = self.start + self.size - 1;
+    } else if self.cursor > new_size - 1 {
+      self.cursor = self.size - 1;
       self.scroll = self.head - usize::from(self.size - 1);
     // position can be preserved
     } else {
-      self.cursor = self.start + position;
-      self.scroll = self.head.saturating_sub(usize::from(position));
+      self.scroll = self.head.saturating_sub(self.cursor.into());
     }
   }
 
@@ -335,8 +394,9 @@ impl LineCursorView {
     // move forward
     } else if self.head < new_head {
       let delta_size = new_head - self.head;
-      let max_delta  = (self.start + self.size.saturating_sub(1))
-          .saturating_sub(self.cursor);
+      let max_delta  = self.size
+        .saturating_sub(1)
+        .saturating_sub(self.cursor);
       // no scroll
       if delta_size < usize::from(max_delta) { 
         self.cursor  += u16::try_from(delta_size).unwrap();
@@ -352,19 +412,17 @@ impl LineCursorView {
     // move backward
     } else { 
       let delta_size = self.head - new_head;
-      let max_delta  = self.cursor.saturating_sub(self.start);
       // no scroll
-      if delta_size <= usize::from(max_delta) {
+      if delta_size <= usize::from(self.cursor) {
         self.cursor -= u16::try_from(delta_size).unwrap();
         self.head    = new_head;
         false
       // scroll backward
       } else { 
         self.scroll = self.scroll.saturating_sub(
-          delta_size - usize::from(max_delta)
+          delta_size - usize::from(self.cursor)
         );
-        self.cursor = self.start + 
-          u16::try_from(new_head - self.scroll).unwrap();
+        self.cursor = u16::try_from(new_head - self.scroll).unwrap();
         self.head = new_head;
         true
       }
