@@ -9,7 +9,6 @@
 mod user;
 mod userkeys;
 mod userstyle;
-mod gursor;
 mod cursor;
 mod tab;
 mod draw;
@@ -37,11 +36,11 @@ pub use crate::user::{
   UserTable,
   user_from_str,
 };
-pub use crate::gursor::{
-  Gursor, 
-  IndexedGursor,
-  ScreenGursor,
-  LineGursorView,
+pub use crate::cursor::{
+  Cursor, 
+  Point,
+  ScreenCursor,
+  LineCursorView,
 };
 pub use crate::tab::{
   Tab, 

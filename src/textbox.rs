@@ -5,9 +5,9 @@ use crate::{
   Rect,
   Style, 
   TextStyle,
-  Gursor,
-  IndexedGursor, 
-  ScreenGursor,
+  Cursor,
+  Point, 
+  ScreenCursor,
 };
 
 
@@ -17,8 +17,8 @@ pub struct TextBox {
   pub style:  Style,
   pub text:   Vec<String>,
   pub styles: Vec<TextStyle>,
-  pub matrix: IndexedGursor<Gursor<char>>,
-  pub cursor: ScreenGursor,
+  pub matrix: IndexedCursor<Cursor<char>>,
+  pub cursor: ScreenCursor,
   pub pref_x: usize,
   pub write:  bool,
 }
@@ -35,8 +35,8 @@ impl From<Rect> for TextBox {
       style:  Style::default(),
       text:   vec![],
       styles: vec![],
-      cursor: ScreenGursor::from(&view), 
-      matrix: IndexedGursor::default(),
+      cursor: ScreenCursor::from(&view), 
+      matrix: IndexedCursor::default(),
       view:   view.get_rect(),
     }
   }
@@ -80,7 +80,7 @@ impl TextBox {
 
   pub fn reset_matrix(&mut self) {
     let linear_head = self.matrix.get_linear_head();
-    self.matrix = IndexedGursor::print_from(
+    self.matrix = IndexedCursor::print_from(
       &self.view, &self.text, &self.styles
     );
     self.matrix.set_linear_head(linear_head);

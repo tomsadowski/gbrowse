@@ -2,7 +2,7 @@
 
 use crate::{
   TextStyle, 
-  Gursor, 
+  Cursor, 
   Style, 
   Rect, 
   GetRect, 
@@ -15,11 +15,11 @@ use crate::{
 pub struct TabManager {
   pub view:  Rect,
   pub style: Style,
-  pub tabs:  Gursor<Tab>,
+  pub tabs:  Cursor<Tab>,
 } 
 
 impl std::ops::Deref for TabManager {
-  type Target = Gursor<Tab>;
+  type Target = Cursor<Tab>;
   fn deref(&self) -> &Self::Target {
     &self.tabs
   }
@@ -36,7 +36,7 @@ impl<V: GetRect> From<V> for TabManager {
     Self {
       view:  view.get_rect(),
       style: Style::default(),
-      tabs:  Gursor::default(),
+      tabs:  Cursor::default(),
     }
   }
 }
