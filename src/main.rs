@@ -118,16 +118,3 @@ fn main() -> std::io::Result<()> {
     .flush()?;
   terminal::disable_raw_mode()
 }
-
-//impl<T> std::ops::Index<Cursor> for Vec<T> {
-//  type Output = T;
-//  fn index(&self, cursor: Cursor) -> &Self::Output {
-//    &self[*cursor]
-//  }
-//}
-
-//impl<T> std::ops::IndexMut<Cursor> for Vec<T> {
-//  fn index_mut(&mut self, cursor: Cursor) -> &mut Self::Output {
-//    &mut self[*cursor]
-//  }
-//}
