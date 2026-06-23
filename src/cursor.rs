@@ -31,23 +31,12 @@ impl Cursor {
   }
 
   pub fn get_max<T>(&self, vec: &Vec<T>) -> usize {
-    match self.buff {
-      true  => vec.len(),
-      false => vec.len().saturating_sub(1),
-    }
+    if self.buff { vec.len() } 
+    else         { vec.len().saturating_sub(1) }
   }
 
-  pub fn peek_backward(&self, delta: usize) -> usize {
-    if delta > self.head {
-      delta - self.head
-    } else {0}
-  }
-
-  pub fn peek_forward<T>(&self, vec: &Vec<T>, delta: usize) -> usize {
-    let max_head = self.get_max(vec);
-    if self.head + delta > max_head {
-      self.head + delta - max_head
-    } else {0}
+  pub fn peek_move<T>(&self, vec: &Vec<T>, idelta: isize) -> isize {
+    self.clone().move_head(vec, idelta)
   }
 
   pub fn fit<T>(&mut self, vec: &Vec<T>, new_head: usize) {
@@ -62,21 +51,15 @@ impl Cursor {
     self.head = self.get_max(vec);
   }
 
-  pub fn peek_move<T>(&self, vec: &Vec<T>, idelta: isize) -> isize {
-    self.clone().move_head(vec, idelta)
-  }
-
   pub fn move_wrapped<T>(&mut self, vec: &Vec<T>, mut idelta: isize) -> isize {
     let     imax       = self.get_max(vec) as isize;
     let mut iremainder = self.move_head(vec, idelta);
     if iremainder < 0 {
-      self.head   = self.get_max(vec);
-      iremainder += 1;
-      self.move_head(vec, iremainder)
+      self.head = self.get_max(vec);
+      self.move_head(vec, iremainder + 1)
     } else if iremainder > imax {
-      self.head   = 0;
-      iremainder -= 1;
-      self.move_head(vec, iremainder)
+      self.head = 0;
+      self.move_head(vec, iremainder - 1)
     } else {
       self.head += idelta as usize;
       0
@@ -141,7 +124,7 @@ impl Cursor {
   }
 
   pub fn backspace<T>(&mut self, vec: &mut Vec<T>) -> bool {
-    if self.peek_backward(1) == 0 {
+    if self.peek_move(vec, -1) == 0 {
       self.move_head(vec, -1);
       vec.remove(self.head);
       true
