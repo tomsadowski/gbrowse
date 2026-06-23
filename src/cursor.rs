@@ -299,10 +299,10 @@ impl crate::Draw for ScreenCursor {
 
 #[derive(Copy, Clone, Debug, Default)]
 pub struct LineCursorView {
-  head:   usize, // data head
-  scroll: usize, // start of displayable data
-  cursor: u16,   // on-screen cursor
-  size:   u16,   // width or height of rectangle
+  pub head:   usize, // data head
+  pub scroll: usize, // start of displayable data
+  pub cursor: u16,   // on-screen cursor
+  pub size:   u16,   // width or height of rectangle
 }
 
 impl LineCursorView {
