@@ -94,7 +94,7 @@ impl Cursor {
       self.head = self.get_max(vec);
       new_ihead - imax
     } else {
-      self.head += idelta as usize;
+      self.head = new_ihead as usize;
       0
     }
   }
@@ -210,11 +210,14 @@ impl Point {
   }
 
   pub fn move_x<T>(&mut self, vec: &Vec<Vec<T>>, idelta: isize) -> isize {
-    let iremainder = self.x.move_head(vec, idelta);
+    let iremainder = vec.get(*self.y).map(|v| self.x.move_head(v, idelta)).unwrap_or(0);
     if iremainder != 0 && self.y.move_head(vec, iremainder.signum()) == 0 {
-      match vec.get(*self.y).map(|v| self.x.move_to_end(v)) {
-        None => iremainder,
-        _    => self.move_x(vec, iremainder + iremainder.signum()),
+      match vec.get(*self.y) {
+        None    => iremainder,
+        Some(v) => {
+          self.x.move_head(v, v.len() as isize * iremainder.signum() * -1);
+          self.move_x(vec, (iremainder.saturating_abs() - 1) * iremainder.signum())
+        }
       }
     } else {
       self.pref_x = self.x.head;
