@@ -1,5 +1,28 @@
 // src/rect.rs
 
+#[derive(Clone, Copy, Default)]
+pub struct Dim(pub u16, pub u16);
+
+impl From<(u16, u16)> for Dim {
+  fn from((w, h): (u16, u16)) -> Self { Self(w.into(), h.into()) }
+}
+
+impl Dim {
+  pub fn w(&self) -> u16 { self.0 }
+  pub fn h(&self) -> u16 { self.1 }
+}
+
+#[derive(Copy, Clone, Debug, Default)]
+pub struct Pos(pub u16, pub u16);
+
+impl From<(u16, u16)> for Pos {
+  fn from((x, y): (u16, u16)) -> Self { Self(x, y) }
+}
+
+impl Pos {
+  pub fn x(&self) -> u16 { self.0 }
+  pub fn y(&self) -> u16 { self.1 }
+}
 
 #[derive(Copy, Clone, Default)]
 pub struct Rect {
@@ -17,68 +40,13 @@ impl GetRect for Rect {
   fn get_rect(&self) -> Rect {self.clone()}
 }
 
-#[derive(Clone, Copy, Default)]
-pub struct Width(pub u16);
-impl From<u16> for Width {
-  fn from(u: u16) -> Self { Self(u) }
-}
-impl std::ops::Deref for Width {
-  type Target = u16;
-  fn deref(&self) -> &u16 {
-    &self.0
-  }
-}
-#[derive(Clone, Copy, Default)]
-pub struct Height(pub u16);
-impl From<u16> for Height {
-  fn from(u: u16) -> Self { Self(u) }
-}
-impl std::ops::Deref for Height {
-  type Target = u16;
-  fn deref(&self) -> &u16 {
-    &self.0
-  }
-}
-#[derive(Clone, Copy, Default)]
-pub struct Dim(pub Width, pub Height);
-impl From<(u16, u16)> for Dim {
-  fn from((w, h): (u16, u16)) -> Self { Self(w.into(), h.into()) }
-}
-impl Dim {
-  pub fn w(&self)       -> u16      { *self.0 }
-  pub fn h(&self)       -> u16      { *self.1 }
-}
-
-#[derive(Copy, Clone, Debug, Default)]
-pub struct Pos(pub u16, pub u16);
-impl From<(u16, u16)> for Pos {
-  fn from((x, y): (u16, u16)) -> Self { Self(x, y) }
-}
-impl Pos {
-  pub fn x(&self) -> u16      { self.0 }
-  pub fn y(&self) -> u16      { self.1 }
-}
-
 impl From<Dim> for Rect {
   fn from(d: Dim) -> Self {
-    Self {x: 0, y: 0, w: d.w(), h: d.h()}
-  }
-}
-impl From<Pos> for Rect {
-  fn from(p: Pos) -> Self {
-    Self {x: p.0, y: p.1, w: 0, h: 0}
+    Self { x: 0, y: 0, w: d.w(), h: d.h() }
   }
 }
 
 impl Rect {
-  pub fn init_size(w: u16, h: u16) -> Self {
-    Self {x: 0, y: 0, w, h}
-  }
-
-  pub fn init_points(x: u16, y: u16) -> Self {
-    Self {x, y, w: 0, h: 0}
-  }
-
   pub fn dim(&self) -> Dim {
     (self.w, self.h).into()
   }

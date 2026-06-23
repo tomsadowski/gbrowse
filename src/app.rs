@@ -3,6 +3,7 @@
 use crate::{
   gemini, 
   util,
+  Dim,
   user,
   User, 
   UserTable,
@@ -73,7 +74,7 @@ impl App {
   pub fn init(path: &str, w: u16, h: u16) -> Self {
     let user_text  = std::fs::read_to_string(path).unwrap_or_default();
     let user: User = user_from_str(&user_text).unwrap_or_default();
-    let frame      = user.get_frame(Rect::init_size(w, h));
+    let frame      = user.get_frame(Rect::from(Dim(w, h)));
     let mut app = Self {
       guide:       "".into(),
       tabs:        TabManager::from(frame).with_style(user.style.general),
@@ -285,7 +286,7 @@ impl App {
         self.quit = true;
       }
       (Msg::Resize(w, h), focus) => {
-        self.frame.resize(Rect::init_size(*w, *h));
+        self.frame.resize(Rect::from(Dim(*w, *h)));
         self.push_size();
       }
       (Msg::Action(action), Focus::Dialog(task, dlg)) 

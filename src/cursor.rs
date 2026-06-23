@@ -54,15 +54,13 @@ impl Cursor {
   pub fn move_wrapped<T>(&mut self, vec: &Vec<T>, mut idelta: isize) -> isize {
     let     imax       = self.get_max(vec) as isize;
     let mut iremainder = self.move_head(vec, idelta);
-    if iremainder < 0 {
-      self.head = self.get_max(vec);
-      self.move_head(vec, iremainder + 1)
-    } else if iremainder > imax {
-      self.head = 0;
-      self.move_head(vec, iremainder - 1)
-    } else {
-      self.head += idelta as usize;
-      0
+    if iremainder == 0 {0} else {
+      self.move_head(vec, 
+        vec.len() as isize * iremainder.signum() * -1
+      );
+      self.move_wrapped(vec, 
+        (iremainder.saturating_abs() - 1) * iremainder.signum()
+      )
     }
   }
 
@@ -193,13 +191,19 @@ impl Point {
   }
 
   pub fn move_x<T>(&mut self, vec: &Vec<Vec<T>>, idelta: isize) -> isize {
-    let iremainder = vec.get(*self.y).map(|v| self.x.move_head(v, idelta)).unwrap_or(0);
+    let iremainder = vec
+      .get(*self.y)
+      .map(|v| self.x.move_head(v, idelta))
+      .unwrap_or(0);
     if iremainder != 0 && self.y.move_head(vec, iremainder.signum()) == 0 {
       match vec.get(*self.y) {
         None    => iremainder,
         Some(v) => {
           self.x.move_head(v, v.len() as isize * iremainder.signum() * -1);
-          self.move_x(vec, (iremainder.saturating_abs() - 1) * iremainder.signum())
+          self.move_x(
+            vec, 
+            (iremainder.saturating_abs() - 1) * iremainder.signum()
+          )
         }
       }
     } else {
