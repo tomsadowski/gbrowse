@@ -428,7 +428,7 @@ impl App {
           self.spawn_request(&url);
         }
         (_, Action::Yes, Task::DelTab) => {
-          if self.tabs.remove() == 0 {
+          if self.tabs.cursor.remove(&mut self.tabs.tabs) == 0 {
             let url_str = self.user.init_url.clone();
             self.focus_edit_dialog(
               Task::Init(url_str.clone()), 
@@ -481,10 +481,10 @@ impl App {
         }
       }
       (Msg::Action(Action::CycleLeft), Focus::Tab) => {
-        self.tab_changed = self.tabs.move_backward_wrapped(1);
+        self.tab_changed = {self.tabs.cursor.move_wrapped(&self.tabs.tabs, -1); true};
       }
       (Msg::Action(Action::CycleRight), Focus::Tab) => {
-        self.tab_changed = self.tabs.move_forward_wrapped(1);
+        self.tab_changed = {self.tabs.cursor.move_wrapped(&self.tabs.tabs, 1); true};
       }
       (Msg::Action(Action::LoadUrl), Focus::Tab) => {
         self.focus_select_dialog(

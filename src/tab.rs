@@ -13,30 +13,19 @@ use crate::{
 
 
 pub struct TabManager {
-  pub view:  Rect,
-  pub style: Style,
-  pub tabs:  Cursor<Tab>,
+  pub view:   Rect,
+  pub style:  Style,
+  pub cursor: Cursor,
+  pub tabs:   Vec<Tab>,
 } 
-
-impl std::ops::Deref for TabManager {
-  type Target = Cursor<Tab>;
-  fn deref(&self) -> &Self::Target {
-    &self.tabs
-  }
-}
-
-impl std::ops::DerefMut for TabManager {
-  fn deref_mut(&mut self) -> &mut Self::Target {
-    &mut self.tabs
-  }
-}
 
 impl<V: GetRect> From<V> for TabManager {
   fn from(view: V) -> Self {
     Self {
-      view:  view.get_rect(),
-      style: Style::default(),
-      tabs:  Cursor::default(),
+      view:   view.get_rect(),
+      style:  Style::default(),
+      cursor: Cursor::default(),
+      tabs:   vec![],
     }
   }
 }
@@ -54,7 +43,7 @@ impl TabManager {
   where T: Into<Style> + Copy
   {
     self.style = style.into();
-    for tab in self.tabs.data.iter_mut() {
+    for tab in self.tabs.iter_mut() {
       tab.get_textbox_mut().style = self.style;
     }
   }
@@ -79,20 +68,20 @@ impl TabManager {
   }
 
   pub fn reset_state(&mut self) {
-    self.tabs.use_current_mut(
+    self.tabs.get_mut(*self.cursor).map(
       |tab| tab.get_textbox_mut().reset_state()
     );
   }
 
   pub fn get_url(&self) -> Option<&url::Url> {
     self.tabs
-      .get_current()
+      .get(*self.cursor)
       .and_then(|tab| tab.get_url())
   }
 
   pub fn get_gem_tag(&self) -> Option<&GemTag> {
     self.tabs
-      .get_current()
+      .get(*self.cursor)
       .and_then(|tab| tab.get_gem_tag())
   }
 
@@ -100,7 +89,7 @@ impl TabManager {
   where F: Fn(&mut TextBox) -> T
   {
     self.tabs
-      .get_current_mut()
+      .get_mut(*self.cursor)
       .map(|tab| tab.get_textbox_mut())
       .map(|textbox| func(textbox))
   }
@@ -119,12 +108,16 @@ impl TabManager {
       .unzip();
     let styles  = tags.iter().map(|tag| get_text_style(tag)).collect();
     let new_tab = Tab::Gem(UrlTab::new(self.view, url, tags, text, styles));
-    self.insert_or_move(|tab| tab.get_url() == Some(url), new_tab);
+    self.cursor.insert_or_move(
+      &mut self.tabs, 
+      |tab| tab.get_url() == Some(url), 
+      new_tab
+    );
     self.reset_state();
   }
 
   pub fn get_banner_text(&self) -> String {
-    match self.use_current(
+    match self.tabs.get(*self.cursor).map(
       |tab| match tab {
         Tab::Gem   (UrlTab {url, ..}) | 
         Tab::Gopher(UrlTab {url, ..}) => url.to_string(),
@@ -132,14 +125,14 @@ impl TabManager {
       }
     ) {
       None    => format!("Empty"),
-      Some(s) => format!("{}/{} - {s}", self.head + 1, self.data.len()),
+      Some(s) => format!("{}/{} - {s}", *self.cursor + 1, self.tabs.len()),
     }
   }
 }
 
 impl crate::Draw for TabManager {
   fn draw<W: std::io::Write>(&self, w: &mut W) -> std::io::Result<()> {
-    if let Some(tab) = self.get_current() {
+    if let Some(tab) = self.tabs.get(*self.cursor) {
       tab.get_textbox().draw(w)?;
       tab.get_textbox().cursor.draw(w)?;
     } 
