@@ -50,8 +50,8 @@ impl Cursor {
     } else {0}
   }
 
-  pub fn fit<T>(&mut self, vec: &Vec<T>) {
-    self.head = self.get_max(vec).min(self.head);
+  pub fn fit<T>(&mut self, vec: &Vec<T>, new_head: usize) {
+    self.head = self.get_max(vec).min(new_head);
   }
 
   pub fn move_to_start(&mut self) {
@@ -62,60 +62,47 @@ impl Cursor {
     self.head = self.get_max(vec);
   }
 
-  pub fn move_backward(&mut self, mut delta: usize) -> usize {
-    if delta > self.head {
-      delta -= self.head; 
-      self.head = 0; 
-      delta
+  pub fn peek_move<T>(&self, vec: &Vec<T>, idelta: isize) -> isize {
+    self.clone().move_head(vec, idelta)
+  }
+
+  pub fn move_wrapped<T>(&mut self, vec: &Vec<T>, mut idelta: isize) -> isize {
+    let     imax       = self.get_max(vec) as isize;
+    let mut iremainder = self.move_head(vec, idelta);
+    if iremainder < 0 {
+      self.head   = self.get_max(vec);
+      iremainder += 1;
+      self.move_head(vec, iremainder)
+    } else if iremainder > imax {
+      self.head   = 0;
+      iremainder -= 1;
+      self.move_head(vec, iremainder)
     } else {
-      self.head -= delta; 
+      self.head += idelta as usize;
       0
     }
   }
 
-  pub fn move_forward<T>(&mut self, vec: &Vec<T>, mut delta: usize) -> usize {
-    if self.head + delta > self.get_max(vec) {
-      delta     = self.head + delta - self.get_max(vec);
+  pub fn move_head<T>(&mut self, vec: &Vec<T>, mut idelta: isize) -> isize {
+    let ihead     = self.head as isize;
+    let imax      = self.get_max(vec) as isize;
+    let new_ihead = ihead + idelta;
+    if new_ihead < 0 {
+      self.head = 0;
+      new_ihead
+    } else if new_ihead > imax {
       self.head = self.get_max(vec);
-      delta
+      new_ihead - imax
     } else {
-      self.head += delta;
+      self.head += idelta as usize;
       0
-    }
-  }
-
-  pub fn move_backward_wrapped<T>(&mut self, vec: &Vec<T>, delta: usize) 
-    -> bool 
-  {
-    if vec.len() <= 1 {
-      false
-    } else if delta > self.head {
-      self.move_to_end(vec);
-      true
-    } else {
-      self.head -= delta;
-      true
-    }
-  }
-
-  pub fn move_forward_wrapped<T>(&mut self, vec: &Vec<T>, delta: usize) 
-    -> bool 
-  {
-    if vec.len() <= 1 {
-      false
-    } else if self.head + delta > self.get_max(vec) {
-      self.move_to_start();
-      true
-    } else {
-      self.head += delta;
-      true
     }
   }
 
   pub fn remove<T>(&mut self, vec: &mut Vec<T>) -> usize {
     if self.head < vec.len() {
       vec.remove(self.head);
-      self.move_backward_wrapped(vec, 1);
+      self.move_wrapped(vec, -1);
     }
     vec.len()
   }
@@ -155,7 +142,7 @@ impl Cursor {
 
   pub fn backspace<T>(&mut self, vec: &mut Vec<T>) -> bool {
     if self.peek_backward(1) == 0 {
-      self.move_backward(1);
+      self.move_head(vec, -1);
       vec.remove(self.head);
       true
     } else {false}
@@ -164,11 +151,11 @@ impl Cursor {
   pub fn insert<T>(&mut self, vec: &mut Vec<T>, c: T) -> bool {
     if self.head + 1 == vec.len() || vec.len() == 0 {
       vec.push(c);
-      self.move_forward(vec, 1);
+      self.move_head(vec, 1);
       true
     } else {
       vec.insert(self.head, c);
-      self.move_forward(vec, 1);
+      self.move_head(vec, 1);
       true
     }
   }
@@ -185,8 +172,9 @@ impl Cursor {
 
 #[derive(Clone, Copy, Debug, Default)]
 pub struct Point {
-  pub x: Cursor,
-  pub y: Cursor,
+  pub x:  Cursor,
+  pub y:  Cursor,
+  pref_x: usize,
 }
 
 impl Point {
@@ -211,43 +199,27 @@ impl Point {
   pub fn set_linear_head<T>(&mut self, vec: &Vec<Vec<T>>, idx: usize) {
     self.y.move_to_start();
     self.x.move_to_start();
-    self.move_right(vec, idx);
+    self.move_x(vec, idx as isize);
   }
 
-  pub fn move_up<T>(&mut self, vec: &Vec<Vec<T>>, delta: usize) -> bool {
-    //let pref_x = self.use_current_mut(|current| current.head).unwrap_or(0);
-    if self.y.move_backward(delta) != delta {
-      vec.get(*self.y).map(|v| self.x.fit(v));
+  pub fn move_y<T>(&mut self, vec: &Vec<Vec<T>>, idelta: isize) -> bool {
+    if self.y.move_head(vec, idelta) != idelta {
+      vec.get(*self.y).map(|v| self.x.fit(v, self.pref_x));
       true
     } else {false}
   }
 
-  pub fn move_down<T>(&mut self, vec: &Vec<Vec<T>>, delta: usize) -> bool {
-    //let pref_x = self.use_current_mut(|current| current.head).unwrap_or(0);
-    if self.y.move_forward(vec, delta) != delta {
-      vec.get(*self.y).map(|v| self.x.fit(v));
-      true
-    } else {false}
-  }
-
-  pub fn move_left<T>(&mut self, vec: &Vec<Vec<T>>, delta: usize) -> usize {
-    let remainder = self.x.move_backward(delta);
-    if remainder != 0 && self.y.move_backward(1) == 0 {
+  pub fn move_x<T>(&mut self, vec: &Vec<Vec<T>>, idelta: isize) -> isize {
+    let iremainder = self.x.move_head(vec, idelta);
+    if iremainder != 0 && self.y.move_head(vec, iremainder.signum()) == 0 {
       match vec.get(*self.y).map(|v| self.x.move_to_end(v)) {
-        None => remainder,
-        _    => self.move_left(vec, remainder.saturating_sub(1)),
+        None => iremainder,
+        _    => self.move_x(vec, iremainder + iremainder.signum()),
       }
-    } else {remainder}
-  }
-
-  pub fn move_right<T>(&mut self, vec: &Vec<Vec<T>>, delta: usize) -> usize {
-    let Some(remainder) = 
-      vec.get(*self.y).map(|v| self.x.move_forward(v, delta)) 
-      else {return delta};
-    if remainder != 0 && self.y.move_forward(vec, 1) == 0 {
-      self.x.move_to_start();
-      self.move_right(vec, remainder.saturating_sub(1))
-    } else {remainder}
+    } else {
+      self.pref_x = self.x.head;
+      iremainder
+    }
   }
 }
 
