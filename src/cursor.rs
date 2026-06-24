@@ -226,9 +226,9 @@ pub struct ScreenCursor {
   y: LineCursorView,
 }
 
-impl<V: GetRect> From<&V> for ScreenCursor {
-  fn from(view: &V) -> Self {
-    let rect = view.get_rect();
+impl<T: GetRect> From<&T> for ScreenCursor {
+  fn from(t: &T) -> Self {
+    let rect = t.get_rect();
     Self {
       x: LineCursorView::from_size(rect.w),
       y: LineCursorView::from_size(rect.h),
