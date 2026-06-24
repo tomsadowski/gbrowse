@@ -66,7 +66,7 @@ impl TextBox {
   }
 
   pub fn editor(mut self) -> Self {
-    self.point.make_editor();
+    self.point.make_editor(&self.matrix);
     self.cursor.update(&self.point);
     self
   }

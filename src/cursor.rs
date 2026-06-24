@@ -21,13 +21,14 @@ impl std::ops::DerefMut for Cursor {
 }
 
 impl Cursor {
-  pub fn editor(mut self) -> Self {
-    self.make_editor();
+  pub fn editor<T>(mut self, vec: &Vec<T>) -> Self {
+    self.make_editor(vec);
     self
   }
 
-  pub fn make_editor(&mut self) {
+  pub fn make_editor<T>(&mut self, vec: &Vec<T>) {
     self.buff = true;
+    self.move_to_end(vec);
   }
 
   pub fn get_max<T>(&self, vec: &Vec<T>) -> usize {
@@ -159,13 +160,13 @@ pub struct Point {
 }
 
 impl Point {
-  pub fn editor(mut self) -> Self {
-    self.make_editor();
+  pub fn editor<T>(mut self, vec: &Vec<Vec<T>>) -> Self {
+    self.make_editor(vec);
     self
   }
 
-  pub fn make_editor(&mut self) {
-    self.x.make_editor();
+  pub fn make_editor<T>(&mut self, vec: &Vec<Vec<T>>) {
+    vec.get(*self.y).map(|v| self.x.make_editor(v));
   }
 
   pub fn get_linear_head<T>(&self, vec: &Vec<Vec<T>>) -> usize {
