@@ -128,12 +128,10 @@ impl TabManager {
       Some(s) => format!("{}/{} - {s}", *self.cursor + 1, self.tabs.len()),
     }
   }
-}
 
-impl crate::Draw for TabManager {
-  fn draw<W: std::io::Write>(&self, w: &mut W) -> std::io::Result<()> {
+  pub fn draw<W: std::io::Write>(&self, w: &mut W) -> std::io::Result<()> {
     if let Some(tab) = self.tabs.get(*self.cursor) {
-      tab.get_textbox().draw(w)?;
+      tab.get_textbox().draw_cursor(w)?;
       tab.get_textbox().cursor.draw(w)?;
     } 
     Ok(())

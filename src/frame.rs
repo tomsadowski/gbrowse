@@ -1,7 +1,6 @@
 // src/frame.rs
 
 use crate::{
-  GetRect, 
   Rect, 
   Style, 
   Margins, 
@@ -24,9 +23,14 @@ pub struct Frame {
   pub footer_style:  Style,
 }
 
-impl GetRect for Frame {
-  fn get_rect(&self) -> Rect {self.inner_rect}
+impl crate::GetRect for Frame {
+  fn get_rect(&self) -> Rect { self.inner_rect }
 }
+
+impl crate::GetHeight for Frame {
+  fn get_height(&self) -> u16 { self.border_rect.h }
+}
+
 
 impl From<Rect> for Frame {
   fn from(screen: Rect) -> Self {
@@ -180,10 +184,8 @@ impl Frame {
     w.queue(SetAttribute(Attribute::Reset))?;
     Ok(())
   }
-}
 
-impl crate::Draw for Frame {
-  fn draw<W: std::io::Write>(&self, w: &mut W) -> std::io::Result<()> {
+  pub fn draw<W: std::io::Write>(&self, w: &mut W) -> std::io::Result<()> {
     use crossterm::{
       QueueableCommand, 
       cursor::MoveTo, 

@@ -1,6 +1,6 @@
 // src/main.rs
 
-//#![allow(unused_imports)]
+#![allow(unused_imports)]
 #![allow(dead_code)]
 #![allow(unused_mut)]
 #![allow(unused_variables)]
@@ -29,7 +29,10 @@ pub use crate::frame::Frame;
 pub use crate::textbox::TextBox;
 pub use crate::network::Request;
 pub use crate::action::Action;
-pub use crate::layout::Layout;
+pub use crate::layout::{
+  Layout,
+  GetHeight,
+};
 pub use crate::user::{
   User,
   Assign,
@@ -54,7 +57,6 @@ pub use crate::rect::{
   Rect, 
 };
 pub use crate::draw::{
-  Draw,
   Style, 
   TextStyle, 
   BorderStyle, 
@@ -97,16 +99,16 @@ fn main() -> std::io::Result<()> {
     .queue(terminal::EnterAlternateScreen)?
     .queue(terminal::DisableLineWrap)?;
   // initial display
-  app.draw(&mut stdout)?;
+  app.draw_cursor(&mut stdout)?;
   // break on control-c
   while !app.quit {
     if app.join_request() {
-      app.draw(&mut stdout)?;
+      app.draw_cursor(&mut stdout)?;
     } 
     if event::poll(Duration::from_millis(16))? {
       if let Some(message) = app.get_update(event::read()?) {
         app.update(&message);
-        app.draw(&mut stdout)?;
+        app.draw_cursor(&mut stdout)?;
       } 
     } 
   }

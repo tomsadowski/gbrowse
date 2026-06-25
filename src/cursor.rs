@@ -1,7 +1,7 @@
 // src/cursor.rs
 
 use crate::{
-  GetRect, Rect, Pos,
+  GetRect, Rect, Pos, Dim,
 };
 
 
@@ -236,30 +236,21 @@ impl<T: GetRect> From<&T> for ScreenCursor {
   }
 }
 
-impl GetRect for ScreenCursor {
-  fn get_rect(&self) -> Rect {
-    Rect {
-      x: self.pos.x(),
-      y: self.pos.y(),
-      w: self.x.size,
-      h: self.y.size,
-    }
-  }
+impl crate::GetRect for ScreenCursor {
+  fn get_rect(&self) -> Rect { Rect::from(self.dim()).with_pos(self.pos()) }
 }
 
 impl ScreenCursor {
   pub fn get_x_view(&self)   -> LineCursorView {self.x}
   pub fn get_y_view(&self)   -> LineCursorView {self.y}
-  pub fn get_x_cursor(&self) -> u16            {
-    self.pos.x() + self.x.cursor
-  }
-  pub fn get_y_cursor(&self) -> u16            {
-    self.pos.y() + self.y.cursor
-  }
-  pub fn get_width(&self)    -> u16            {self.x.size}
-  pub fn get_height(&self)   -> u16            {self.y.size}
-  pub fn get_x_scroll(&self) -> usize          {self.x.scroll}
-  pub fn get_y_scroll(&self) -> usize          {self.y.scroll}
+  pub fn dim(&self)          -> Dim { Dim(self.x.size, self.y.size) }  
+  pub fn pos(&self)          -> Pos { self.pos }
+  pub fn get_x_cursor(&self) -> u16 { self.pos.x() + self.x.cursor }
+  pub fn get_y_cursor(&self) -> u16 { self.pos.y() + self.y.cursor }
+  pub fn get_width(&self)    -> u16   {self.x.size}
+  pub fn get_height(&self)   -> u16   {self.y.size}
+  pub fn get_x_scroll(&self) -> usize {self.x.scroll}
+  pub fn get_y_scroll(&self) -> usize {self.y.scroll}
 
   pub fn resize<V>(&mut self, point: &Point, view: &V)
   where V: GetRect,
@@ -275,10 +266,8 @@ impl ScreenCursor {
     let x = self.x.update(*point.x);
     x || y
   }
-}
 
-impl crate::Draw for ScreenCursor {
-  fn draw<W: std::io::Write>(&self, w: &mut W) -> std::io::Result<()> {
+  pub fn draw<W: std::io::Write>(&self, w: &mut W) -> std::io::Result<()> {
     use crossterm::{QueueableCommand, cursor};
     w
       .queue(cursor::MoveTo(self.get_x_cursor(), self.get_y_cursor()))?

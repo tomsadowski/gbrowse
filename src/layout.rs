@@ -5,9 +5,18 @@ use crate::{
   GetRect,
   Frame,
   ScreenCursor,
+  TextBox,
 };
 use std::collections::HashMap;
 
+
+pub trait GetHeight { fn get_height(&self) -> u16; }
+
+impl<T> GetHeight for Vec<T> {
+  fn get_height(&self) -> u16 { 
+    u16::try_from(self.len()).unwrap_or(u16::MAX)
+  }
+}
 
 pub const TAB: u8 = 0;
 pub const DLG: u8 = 1;
@@ -18,20 +27,21 @@ pub enum Max {
   Fill,
 }
 
-pub enum ViewType {
-  Cursor(ScreenCursor),
-  Screen(Rect),
+pub enum View {
+  Cursor        (ScreenCursor),
+  Rect          (Rect),
+  FramedCursor  (ScreenCursor, Frame),
+  FramedRect    (Rect,         Frame),
 }
 
-pub struct View {
-  frame:    Option<Frame>,
-  max:      Max,
-  viewtype: ViewType,
+pub struct ViewParams {
+  max:  Max,
+  view: View,
 }
 
 pub struct Layout {
   pub rect:  Rect,
-  pub views: HashMap<u8, View>,
+  pub views: HashMap<u8, ViewParams>,
 }
 
 impl<T: GetRect> From<&T> for Layout {

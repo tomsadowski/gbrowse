@@ -1,14 +1,10 @@
-// src/coreui.rs
+// src/draw.rs
 
 use crate::{
-  GetRect, Rect,
+  GetRect, Rect, ScreenCursor,
 };
 use crossterm::style::Color;
 
-
-pub trait Draw {
-  fn draw<W: std::io::Write>(&self, w: &mut W) -> std::io::Result<()>;
-}
 
 // corners 
 // square
@@ -132,21 +128,18 @@ impl From<TextStyle> for Style {
 
 impl crossterm::Command for Style {
   fn write_ansi(&self, f: &mut impl std::fmt::Write) -> std::fmt::Result {
-    use crossterm::{
-      style::{SetStyle, ContentStyle, Attribute, Attributes},
-    };
-    let mut contentstyle = ContentStyle::new();
+    let mut contentstyle = crossterm::style::ContentStyle::new();
     contentstyle.foreground_color = self.fg;
     contentstyle.background_color = self.bg;
-    let mut attributes = Attributes::none();
+    let mut attributes = crossterm::style::Attributes::none();
     if self.bold {
-      attributes.set(Attribute::Bold);
+      attributes.set(crossterm::style::Attribute::Bold);
     }
     if self.underline {
-      attributes.set(Attribute::Underlined);
+      attributes.set(crossterm::style::Attribute::Underlined);
     }
     contentstyle.attributes = attributes;
-    SetStyle(contentstyle).write_ansi(f)?;
+    crossterm::style::SetStyle(contentstyle).write_ansi(f)?;
     Ok(())
   }
 }
