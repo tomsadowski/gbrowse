@@ -22,8 +22,8 @@ pub struct TextBox {
   pub point:   Point,
 }
 
-impl From<Rect> for TextBox {
-  fn from(view: Rect) -> Self {
+impl<T: crate::GetRect> From<&T> for TextBox {
+  fn from(t: &T) -> Self {
     Self {
       style:   Style::default(),
       text:    vec![],
@@ -31,9 +31,13 @@ impl From<Rect> for TextBox {
       matrix:  vec![],
       indexes: vec![],
       point:   Point::default(),
-      width:   view.get_rect().w
+      width:   t.get_rect().w
     }
   }
+}
+
+impl crate::GetHeight for TextBox {
+  fn get_height(&self) -> u16 { self.matrix.get_height() }
 }
 
 impl TextBox {
@@ -101,8 +105,8 @@ impl TextBox {
     self.point.set_linear_head(&self.matrix, linear_head);
   }
 
-  pub fn resize<V: GetRect>(&mut self, view: V) {
-    let new_width = view.get_rect().w;
+  pub fn resize<T: GetRect>(&mut self, t: T) {
+    let new_width = t.get_rect().w;
     if self.width != new_width {
       self.width = new_width;
       self.reset_matrix();
@@ -188,8 +192,4 @@ impl TextBox {
     w.queue(style::SetAttribute(style::Attribute::Reset))?;
     Ok(())
   }
-}
-
-impl crate::GetHeight for TextBox {
-  fn get_height(&self) -> u16 { self.matrix.get_height() }
 }

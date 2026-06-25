@@ -139,22 +139,20 @@ impl Dialog {
       }
     }
   }
-}
 
-impl crate::Draw for Dialog {
-  fn draw_cursor<W: std::io::Write>(&self, w: &mut W) -> std::io::Result<()> {
-    self.prompt.draw_cursor(w)?;
+  pub fn draw<W: std::io::Write>(&self, w: &mut W) -> std::io::Result<()> {
+    self.prompt.draw(w)?;
     match &self.input {
       DlgInput::Ack(r) | 
       DlgInput::Ask(r) => { 
-        r.draw_cursor(w)?;
+        r.draw(w)?;
       }
       DlgInput::Edit(r) => {
-        r.draw_cursor(w)?;
+        r.draw(w)?;
         r.cursor.draw(w)?;
       }
       DlgInput::Select(r) => {
-        r.draw_cursor(w)?;
+        r.draw(w)?;
         r.cursor.draw(w)?;
       }
     }

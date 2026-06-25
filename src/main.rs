@@ -99,16 +99,16 @@ fn main() -> std::io::Result<()> {
     .queue(terminal::EnterAlternateScreen)?
     .queue(terminal::DisableLineWrap)?;
   // initial display
-  app.draw_cursor(&mut stdout)?;
+  app.draw(&mut stdout)?;
   // break on control-c
   while !app.quit {
     if app.join_request() {
-      app.draw_cursor(&mut stdout)?;
+      app.draw(&mut stdout)?;
     } 
     if event::poll(Duration::from_millis(16))? {
       if let Some(message) = app.get_update(event::read()?) {
         app.update(&message);
-        app.draw_cursor(&mut stdout)?;
+        app.draw(&mut stdout)?;
       } 
     } 
   }

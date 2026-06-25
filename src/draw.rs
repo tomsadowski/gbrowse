@@ -128,18 +128,19 @@ impl From<TextStyle> for Style {
 
 impl crossterm::Command for Style {
   fn write_ansi(&self, f: &mut impl std::fmt::Write) -> std::fmt::Result {
-    let mut contentstyle = crossterm::style::ContentStyle::new();
+    use crossterm::style;
+    let mut contentstyle = style::ContentStyle::new();
     contentstyle.foreground_color = self.fg;
     contentstyle.background_color = self.bg;
-    let mut attributes = crossterm::style::Attributes::none();
+    let mut attributes = style::Attributes::none();
     if self.bold {
-      attributes.set(crossterm::style::Attribute::Bold);
+      attributes.set(style::Attribute::Bold);
     }
     if self.underline {
-      attributes.set(crossterm::style::Attribute::Underlined);
+      attributes.set(style::Attribute::Underlined);
     }
     contentstyle.attributes = attributes;
-    crossterm::style::SetStyle(contentstyle).write_ansi(f)?;
+    style::SetStyle(contentstyle).write_ansi(f)?;
     Ok(())
   }
 }

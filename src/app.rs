@@ -549,21 +549,19 @@ impl App {
       _ => None,
     }
   }
-}
 
-impl crate::Draw for App {
-  fn draw_cursor<W: std::io::Write>(&self, w: &mut W) -> std::io::Result<()> {
+  pub fn draw<W: std::io::Write>(&self, w: &mut W) -> std::io::Result<()> {
     use crossterm::{QueueableCommand, cursor, terminal};
     w.queue(cursor::Hide)?;
     if self.clear {
       w.queue(terminal::Clear(terminal::ClearType::All))?;
-      self.frame.draw_cursor(w)?;
+      self.frame.draw(w)?;
     }
     let banner_text = self.tabs.get_banner_text();
     self.frame.draw_banner(&banner_text, w)?;
     self.frame.draw_footer(&self.guide, w)?;
     if let Focus::Dialog(_, dialog) = &self.focus {
-      dialog.draw_cursor(w)?;
+      dialog.draw(w)?;
     } else {
       if let Some(request) = &self.request {
     //  let tb: TextBox = TextBox::from(
@@ -573,9 +571,9 @@ impl crate::Draw for App {
     //      |s| StyledText::from(s.clone())
     //    );
     //  tb.draw(writer)?;
-        self.tabs.draw_cursor(w)?;
+        self.tabs.draw(w)?;
       } else {
-        self.tabs.draw_cursor(w)?;
+        self.tabs.draw(w)?;
       }
     }
     w.flush()
