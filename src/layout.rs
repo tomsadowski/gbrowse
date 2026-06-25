@@ -9,15 +9,24 @@ use crate::{
 use std::collections::HashMap;
 
 
-pub const TAB:      u8 = 0;
-pub const DLG_HEAD: u8 = 1;
-pub const DLG_BODY: u8 = 2;
-pub const MSG:      u8 = 3;
+pub const TAB: u8 = 0;
+pub const DLG: u8 = 1;
+pub const MSG: u8 = 2;
+
+pub enum Max {
+  Size(u16),
+  Fill,
+}
+
+pub enum ViewType {
+  Cursor(ScreenCursor),
+  Screen(Rect),
+}
 
 pub struct View {
-  must_show: bool,
-  frame:     Option<Frame>,
-  cursor:    ScreenCursor,
+  frame:    Option<Frame>,
+  max:      Max,
+  viewtype: ViewType,
 }
 
 pub struct Layout {

@@ -201,8 +201,7 @@ impl Point {
         None    => iremainder,
         Some(v) => {
           self.x.move_head(v, v.len() as isize * iremainder.signum() * -1);
-          self.move_x(
-            vec, 
+          self.move_x(vec, 
             (iremainder.saturating_abs() - 1) * iremainder.signum()
           )
         }

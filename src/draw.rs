@@ -171,7 +171,16 @@ impl Default for Margins {
 }
 
 impl Margins {
-  pub fn get_rect<V: GetRect>(&self, view: V) -> Rect {
+  pub fn get_outer<V: GetRect>(&self, view: V) -> Rect {
+    view
+      .get_rect()
+      .bump_north(self.north)
+      .bump_south(self.south)
+      .bump_east(self.east)
+      .bump_west(self.west)
+  }
+
+  pub fn get_inner<V: GetRect>(&self, view: V) -> Rect {
     view
       .get_rect()
       .crop_north(self.north)

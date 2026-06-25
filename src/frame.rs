@@ -32,9 +32,9 @@ impl From<Rect> for Frame {
   fn from(screen: Rect) -> Self {
     let screen_margin = Margins::default();
     let text_margin   = Margins::default();
-    let border_rect   = screen_margin.get_rect(screen);
+    let border_rect   = screen_margin.get_inner(screen);
     let outer_rect    = border_rect.crop_x(1).crop_y(1);
-    let inner_rect    = text_margin.get_rect(outer_rect);
+    let inner_rect    = text_margin.get_inner(outer_rect);
     Self {
       margin_style: Style::default(),
       banner_style: Style::default(),
@@ -53,15 +53,15 @@ impl From<Rect> for Frame {
 impl Frame {
   pub fn screen_margin(mut self, screen_margin: Margins) -> Self {
     self.screen_margin = screen_margin;
-    self.border_rect = self.screen_margin.get_rect(self.screen);
+    self.border_rect = self.screen_margin.get_inner(self.screen);
     self.outer_rect  = self.border_rect.crop_x(1).crop_y(1);
-    self.inner_rect  = self.text_margin.get_rect(self.outer_rect);
+    self.inner_rect  = self.text_margin.get_inner(self.outer_rect);
     self
   }
 
   pub fn text_margin(mut self, screen_margin: Margins) -> Self {
     self.text_margin = screen_margin;
-    self.inner_rect  = self.text_margin.get_rect(self.outer_rect);
+    self.inner_rect  = self.text_margin.get_inner(self.outer_rect);
     self
   }
 
@@ -91,15 +91,28 @@ impl Frame {
     self
   }
 
+  pub fn resize_inner(&mut self, inner_rect: Rect) {
+    self.inner_rect  = inner_rect;
+    self.outer_rect  = self.text_margin.get_outer(self.inner_rect);
+    self.border_rect = self.screen_margin.get_outer(
+      self.outer_rect.bump_x(1).bump_y(1)
+    );
+  }
+
   pub fn resize(&mut self, screen: Rect) {
     self.screen      = screen;
-    self.border_rect = self.screen_margin.get_rect(screen);
+    self.border_rect = self.screen_margin.get_inner(screen);
     self.outer_rect  = self.border_rect.crop_x(1).crop_y(1);
-    self.inner_rect  = self.text_margin.get_rect(self.outer_rect);
+    self.inner_rect  = self.text_margin.get_inner(self.outer_rect);
+  }
+
+  pub fn reset(&mut self, inner_rect: Rect) {
+    self.resize(self.screen);
   }
 
   pub fn draw_footer<W: std::io::Write>(&self, text: &str, w: &mut W) 
-  -> std::io::Result<()> {
+    -> std::io::Result<()> 
+  {
     use crossterm::{
       QueueableCommand, 
       cursor::{self, MoveTo}, 
@@ -136,7 +149,8 @@ impl Frame {
   }
 
   pub fn draw_banner<W: std::io::Write>(&self, text: &str, w: &mut W) 
-  -> std::io::Result<()> {
+    -> std::io::Result<()> 
+  {
     use crossterm::{
       QueueableCommand, 
       cursor::MoveTo, 

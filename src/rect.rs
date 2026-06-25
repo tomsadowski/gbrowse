@@ -1,5 +1,6 @@
 // src/rect.rs
 
+
 #[derive(Clone, Copy, Default)]
 pub struct Dim(pub u16, pub u16);
 
@@ -120,6 +121,41 @@ impl Rect {
   pub fn crop_x(&self, delta: u16) -> Self {
     self.crop_east(delta).crop_west(delta)
   }
+
+  pub fn bump_north(&self, delta: u16) -> Self {
+    let mut rect = self.clone();
+    rect.y = rect.y.saturating_sub(delta);
+    rect.h += delta;
+    rect
+  }
+
+  pub fn bump_south(&self, delta: u16) -> Self {
+    let mut rect = self.clone();
+    rect.h += delta;
+    rect
+  }
+
+  pub fn bump_east(&self, delta: u16) -> Self {
+    let mut rect = self.clone();
+    rect.w += delta;
+    rect
+  }
+
+  pub fn bump_west(&self, delta: u16) -> Self {
+    let mut rect = self.clone();
+    rect.x = rect.x.saturating_sub(delta);
+    rect.w += delta;
+    rect
+  }
+
+  pub fn bump_y(&self, delta: u16) -> Self {
+    self.bump_north(delta).bump_south(delta)
+  }
+
+  pub fn bump_x(&self, delta: u16) -> Self {
+    self.bump_east(delta).bump_west(delta)
+  }
+
 
   pub fn row(&self, y: u16) -> Self {
     Self {
