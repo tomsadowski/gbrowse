@@ -170,7 +170,7 @@ impl User {
     }
   }
 
-  pub fn get_frame(&self, screen: Rect) -> Frame {
+  pub fn get_frame(&self, screen: &Rect) -> Frame {
     self.style.get_frame(screen)
   }
 

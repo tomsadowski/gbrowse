@@ -10,6 +10,7 @@ use crate::{
   user_from_str,
   TabManager,
   Request,
+  Layout,
   DlgInput, 
   Dialog,
   Action,
@@ -61,6 +62,7 @@ pub struct App {
   pub user:        User,
   pub frame:       Frame,
   pub tabs:        TabManager,
+  pub layout:      Layout,
   pub focus:       Focus,
   pub request:     Option<Request>,
   pub guide:       String,
@@ -74,8 +76,9 @@ impl App {
   pub fn init(path: &str, w: u16, h: u16) -> Self {
     let user_text  = std::fs::read_to_string(path).unwrap_or_default();
     let user: User = user_from_str(&user_text).unwrap_or_default();
-    let frame      = user.get_frame(Rect::from(Dim(w, h)));
+    let frame      = user.get_frame(&Rect::from(Dim(w, h)));
     let mut app = Self {
+      layout:      Layout::from(&Rect::from(Dim(w, h))),
       guide:       "".into(),
       tabs:        TabManager::from(frame).with_style(user.style.general),
       request:     None,

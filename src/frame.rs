@@ -27,11 +27,11 @@ impl crate::GetRect for Frame {
   fn get_rect(&self) -> Rect { self.inner_rect }
 }
 
-impl From<Rect> for Frame {
-  fn from(screen: Rect) -> Self {
+impl<T: crate::GetRect> From<&T> for Frame {
+  fn from(screen: &T) -> Self {
     let screen_margin = Margins::default();
     let text_margin   = Margins::default();
-    let border_rect   = screen_margin.get_inner(screen);
+    let border_rect   = screen_margin.get_inner(screen.get_rect());
     let outer_rect    = border_rect.shift_x(-1).shift_y(-1);
     let inner_rect    = text_margin.get_inner(outer_rect);
     Self {
@@ -39,7 +39,7 @@ impl From<Rect> for Frame {
       banner_style: Style::default(),
       footer_style: Style::default(),
       border_style: BorderStyle::default(),
-      screen,
+      screen:       screen.get_rect(),
       border_rect,
       outer_rect,
       inner_rect,

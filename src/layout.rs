@@ -41,10 +41,27 @@ pub const MSG: u8 = 2;
 
 pub struct TextBox {
   pub max:    Option<u16>,
-  pub frame:  Option<Frame>,
+  pub frame:  Frame,
   pub rect:   Rect,
   pub screen: ScreenCursor,
   pub text:   Rc<TextCursor>,
+}
+
+impl From<TextCursor> for TextBox {
+  fn from(textcursor: TextCursor) -> Self {
+    Self {
+      max:    None,
+      rect:   Rect::default(),
+      frame:  Frame::default(),
+      screen: ScreenCursor::default(),
+      text:   Rc::new(textcursor),
+    }
+  }
+}
+
+impl TextBox {
+  pub fn size(&mut self) {
+  }
 }
 
 pub enum View {
@@ -67,16 +84,18 @@ impl View {
 }
 
 pub struct Layout {
-  pub rect:  Rect,
   pub max:   Option<u16>,
-  pub frame: Option<Frame>,
+  pub rect:  Rect,
+  pub frame: Frame,
   pub views: HashMap<u8, View>,
 }
 
 impl<T: GetRect> From<&T> for Layout {
   fn from(t: &T) -> Self {
     Self {
-      rect: t.get_rect(),
+      max:   None,
+      rect:  t.get_rect(),
+      frame: Frame::from(t),
       views: HashMap::default(),
     }
   }

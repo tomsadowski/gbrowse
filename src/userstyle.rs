@@ -34,7 +34,7 @@ pub struct UserStyle {
 } 
 
 impl UserStyle {
-  pub fn get_frame(&self, screen: Rect) -> Frame {
+  pub fn get_frame(&self, screen: &Rect) -> Frame {
     Frame::from(screen)
       .screen_margin(self.screen_margin)
       .text_margin(self.text_margin)
