@@ -1,4 +1,4 @@
-// src/textbox.rs
+// src/textcursor.rs
 
 use crate::{
   GetRect, 
@@ -12,7 +12,7 @@ use crate::{
 
 
 #[derive(Default)]
-pub struct TextBox {
+pub struct TextCursor {
   pub width:   u16,
   pub style:   Style,
   pub styles:  Vec<TextStyle>,
@@ -22,7 +22,7 @@ pub struct TextBox {
   pub point:   Point,
 }
 
-impl<T: crate::GetRect> From<&T> for TextBox {
+impl<T: crate::GetRect> From<&T> for TextCursor {
   fn from(t: &T) -> Self {
     Self {
       style:   Style::default(),
@@ -36,11 +36,11 @@ impl<T: crate::GetRect> From<&T> for TextBox {
   }
 }
 
-impl crate::GetHeight for TextBox {
+impl crate::GetHeight for TextCursor {
   fn get_height(&self) -> u16 { self.matrix.get_height() }
 }
 
-impl TextBox {
+impl TextCursor {
   pub fn get_current_index(&self) -> usize {
     self.indexes.get(*self.point.y)
       .map(|u| u.clone())

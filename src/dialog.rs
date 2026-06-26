@@ -1,21 +1,21 @@
 // src/dialog.rs
 
 use crate::{
-  TextBox, 
+  TextCursor, 
   Style, 
   GetRect,
 };
 
 
 pub enum DlgInput {
-  Ack   (TextBox),
-  Ask   (TextBox),
-  Select(TextBox),
-  Edit  (TextBox),
+  Ack   (TextCursor),
+  Ask   (TextCursor),
+  Select(TextCursor),
+  Edit  (TextCursor),
 }
 
 pub struct Dialog {
-  pub prompt: TextBox,
+  pub prompt: TextCursor,
   pub input:  DlgInput,
 } 
 
@@ -24,7 +24,7 @@ impl Dialog {
   where V: GetRect,
         S: Into<Style> + Copy
   {
-    let prompt_box = TextBox::from(
+    let prompt_box = TextCursor::from(
         view.get_rect()
       )
       .text(
@@ -32,7 +32,7 @@ impl Dialog {
         vec![]
       )
       .style(style);
-    let response_box = TextBox::from(
+    let response_box = TextCursor::from(
         view.get_rect()
       )
       .text(
@@ -50,7 +50,7 @@ impl Dialog {
   where V: GetRect,
         S: Into<Style> + Copy
   {
-    let prompt_box = TextBox::from(
+    let prompt_box = TextCursor::from(
         view.get_rect()
       )
       .text(
@@ -58,7 +58,7 @@ impl Dialog {
         vec![]
       )
       .style(style);
-    let response_box = TextBox::from(
+    let response_box = TextCursor::from(
         view.get_rect()
       )
       .text(
@@ -77,7 +77,7 @@ impl Dialog {
   where V: GetRect,
         S: Into<Style> + Copy
   {
-    let prompt_box = TextBox::from(
+    let prompt_box = TextCursor::from(
         view.get_rect()
       )
       .text(
@@ -85,7 +85,7 @@ impl Dialog {
         vec![]
       )
       .style(style);
-    let response_box = TextBox::from(
+    let response_box = TextCursor::from(
         view.get_rect()
       )
       .text(
@@ -103,7 +103,7 @@ impl Dialog {
   where V: GetRect,
         S: Into<Style> + Copy
   {
-    let prompt_box = TextBox::from(
+    let prompt_box = TextCursor::from(
         view.get_rect()
       )
       .text(
@@ -111,7 +111,7 @@ impl Dialog {
         vec![]
       )
       .style(style);
-    let response_box = TextBox::from(
+    let response_box = TextCursor::from(
         view.get_rect()
       )
       .text(

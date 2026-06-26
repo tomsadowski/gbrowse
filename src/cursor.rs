@@ -229,8 +229,8 @@ impl<T: GetRect> From<&T> for ScreenCursor {
   fn from(t: &T) -> Self {
     let rect = t.get_rect();
     Self {
-      x: LineCursorView::from_size(rect.w),
-      y: LineCursorView::from_size(rect.h),
+      x: LineCursorView::from_size(rect.width()),
+      y: LineCursorView::from_size(rect.height()),
       pos: rect.pos(),
     }
   }
@@ -257,8 +257,8 @@ impl ScreenCursor {
   {
     let rect = view.get_rect();
     self.pos = rect.pos();
-    self.y.resize(*point.y, rect.h);
-    self.x.resize(*point.x, rect.w);
+    self.y.resize(*point.y, rect.height());
+    self.x.resize(*point.x, rect.width());
   }
 
   pub fn update(&mut self, point: &Point) -> bool {

@@ -5,7 +5,7 @@ use crate::{
   GetRect,
   Frame,
   ScreenCursor,
-  TextBox,
+  TextCursor,
 };
 use std::{
   collections::HashMap,
@@ -30,27 +30,57 @@ pub enum Max {
   Fill,
 }
 
+
 pub enum View {
-  Layout         (Rc<Layout>),
-  FramedLayout   (Rc<Layout>, Frame),
-  TextBox        (ScreenCursor, Rc<TextBox>),
-  FramedTextBox  (ScreenCursor, Rc<TextBox>, Frame),
+  Layout(Rc<Layout>),
+  FramedLayout(Rc<Layout>, Frame),
+  TextCursor(ScreenCursor, Rc<TextCursor>),
+  FramedTextCursor(ScreenCursor, Rc<TextCursor>, Frame),
+}
+
+impl View {
+  pub fn layout() {
+  }
+
+  pub fn framed_layout() {
+  }
+
+  pub fn text_cursor() {
+  }
+
+  pub fn framed_text_cursor() {
+  }
 }
 
 pub struct ViewParams {
-  max:  Max,
+  max: Max,
   view: View,
 }
 
+impl ViewParams {
+  pub fn layout() {
+  }
+
+  pub fn framed_layout() {
+  }
+
+  pub fn text_cursor() {
+  }
+
+  pub fn framed_text_cursor() {
+  }
+}
+
+
 pub struct Layout {
-  pub rect:  Rect,
+  pub rect: Rect,
   pub views: HashMap<u8, ViewParams>,
 }
 
 impl<T: GetRect> From<&T> for Layout {
   fn from(t: &T) -> Self {
     Self {
-      rect:  t.get_rect(),
+      rect: t.get_rect(),
       views: HashMap::default(),
     }
   }
@@ -58,9 +88,9 @@ impl<T: GetRect> From<&T> for Layout {
 
 impl Layout {
   // add
-  pub fn add(&mut self, handle: &str, view: View) {
+  pub fn add(&mut self, handle: u8, params: ViewParams) {
   }
   // remove
-  pub fn remove(&mut self, handle: &str) {
+  pub fn remove(&mut self, handle: u8) {
   }
 }

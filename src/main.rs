@@ -14,7 +14,7 @@ mod tab;
 mod draw;
 mod rect;
 mod frame;
-mod textbox;
+mod textcursor;
 mod dialog;
 mod network;
 mod gemini;
@@ -26,7 +26,7 @@ mod util;
 pub use crate::userkeys::UserKeys;
 pub use crate::userstyle::UserStyle;
 pub use crate::frame::Frame;
-pub use crate::textbox::TextBox;
+pub use crate::textcursor::TextCursor;
 pub use crate::network::Request;
 pub use crate::action::Action;
 pub use crate::layout::{
@@ -75,15 +75,11 @@ pub use crate::gemini::{
 
 
 fn main() -> std::io::Result<()> {
-  use crossterm::{
-    QueueableCommand, terminal, event, cursor,
-  };
-  use std::{
-    io::Write, time::Duration, env,
-  };
+  use crossterm::{QueueableCommand, terminal, event, cursor};
+  use std::io::Write;
   // initialize app
   let mut app = {
-    let args = env::args().collect::<Vec<String>>();
+    let args = std::env::args().collect::<Vec<String>>();
     let init = match args.get(1) {
       None       => user::INIT_FILE.into(),
       Some(init) => user::get_init_file(init),
@@ -105,7 +101,7 @@ fn main() -> std::io::Result<()> {
     if app.join_request() {
       app.draw(&mut stdout)?;
     } 
-    if event::poll(Duration::from_millis(16))? {
+    if event::poll(std::time::Duration::from_millis(16))? {
       if let Some(message) = app.get_update(event::read()?) {
         app.update(&message);
         app.draw(&mut stdout)?;

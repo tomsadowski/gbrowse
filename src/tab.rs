@@ -6,7 +6,7 @@ use crate::{
   Style, 
   Rect, 
   GetRect, 
-  TextBox, 
+  TextCursor, 
   GemText,
   GemTag,
 };
@@ -86,7 +86,7 @@ impl TabManager {
   }
 
   pub fn use_textbox_mut<F, T>(&mut self, func: F) -> Option<T>
-  where F: Fn(&mut TextBox) -> T
+  where F: Fn(&mut TextCursor) -> T
   {
     self.tabs
       .get_mut(*self.cursor)
@@ -139,14 +139,14 @@ impl TabManager {
 }
 
 pub enum Tab {
-  Text  (String, TextBox),
+  Text  (String, TextCursor),
   Gem   (UrlTab<GemTag>),
   Gopher(UrlTab<String>),
 }
 
 impl Default for Tab {
   fn default() -> Self {
-    Self::Text("".into(), TextBox::default())
+    Self::Text("".into(), TextCursor::default())
   }
 }
 
@@ -175,7 +175,7 @@ impl Tab {
     if let Tab::Gopher(tab) = self {Some(tab)} else {None}
   }
 
-  pub fn get_text_tab(&self) ->  Option<(&str, &TextBox)> {
+  pub fn get_text_tab(&self) ->  Option<(&str, &TextCursor)> {
     if let Tab::Text(heading, textbox) = self {
       Some((heading, textbox))
     } else {None}
@@ -187,7 +187,7 @@ impl Tab {
       .and_then(|gem_tab| gem_tab.get_current_tag())
   }
 
-  pub fn get_textbox(&self) -> &TextBox {
+  pub fn get_textbox(&self) -> &TextCursor {
     match self {
       Tab::Text(_, textbox) |
       Tab::Gem(   UrlTab {textbox, ..}) | 
@@ -195,7 +195,7 @@ impl Tab {
     }
   }
 
-  pub fn get_textbox_mut(&mut self) -> &mut TextBox {
+  pub fn get_textbox_mut(&mut self) -> &mut TextCursor {
     match self {
       Tab::Text(_, textbox) |
       Tab::Gem(   UrlTab {textbox, ..}) | 
@@ -207,7 +207,7 @@ impl Tab {
 pub struct UrlTab<T> {
   pub url:     url::Url,
   pub tags:    Vec<T>,
-  pub textbox: TextBox,
+  pub textbox: TextCursor,
 } 
 
 impl<T> UrlTab<T> {
@@ -219,7 +219,7 @@ impl<T> UrlTab<T> {
     styles: Vec<TextStyle>,
   ) -> Self {
     Self {
-      textbox: TextBox::from(view.get_rect()).text(text, styles),
+      textbox: TextCursor::from(view.get_rect()).text(text, styles),
       url:     url.clone(),
       tags,
     }

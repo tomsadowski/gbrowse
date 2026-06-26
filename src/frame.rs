@@ -28,7 +28,7 @@ impl crate::GetRect for Frame {
 }
 
 impl crate::GetHeight for Frame {
-  fn get_height(&self) -> u16 { self.border_rect.h }
+  fn get_height(&self) -> u16 { self.border_rect.height() }
 }
 
 
@@ -37,7 +37,7 @@ impl From<Rect> for Frame {
     let screen_margin = Margins::default();
     let text_margin   = Margins::default();
     let border_rect   = screen_margin.get_inner(screen);
-    let outer_rect    = border_rect.crop_x(1).crop_y(1);
+    let outer_rect    = border_rect.shift_x(-1).shift_y(-1);
     let inner_rect    = text_margin.get_inner(outer_rect);
     Self {
       margin_style: Style::default(),
@@ -58,7 +58,7 @@ impl Frame {
   pub fn screen_margin(mut self, screen_margin: Margins) -> Self {
     self.screen_margin = screen_margin;
     self.border_rect = self.screen_margin.get_inner(self.screen);
-    self.outer_rect  = self.border_rect.crop_x(1).crop_y(1);
+    self.outer_rect  = self.border_rect.shift_x(-1).shift_y(-1);
     self.inner_rect  = self.text_margin.get_inner(self.outer_rect);
     self
   }
@@ -99,14 +99,14 @@ impl Frame {
     self.inner_rect  = inner_rect;
     self.outer_rect  = self.text_margin.get_outer(self.inner_rect);
     self.border_rect = self.screen_margin.get_outer(
-      self.outer_rect.bump_x(1).bump_y(1)
+      self.outer_rect.shift_x(1).shift_y(1)
     );
   }
 
   pub fn resize(&mut self, screen: Rect) {
     self.screen      = screen;
     self.border_rect = self.screen_margin.get_inner(screen);
-    self.outer_rect  = self.border_rect.crop_x(1).crop_y(1);
+    self.outer_rect  = self.border_rect.shift_x(-1).shift_y(-1);
     self.inner_rect  = self.text_margin.get_inner(self.outer_rect);
   }
 
@@ -132,7 +132,11 @@ impl Frame {
       .queue(Print(' '))?
       .queue(&self.footer_style)?;
     x -= 2;
-    for c in text.chars().rev().take(self.inner_rect.crop_x(2).w.into()) {
+    for c in text
+      .chars()
+      .rev()
+      .take(self.inner_rect.shift_x(-2).width().into()) 
+    {
       w.queue(cursor::MoveLeft(2))?.queue(Print(c))?;
       x -= 1;
     }
@@ -143,7 +147,7 @@ impl Frame {
       .queue(cursor::MoveLeft(2))?
       .queue(Print(self.border_style.open))?;
     x -= 2;
-    for _ in self.inner_rect.x..x {
+    for _ in self.inner_rect.x()..x {
       w
         .queue(cursor::MoveLeft(2))?
         .queue(Print(self.border_style.x))?;
@@ -160,8 +164,8 @@ impl Frame {
       cursor::MoveTo, 
       style::{Print, SetAttribute, Attribute},
     };
-    let mut x = self.inner_rect.x;
-    let     y = self.border_rect.y;
+    let mut x = self.inner_rect.x();
+    let     y = self.border_rect.y();
     w
       .queue(MoveTo(x, y))?
       .queue(&self.border_style.style)?
@@ -169,7 +173,10 @@ impl Frame {
       .queue(Print(' '))?
       .queue(&self.banner_style)?;
     x += 2;
-    for c in text.chars().take(self.inner_rect.crop_x(2).w.into()) {
+    for c in text
+      .chars()
+      .take(self.inner_rect.shift_x(-2).width().into()) 
+    {
       w.queue(Print(c))?;
       x += 1;
     }
@@ -203,12 +210,12 @@ impl Frame {
       .queue(MoveTo(bx, by))?.queue(Print(self.border_style.b))?
       .queue(MoveTo(cx, cy))?.queue(Print(self.border_style.c))?
       .queue(MoveTo(dx, dy))?.queue(Print(self.border_style.d))?;
-    for x in self.border_rect.crop_x(1).x_range() {
+    for x in self.border_rect.shift_x(-1).x_range() {
       w
         .queue(MoveTo(x, ay))?.queue(Print(self.border_style.x))?
         .queue(MoveTo(x, cy))?.queue(Print(self.border_style.x))?;
     }
-    for y in self.border_rect.crop_y(1).y_range() {
+    for y in self.border_rect.shift_y(-1).y_range() {
       w
         .queue(MoveTo(ax, y))?.queue(Print(self.border_style.y))?
         .queue(MoveTo(bx, y))?.queue(Print(self.border_style.y))?;
@@ -218,7 +225,7 @@ impl Frame {
       .queue(SetAttribute(Attribute::Reset))?
       .queue(&self.margin_style)?;
     for x in self.outer_rect.x_range() {
-      for y in self.outer_rect.y..self.inner_rect.y {
+      for y in self.outer_rect.y()..self.inner_rect.y() {
         w.queue(MoveTo(x, y))?.queue(Print(' '))?;
       }
       for y in self.inner_rect.y_end()..self.outer_rect.y_end() {
@@ -226,7 +233,7 @@ impl Frame {
       }
     }
     for y in self.inner_rect.y_range() {
-      for x in self.outer_rect.x..self.inner_rect.x {
+      for x in self.outer_rect.x()..self.inner_rect.x() {
         w.queue(MoveTo(x, y))?.queue(Print(' '))?;
       }
       for x in self.inner_rect.x_end()..self.outer_rect.x_end() {

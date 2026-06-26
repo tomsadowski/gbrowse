@@ -5,7 +5,9 @@
 pub struct Dim(pub u16, pub u16);
 
 impl From<(u16, u16)> for Dim {
-  fn from((w, h): (u16, u16)) -> Self { Self(w.into(), h.into()) }
+  fn from((w, h): (u16, u16)) -> Self { 
+    Self(w.into(), h.into()) 
+  }
 }
 
 impl Dim {
@@ -17,7 +19,9 @@ impl Dim {
 pub struct Pos(pub u16, pub u16);
 
 impl From<(u16, u16)> for Pos {
-  fn from((x, y): (u16, u16)) -> Self { Self(x, y) }
+  fn from((x, y): (u16, u16)) -> Self { 
+    Self(x, y) 
+  }
 }
 
 impl Pos {
@@ -27,10 +31,10 @@ impl Pos {
 
 #[derive(Copy, Clone, Default)]
 pub struct Rect {
-  pub x: u16,
-  pub y: u16,
-  pub w: u16,
-  pub h: u16,
+  x: u16,
+  y: u16,
+  w: u16,
+  h: u16,
 }
 
 pub trait GetRect {
@@ -47,15 +51,13 @@ impl From<Dim> for Rect {
   }
 }
 
+impl From<Pos> for Rect {
+  fn from(p: Pos) -> Self {
+    Self { x: p.x(), y: p.y(), w: 0, h: 0 }
+  }
+}
+
 impl Rect {
-  pub fn dim(&self) -> Dim {
-    (self.w, self.h).into()
-  }
-
-  pub fn pos(&self) -> Pos {
-    (self.x, self.y).into()
-  }
-
   pub fn with_dim(mut self, dim: Dim) -> Self {
     self.set_dim(dim);
     self
@@ -80,82 +82,39 @@ impl Rect {
     self.y = above.y + self.h
   }
 
-  pub fn crop_north(&self, delta: u16) -> Self {
+  pub fn shift_north(&self, idelta: i16) -> Self {
     let mut rect = self.clone();
-    if delta * 2 < rect.h {
-      rect.y += delta;
-      rect.h -= delta;
-    }
+    rect.y = (rect.y as i16).saturating_add(idelta) as u16;
+    rect.h = (rect.h as i16).saturating_sub(idelta) as u16;
     rect
   }
 
-  pub fn crop_south(&self, delta: u16) -> Self {
+  pub fn shift_south(&self, idelta: i16) -> Self {
     let mut rect = self.clone();
-    if delta < rect.h {
-      rect.h -= delta;
-    }
+    rect.h = (rect.h as i16).saturating_sub(idelta) as u16;
     rect
   }
 
-  pub fn crop_east(&self, delta: u16) -> Self {
+  pub fn shift_east(&self, idelta: i16) -> Self {
     let mut rect = self.clone();
-    if delta < rect.w {
-      rect.w -= delta
-    }
+    rect.w = (rect.w as i16).saturating_sub(idelta) as u16;
     rect
   }
 
-  pub fn crop_west(&self, delta: u16) -> Self {
+  pub fn shift_west(&self, idelta: i16) -> Self {
     let mut rect = self.clone();
-    if delta * 2 < rect.w {
-      rect.x += delta;
-      rect.w -= delta;
-    }
+    rect.x = (rect.x as i16).saturating_add(idelta) as u16;
+    rect.w = (rect.w as i16).saturating_sub(idelta) as u16;
     rect
   }
 
-  pub fn crop_y(&self, delta: u16) -> Self {
-    self.crop_north(delta).crop_south(delta)
+  pub fn shift_y(&self, idelta: i16) -> Self {
+    self.shift_north(idelta).shift_south(idelta)
   }
 
-  pub fn crop_x(&self, delta: u16) -> Self {
-    self.crop_east(delta).crop_west(delta)
+  pub fn shift_x(&self, idelta: i16) -> Self {
+    self.shift_east(idelta).shift_west(idelta)
   }
-
-  pub fn bump_north(&self, delta: u16) -> Self {
-    let mut rect = self.clone();
-    rect.y = rect.y.saturating_sub(delta);
-    rect.h += delta;
-    rect
-  }
-
-  pub fn bump_south(&self, delta: u16) -> Self {
-    let mut rect = self.clone();
-    rect.h += delta;
-    rect
-  }
-
-  pub fn bump_east(&self, delta: u16) -> Self {
-    let mut rect = self.clone();
-    rect.w += delta;
-    rect
-  }
-
-  pub fn bump_west(&self, delta: u16) -> Self {
-    let mut rect = self.clone();
-    rect.x = rect.x.saturating_sub(delta);
-    rect.w += delta;
-    rect
-  }
-
-  pub fn bump_y(&self, delta: u16) -> Self {
-    self.bump_north(delta).bump_south(delta)
-  }
-
-  pub fn bump_x(&self, delta: u16) -> Self {
-    self.bump_east(delta).bump_west(delta)
-  }
-
 
   pub fn row(&self, y: u16) -> Self {
     Self {
@@ -180,24 +139,32 @@ impl Rect {
     rect
   }
 
-  pub fn x_end(&self) -> u16 {self.x + self.w}
-
-  pub fn y_end(&self) -> u16 {self.y + self.h}
+  pub fn x(&self)      -> u16 { self.pos().x() }
+  pub fn y(&self)      -> u16 { self.pos().y() }
+  pub fn width(&self)  -> u16 { self.dim().w() }
+  pub fn height(&self) -> u16 { self.dim().h() }
+  pub fn dim(&self)    -> Dim { (self.w, self.h).into() }
+  pub fn pos(&self)    -> Pos { (self.x, self.y).into() }
+  pub fn x_end(&self)  -> u16 { self.x + self.w }
+  pub fn y_end(&self)  -> u16 { self.y + self.h }
 
   pub fn a(&self) -> Pos {
     (self.x, self.y).into()
   }
 
   pub fn b(&self) -> Pos {
-    (self.x_end().saturating_sub(1), self.y).into()
+    (self.x_end().saturating_sub(1), 
+     self.y).into()
   }
 
   pub fn c(&self) -> Pos {
-    (self.x, self.y_end().saturating_sub(1)).into()
+    (self.x, 
+     self.y_end().saturating_sub(1)).into()
   }
 
   pub fn d(&self) -> Pos {
-    (self.x_end().saturating_sub(1), self.y_end().saturating_sub(1)).into()
+    (self.x_end().saturating_sub(1), 
+     self.y_end().saturating_sub(1)).into()
   }
 
   pub fn x_range(&self) -> std::ops::Range<u16> {

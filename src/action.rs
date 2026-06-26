@@ -34,10 +34,10 @@ pub enum Action {
 }
 
 impl Action {
-  pub fn update(&self, textbox: &mut crate::TextBox) {
+  pub fn update(&self, textbox: &mut crate::TextCursor) {
     match self {
-      Action::PageDown  => {textbox.move_down(usize::from(textbox.view.h));}
-      Action::PageUp    => {textbox.move_up(usize::from(textbox.view.h));}
+      Action::PageDown  => {textbox.move_down(15);}
+      Action::PageUp    => {textbox.move_up(15);}
       Action::Bottom    => {textbox.move_down(textbox.matrix.len());}
       Action::Top       => {textbox.move_up(textbox.matrix.len());}
       Action::MoveDown  => {textbox.move_down(1);}
@@ -48,10 +48,10 @@ impl Action {
     }
   }
 
-  pub fn update_edit(&self, textbox: &mut crate::TextBox) {
+  pub fn update_edit(&self, textbox: &mut crate::TextCursor) {
     match self {
-      Action::PageDown  => {textbox.move_left(usize::from(textbox.view.w));}
-      Action::PageUp    => {textbox.move_right(usize::from(textbox.view.w));}
+      Action::PageDown  => {textbox.move_left(15);}
+      Action::PageUp    => {textbox.move_right(15);}
       Action::Backspace => {textbox.backspace();}
       Action::Delete    => {textbox.delete();}
       Action::Insert(c) => {textbox.insert(*c);}
