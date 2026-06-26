@@ -168,19 +168,19 @@ impl Margins {
   pub fn get_outer<V: GetRect>(&self, view: V) -> Rect {
     view
       .get_rect()
-      .bump_north(self.north)
-      .bump_south(self.south)
-      .bump_east(self.east)
-      .bump_west(self.west)
+      .shift_north(self.north as i16)
+      .shift_south(self.south as i16)
+      .shift_east(self.east as i16)
+      .shift_west(self.west as i16)
   }
 
   pub fn get_inner<V: GetRect>(&self, view: V) -> Rect {
     view
       .get_rect()
-      .crop_north(self.north)
-      .crop_south(self.south)
-      .crop_east(self.east)
-      .crop_west(self.west)
+      .shift_north(self.north as i16 * -1)
+      .shift_south(self.south as i16 * -1)
+      .shift_east(self.east as i16 * -1)
+      .shift_west(self.west as i16 * -1)
   }
 }
 

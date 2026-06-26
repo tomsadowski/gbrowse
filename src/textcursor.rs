@@ -36,10 +36,6 @@ impl<T: crate::GetRect> From<&T> for TextCursor {
   }
 }
 
-impl crate::GetHeight for TextCursor {
-  fn get_height(&self) -> u16 { self.matrix.get_height() }
-}
-
 impl TextCursor {
   pub fn get_current_index(&self) -> usize {
     self.indexes.get(*self.point.y)
@@ -182,10 +178,10 @@ impl TextCursor {
       w
         .queue(style::SetAttribute(style::Attribute::Reset))?
         .queue(&self.style)?;
-      for _ in x..screen.x_end() {
+      for _ in x..screen.get_rect().x_end() {
         w.queue(style::Print(' '))?;
       }
-      x = self.view.x; 
+      x = screen.pos().x(); 
       y += 1; 
       w.queue(cursor::MoveTo(x, y))?;
     }

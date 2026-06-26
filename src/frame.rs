@@ -27,11 +27,6 @@ impl crate::GetRect for Frame {
   fn get_rect(&self) -> Rect { self.inner_rect }
 }
 
-impl crate::GetHeight for Frame {
-  fn get_height(&self) -> u16 { self.border_rect.height() }
-}
-
-
 impl From<Rect> for Frame {
   fn from(screen: Rect) -> Self {
     let screen_margin = Margins::default();

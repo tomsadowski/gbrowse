@@ -13,7 +13,9 @@ use std::{
 };
 
 
-pub trait GetHeight { fn get_height(&self) -> u16; }
+pub trait GetHeight { 
+  fn get_height(&self) -> u16; 
+}
 
 impl<T> GetHeight for Vec<T> {
   fn get_height(&self) -> u16 { 
@@ -21,21 +23,33 @@ impl<T> GetHeight for Vec<T> {
   }
 }
 
+impl crate::GetHeight for TextCursor {
+  fn get_height(&self) -> u16 {
+    self.matrix.get_height()
+  }
+}
+
+impl crate::GetHeight for Frame {
+  fn get_height(&self) -> u16 {
+    self.border_rect.height()
+  }
+}
+
 pub const TAB: u8 = 0;
 pub const DLG: u8 = 1;
 pub const MSG: u8 = 2;
 
-pub enum Max {
-  Size(u16),
-  Fill,
+pub struct TextBox {
+  pub max:    Option<u16>,
+  pub frame:  Option<Frame>,
+  pub rect:   Rect,
+  pub screen: ScreenCursor,
+  pub text:   Rc<TextCursor>,
 }
-
 
 pub enum View {
   Layout(Rc<Layout>),
-  FramedLayout(Rc<Layout>, Frame),
-  TextCursor(ScreenCursor, Rc<TextCursor>),
-  FramedTextCursor(ScreenCursor, Rc<TextCursor>, Frame),
+  TextBox(TextBox),
 }
 
 impl View {
@@ -52,29 +66,11 @@ impl View {
   }
 }
 
-pub struct ViewParams {
-  max: Max,
-  view: View,
-}
-
-impl ViewParams {
-  pub fn layout() {
-  }
-
-  pub fn framed_layout() {
-  }
-
-  pub fn text_cursor() {
-  }
-
-  pub fn framed_text_cursor() {
-  }
-}
-
-
 pub struct Layout {
-  pub rect: Rect,
-  pub views: HashMap<u8, ViewParams>,
+  pub rect:  Rect,
+  pub max:   Option<u16>,
+  pub frame: Option<Frame>,
+  pub views: HashMap<u8, View>,
 }
 
 impl<T: GetRect> From<&T> for Layout {
@@ -88,7 +84,7 @@ impl<T: GetRect> From<&T> for Layout {
 
 impl Layout {
   // add
-  pub fn add(&mut self, handle: u8, params: ViewParams) {
+  pub fn add(&mut self, handle: u8, view: View) {
   }
   // remove
   pub fn remove(&mut self, handle: u8) {
