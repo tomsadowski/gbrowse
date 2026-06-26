@@ -7,7 +7,10 @@ use crate::{
   ScreenCursor,
   TextBox,
 };
-use std::collections::HashMap;
+use std::{
+  collections::HashMap,
+  rc::Rc,
+};
 
 
 pub trait GetHeight { fn get_height(&self) -> u16; }
@@ -28,10 +31,10 @@ pub enum Max {
 }
 
 pub enum View {
-  Cursor        (ScreenCursor),
-  Rect          (Rect),
-  FramedCursor  (ScreenCursor, Frame),
-  FramedRect    (Rect,         Frame),
+  Layout         (Rc<Layout>),
+  FramedLayout   (Rc<Layout>, Frame),
+  TextBox        (ScreenCursor, Rc<TextBox>),
+  FramedTextBox  (ScreenCursor, Rc<TextBox>, Frame),
 }
 
 pub struct ViewParams {
