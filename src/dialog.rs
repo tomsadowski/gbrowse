@@ -3,7 +3,7 @@
 use crate::{
   TextCursor, 
   Style, 
-  GetRect,
+  Rect,
 };
 
 
@@ -20,21 +20,16 @@ pub struct Dialog {
 } 
 
 impl Dialog {
-  pub fn ack<V, S>(view: V, style: S, prompt: &str, input: &str) -> Self
-  where V: GetRect,
-        S: Into<Style> + Copy
+  pub fn ack<S>(rect: &Rect, style: S, prompt: &str, input: &str) -> Self
+  where S: Into<Style> + Copy
   {
-    let prompt_box = TextCursor::from(
-        view.get_rect()
-      )
+    let prompt_box = TextCursor::from(rect)
       .text(
         vec![prompt.into()], 
         vec![]
       )
       .style(style);
-    let response_box = TextCursor::from(
-        view.get_rect()
-      )
+    let response_box = TextCursor::from(rect)
       .text(
         vec![input.into()], 
         vec![]
@@ -46,12 +41,11 @@ impl Dialog {
     }
   }
 
-  pub fn ask<V, S>(view: V, style: S, prompt: &str, input: &str) -> Self 
-  where V: GetRect,
-        S: Into<Style> + Copy
+  pub fn ask<S>(rect: &Rect, style: S, prompt: &str, input: &str) -> Self 
+  where S: Into<Style> + Copy
   {
     let prompt_box = TextCursor::from(
-        view.get_rect()
+        rect
       )
       .text(
         vec![prompt.into()], 
@@ -59,7 +53,7 @@ impl Dialog {
       )
       .style(style);
     let response_box = TextCursor::from(
-        view.get_rect()
+        rect
       )
       .text(
         vec![input.into()], 
@@ -72,13 +66,12 @@ impl Dialog {
     }
   }
 
-  pub fn select<V, S>(view: V, style: S, prompt: &str, input: Vec<String>) 
+  pub fn select<S>(rect: &Rect, style: S, prompt: &str, input: Vec<String>) 
     -> Self 
-  where V: GetRect,
-        S: Into<Style> + Copy
+  where S: Into<Style> + Copy
   {
     let prompt_box = TextCursor::from(
-        view.get_rect()
+        rect
       )
       .text(
         vec![prompt.into()], 
@@ -86,7 +79,7 @@ impl Dialog {
       )
       .style(style);
     let response_box = TextCursor::from(
-        view.get_rect()
+        rect
       )
       .text(
         input, 
@@ -99,12 +92,11 @@ impl Dialog {
     }
   }
 
-  pub fn edit<V, S>(view: V, style: S, prompt: &str, text: &str) -> Self 
-  where V: GetRect,
-        S: Into<Style> + Copy
+  pub fn edit<S>(rect: &Rect, style: S, prompt: &str, text: &str) -> Self 
+  where S: Into<Style> + Copy
   {
     let prompt_box = TextCursor::from(
-        view.get_rect()
+        rect
       )
       .text(
         vec![prompt.into()], 
@@ -112,7 +104,7 @@ impl Dialog {
       )
       .style(style);
     let response_box = TextCursor::from(
-        view.get_rect()
+        rect
       )
       .text(
         vec![text.into()], 
@@ -126,8 +118,8 @@ impl Dialog {
     }
   }
 
-  pub fn resize<V: GetRect>(&mut self, view: V) {
-    self.prompt.resize(view.get_rect());
+  pub fn resize(&mut self, rect: &Rect) {
+    self.prompt.resize(&rect);
     match &mut self.input {
       DlgInput::Ack(r) | 
       DlgInput::Ask(r) |
@@ -135,7 +127,7 @@ impl Dialog {
         r.resize(self.prompt.used_rect().bottom_row());
       }
       DlgInput::Select(r) => {
-        r.resize(view.get_rect().crop_north(self.prompt.used_rect().h));
+        r.resize(rect.get_rect().crop_north(self.prompt.used_rect().h));
       }
     }
   }

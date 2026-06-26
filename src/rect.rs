@@ -37,14 +37,6 @@ pub struct Rect {
   h: u16,
 }
 
-pub trait GetRect {
-  fn get_rect(&self) -> Rect;
-}
-
-impl GetRect for Rect {
-  fn get_rect(&self) -> Rect {self.clone()}
-}
-
 impl From<Dim> for Rect {
   fn from(d: Dim) -> Self {
     Self { x: 0, y: 0, w: d.w(), h: d.h() }
@@ -76,10 +68,6 @@ impl Rect {
   pub fn set_pos(&mut self, pos: Pos) {
     self.x = pos.x(); 
     self.y = pos.y();
-  }
-
-  pub fn append_below(&mut self, above: &Rect) {
-    self.y = above.y + self.h
   }
 
   pub fn shift_north(&self, idelta: i16) -> Self {

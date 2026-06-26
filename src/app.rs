@@ -19,19 +19,9 @@ use crate::{
   Status, 
   StatusText,
   Frame,
+  constants::*,
 };
 
-
-pub const MANUAL:        &str = "User manual";
-pub const CHANGE_KEYS:   &str = "Change keys";
-pub const CHANGE_STYLE:  &str = "Change style";
-pub const VIEW_SETTINGS: &str = "View settings";
-pub const MENU: [&str; 4] = [
-  MANUAL, 
-  CHANGE_KEYS, 
-  CHANGE_STYLE,
-  VIEW_SETTINGS, 
-];
 
 #[derive(Debug)]
 pub enum Task {
@@ -60,7 +50,6 @@ pub enum Focus {
 
 pub struct App {
   pub user:        User,
-  pub frame:       Frame,
   pub tabs:        TabManager,
   pub layout:      Layout,
   pub focus:       Focus,
@@ -87,7 +76,6 @@ impl App {
       tab_changed: true,
       clear:       true,
       quit:        false,
-      frame,
       user,
     };
     match url::Url::parse(&app.user.init_url) {
@@ -485,10 +473,14 @@ impl App {
         }
       }
       (Msg::Action(Action::CycleLeft), Focus::Tab) => {
-        self.tab_changed = {self.tabs.cursor.move_wrapped(&self.tabs.tabs, -1); true};
+        self.tab_changed = {
+          self.tabs.cursor.move_wrapped(&self.tabs.tabs, -1); true
+        };
       }
       (Msg::Action(Action::CycleRight), Focus::Tab) => {
-        self.tab_changed = {self.tabs.cursor.move_wrapped(&self.tabs.tabs, 1); true};
+        self.tab_changed = {
+          self.tabs.cursor.move_wrapped(&self.tabs.tabs, 1); true
+        };
       }
       (Msg::Action(Action::LoadUrl), Focus::Tab) => {
         self.focus_select_dialog(

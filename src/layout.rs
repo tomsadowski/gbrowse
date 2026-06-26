@@ -2,7 +2,6 @@
 
 use crate::{
   Rect, 
-  GetRect,
   Frame,
   ScreenCursor,
   TextCursor,
@@ -23,26 +22,22 @@ impl<T> GetHeight for Vec<T> {
   }
 }
 
-impl crate::GetHeight for TextCursor {
+impl GetHeight for TextCursor {
   fn get_height(&self) -> u16 {
     self.matrix.get_height()
   }
 }
 
-impl crate::GetHeight for Frame {
+impl GetHeight for Frame {
   fn get_height(&self) -> u16 {
     self.border_rect.height()
   }
 }
 
-pub const TAB: u8 = 0;
-pub const DLG: u8 = 1;
-pub const MSG: u8 = 2;
-
 pub struct TextBox {
   pub max:    Option<u16>,
-  pub frame:  Frame,
   pub rect:   Rect,
+  pub frame:  Frame,
   pub screen: ScreenCursor,
   pub text:   Rc<TextCursor>,
 }
@@ -61,26 +56,14 @@ impl From<TextCursor> for TextBox {
 
 impl TextBox {
   pub fn size(&mut self) {
+    self.frame.resize(self.rect);
+
   }
 }
 
 pub enum View {
   Layout(Rc<Layout>),
   TextBox(TextBox),
-}
-
-impl View {
-  pub fn layout() {
-  }
-
-  pub fn framed_layout() {
-  }
-
-  pub fn text_cursor() {
-  }
-
-  pub fn framed_text_cursor() {
-  }
 }
 
 pub struct Layout {
@@ -90,12 +73,12 @@ pub struct Layout {
   pub views: HashMap<u8, View>,
 }
 
-impl<T: GetRect> From<&T> for Layout {
-  fn from(t: &T) -> Self {
+impl From<&Rect> for Layout {
+  fn from(rect: &Rect) -> Self {
     Self {
       max:   None,
-      rect:  t.get_rect(),
-      frame: Frame::from(t),
+      rect:  rect.clone(),
+      frame: Frame::from(rect),
       views: HashMap::default(),
     }
   }

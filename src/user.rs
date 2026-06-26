@@ -7,6 +7,7 @@ use crate::{
   GemTag, 
   TextStyle,
   Rect,
+  constants::*,
 };
 
 
@@ -53,12 +54,6 @@ pub fn user_from_str<T: UserTable + Default>(s: &str) -> Result<T, String> {
   let table = s.parse::<toml::Table>().map_err(|e| e.to_string())?;
   T::default().read_table(table)
 }
-
-pub const DATA_PATH:   &str = "gdata";
-pub const SAVE_FILE:   &str = "gdata/urls";
-pub const INIT_FILE:   &str = "gdata/init";
-pub const STYLES_PATH: &str = "gdata/styles";
-pub const KEYS_PATH:   &str = "gdata/keys";
 
 pub fn get_init_file(name: &str) -> String {
   format!("{DATA_PATH}/{name}")

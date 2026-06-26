@@ -9,8 +9,10 @@ use crate::{
   TextStyle,
   GemTag,
   Frame,
+  FrameStyle,
   Style,
-  draw,
+  color,
+  constants::*,
 };
 
 
@@ -34,8 +36,8 @@ pub struct UserStyle {
 } 
 
 impl UserStyle {
-  pub fn get_frame(&self, screen: &Rect) -> Frame {
-    Frame::from(screen)
+  pub fn get_frame_style(&self) -> FrameStyle {
+    FrameStyle::init()
       .screen_margin(self.screen_margin)
       .text_margin(self.text_margin)
       .banner_style(self.banner)
@@ -104,7 +106,7 @@ impl Assign for Style {
     use toml::Value;
     match (f, v) {
       (StyleField::Color(f), v) => {
-        let v = draw::parse_color(&v).map_err(|e| format!("{v:?} : {e}"))?;
+        let v = color::parse_color(&v).map_err(|e| format!("{v:?} : {e}"))?;
         match f {
           ColorField::Fg => self.fg = Some(v),
           ColorField::Bg => self.bg = Some(v),
@@ -157,16 +159,16 @@ impl Assign for BorderStyle {
       (BorderField::Corner, Value::String(v)) => {
         match v.as_str() {
           "square" => {
-            self.a = draw::A_SQR;
-            self.b = draw::B_SQR;
-            self.c = draw::C_SQR;
-            self.d = draw::D_SQR;
+            self.a = A_SQR;
+            self.b = B_SQR;
+            self.c = C_SQR;
+            self.d = D_SQR;
           }
           "round" => {
-            self.a = draw::A_RND;
-            self.b = draw::B_RND;
-            self.c = draw::C_RND;
-            self.d = draw::D_RND;
+            self.a = A_RND;
+            self.b = B_RND;
+            self.c = C_RND;
+            self.d = D_RND;
           }
           s => return Err(
             format!("Corner field does not contain {s}")
@@ -180,20 +182,20 @@ impl Assign for BorderStyle {
             self.close = ' ';
           }
           "tortoise" | "tort" | "t" => {
-            self.open  = draw::OPEN_TORT;
-            self.close = draw::CLOSE_TORT;
+            self.open  = OPEN_TORT;
+            self.close = CLOSE_TORT;
           }
           "integral" | "int"  | "i" | "j" | "J" => {
-            self.open  = draw::OPEN_INT;
-            self.close = draw::CLOSE_INT;
+            self.open  = OPEN_INT;
+            self.close = CLOSE_INT;
           }
           "square" | "sqr" => {
-            self.open  = draw::OPEN_SQR;
-            self.close = draw::CLOSE_SQR;
+            self.open  = OPEN_SQR;
+            self.close = CLOSE_SQR;
           }
           "E" | "e" => {
-            self.open  = draw::OPEN_E;
-            self.close = draw::CLOSE_E;
+            self.open  = OPEN_E;
+            self.close = CLOSE_E;
           }
           s => return Err(
             format!("Bracket field does not contain {s}")

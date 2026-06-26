@@ -11,7 +11,7 @@ mod userkeys;
 mod userstyle;
 mod cursor;
 mod tab;
-mod draw;
+mod color;
 mod rect;
 mod frame;
 mod textcursor;
@@ -22,16 +22,26 @@ mod app;
 mod action;
 mod layout;
 mod util;
+mod constants;
 
 pub use crate::userkeys::UserKeys;
 pub use crate::userstyle::UserStyle;
-pub use crate::frame::Frame;
-pub use crate::textcursor::TextCursor;
 pub use crate::network::Request;
 pub use crate::action::Action;
+pub use crate::textcursor::{
+  TextStyle, 
+  TextCursor,
+};
+pub use crate::frame::{
+  Frame,
+  FrameStyle,
+  BorderStyle, 
+  Margins, 
+};
 pub use crate::layout::{
   Layout,
-  GetHeight,
+  View,
+  TextBox,
 };
 pub use crate::user::{
   User,
@@ -53,14 +63,10 @@ pub use crate::tab::{
 pub use crate::rect::{
   Pos, 
   Dim,
-  GetRect, 
   Rect, 
 };
-pub use crate::draw::{
+pub use crate::color::{
   Style, 
-  TextStyle, 
-  BorderStyle, 
-  Margins, 
 };
 pub use crate::dialog::{
   Dialog, 

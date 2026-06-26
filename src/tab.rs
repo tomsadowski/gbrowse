@@ -5,7 +5,6 @@ use crate::{
   Cursor, 
   Style, 
   Rect, 
-  GetRect, 
   TextCursor, 
   GemText,
   GemTag,
@@ -13,16 +12,16 @@ use crate::{
 
 
 pub struct TabManager {
-  pub view:   Rect,
+  pub rect:   Rect,
   pub style:  Style,
   pub cursor: Cursor,
   pub tabs:   Vec<Tab>,
 } 
 
-impl<V: GetRect> From<V> for TabManager {
-  fn from(view: V) -> Self {
+impl From<&Rect> for TabManager {
+  fn from(rect: &Rect) -> Self {
     Self {
-      view:   view.get_rect(),
+      rect:   rect.clone(),
       style:  Style::default(),
       cursor: Cursor::default(),
       tabs:   vec![],
@@ -60,10 +59,10 @@ impl TabManager {
     }
   }
 
-  pub fn resize<V: GetRect + Copy>(&mut self, view: V) {
-    self.view = view.get_rect();
+  pub fn resize(&mut self, rect: &Rect) {
+    self.rect = rect.get_rect();
     for tab in self.tabs.iter_mut() {
-      tab.get_textbox_mut().resize(self.view);
+      tab.get_textbox_mut().resize(&self.rect);
     }
   }
 
@@ -107,7 +106,7 @@ impl TabManager {
       .map(|gemtext| (gemtext.tag, gemtext.text))
       .unzip();
     let styles  = tags.iter().map(|tag| get_text_style(tag)).collect();
-    let new_tab = Tab::Gem(UrlTab::new(self.view, url, tags, text, styles));
+    let new_tab = Tab::Gem(UrlTab::new(&self.rect, url, tags, text, styles));
     self.cursor.insert_or_move(
       &mut self.tabs, 
       |tab| tab.get_url() == Some(url), 
@@ -211,15 +210,15 @@ pub struct UrlTab<T> {
 } 
 
 impl<T> UrlTab<T> {
-  pub fn new<V: GetRect>(
-    view:   V, 
+  pub fn new(
+    rect:   &Rect, 
     url:    &url::Url, 
     tags:   Vec<T>, 
     text:   Vec<String>,
     styles: Vec<TextStyle>,
   ) -> Self {
     Self {
-      textbox: TextCursor::from(view.get_rect()).text(text, styles),
+      textbox: TextCursor::from(rect.clone()).text(text, styles),
       url:     url.clone(),
       tags,
     }

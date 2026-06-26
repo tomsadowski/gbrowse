@@ -1,7 +1,7 @@
 // src/cursor.rs
 
 use crate::{
-  GetRect, Rect, Pos, Dim,
+  Rect, Pos, Dim,
 };
 
 
@@ -225,19 +225,15 @@ pub struct ScreenCursor {
   y: LineCursorView,
 }
 
-impl<T: GetRect> From<&T> for ScreenCursor {
-  fn from(t: &T) -> Self {
-    let rect = t.get_rect();
+impl From<&Rect> for ScreenCursor {
+  fn from(rect: &Rect) -> Self {
+    let rect = rect.clone();
     Self {
       x: LineCursorView::from_size(rect.width()),
       y: LineCursorView::from_size(rect.height()),
       pos: rect.pos(),
     }
   }
-}
-
-impl crate::GetRect for ScreenCursor {
-  fn get_rect(&self) -> Rect { Rect::from(self.dim()).with_pos(self.pos()) }
 }
 
 impl ScreenCursor {
@@ -251,11 +247,12 @@ impl ScreenCursor {
   pub fn get_height(&self)   -> u16   {self.y.size}
   pub fn get_x_scroll(&self) -> usize {self.x.scroll}
   pub fn get_y_scroll(&self) -> usize {self.y.scroll}
+  pub fn get_rect(&self) -> Rect { 
+    Rect::from(self.dim()).with_pos(self.pos()) 
+  }
 
-  pub fn resize<V>(&mut self, point: &Point, view: &V)
-  where V: GetRect,
-  {
-    let rect = view.get_rect();
+  pub fn resize(&mut self, point: &Point, rect: &Rect) {
+    let rect = rect.clone();
     self.pos = rect.pos();
     self.y.resize(*point.y, rect.height());
     self.x.resize(*point.x, rect.width());

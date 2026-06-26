@@ -1,41 +1,7 @@
-// src/draw.rs
+// src/color.rs
 
-use crate::{
-  GetRect, Rect, ScreenCursor,
-};
 use crossterm::style::Color;
 
-
-// corners 
-// square
-pub const A_SQR: char = '\u{250C}';
-pub const B_SQR: char = '\u{2510}';
-pub const C_SQR: char = '\u{2514}';
-pub const D_SQR: char = '\u{2518}';
-// round
-pub const A_RND: char = '\u{256D}';
-pub const B_RND: char = '\u{256E}';
-pub const C_RND: char = '\u{2570}';
-pub const D_RND: char = '\u{256F}';
-// lines
-pub const X_LINE: char = '\u{2500}';
-pub const Y_LINE: char = '\u{2502}';
-// brackets
-// tortoise shell square bracket (hot)
-pub const OPEN_TORT:  char = '\u{2997}';
-pub const CLOSE_TORT: char = '\u{2998}';
-// super square bracket (hot)
-pub const OPEN_SQR:  char = '\u{27E6}';
-pub const CLOSE_SQR: char = '\u{27E7}';
-// brack with quill (pretty good)
-pub const OPEN_E:  char = '\u{2045}';
-pub const CLOSE_E: char = '\u{2046}';
-// integrals (not bad)
-pub const OPEN_INT:  char = '\u{2320}';
-pub const CLOSE_INT: char = '\u{2321}';
-// ceiling / floor (not bad)
-pub const OPEN_L:  char = '\u{2308}';
-pub const CLOSE_L: char = '\u{230B}';
 
 pub fn parse_color(v: &toml::Value) -> Result<Color, String> {
   match v {
@@ -122,8 +88,8 @@ pub struct Style {
   pub bg:        Option<Color>,
 }
 
-impl From<TextStyle> for Style {
-  fn from(item: TextStyle) -> Self {item.style}
+impl From<crate::TextStyle> for Style {
+  fn from(item: crate::TextStyle) -> Self {item.style}
 }
 
 impl crossterm::Command for Style {
@@ -142,112 +108,5 @@ impl crossterm::Command for Style {
     contentstyle.attributes = attributes;
     style::SetStyle(contentstyle).write_ansi(f)?;
     Ok(())
-  }
-}
-
-#[derive(Copy, Debug, Clone)]
-pub struct Margins {
-  pub north: u16,
-  pub south: u16,
-  pub east:  u16,
-  pub west:  u16,
-}
-
-impl Default for Margins {
-  fn default() -> Self {
-    Self {
-      north: 1, 
-      south: 1, 
-      east:  1, 
-      west:  1,
-    }
-  }
-}
-
-impl Margins {
-  pub fn get_outer<V: GetRect>(&self, view: V) -> Rect {
-    view
-      .get_rect()
-      .shift_north(self.north as i16)
-      .shift_south(self.south as i16)
-      .shift_east(self.east as i16)
-      .shift_west(self.west as i16)
-  }
-
-  pub fn get_inner<V: GetRect>(&self, view: V) -> Rect {
-    view
-      .get_rect()
-      .shift_north(self.north as i16 * -1)
-      .shift_south(self.south as i16 * -1)
-      .shift_east(self.east as i16 * -1)
-      .shift_west(self.west as i16 * -1)
-  }
-}
-
-#[derive(Copy, Debug, Clone)]
-pub struct BorderStyle {
-  pub style: Style,
-  pub x:     char,
-  pub y:     char,
-  pub a:     char,
-  pub b:     char,
-  pub c:     char,
-  pub d:     char,
-  pub open:  char,
-  pub close: char,
-}
-
-impl Default for BorderStyle {
-  fn default() -> Self {
-    Self {
-      style: Style::default(),
-      x:     X_LINE,
-      y:     Y_LINE,
-      a:     A_SQR,
-      b:     B_SQR,
-      c:     C_SQR,
-      d:     D_SQR,
-      open:  ' ',
-      close: ' ',
-    }
-  }
-}
-
-#[derive(Copy, Clone, Debug)]
-pub struct TextStyle {
-  pub style: Style,
-  pub wrap:  bool,
-}
-
-impl Default for TextStyle {
-  fn default() -> Self {
-    Self {
-      style: Style::default(),
-      wrap:  true,
-    }
-  }
-}
-
-impl std::ops::Deref for TextStyle {
-  type Target = Style;
-  fn deref(&self) -> &Self::Target {&self.style}
-}
-
-impl TextStyle {
-  // split at spaces within width and split at lines
-  pub fn print(&self, width: usize, text: &str) -> Vec<Vec<char>> {
-    if text.len() == 0 {
-      vec![vec![]]
-    } else if self.wrap {
-      text
-        .lines()
-        .flat_map(|line| crate::util::get_wrapped_text(line, width))
-        .collect()
-    } else {
-      text
-        .lines()
-        .map(|line| line.chars().collect())
-        .collect()
-    }
   }
 }

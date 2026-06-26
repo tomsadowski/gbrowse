@@ -3,64 +3,97 @@
 use crate::{
   Rect, 
   Style, 
-  Margins, 
-  BorderStyle,
   Pos,
+  constants::*,
 };
 
 
+#[derive(Copy, Debug, Clone, Default)]
+pub struct Margins {
+  pub north: u16,
+  pub south: u16,
+  pub east:  u16,
+  pub west:  u16,
+}
+
+impl Margins {
+  pub fn symmetric(m: u16) -> Self {
+    Self {
+      north: m, 
+      south: m, 
+      east:  m, 
+      west:  m,
+    }
+  }
+
+  pub fn get_outer_rect(&self, rect: &Rect) -> Rect {
+    rect
+      .shift_north(self.north as i16)
+      .shift_south(self.south as i16)
+      .shift_east(self.east as i16)
+      .shift_west(self.west as i16)
+  }
+
+  pub fn get_inner_rect(&self, rect: &Rect) -> Rect {
+    rect
+      .shift_north(self.north as i16 * -1)
+      .shift_south(self.south as i16 * -1)
+      .shift_east(self.east as i16 * -1)
+      .shift_west(self.west as i16 * -1)
+  }
+}
+
+#[derive(Copy, Debug, Clone)]
+pub struct BorderStyle {
+  pub style: Style,
+  pub x:     char,
+  pub y:     char,
+  pub a:     char,
+  pub b:     char,
+  pub c:     char,
+  pub d:     char,
+  pub open:  char,
+  pub close: char,
+}
+
+impl Default for BorderStyle {
+  fn default() -> Self {
+    Self {
+      style: Style::default(),
+      x:     X_LINE,
+      y:     Y_LINE,
+      a:     A_SQR,
+      b:     B_SQR,
+      c:     C_SQR,
+      d:     D_SQR,
+      open:  ' ',
+      close: ' ',
+    }
+  }
+}
+
 #[derive(Copy, Default, Clone)]
-pub struct Frame {
+pub struct FrameStyle {
   pub text_margin:   Margins,
   pub screen_margin: Margins,
-  pub screen:        Rect,
-  pub border_rect:   Rect,
-  pub outer_rect:    Rect,
-  pub inner_rect:    Rect,
   pub border_style:  BorderStyle,
   pub margin_style:  Style,
   pub banner_style:  Style,
   pub footer_style:  Style,
 }
 
-impl crate::GetRect for Frame {
-  fn get_rect(&self) -> Rect { self.inner_rect }
-}
-
-impl<T: crate::GetRect> From<&T> for Frame {
-  fn from(screen: &T) -> Self {
-    let screen_margin = Margins::default();
-    let text_margin   = Margins::default();
-    let border_rect   = screen_margin.get_inner(screen.get_rect());
-    let outer_rect    = border_rect.shift_x(-1).shift_y(-1);
-    let inner_rect    = text_margin.get_inner(outer_rect);
-    Self {
-      margin_style: Style::default(),
-      banner_style: Style::default(),
-      footer_style: Style::default(),
-      border_style: BorderStyle::default(),
-      screen:       screen.get_rect(),
-      border_rect,
-      outer_rect,
-      inner_rect,
-      screen_margin,
-      text_margin,
-    }
+impl FrameStyle {
+  pub fn init() -> Self {
+    Self::default()
   }
-}
 
-impl Frame {
   pub fn screen_margin(mut self, screen_margin: Margins) -> Self {
     self.screen_margin = screen_margin;
-    self.border_rect = self.screen_margin.get_inner(self.screen);
-    self.outer_rect  = self.border_rect.shift_x(-1).shift_y(-1);
-    self.inner_rect  = self.text_margin.get_inner(self.outer_rect);
     self
   }
 
   pub fn text_margin(mut self, screen_margin: Margins) -> Self {
     self.text_margin = screen_margin;
-    self.inner_rect  = self.text_margin.get_inner(self.outer_rect);
     self
   }
 
@@ -90,33 +123,54 @@ impl Frame {
     self
   }
 
-  pub fn resize_inner(&mut self, inner_rect: Rect) {
-    self.inner_rect  = inner_rect;
-    self.outer_rect  = self.text_margin.get_outer(self.inner_rect);
-    self.border_rect = self.screen_margin.get_outer(
-      self.outer_rect.shift_x(1).shift_y(1)
+  pub fn build_from_inner(&self, rect: &Rect) -> Frame {
+    let inner_rect  = rect.clone();
+    let outer_rect  = self.text_margin.get_outer_rect(self.inner_rect);
+    let border_rect = self.screen_margin.get_outer_rect(
+      &outer_rect.shift_x(1).shift_y(1)
     );
+    Frame {
+      style: self.clone(),
+      screen: rect.clone(),
+      border_rect,
+      outer_rect,
+      inner_rect,
+    }
   }
 
-  pub fn resize(&mut self, screen: Rect) {
-    self.screen      = screen;
-    self.border_rect = self.screen_margin.get_inner(screen);
-    self.outer_rect  = self.border_rect.shift_x(-1).shift_y(-1);
-    self.inner_rect  = self.text_margin.get_inner(self.outer_rect);
+  pub fn build_from_outer(&self, rect: &Rect) -> Frame {
+    let border_rect = self.screen_margin.get_inner_rect(rect);
+    let outer_rect  = border_rect.shift_x(-1).shift_y(-1);
+    let inner_rect  = self.text_margin.get_inner_rect(&outer_rect);
+    Frame {
+      style: self.clone(),
+      screen: rect.clone(),
+      border_rect,
+      outer_rect,
+      inner_rect,
+    }
   }
+}
 
-  pub fn reset(&mut self, inner_rect: Rect) {
-    self.resize(self.screen);
-  }
+#[derive(Copy, Default, Clone)]
+pub struct Frame {
+  pub style:         FrameStyle,
+  pub screen:        Rect,
+  pub border_rect:   Rect,
+  pub outer_rect:    Rect,
+  pub inner_rect:    Rect,
+}
 
+use crossterm::{
+  QueueableCommand, 
+  cursor::{self, MoveTo}, 
+  style::{Print, SetAttribute, Attribute},
+};
+
+impl Frame {
   pub fn draw_footer<W: std::io::Write>(&self, text: &str, w: &mut W) 
     -> std::io::Result<()> 
   {
-    use crossterm::{
-      QueueableCommand, 
-      cursor::{self, MoveTo}, 
-      style::{Print, SetAttribute, Attribute},
-    };
     let mut x = self.inner_rect.x_end().saturating_sub(1);
     let     y = self.border_rect.y_end().saturating_sub(1);
     w
@@ -154,11 +208,6 @@ impl Frame {
   pub fn draw_banner<W: std::io::Write>(&self, text: &str, w: &mut W) 
     -> std::io::Result<()> 
   {
-    use crossterm::{
-      QueueableCommand, 
-      cursor::MoveTo, 
-      style::{Print, SetAttribute, Attribute},
-    };
     let mut x = self.inner_rect.x();
     let     y = self.border_rect.y();
     w
@@ -188,11 +237,6 @@ impl Frame {
   }
 
   pub fn draw<W: std::io::Write>(&self, w: &mut W) -> std::io::Result<()> {
-    use crossterm::{
-      QueueableCommand, 
-      cursor::MoveTo, 
-      style::{Print, SetAttribute, Attribute},
-    };
     // border
     let Pos(ax, ay) = self.border_rect.a();
     let Pos(bx, by) = self.border_rect.b();

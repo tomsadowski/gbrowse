@@ -1,37 +1,74 @@
 // src/textcursor.rs
 
 use crate::{
-  GetRect, 
   Rect,
   Style, 
-  TextStyle,
   LineCursorView,
   Point, 
   ScreenCursor,
 };
 
 
+#[derive(Copy, Clone, Debug)]
+pub struct TextStyle {
+  pub style: Style,
+  pub wrap:  bool,
+}
+
+impl Default for TextStyle {
+  fn default() -> Self {
+    Self {
+      style: Style::default(),
+      wrap:  true,
+    }
+  }
+}
+
+impl std::ops::Deref for TextStyle {
+  type Target = Style;
+  fn deref(&self) -> &Self::Target {&self.style}
+}
+
+impl TextStyle {
+  // split at spaces within width and split at lines
+  pub fn print(&self, width: usize, text: &str) -> Vec<Vec<char>> {
+    if text.len() == 0 {
+      vec![vec![]]
+    } else if self.wrap {
+      text
+        .lines()
+        .flat_map(|line| crate::util::get_wrapped_text(line, width))
+        .collect()
+    } else {
+      text
+        .lines()
+        .map(|line| line.chars().collect())
+        .collect()
+    }
+  }
+}
+
 #[derive(Default)]
 pub struct TextCursor {
   pub width:   u16,
   pub style:   Style,
-  pub styles:  Vec<TextStyle>,
+  pub style_vec:  Vec<TextStyle>,
   pub indexes: Vec<usize>,
-  pub text:    Vec<String>,
+  pub string_vec:    Vec<String>,
   pub matrix:  Vec<Vec<char>>, 
   pub point:   Point,
 }
 
-impl<T: crate::GetRect> From<&T> for TextCursor {
-  fn from(t: &T) -> Self {
+impl From<&Rect> for TextCursor {
+  fn from(rect: &Rect) -> Self {
     Self {
       style:   Style::default(),
-      text:    vec![],
-      styles:  vec![],
+      string_vec:    vec![],
+      style_vec:  vec![],
       matrix:  vec![],
       indexes: vec![],
       point:   Point::default(),
-      width:   t.get_rect().w
+      width:   rect.width(),
     }
   }
 }
@@ -73,26 +110,25 @@ impl TextCursor {
     } else {
       styles
     };
-    self.text = text;
+    self.string_vec = text;
     self.set_styles(buffed_styles);
   }
 
   pub fn set_styles(&mut self, styles: Vec<TextStyle>) {
-    self.styles = styles;
+    self.style_vec = styles;
     self.reset_matrix();
   }
 
   pub fn reset_matrix(&mut self) {
     let linear_head = self.point.get_linear_head(&self.matrix);
     let width = usize::from(self.width);
-    let (indexes, matrix): (Vec<usize>, Vec<Vec<char>>) = self.styles
+    let (indexes, matrix): (Vec<usize>, Vec<Vec<char>>) = self.style_vec
       .iter()
-      .zip(self.text.iter())
+      .zip(self.string_vec.iter())
       .enumerate()
-      .flat_map(
-      |(idx, (style, text))| 
+      .flat_map(|(idx, (style, string))| 
         style
-          .print(width, text)
+          .print(width, string)
           .into_iter()
           .map(move |text| (idx, text))
       ).unzip();
@@ -101,8 +137,8 @@ impl TextCursor {
     self.point.set_linear_head(&self.matrix, linear_head);
   }
 
-  pub fn resize<T: GetRect>(&mut self, t: T) {
-    let new_width = t.get_rect().w;
+  pub fn resize(&mut self, rect: &Rect) {
+    let new_width = rect.width();
     if self.width != new_width {
       self.width = new_width;
       self.reset_matrix();
@@ -114,7 +150,7 @@ impl TextCursor {
   }
 
   pub fn get_current_text(&self) -> String {
-    self.text
+    self.string_vec
       .get(*self.point.y)
       .map(|t| t.to_string())
       .unwrap_or("empty".into())
@@ -169,7 +205,7 @@ impl TextCursor {
       .queue(&self.style)?;
     for (index, line) in self.get_view(screen.get_y_view()) {
       w.queue(Style::from(
-        *self.styles.get(*index).unwrap_or(&TextStyle::default())
+        *self.style_vec.get(*index).unwrap_or(&TextStyle::default())
       ))?;
       for c in screen.get_x_view().get_weighted_view(line) {
         w.queue(style::Print(c))?;
