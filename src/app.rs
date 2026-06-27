@@ -63,13 +63,14 @@ pub struct App {
 
 impl App {
   pub fn init(path: &str, w: u16, h: u16) -> Self {
-    let user_text  = std::fs::read_to_string(path).unwrap_or_default();
+    let user_text = std::fs::read_to_string(path).unwrap_or_default();
     let user: User = user_from_str(&user_text).unwrap_or_default();
-    let frame      = user.get_frame(&Rect::from(Dim(w, h)));
+    let layout = Layout::from(&Rect::from(Dim(w, h)))
+      .with_frame_params(user.get_frame_params());
     let mut app = Self {
       layout:      Layout::from(&Rect::from(Dim(w, h))),
       guide:       "".into(),
-      tabs:        TabManager::from(frame).with_style(user.style.general),
+      tabs:        TabManager::default().with_style(user.style.general),
       request:     None,
       focus:       Focus::Tab,
       new_dlg:     false,
@@ -185,7 +186,8 @@ impl App {
           gemini::parse_doc(&content), 
           |g| self.user.get_gem_style(g),
         );
-        self.tabs.use_textbox_mut(
+        self.layout.insert_page(11, self.tabs.get_current_page_params());
+        self.tabs.use_page_params_mut(
           |textbox| {
             textbox.style = self.user.style.general.into();
           }
@@ -295,7 +297,7 @@ impl App {
         }
         (DlgInput::Select(textbox), Action::Select, Task::ChangeKeys) => {
           match std::fs::read_to_string(
-            user::get_keys_file(&textbox.get_current_text())
+            user::get_keys_file(&textbox.get_current_param_string())
           ) {
             Err(e) => self.focus_ack_dialog(format!("Problem: {e}")),
             Ok(s)  => if let Err(e) = self.user.keys.update_from_str(&s) {
@@ -307,7 +309,7 @@ impl App {
         }
         (DlgInput::Select(textbox), Action::Select, Task::ChangeStyle) => {
           match std::fs::read_to_string(
-            user::get_styles_file(&textbox.get_current_text())
+            user::get_styles_file(&textbox.get_current_param_string())
           ) {
             Err(e) => self.focus_ack_dialog(e.to_string()),
             Ok(s)  => if let Err(e) = self.user.style.update_from_str(&s) {
@@ -324,13 +326,13 @@ impl App {
             MANUAL => {
               self.focus_ack_dialog("View manual".into());
             }
-            CHANGE_KEYS => match util::get_entries(user::KEYS_PATH) {
+            CHANGE_KEYS => match util::get_entries(KEYS_PATH) {
               Err(e)    => self.focus_ack_dialog(e),
               Ok(entry) => self.focus_select_dialog(
                 Task::ChangeKeys, "Choose keys", entry
               ),
             }
-            CHANGE_STYLE => match util::get_entries(user::STYLES_PATH) {
+            CHANGE_STYLE => match util::get_entries(STYLES_PATH) {
               Err(e)    => self.focus_ack_dialog(e),
               Ok(entry) => self.focus_select_dialog(
                 Task::ChangeStyle, "Choose style", entry
@@ -507,7 +509,7 @@ impl App {
         );
       }
       (Msg::Action(action), Focus::Tab) => {
-        self.tabs.use_textbox_mut(
+        self.tabs.use_page_params_mut(
           |textbox| action.update(textbox)
         );
       }

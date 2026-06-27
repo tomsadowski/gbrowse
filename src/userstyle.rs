@@ -9,7 +9,7 @@ use crate::{
   TextStyle,
   GemTag,
   Frame,
-  FrameStyle,
+  FrameParams,
   Style,
   color,
   constants::*,
@@ -20,7 +20,7 @@ use crate::{
 pub struct UserStyle {
   pub text_margin:     Margins,
   pub screen_margin:   Margins,
-  pub border:          BorderStyle,
+  pub border:          Option<BorderStyle>,
   pub general:         TextStyle,
   pub banner:          TextStyle,
   pub info:            TextStyle,
@@ -36,8 +36,8 @@ pub struct UserStyle {
 } 
 
 impl UserStyle {
-  pub fn get_frame_style(&self) -> FrameStyle {
-    FrameStyle::init()
+  pub fn get_frame_params(&self) -> FrameParams {
+    FrameParams::init()
       .screen_margin(self.screen_margin)
       .text_margin(self.text_margin)
       .banner_style(self.banner)
@@ -66,7 +66,7 @@ impl Assign for UserStyle {
     use toml::Value;
     match (f, v) {
       (StyleTableField::Border, Value::Table(v)) => {
-        self.border = BorderStyle::default().read_table(v)?;
+        self.border = Some(BorderStyle::default().read_table(v)?);
       }
       (StyleTableField::Text(f), Value::Table(v)) => {
         let v = TextStyle::default().read_table(v)?;

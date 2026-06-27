@@ -1,9 +1,5 @@
 // src/cursor.rs
 
-use crate::{
-  Rect, Pos, Dim,
-};
-
 
 #[derive(Clone, Copy, Debug, Default)]
 pub struct Cursor {
@@ -160,6 +156,8 @@ pub struct Point {
 }
 
 impl Point {
+  pub fn init() -> Self { Self::default() }
+
   pub fn editor<T>(mut self, vec: &Vec<Vec<T>>) -> Self {
     self.make_editor(vec);
     self
@@ -211,6 +209,44 @@ impl Point {
       iremainder
     }
   }
+
+  pub fn delete<T>(&mut self, vec: &mut Vec<Vec<T>>) -> bool {
+    vec
+      .get_mut(*self.y)
+      .map(|c| self.x.delete(c))
+      .unwrap_or(false) 
+  }
+
+  pub fn backspace<T>(&mut self, vec: &mut Vec<Vec<T>>) -> bool {
+    vec
+      .get_mut(*self.y)
+      .map(|c| self.x.backspace(c))
+      .unwrap_or(false) 
+  }
+
+  pub fn insert<T>(&mut self, vec: &mut Vec<Vec<T>>, t: T) -> bool {
+    vec
+      .get_mut(*self.y)
+      .map(|c| self.x.insert(c, t))
+      .unwrap_or(false) 
+  }
+
+  pub fn move_left<T>(&mut self, vec: &Vec<Vec<T>>, delta: usize) -> bool {
+    self.move_x(vec, delta as isize * -1) == 0
+  }
+
+  pub fn move_right<T>(&mut self, vec: &Vec<Vec<T>>, delta: usize) -> bool {
+    self.move_x(vec, delta as isize) == 0
+  }
+
+  pub fn move_down<T>(&mut self, vec: &Vec<Vec<T>>, delta: usize) -> bool {
+    self.move_y(vec, delta as isize)
+  }
+
+  pub fn move_up<T>(&mut self, vec: &Vec<Vec<T>>, delta: usize) -> bool {
+    self.move_y(vec, delta as isize * -1)
+  }
+
 }
 
 pub fn get_weighted_length(vec: &Vec<char>) -> usize {
@@ -218,27 +254,29 @@ pub fn get_weighted_length(vec: &Vec<char>) -> usize {
   vec.iter().map(|c| c.width().unwrap_or(0)).sum()
 }
 
+use crate::{Rect, Pos, Dim};
+
 #[derive(Copy, Clone, Debug, Default)]
-pub struct ScreenCursor {
+pub struct PointView {
   pos: Pos,
-  x: LineCursorView,
-  y: LineCursorView,
+  x: CursorView,
+  y: CursorView,
 }
 
-impl From<&Rect> for ScreenCursor {
+impl From<&Rect> for PointView {
   fn from(rect: &Rect) -> Self {
     let rect = rect.clone();
     Self {
-      x: LineCursorView::from_size(rect.width()),
-      y: LineCursorView::from_size(rect.height()),
+      x: CursorView::from_size(rect.width()),
+      y: CursorView::from_size(rect.height()),
       pos: rect.pos(),
     }
   }
 }
 
-impl ScreenCursor {
-  pub fn get_x_view(&self)   -> LineCursorView {self.x}
-  pub fn get_y_view(&self)   -> LineCursorView {self.y}
+impl PointView {
+  pub fn get_x_view(&self)   -> CursorView {self.x}
+  pub fn get_y_view(&self)   -> CursorView {self.y}
   pub fn dim(&self)          -> Dim { Dim(self.x.size, self.y.size) }  
   pub fn pos(&self)          -> Pos { self.pos }
   pub fn get_x_cursor(&self) -> u16 { self.pos.x() + self.x.cursor }
@@ -274,14 +312,14 @@ impl ScreenCursor {
 }
 
 #[derive(Copy, Clone, Debug, Default)]
-pub struct LineCursorView {
+pub struct CursorView {
   pub head:   usize, // data head
   pub scroll: usize, // start of displayable data
   pub cursor: u16,   // on-screen cursor
   pub size:   u16,   // width or height of rectangle
 }
 
-impl LineCursorView {
+impl CursorView {
   pub fn from_size(size: u16) -> Self {
     Self {
       scroll: 0, 

@@ -154,7 +154,7 @@ impl UserKeys {
   {
     match dialog.input {
       DlgInput::Ack(_)    => self.get_ack_dialog_action(kc),
-      DlgInput::Ask(_)    => self.get_ask_dialog_action(kc),
+      DlgInput::Text(_)    => self.get_ask_dialog_action(kc),
       DlgInput::Edit(_)   => self.get_edit_dialog_action(kc),
       DlgInput::Select(_) => self.get_select_dialog_action(kc),
     }

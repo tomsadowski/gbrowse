@@ -1,7 +1,7 @@
 // src/rect.rs
 
 
-#[derive(Clone, Copy, Default)]
+#[derive(Clone, Copy, Debug, Default)]
 pub struct Dim(pub u16, pub u16);
 
 impl From<(u16, u16)> for Dim {
@@ -9,13 +9,17 @@ impl From<(u16, u16)> for Dim {
     Self(w.into(), h.into()) 
   }
 }
-
+impl From<Dim> for (u16, u16) {
+  fn from(dim: Dim) -> Self { 
+    (dim.w(), dim.h()) 
+  }
+}
 impl Dim {
   pub fn w(&self) -> u16 { self.0 }
   pub fn h(&self) -> u16 { self.1 }
 }
 
-#[derive(Copy, Clone, Debug, Default)]
+#[derive(Clone, Copy, Debug, Default)]
 pub struct Pos(pub u16, pub u16);
 
 impl From<(u16, u16)> for Pos {
@@ -23,7 +27,11 @@ impl From<(u16, u16)> for Pos {
     Self(x, y) 
   }
 }
-
+impl From<Pos> for (u16, u16) {
+  fn from(pos: Pos) -> Self { 
+    (pos.x(), pos.y()) 
+  }
+}
 impl Pos {
   pub fn x(&self) -> u16 { self.0 }
   pub fn y(&self) -> u16 { self.1 }
@@ -36,19 +44,16 @@ pub struct Rect {
   w: u16,
   h: u16,
 }
-
 impl From<Dim> for Rect {
   fn from(d: Dim) -> Self {
     Self { x: 0, y: 0, w: d.w(), h: d.h() }
   }
 }
-
 impl From<Pos> for Rect {
   fn from(p: Pos) -> Self {
     Self { x: p.x(), y: p.y(), w: 0, h: 0 }
   }
 }
-
 impl Rect {
   pub fn with_dim(mut self, dim: Dim) -> Self {
     self.set_dim(dim);
@@ -104,29 +109,6 @@ impl Rect {
     self.shift_east(idelta).shift_west(idelta)
   }
 
-  pub fn row(&self, y: u16) -> Self {
-    Self {
-      x: self.x, 
-      y: y, 
-      w: self.w, 
-      h: 1
-    }
-  }
-
-  pub fn top_row(&self) -> Self {
-    self.row(self.y)
-  }
-
-  pub fn bottom_row(&self) -> Self {
-    self.row(self.y_end())
-  }
-
-  pub fn cap_height(&self, h: u16) -> Self {
-    let mut rect = self.clone();
-    rect.h = h.min(rect.h);
-    rect
-  }
-
   pub fn x(&self)      -> u16 { self.pos().x() }
   pub fn y(&self)      -> u16 { self.pos().y() }
   pub fn width(&self)  -> u16 { self.dim().w() }
@@ -167,10 +149,5 @@ impl Rect {
       start: self.y, 
       end:   self.y_end()
     }
-  }
-
-  pub fn resize(&mut self, w: u16, h: u16) {
-    self.w = w; 
-    self.h = h;
   }
 }

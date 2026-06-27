@@ -4,6 +4,7 @@ use crate::{
   UserKeys,
   UserStyle,
   Frame, 
+  FrameParams,
   GemTag, 
   TextStyle,
   Rect,
@@ -165,8 +166,8 @@ impl User {
     }
   }
 
-  pub fn get_frame(&self, screen: &Rect) -> Frame {
-    self.style.get_frame(screen)
+  pub fn get_frame_params(&self) -> FrameParams {
+    self.style.get_frame_params()
   }
 
   pub fn get_gem_style(&self, gemtext: &GemTag) -> TextStyle {

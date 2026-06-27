@@ -4,36 +4,30 @@ use crate::{
   TextStyle, 
   Cursor, 
   Style, 
-  Rect, 
-  TextCursor, 
+  PageParams, 
+  Page,
   GemText,
   GemTag,
+  Layout,
 };
+use std::{
+  collections::HashMap,
+  rc::Rc,
+};
+use url::Url;
 
 
+#[derive(Default)]
 pub struct TabManager {
-  pub rect:   Rect,
-  pub style:  Style,
   pub cursor: Cursor,
-  pub tabs:   Vec<Tab>,
+  pub urls:   Vec<Url>,
+  pub tabs:   HashMap<Url, Tab>,
 } 
-
-impl From<&Rect> for TabManager {
-  fn from(rect: &Rect) -> Self {
-    Self {
-      rect:   rect.clone(),
-      style:  Style::default(),
-      cursor: Cursor::default(),
-      tabs:   vec![],
-    }
-  }
-}
-
 impl TabManager {
   pub fn with_style<T: Into<Style> + Copy>(mut self, style: T) -> Self {
     self.style = style.into();
     for tab in self.tabs.iter_mut() {
-      tab.get_textbox_mut().style = self.style;
+      tab.get_page_params_mut().style = self.style;
     }
     self
   }
@@ -43,7 +37,7 @@ impl TabManager {
   {
     self.style = style.into();
     for tab in self.tabs.iter_mut() {
-      tab.get_textbox_mut().style = self.style;
+      tab.get_page_params_mut().style = self.style;
     }
   }
 
@@ -53,23 +47,10 @@ impl TabManager {
     for tab in self.tabs.iter_mut() {
       if let Tab::Gem(gem_tab) = tab {
         let styles = gem_tab.tags.iter().map(|t| func(t)).collect();
-        gem_tab.textbox.set_styles(styles);
-        gem_tab.textbox.style = self.style;
+        gem_tab.page_params.set_styles(styles);
+        gem_tab.page_params.style = self.style;
       }
     }
-  }
-
-  pub fn resize(&mut self, rect: &Rect) {
-    self.rect = rect.get_rect();
-    for tab in self.tabs.iter_mut() {
-      tab.get_textbox_mut().resize(&self.rect);
-    }
-  }
-
-  pub fn reset_state(&mut self) {
-    self.tabs.get_mut(*self.cursor).map(
-      |tab| tab.get_textbox_mut().reset_state()
-    );
   }
 
   pub fn get_url(&self) -> Option<&url::Url> {
@@ -78,18 +59,18 @@ impl TabManager {
       .and_then(|tab| tab.get_url())
   }
 
-  pub fn get_gem_tag(&self) -> Option<&GemTag> {
+  pub fn get_gem_tag(&self, page: &Page) -> Option<&GemTag> {
     self.tabs
       .get(*self.cursor)
-      .and_then(|tab| tab.get_gem_tag())
+      .and_then(|tab| tab.get_gem_tag(page))
   }
 
-  pub fn use_textbox_mut<F, T>(&mut self, func: F) -> Option<T>
-  where F: Fn(&mut TextCursor) -> T
+  pub fn use_page_params_mut<F, T>(&mut self, func: F) -> Option<T>
+  where F: Fn(&mut PageParams) -> T
   {
     self.tabs
       .get_mut(*self.cursor)
-      .map(|tab| tab.get_textbox_mut())
+      .map(|tab| tab.get_page_params_mut())
       .map(|textbox| func(textbox))
   }
 
@@ -98,7 +79,7 @@ impl TabManager {
     url:            &url::Url, 
     source:         Vec<GemText>, 
     get_text_style: F
-  ) 
+  ) -> Option<Rc<&PageParams>> 
   where F: Fn(&GemTag) -> TextStyle,
   {
     let (tags, text): (Vec<GemTag>, Vec<String>) = source
@@ -106,13 +87,13 @@ impl TabManager {
       .map(|gemtext| (gemtext.tag, gemtext.text))
       .unzip();
     let styles  = tags.iter().map(|tag| get_text_style(tag)).collect();
-    let new_tab = Tab::Gem(UrlTab::new(&self.rect, url, tags, text, styles));
+    let new_tab = Tab::Gem(UrlTab::new(url, tags, text, styles));
     self.cursor.insert_or_move(
       &mut self.tabs, 
       |tab| tab.get_url() == Some(url), 
       new_tab
     );
-    self.reset_state();
+    self.tabs.get(*self.cursor).map(|t| t.get_page_params())
   }
 
   pub fn get_banner_text(&self) -> String {
@@ -127,25 +108,17 @@ impl TabManager {
       Some(s) => format!("{}/{} - {s}", *self.cursor + 1, self.tabs.len()),
     }
   }
-
-  pub fn draw<W: std::io::Write>(&self, w: &mut W) -> std::io::Result<()> {
-    if let Some(tab) = self.tabs.get(*self.cursor) {
-      tab.get_textbox().draw_cursor(w)?;
-      tab.get_textbox().cursor.draw(w)?;
-    } 
-    Ok(())
-  }
 }
 
 pub enum Tab {
-  Text  (String, TextCursor),
+  Text  (String, PageParams),
   Gem   (UrlTab<GemTag>),
   Gopher(UrlTab<String>),
 }
 
 impl Default for Tab {
   fn default() -> Self {
-    Self::Text("".into(), TextCursor::default())
+    Self::Text("".into(), PageParams::default())
   }
 }
 
@@ -174,31 +147,31 @@ impl Tab {
     if let Tab::Gopher(tab) = self {Some(tab)} else {None}
   }
 
-  pub fn get_text_tab(&self) ->  Option<(&str, &TextCursor)> {
-    if let Tab::Text(heading, textbox) = self {
-      Some((heading, textbox))
+  pub fn get_text_tab(&self) ->  Option<(&str, &PageParams)> {
+    if let Tab::Text(heading, params) = self {
+      Some((heading, params))
     } else {None}
   }
 
-  pub fn get_gem_tag(&self) -> Option<&GemTag> {
+  pub fn get_gem_tag(&self, page: &Page) -> Option<&GemTag> {
     self
       .get_gem_tab()
-      .and_then(|gem_tab| gem_tab.get_current_tag())
+      .and_then(|gem_tab| gem_tab.get_current_tag(page))
   }
 
-  pub fn get_textbox(&self) -> &TextCursor {
+  pub fn get_page_params(&self) -> Rc<&PageParams> {
     match self {
       Tab::Text(_, textbox) |
-      Tab::Gem(   UrlTab {textbox, ..}) | 
-      Tab::Gopher(UrlTab {textbox, ..}) => textbox,
+      Tab::Gem(   UrlTab {page_params: textbox, ..}) | 
+      Tab::Gopher(UrlTab {page_params: textbox, ..}) => Rc::new(textbox),
     }
   }
 
-  pub fn get_textbox_mut(&mut self) -> &mut TextCursor {
+  pub fn get_page_params_mut(&mut self) -> &mut PageParams {
     match self {
-      Tab::Text(_, textbox) |
-      Tab::Gem(   UrlTab {textbox, ..}) | 
-      Tab::Gopher(UrlTab {textbox, ..}) => textbox,
+      Tab::Text(_, params) |
+      Tab::Gem(   UrlTab {page_params: params, ..}) | 
+      Tab::Gopher(UrlTab {page_params: params, ..}) => params,
     }
   }
 }
@@ -206,27 +179,24 @@ impl Tab {
 pub struct UrlTab<T> {
   pub url:     url::Url,
   pub tags:    Vec<T>,
-  pub textbox: TextCursor,
+  pub page_params: PageParams,
 } 
 
 impl<T> UrlTab<T> {
   pub fn new(
-    rect:   &Rect, 
     url:    &url::Url, 
     tags:   Vec<T>, 
     text:   Vec<String>,
     styles: Vec<TextStyle>,
   ) -> Self {
     Self {
-      textbox: TextCursor::from(rect.clone()).text(text, styles),
+      page_params: PageParams::init().text(text, styles),
       url:     url.clone(),
       tags,
     }
   }
 
-  pub fn get_current_tag(&self) -> Option<&T> {
-    self.tags.get(
-      self.textbox.get_current_index()
-    )
+  pub fn get_current_tag(&self, page: &Page) -> Option<&T> {
+    self.tags.get(page.get_current_index())
   }
 }

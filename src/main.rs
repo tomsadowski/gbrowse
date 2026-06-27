@@ -14,7 +14,7 @@ mod tab;
 mod color;
 mod rect;
 mod frame;
-mod textcursor;
+mod page;
 mod dialog;
 mod network;
 mod gemini;
@@ -24,24 +24,36 @@ mod layout;
 mod util;
 mod constants;
 
-pub use crate::userkeys::UserKeys;
-pub use crate::userstyle::UserStyle;
-pub use crate::network::Request;
-pub use crate::action::Action;
-pub use crate::textcursor::{
+pub use crate::userkeys::{
+  UserKeys,
+};
+pub use crate::userstyle::{
+  UserStyle,
+};
+pub use crate::network::{
+  Request,
+};
+pub use crate::action::{
+  Action,
+};
+pub use crate::color::{
+  Style, 
+};
+pub use crate::page::{
   TextStyle, 
-  TextCursor,
+  PageParams,
+  Page,
 };
 pub use crate::frame::{
   Frame,
-  FrameStyle,
+  FrameParams,
   BorderStyle, 
   Margins, 
 };
 pub use crate::layout::{
   Layout,
   View,
-  TextBox,
+  PageView,
 };
 pub use crate::user::{
   User,
@@ -52,8 +64,8 @@ pub use crate::user::{
 pub use crate::cursor::{
   Cursor, 
   Point,
-  ScreenCursor,
-  LineCursorView,
+  PointView,
+  CursorView,
 };
 pub use crate::tab::{
   Tab, 
@@ -64,9 +76,6 @@ pub use crate::rect::{
   Pos, 
   Dim,
   Rect, 
-};
-pub use crate::color::{
-  Style, 
 };
 pub use crate::dialog::{
   Dialog, 
@@ -87,7 +96,7 @@ fn main() -> std::io::Result<()> {
   let mut app = {
     let args = std::env::args().collect::<Vec<String>>();
     let init = match args.get(1) {
-      None       => user::INIT_FILE.into(),
+      None       => constants::INIT_FILE.into(),
       Some(init) => user::get_init_file(init),
     };
     let (w, h) = terminal::size()?;

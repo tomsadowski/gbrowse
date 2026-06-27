@@ -34,7 +34,7 @@ pub enum Action {
 }
 
 impl Action {
-  pub fn update(&self, textbox: &mut crate::TextCursor) {
+  pub fn update(&self, textbox: &mut crate::Page) {
     match self {
       Action::PageDown  => {textbox.move_down(15);}
       Action::PageUp    => {textbox.move_up(15);}
@@ -48,7 +48,7 @@ impl Action {
     }
   }
 
-  pub fn update_edit(&self, textbox: &mut crate::TextCursor) {
+  pub fn update_edit(&self, textbox: &mut crate::Page) {
     match self {
       Action::PageDown  => {textbox.move_left(15);}
       Action::PageUp    => {textbox.move_right(15);}

@@ -1,21 +1,22 @@
 // src/dialog.rs
 
 use crate::{
-  TextCursor, 
+  Page, 
   Style, 
   Rect,
+  Layout,
 };
 
 
 pub enum DlgInput {
-  Ack   (TextCursor),
-  Ask   (TextCursor),
-  Select(TextCursor),
-  Edit  (TextCursor),
+  Text  (Page),
+  Select(Page),
+  Edit  (Page),
 }
 
 pub struct Dialog {
-  pub prompt: TextCursor,
+  pub layout: Layout,
+  pub prompt: Page,
   pub input:  DlgInput,
 } 
 
@@ -23,13 +24,13 @@ impl Dialog {
   pub fn ack<S>(rect: &Rect, style: S, prompt: &str, input: &str) -> Self
   where S: Into<Style> + Copy
   {
-    let prompt_box = TextCursor::from(rect)
+    let prompt_box = Page::from(rect)
       .text(
         vec![prompt.into()], 
         vec![]
       )
       .style(style);
-    let response_box = TextCursor::from(rect)
+    let response_box = Page::from(rect)
       .text(
         vec![input.into()], 
         vec![]
@@ -44,7 +45,7 @@ impl Dialog {
   pub fn ask<S>(rect: &Rect, style: S, prompt: &str, input: &str) -> Self 
   where S: Into<Style> + Copy
   {
-    let prompt_box = TextCursor::from(
+    let prompt_box = Page::from(
         rect
       )
       .text(
@@ -52,7 +53,7 @@ impl Dialog {
         vec![]
       )
       .style(style);
-    let response_box = TextCursor::from(
+    let response_box = Page::from(
         rect
       )
       .text(
@@ -62,7 +63,7 @@ impl Dialog {
       .style(style);
     Dialog {
       prompt: prompt_box,
-      input:  DlgInput::Ask(response_box),
+      input:  DlgInput::Text(response_box),
     }
   }
 
@@ -70,7 +71,7 @@ impl Dialog {
     -> Self 
   where S: Into<Style> + Copy
   {
-    let prompt_box = TextCursor::from(
+    let prompt_box = Page::from(
         rect
       )
       .text(
@@ -78,7 +79,7 @@ impl Dialog {
         vec![]
       )
       .style(style);
-    let response_box = TextCursor::from(
+    let response_box = Page::from(
         rect
       )
       .text(
@@ -95,7 +96,7 @@ impl Dialog {
   pub fn edit<S>(rect: &Rect, style: S, prompt: &str, text: &str) -> Self 
   where S: Into<Style> + Copy
   {
-    let prompt_box = TextCursor::from(
+    let prompt_box = Page::from(
         rect
       )
       .text(
@@ -103,7 +104,7 @@ impl Dialog {
         vec![]
       )
       .style(style);
-    let response_box = TextCursor::from(
+    let response_box = Page::from(
         rect
       )
       .text(
@@ -122,7 +123,7 @@ impl Dialog {
     self.prompt.resize(&rect);
     match &mut self.input {
       DlgInput::Ack(r) | 
-      DlgInput::Ask(r) |
+      DlgInput::Text(r) |
       DlgInput::Edit(r) => {
         r.resize(self.prompt.used_rect().bottom_row());
       }
@@ -136,7 +137,7 @@ impl Dialog {
     self.prompt.draw(w)?;
     match &self.input {
       DlgInput::Ack(r) | 
-      DlgInput::Ask(r) => { 
+      DlgInput::Text(r) => { 
         r.draw(w)?;
       }
       DlgInput::Edit(r) => {
