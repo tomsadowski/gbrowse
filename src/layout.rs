@@ -37,6 +37,30 @@ impl GetHeight for Frame {
   }
 }
 
+impl GetHeight for PageView {
+  fn get_height(&self) -> u16 {
+    self.frame.border_rect.height()
+  }
+}
+
+impl GetHeight for PageViewList {
+  fn get_height(&self) -> u16 {
+    self.page_views
+      .get(*self.cursor)
+      .map(|page_view| page_view.get_height())
+      .unwrap_or(u16::MIN)
+  }
+}
+
+impl GetHeight for View {
+  fn get_height(&self) -> u16 {
+    match self {
+      Self::Page(view) => view.get_height(),
+      Self::List(list) => list.get_height(),
+    }
+  }
+}
+
 pub struct PageViewParams {
   pub max_height:   Option<u16>,
   pub write_cursor: bool,
@@ -56,18 +80,21 @@ impl From<Rc<PageParams>> for PageViewParams {
 impl PageViewParams {
   pub fn with_write_cursor(mut self, write_cursor: bool) 
     -> Self { self.set_write_cursor(write_cursor); self }
+
   pub fn set_write_cursor(&mut self, write_cursor: bool) {
     self.write_cursor = write_cursor;
   }
 
   pub fn with_max_height(mut self, max_height: Option<u16>) 
     -> Self { self.set_max_height(max_height); self }
+
   pub fn set_max_height(&mut self, max_height: Option<u16>) {
     self.max_height = max_height;
   }
 
   pub fn with_frame_params(mut self, frame_params: FrameParams) 
     -> Self { self.set_frame_params(frame_params); self }
+
   pub fn set_frame_params(&mut self, frame_params: FrameParams) {
     self.frame_params = frame_params;
   }
@@ -157,7 +184,7 @@ impl PageView {
 }
 
 pub struct PageViewList {
-  pub cursor:     Rc<Cursor>,
+  pub cursor:     Cursor,
   pub page_views: Vec<PageView>,
 }
 impl PageViewList {
@@ -216,13 +243,15 @@ impl From<Rect> for Layout {
 }
 
 impl Layout {
-  fn push_new_frame(&mut self) {
+  fn push_frame(&mut self) {
     let mut keys: Vec<u16> = self.view_map
       .keys().map(|k| k.clone()).collect();
     keys.sort();
+    let mut rect = self.frame.inner_rect;
     for k in keys.iter() {
       if let Some(value) = self.view_map.get_mut(k) {
-        value.rebuild(&self.frame.inner_rect);
+        value.rebuild(&rect);
+        rect = rect.shift_north((value.get_height() as i16) * -1);
       }
     }
   }
@@ -230,15 +259,16 @@ impl Layout {
   pub fn set_max_rect(&mut self, rect: Rect) {
     self.max_rect = rect;
     self.frame = self.frame_params.build_from_outer(&self.max_rect);
-    self.push_new_frame();
+    self.push_frame();
   }
 
   pub fn with_frame_params(mut self, frame_params: FrameParams) 
     -> Self { self.set_frame_params(frame_params); self }
+
   pub fn set_frame_params(&mut self, frame_params: FrameParams) {
     self.frame_params = frame_params;
     self.frame = self.frame_params.build_from_outer(&self.max_rect);
-    self.push_new_frame();
+    self.push_frame();
   }
 
   pub fn insert_page(&mut self, handle: u16, view_params: PageViewParams) {
