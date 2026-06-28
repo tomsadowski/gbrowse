@@ -45,19 +45,10 @@ impl GetHeight for PageView {
 
 impl GetHeight for PageViewList {
   fn get_height(&self) -> u16 {
-    self.page_views
+    self.views
       .get(*self.cursor)
       .map(|page_view| page_view.get_height())
       .unwrap_or(u16::MIN)
-  }
-}
-
-impl GetHeight for View {
-  fn get_height(&self) -> u16 {
-    match self {
-      Self::Page(view) => view.get_height(),
-      Self::List(list) => list.get_height(),
-    }
   }
 }
 
@@ -183,42 +174,35 @@ impl PageView {
   }
 }
 
+#[derive(Default)]
 pub struct PageViewList {
-  pub cursor:     Cursor,
-  pub page_views: Vec<PageView>,
+  pub cursor: Cursor,
+  pub views:  Vec<PageView>,
 }
+
+impl From<PageView> for PageViewList {
+  fn from(view: PageView) -> Self {
+    let mut view_list = Self::default();
+    view_list.insert(view);
+    view_list
+  }
+}
+
 impl PageViewList {
+  pub fn insert(&mut self, view: PageView) {
+    self.cursor.insert(&mut self.views, view);
+  }
+
   pub fn rebuild(&mut self, rect: &Rect) {
-    for view in self.page_views.iter_mut() {
+    for view in self.views.iter_mut() {
       view.rebuild(rect);
     }
   }
 
   // dont rewrap, only point_view changes
   pub fn resize(&mut self, rect: &Rect) {
-    for view in self.page_views.iter_mut() {
+    for view in self.views.iter_mut() {
       view.resize(rect);
-    }
-  }
-}
-
-pub enum View {
-  Page(PageView),
-  List(PageViewList),
-}
-impl View {
-  pub fn rebuild(&mut self, rect: &Rect) {
-    match self {
-      Self::Page(view) => view.rebuild(rect),
-      Self::List(list) => list.rebuild(rect),
-    }
-  }
-
-  // dont rewrap, only point_view changes
-  pub fn resize(&mut self, rect: &Rect) {
-    match self {
-      Self::Page(view) => view.resize(rect),
-      Self::List(list) => list.resize(rect),
     }
   }
 }
@@ -227,7 +211,7 @@ pub struct Layout {
   pub max_rect:     Rect,
   pub frame_params: FrameParams,
   pub frame:        Frame,
-  pub view_map:     HashMap<u16, View>,
+  pub view_map:     HashMap<u16, PageViewList>,
 }
 
 impl From<Rect> for Layout {
@@ -243,23 +227,55 @@ impl From<Rect> for Layout {
 }
 
 impl Layout {
-  fn push_frame(&mut self) {
-    let mut keys: Vec<u16> = self.view_map
-      .keys().map(|k| k.clone()).collect();
+  fn get_sorted_keys(&self) -> Vec<u16> {
+    let mut keys: Vec<_> = self.view_map.keys().map(|k| k.clone()).collect();
     keys.sort();
-    let mut rect = self.frame.inner_rect;
-    for k in keys.iter() {
-      if let Some(value) = self.view_map.get_mut(k) {
-        value.rebuild(&rect);
-        rect = rect.shift_north((value.get_height() as i16) * -1);
+    keys
+  }
+
+  fn for_each<F: FnMut(&mut PageViewList)>(&mut self, mut func: F) {
+    for k in self.get_sorted_keys().iter() {
+      if let Some(view_list) = self.view_map.get_mut(k) {
+        func(view_list);
       }
     }
+  }
+
+  fn resize(&mut self) {
+    let mut rect = self.frame.inner_rect;
+    self.for_each(|view_list| {
+      view_list.resize(&rect);
+      rect = rect.shift_north((view_list.get_height() as i16) * -1);
+    });
+  }
+
+  fn rebuild(&mut self) {
+    let mut rect = self.frame.inner_rect;
+    self.for_each(|view_list| {
+      view_list.rebuild(&rect);
+      rect = rect.shift_north((view_list.get_height() as i16) * -1);
+    });
+  }
+
+  fn get_rect_for_key(&self, key: u16) -> Rect {
+    let mut rect = self.frame.inner_rect;
+    for k in self.get_sorted_keys().iter().take_while(|k| **k < key) {
+      if let Some(view_list) = self.view_map.get(k) {
+        rect = rect.shift_north((view_list.get_height() as i16) * -1);
+      }
+    }
+    for k in self.get_sorted_keys().iter().rev().take_while(|k| **k > key) {
+      if let Some(view_list) = self.view_map.get(k) {
+        rect = rect.shift_south((view_list.get_height() as i16) * -1);
+      }
+    }
+    rect
   }
 
   pub fn set_max_rect(&mut self, rect: Rect) {
     self.max_rect = rect;
     self.frame = self.frame_params.build_from_outer(&self.max_rect);
-    self.push_frame();
+    self.rebuild();
   }
 
   pub fn with_frame_params(mut self, frame_params: FrameParams) 
@@ -268,13 +284,17 @@ impl Layout {
   pub fn set_frame_params(&mut self, frame_params: FrameParams) {
     self.frame_params = frame_params;
     self.frame = self.frame_params.build_from_outer(&self.max_rect);
-    self.push_frame();
+    self.rebuild();
   }
 
-  pub fn insert_page(&mut self, handle: u16, view_params: PageViewParams) {
-    self.view_map.insert(
-      handle, View::Page(view_params.build(&self.frame.inner_rect))
-    );
+  pub fn insert(&mut self, key: u16, view_params: PageViewParams) {
+    let rect = self.get_rect_for_key(key);
+    let view = view_params.build(&rect);
+    if let Some(view_list) = self.view_map.get_mut(&key) {
+      view_list.insert(view);
+    } else {
+      self.view_map.insert(key, view.into());
+    }
   }
 
   pub fn remove(&mut self, handle: u16) {
