@@ -72,6 +72,36 @@ impl PageViewParams {
     self.frame_params = frame_params;
   }
 
+  fn build_max_height(&self, rect: &Rect) -> u16 {
+    self.max_height.unwrap_or(u16::MIN).min(rect.height())
+  }
+
+  fn build_max_rect(&self, rect: &Rect) -> Rect {
+    let max_height = self.build_max_height(rect);
+    rect.set_height(max_height)
+  }
+
+  fn build_max_frame(&self, rect: &Rect) -> Frame {
+    self.frame_params.build_from_outer(
+      &self.build_max_rect(rect)
+    )
+  }
+
+  pub fn resize(
+    &self, 
+    page:       &Page, 
+    point_view: &mut PointView, 
+    rect:       &Rect
+  ) {
+    let mut frame = self.build_max_frame(rect);
+    if page.get_height() < frame.inner_rect.height() {
+      frame = self.frame_params.build_from_inner(
+        &frame.inner_rect.set_height(page.get_height())
+      );
+    }
+    point_view.resize(&page.point, &frame.inner_rect);
+  }
+
   pub fn rebuild(
     &self, 
     page:       &mut Page, 
@@ -86,21 +116,6 @@ impl PageViewParams {
       );
     }
     point_view.resize(&page.point, &frame.inner_rect);
-  }
-
-  fn build_max_height(&self, rect: &Rect) -> u16 {
-    self.max_height.unwrap_or(u16::MIN).min(rect.height())
-  }
-
-  fn build_max_rect(&self, rect: &Rect) -> Rect {
-    let max_height = self.build_max_height(rect);
-    rect.set_height(max_height)
-  }
-
-  fn build_max_frame(&self, rect: &Rect) -> Frame {
-    self.frame_params.build_from_outer(
-      &self.build_max_rect(rect)
-    )
   }
 
   pub fn build(self, rect: &Rect) -> PageView {
@@ -137,7 +152,7 @@ impl PageView {
 
   // dont rewrap, only point_view changes
   pub fn resize(&mut self, rect: &Rect) {
-    self.view_params.rebuild(&mut self.page, &mut self.point_view, rect);
+    self.view_params.resize(&self.page, &mut self.point_view, rect);
   }
 }
 
@@ -145,11 +160,40 @@ pub struct PageViewList {
   pub cursor:     Rc<Cursor>,
   pub page_views: Vec<PageView>,
 }
+impl PageViewList {
+  pub fn rebuild(&mut self, rect: &Rect) {
+    for view in self.page_views.iter_mut() {
+      view.rebuild(rect);
+    }
+  }
+
+  // dont rewrap, only point_view changes
+  pub fn resize(&mut self, rect: &Rect) {
+    for view in self.page_views.iter_mut() {
+      view.resize(rect);
+    }
+  }
+}
 
 pub enum View {
-  Layout(Rc<Layout>),
   Page(PageView),
   List(PageViewList),
+}
+impl View {
+  pub fn rebuild(&mut self, rect: &Rect) {
+    match self {
+      Self::Page(view) => view.rebuild(rect),
+      Self::List(list) => list.rebuild(rect),
+    }
+  }
+
+  // dont rewrap, only point_view changes
+  pub fn resize(&mut self, rect: &Rect) {
+    match self {
+      Self::Page(view) => view.resize(rect),
+      Self::List(list) => list.resize(rect),
+    }
+  }
 }
 
 pub struct Layout {
@@ -173,6 +217,14 @@ impl From<Rect> for Layout {
 
 impl Layout {
   fn push_new_frame(&mut self) {
+    let mut keys: Vec<u16> = self.view_map
+      .keys().map(|k| k.clone()).collect();
+    keys.sort();
+    for k in keys.iter() {
+      if let Some(value) = self.view_map.get_mut(k) {
+        value.rebuild(&self.frame.inner_rect);
+      }
+    }
   }
 
   pub fn set_max_rect(&mut self, rect: Rect) {
