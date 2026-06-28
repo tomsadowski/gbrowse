@@ -65,10 +65,9 @@ impl App {
   pub fn init(path: &str, w: u16, h: u16) -> Self {
     let user_text = std::fs::read_to_string(path).unwrap_or_default();
     let user: User = user_from_str(&user_text).unwrap_or_default();
-    let layout = Layout::from(&Rect::from(Dim(w, h)))
+    let layout = Layout::from(Rect::from(Dim(w, h)))
       .with_frame_params(user.get_frame_params());
     let mut app = Self {
-      layout:      Layout::from(&Rect::from(Dim(w, h))),
       guide:       "".into(),
       tabs:        TabManager::default().with_style(user.style.general),
       request:     None,
@@ -77,6 +76,7 @@ impl App {
       tab_changed: true,
       clear:       true,
       quit:        false,
+      layout,
       user,
     };
     match url::Url::parse(&app.user.init_url) {

@@ -118,6 +118,18 @@ impl Rect {
   pub fn x_end(&self)  -> u16 { self.x + self.w }
   pub fn y_end(&self)  -> u16 { self.y + self.h }
 
+  pub fn set_width(&self, w: u16)  -> Self { 
+    let mut rect = self.clone();
+    rect.w = w; 
+    rect
+  }
+
+  pub fn set_height(&self, h: u16) -> Self { 
+    let mut rect = self.clone();
+    rect.h = h; 
+    rect
+  }
+
   pub fn a(&self) -> Pos {
     (self.x, self.y).into()
   }
