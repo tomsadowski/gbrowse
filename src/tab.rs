@@ -84,7 +84,7 @@ impl TabCursor {
       .map(|gemtext| (gemtext.tag, gemtext.text))
       .unzip();
     let new_tab = Tab::Gem(UrlTab::new(url, tags));
-    self.cursor.insert_or_move(
+    self.cursor.insert_unique_with(
       &mut self.tabs, 
       |tab| tab.get_url() == Some(url), 
       new_tab

@@ -16,6 +16,16 @@ impl std::ops::DerefMut for Cursor {
   fn deref_mut(&mut self) -> &mut Self::Target {&mut self.head}
 }
 
+pub enum CursorAction {
+  Insert(usize), 
+  Remove(usize),
+}
+
+impl CursorAction {
+  pub fn apply<T>(&self, vec: &mut Vec<T>) {
+  }
+}
+
 impl Cursor {
   pub fn editor<T>(mut self, vec: &Vec<T>) -> Self {
     self.make_editor(vec);
@@ -85,37 +95,43 @@ impl Cursor {
     vec.len()
   }
 
-  pub fn insert_or_move<T, F>(&mut self, vec: &mut Vec<T>, func: F, unit: T) 
-    -> bool
+  pub fn insert_unique_with<T, F>(
+    &mut self, 
+    vec:        &mut Vec<T>, 
+    is_equal:   F, 
+    unit:       T
+  ) -> Option<CursorAction>
   where F: Fn(&T) -> bool,
   {
     if let Some((idx, _)) = vec
       .iter_mut()
       .enumerate()
-      .find(|(_, u)| func(u))
+      .find(|(_, u)| is_equal(u))
     {
       self.head = idx;
-      false
+      None
     } else if vec.len() == 0 {
       vec.push(unit);
-      true
+      Some(CursorAction::Insert(self.head))
     } else if self.head + 1 == vec.len() {
       vec.push(unit);
       self.head += 1;
-      true
+      Some(CursorAction::Insert(self.head - 1))
     }
     else {
       self.head += 1;
       vec.insert(self.head, unit);
-      true
+      Some(CursorAction::Insert(self.head))
     }
   }
 
-  pub fn delete<T>(&mut self, vec: &mut Vec<T>) -> bool {
+  pub fn delete<T>(&mut self, vec: &mut Vec<T>) 
+    -> Option<CursorAction>
+  {
     if self.head < vec.len() {
       vec.remove(self.head);
-      true
-    } else {false}
+      Some(CursorAction::Remove(self.head))
+    } else {None}
   }
 
   pub fn backspace<T>(&mut self, vec: &mut Vec<T>) -> bool {
