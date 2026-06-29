@@ -1,6 +1,87 @@
 // src/cursor.rs
 
 
+#[derive(Default)]
+pub struct CursorList<T> {
+  pub cursor: Cursor,
+  pub vec:    Vec<T>,
+}
+
+impl<T> From<T> for CursorList<T> {
+  fn from(t: T) -> Self {
+    Self {
+      cursor: Cursor::default(),
+      vec: vec![t],
+    }
+  }
+}
+
+impl<T> From<Vec<T>> for CursorList<T> {
+  fn from(vec: Vec<T>) -> Self {
+    Self {
+      cursor: Cursor::default(),
+      vec,
+    }
+  }
+}
+
+impl<T> std::ops::Deref for CursorList<T> {
+  type Target = Vec<T>;
+  fn deref(&self) -> &Self::Target {&self.vec}
+}
+
+impl<T> std::ops::DerefMut for CursorList<T> {
+  fn deref_mut(&mut self) -> &mut Self::Target { &mut self.vec }
+}
+
+impl<T> CursorList<T> {
+  pub fn get_current(&self) -> Option<&T> {
+    self.vec.get(*self.cursor)
+  }
+
+  pub fn get_current_mut(&mut self) -> Option<&mut T> {
+    self.vec.get_mut(*self.cursor)
+  }
+
+  pub fn remove(&mut self) -> Option<CursorRemove> {
+    self.cursor.remove(&mut self.vec)
+  }
+
+  pub fn delete(&mut self) -> Option<CursorRemove> {
+    self.cursor.delete(&mut self.vec)
+  }
+
+  pub fn backspace(&mut self) -> Option<CursorRemove> {
+    self.cursor.backspace(&mut self.vec)
+  }
+
+  pub fn insert(&mut self, t: T) -> CursorInsert {
+    self.cursor.insert(&mut self.vec, t)
+  }
+
+  pub fn insert_unique_with<F>(&mut self, is_equal: F, unit: T) 
+    -> Option<CursorInsert> 
+  where F: Fn(&T) -> bool,
+  {
+    self.cursor.insert_unique_with(&mut self.vec, is_equal, unit)
+  }
+}
+
+pub struct CursorRemove(usize);
+impl CursorRemove {
+  pub fn apply<T>(&self, vec: &mut Vec<T>) { vec.remove(self.0); }
+}
+
+pub enum CursorInsert { Insert(usize), Push }
+impl CursorInsert {
+  pub fn apply<T>(&self, vec: &mut Vec<T>, t: T) {
+    match self {
+      Self::Insert(i) => { vec.insert(*i, t); }
+      Self::Push      => { vec.push(t); }
+    }
+  }
+}
+
 #[derive(Clone, Copy, Debug, Default)]
 pub struct Cursor {
   head: usize,
@@ -14,28 +95,6 @@ impl std::ops::Deref for Cursor {
 
 impl std::ops::DerefMut for Cursor {
   fn deref_mut(&mut self) -> &mut Self::Target {&mut self.head}
-}
-
-pub struct CursorRemove(usize);
-
-impl CursorRemove {
-  pub fn apply<T>(&self, vec: &mut Vec<T>) {
-    vec.remove(self.0);
-  }
-}
-
-pub enum CursorInsert {
-  Insert(usize), 
-  Push,
-}
-
-impl CursorInsert {
-  pub fn apply<T>(&self, vec: &mut Vec<T>, t: T) {
-    match self {
-      Self::Insert(i) => { vec.insert(*i, t); }
-      Self::Push => { vec.push(t); }
-    }
-  }
 }
 
 impl Cursor {
@@ -108,6 +167,25 @@ impl Cursor {
     } else {None}
   }
 
+  pub fn delete<T>(&mut self, vec: &mut Vec<T>) 
+    -> Option<CursorRemove>
+  {
+    if self.head < vec.len() {
+      vec.remove(self.head);
+      Some(CursorRemove(self.head))
+    } else {None}
+  }
+
+  pub fn backspace<T>(&mut self, vec: &mut Vec<T>) 
+    -> Option<CursorRemove>
+  {
+    if self.peek_move(vec, -1) == 0 {
+      self.move_head(vec, -1);
+      vec.remove(self.head);
+      Some(CursorRemove(self.head))
+    } else {None}
+  }
+
   pub fn insert_unique_with<T, F>(
     &mut self, 
     vec:        &mut Vec<T>, 
@@ -136,25 +214,6 @@ impl Cursor {
       vec.insert(self.head, unit);
       Some(CursorInsert::Insert(self.head))
     }
-  }
-
-  pub fn delete<T>(&mut self, vec: &mut Vec<T>) 
-    -> Option<CursorRemove>
-  {
-    if self.head < vec.len() {
-      vec.remove(self.head);
-      Some(CursorRemove(self.head))
-    } else {None}
-  }
-
-  pub fn backspace<T>(&mut self, vec: &mut Vec<T>) 
-    -> Option<CursorRemove>
-  {
-    if self.peek_move(vec, -1) == 0 {
-      self.move_head(vec, -1);
-      vec.remove(self.head);
-      Some(CursorRemove(self.head))
-    } else {None}
   }
 
   pub fn insert<T>(&mut self, vec: &mut Vec<T>, c: T) 

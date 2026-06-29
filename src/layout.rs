@@ -8,6 +8,7 @@ use crate::{
   PointView,
   Page,
   PageParams,
+  CursorList,
 };
 use std::collections::HashMap;
 
@@ -40,10 +41,10 @@ impl GetHeight for PageView {
   }
 }
 
-impl GetHeight for PageViewList {
+impl GetHeight for CursorList<PageView> {
   fn get_height(&self) -> u16 {
-    self.views
-      .get(*self.cursor)
+    self
+      .get_current()
       .map(|page_view| page_view.get_height())
       .unwrap_or(u16::MIN)
   }
@@ -199,51 +200,25 @@ impl PageView {
   }
 }
 
-#[derive(Default)]
-pub struct PageViewList {
-  pub cursor: Cursor,
-  pub views:  Vec<PageView>,
-}
-
-impl From<PageView> for PageViewList {
-  fn from(view: PageView) -> Self {
-    let mut view_list = Self::default();
-    view_list.insert(view);
-    view_list
-  }
-}
-
-impl PageViewList {
+impl CursorList<PageView> {
   pub fn draw<W: std::io::Write>(&self, writer: &mut W) 
     -> std::io::Result<()> 
   {
-    if let Some(view) = self.get_page_view() {
+    if let Some(view) = self.get_current() {
       view.draw(writer)?;
     }
     Ok(())
   }
 
-  pub fn get_page_view(&self) -> Option<&PageView> {
-    self.views.get(*self.cursor)
-  }
-
-  pub fn get_page_view_mut(&mut self) -> Option<&mut PageView> {
-    self.views.get_mut(*self.cursor)
-  }
-
-  pub fn insert(&mut self, view: PageView) {
-    self.cursor.insert(&mut self.views, view);
-  }
-
   pub fn rebuild(&mut self, rect: &Rect) {
-    for view in self.views.iter_mut() {
+    for view in self.vec.iter_mut() {
       view.rebuild(rect);
     }
   }
 
   // dont rewrap, only point_view changes
   pub fn resize(&mut self, rect: &Rect) {
-    for view in self.views.iter_mut() {
+    for view in self.vec.iter_mut() {
       view.resize(rect);
     }
   }
@@ -253,7 +228,7 @@ pub struct Layout {
   pub max_rect:     Rect,
   pub frame_params: FrameParams,
   pub frame:        Frame,
-  pub map:          HashMap<u16, PageViewList>,
+  pub map:          HashMap<u16, CursorList<PageView>>,
 }
 
 impl From<Rect> for Layout {
@@ -279,7 +254,7 @@ impl Layout {
   pub fn get_page_view_mut(&mut self, key: u16) -> Option<&mut PageView> {
     self.map
       .get_mut(&key)
-      .and_then(|v| v.get_page_view_mut())
+      .and_then(|v| v.get_current_mut())
   }
 
   fn get_sorted_keys(&self) -> Vec<u16> {
@@ -289,7 +264,7 @@ impl Layout {
   }
 
   fn for_each_sorted<F, T>(&self, mut func: F)
-  where F: FnMut(&PageViewList) -> T
+  where F: FnMut(&CursorList<PageView>) -> T
   {
     for k in self.get_sorted_keys().iter() {
       if let Some(v) = self.map.get(k) { func(v); }
@@ -297,7 +272,7 @@ impl Layout {
   }
 
   fn for_each_sorted_mut<F>(&mut self, mut func: F) 
-  where F: FnMut(&mut PageViewList)
+  where F: FnMut(&mut CursorList<PageView>)
   {
     for k in self.get_sorted_keys().iter() {
       if let Some(v) = self.map.get_mut(k) { func(v); }

@@ -53,7 +53,6 @@ pub use crate::layout::{
   Layout,
   PageView,
   PageViewParams,
-  PageViewList,
 };
 pub use crate::user::{
   User,
@@ -63,6 +62,9 @@ pub use crate::user::{
 };
 pub use crate::cursor::{
   Cursor, 
+  CursorList,
+  CursorRemove,
+  CursorInsert,
   Point,
   PointView,
   CursorView,
