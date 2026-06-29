@@ -248,21 +248,21 @@ impl Point {
     vec
       .get_mut(*self.y)
       .map(|c| self.x.delete(c))
-      .unwrap_or(false) 
+      .is_some()
   }
 
   pub fn backspace<T>(&mut self, vec: &mut Vec<Vec<T>>) -> bool {
     vec
       .get_mut(*self.y)
       .map(|c| self.x.backspace(c))
-      .unwrap_or(false) 
+      .is_some()
   }
 
   pub fn insert<T>(&mut self, vec: &mut Vec<Vec<T>>, t: T) -> bool {
     vec
       .get_mut(*self.y)
       .map(|c| self.x.insert(c, t))
-      .unwrap_or(false) 
+      .is_some()
   }
 
   pub fn move_left<T>(&mut self, vec: &Vec<Vec<T>>, delta: usize) -> bool {
