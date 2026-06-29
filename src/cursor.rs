@@ -18,6 +18,12 @@ impl std::ops::DerefMut for Cursor {
 
 pub struct CursorRemove(usize);
 
+impl CursorRemove {
+  pub fn apply<T>(&self, vec: &mut Vec<T>) {
+    vec.remove(self.0);
+  }
+}
+
 pub enum CursorInsert {
   Insert(usize), 
   Push,
@@ -26,8 +32,8 @@ pub enum CursorInsert {
 impl CursorInsert {
   pub fn apply<T>(&self, vec: &mut Vec<T>, t: T) {
     match self {
-      Self::Insert(i) => { vec.insert(i, t); }
-      Self::Push => { vec.push(t) }
+      Self::Insert(i) => { vec.insert(*i, t); }
+      Self::Push => { vec.push(t); }
     }
   }
 }
@@ -93,12 +99,13 @@ impl Cursor {
     }
   }
 
-  pub fn remove<T>(&mut self, vec: &mut Vec<T>) -> usize {
+  pub fn remove<T>(&mut self, vec: &mut Vec<T>) -> Option<CursorRemove> {
     if self.head < vec.len() {
+      let head = self.head;
       vec.remove(self.head);
       self.move_wrapped(vec, -1);
-    }
-    vec.len()
+      Some(CursorRemove(head))
+    } else {None}
   }
 
   pub fn insert_unique_with<T, F>(
@@ -122,7 +129,7 @@ impl Cursor {
     } else if self.head + 1 == vec.len() {
       vec.push(unit);
       self.head += 1;
-      Some(CursorInsert::Insert(self.head - 1))
+      Some(CursorInsert::Push)
     }
     else {
       self.head += 1;
@@ -140,23 +147,28 @@ impl Cursor {
     } else {None}
   }
 
-  pub fn backspace<T>(&mut self, vec: &mut Vec<T>) -> bool {
+  pub fn backspace<T>(&mut self, vec: &mut Vec<T>) 
+    -> Option<CursorRemove>
+  {
     if self.peek_move(vec, -1) == 0 {
       self.move_head(vec, -1);
       vec.remove(self.head);
-      true
-    } else {false}
+      Some(CursorRemove(self.head))
+    } else {None}
   }
 
-  pub fn insert<T>(&mut self, vec: &mut Vec<T>, c: T) -> bool {
+  pub fn insert<T>(&mut self, vec: &mut Vec<T>, c: T) 
+    -> CursorInsert
+  {
     if self.head + 1 == vec.len() || vec.len() == 0 {
       vec.push(c);
       self.move_head(vec, 1);
-      true
+      CursorInsert::Push
     } else {
+      let head = self.head;
       vec.insert(self.head, c);
       self.move_head(vec, 1);
-      true
+      CursorInsert::Insert(head)
     }
   }
 
