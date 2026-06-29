@@ -16,13 +16,19 @@ impl std::ops::DerefMut for Cursor {
   fn deref_mut(&mut self) -> &mut Self::Target {&mut self.head}
 }
 
-pub enum CursorAction {
+pub struct CursorRemove(usize);
+
+pub enum CursorInsert {
   Insert(usize), 
-  Remove(usize),
+  Push,
 }
 
-impl CursorAction {
-  pub fn apply<T>(&self, vec: &mut Vec<T>) {
+impl CursorInsert {
+  pub fn apply<T>(&self, vec: &mut Vec<T>, t: T) {
+    match self {
+      Self::Insert(i) => { vec.insert(i, t); }
+      Self::Push => { vec.push(t) }
+    }
   }
 }
 
@@ -100,7 +106,7 @@ impl Cursor {
     vec:        &mut Vec<T>, 
     is_equal:   F, 
     unit:       T
-  ) -> Option<CursorAction>
+  ) -> Option<CursorInsert>
   where F: Fn(&T) -> bool,
   {
     if let Some((idx, _)) = vec
@@ -112,25 +118,25 @@ impl Cursor {
       None
     } else if vec.len() == 0 {
       vec.push(unit);
-      Some(CursorAction::Insert(self.head))
+      Some(CursorInsert::Push)
     } else if self.head + 1 == vec.len() {
       vec.push(unit);
       self.head += 1;
-      Some(CursorAction::Insert(self.head - 1))
+      Some(CursorInsert::Insert(self.head - 1))
     }
     else {
       self.head += 1;
       vec.insert(self.head, unit);
-      Some(CursorAction::Insert(self.head))
+      Some(CursorInsert::Insert(self.head))
     }
   }
 
   pub fn delete<T>(&mut self, vec: &mut Vec<T>) 
-    -> Option<CursorAction>
+    -> Option<CursorRemove>
   {
     if self.head < vec.len() {
       vec.remove(self.head);
-      Some(CursorAction::Remove(self.head))
+      Some(CursorRemove(self.head))
     } else {None}
   }
 
