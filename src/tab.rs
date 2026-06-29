@@ -163,10 +163,7 @@ pub struct UrlTab<T> {
 
 impl<T> UrlTab<T> {
   pub fn new(url: &Url, tags: Vec<T>) -> Self {
-    Self {
-      url: url.clone(),
-      tags,
-    }
+    Self { url: url.clone(), tags }
   }
 
   pub fn get_current_tag(&self, page: &Page) -> Option<&T> {
