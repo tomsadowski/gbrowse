@@ -15,7 +15,6 @@ mod color;
 mod rect;
 mod frame;
 mod page;
-mod dialog;
 mod network;
 mod gemini;
 mod app;
@@ -77,10 +76,6 @@ pub use crate::rect::{
   Pos, 
   Dim,
   Rect, 
-};
-pub use crate::dialog::{
-  Dialog, 
-  DlgInput,
 };
 pub use crate::gemini::{
   GemTag, 

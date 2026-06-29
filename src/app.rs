@@ -12,8 +12,6 @@ use crate::{
   TabCursor,
   Request,
   Layout,
-  DlgInput, 
-  Dialog,
   Action,
   Rect, 
   PageViewParams,
@@ -72,7 +70,7 @@ impl App {
       .with_frame_params(user.get_frame_params());
     let mut app = Self {
       guide:       "".into(),
-      tabs:        TabCursor::default().with_style(user.style.general),
+      tabs:        TabCursor::default(),//.with_style(user.style.general),
       request:     None,
       focus:       Focus::Tab,
       new_dlg:     false,
@@ -264,12 +262,12 @@ impl App {
   }
 
   pub fn push_style(&mut self) {
-    self.frame = self.user.get_frame(self.frame.screen);
-    self.push_size();
-    self.tabs.push_style(self.user.style.general);
-    self.tabs.push_gem_style(
-      |gem| self.user.get_style_from_gem_tag(gem)
-    );
+//  self.frame = self.user.get_frame(self.frame.screen);
+//  self.push_size();
+//  self.tabs.push_style(self.user.style.general);
+//  self.tabs.push_gem_style(
+//    |gem| self.user.get_style_from_gem_tag(gem)
+//  );
   }
 
   pub fn select_link(&mut self, url_str: &str) {
@@ -370,8 +368,8 @@ impl App {
             _ => self.focus_tabs(),
           }
         }
-        (Some(editbox), Action::Enter, Task::Init(_)) => {
-          let url_str = editbox.get_current_string().unwrap();
+        (Some(view), Action::Enter, Task::Init(_)) => {
+          let url_str = view.get_page_string().unwrap();
           match url::Url::parse(&url_str) {
             Err(e) => 
               self.focus_edit_dialog(
@@ -392,9 +390,9 @@ impl App {
             Task::Init(url_str), "Exit application?".into()
           )
         }
-        (Some(editbox), Action::Enter, Task::Reply(url)) => {
-          let text = editbox
-            .get_current_string()
+        (Some(view), Action::Enter, Task::Reply(url)) => {
+          let text = view
+            .get_page_string()
             .unwrap()
             .trim()
             .replace(" ", "%20");
@@ -409,9 +407,9 @@ impl App {
             }
           }
         }
-        (Some(editbox), Action::Enter, Task::NewTab) => {
+        (Some(view), Action::Enter, Task::NewTab) => {
           match url::Url::parse(
-            &editbox.get_current_string().unwrap()
+            &view.get_page_string().unwrap()
           ) {
             Err(e) => 
               self.focus_ack_dialog(
@@ -454,89 +452,88 @@ impl App {
             self.focus_tabs();
           }
         }
-        (DlgInput::Ack(_), _, _) |
+       // (DlgInput::Ack(_), _, _) |
         (_,   Action::Select, _) |
         (_,       Action::No, _) |
         (_,   Action::Cancel, _) => {
           self.focus_tabs();
         }
         (Some(textbox), action, _) => {
-          action.update(textbox);
+         // action.update(textbox);
         }
-        (Some(editbox),   action, _) => {
-          action.update_edit(editbox);
-        }
+      //(Some(editbox),   action, _) => {
+      // // action.update_edit(editbox);
+      //}
         (_, _, _) => {
           self.focus_tabs();
         }
       }
-      (Msg::Action(Action::SaveUrl), Focus::Tab) 
-        => match (
-
-          self.layout.get_page_view_mut(TAB)
-        )
-      {
-        if let Some(url) = self.tabs.get_url() {
-          match self.user.save_url(url) {
-            Err(e) => self.focus_ack_dialog(e),
-            Ok(()) => self.focus_ack_dialog(
-              format!("Saved URL: {url}")
+      (Msg::Action(action), Focus::Tab) => match (
+        self.layout.get_page_view_mut(TAB),
+        action,
+      ) {
+        (None, _) => {}
+        (Some(view), Action::SaveUrl) => 
+          if let Some(url) = self.tabs.get_url() {
+            match self.user.save_url(url) {
+              Err(e) => self.focus_ack_dialog(e),
+              Ok(()) => self.focus_ack_dialog(
+                format!("Saved URL: {url}")
+              ),
+            }
+          }
+        (Some(view), Action::Select) => 
+          match self.tabs.get_gem_tag(&view.page) {
+            None => self.focus_ack_dialog(
+              format!("You've selected nothing")
+            ),
+            Some(GemTag::Link(link)) => {
+              let link = link.clone();
+              self.select_link(&link);
+            }
+            Some(gemtag) => self.focus_ack_dialog(
+              format!("You've selected {gemtag:?}")
             ),
           }
+        (Some(view), Action::CycleLeft) => {
+          self.tab_changed = {
+            self.tabs.cursor.move_wrapped(&self.tabs.tabs, -1); true
+          };
         }
-      }
-      (Msg::Action(Action::Select), Focus::Tab) => {
-        match self.tabs.get_gem_tag() {
-          None => self.focus_ack_dialog(
-            format!("You've selected nothing")
-          ),
-          Some(GemTag::Link(link)) => {
-            let link = link.clone();
-            self.select_link(&link);
-          }
-          Some(gemtag) => self.focus_ack_dialog(
-            format!("You've selected {gemtag:?}")
-          ),
+        (Some(view), Action::CycleRight) => {
+          self.tab_changed = {
+            self.tabs.cursor.move_wrapped(&self.tabs.tabs, 1); true
+          };
         }
-      }
-      (Msg::Action(Action::CycleLeft), Focus::Tab) => {
-        self.tab_changed = {
-          self.tabs.cursor.move_wrapped(&self.tabs.tabs, -1); true
-        };
-      }
-      (Msg::Action(Action::CycleRight), Focus::Tab) => {
-        self.tab_changed = {
-          self.tabs.cursor.move_wrapped(&self.tabs.tabs, 1); true
-        };
-      }
-      (Msg::Action(Action::LoadUrl), Focus::Tab) => {
-        self.focus_select_dialog(
-          Task::NewTab, 
-          "Choose URL: ", 
-          self.user.urls.clone()
-        );
-      }
-      (Msg::Action(Action::Menu), Focus::Tab) => {
-        self.focus_select_dialog(
-          Task::Menu, 
-          "Choose: ", 
-          MENU.iter().map(|s| s.to_string()).collect()
-        );
-      }
-      (Msg::Action(Action::NewTab), Focus::Tab) => {
-        self.focus_edit_dialog(
-          Task::NewTab, "enter path: ", ""
-        );
-      }
-      (Msg::Action(Action::DelTab), Focus::Tab) => {
-        self.focus_ask_dialog(
-          Task::DelTab, "Delete current tab?"
-        );
-      }
-      (Msg::Action(action), Focus::Tab) => {
-        self.tabs.use_page_params_mut(
-          |textbox| action.update(textbox)
-        );
+        (Some(view), Action::LoadUrl) => {
+          self.focus_select_dialog(
+            Task::NewTab, 
+            "Choose URL: ", 
+            self.user.urls.clone()
+          );
+        }
+        (Some(view), Action::Menu) => {
+          self.focus_select_dialog(
+            Task::Menu, 
+            "Choose: ", 
+            MENU.iter().map(|s| s.to_string()).collect()
+          );
+        }
+        (Some(view), Action::NewTab) => {
+          self.focus_edit_dialog(
+            Task::NewTab, "enter path: ", ""
+          );
+        }
+        (Some(view), Action::DelTab) => {
+          self.focus_ask_dialog(
+            Task::DelTab, "Delete current tab?"
+          );
+        }
+        (Some(view), action) => {
+        //self.tabs.use_page_params_mut(
+        //  |textbox| action.update(textbox)
+        //);
+        }
       }
     }
   }
@@ -563,8 +560,8 @@ impl App {
           ..
         }
       ) => match &self.focus {
-        Focus::Dialog(_, dlg) => 
-          self.user.keys.get_dlg_action(dlg, &kc).map(Msg::Action),
+        Focus::Dialog(_) => 
+          self.user.keys.get_tab_action(&kc).map(Msg::Action),
         Focus::Tab => 
           self.user.keys.get_tab_action(&kc).map(Msg::Action),
       }
@@ -577,27 +574,28 @@ impl App {
     w.queue(cursor::Hide)?;
     if self.clear {
       w.queue(terminal::Clear(terminal::ClearType::All))?;
-      self.frame.draw(w)?;
+      self.layout.frame.draw(w)?;
     }
     let banner_text = self.tabs.get_banner_text();
-    self.frame.draw_banner(&banner_text, w)?;
-    self.frame.draw_footer(&self.guide, w)?;
-    if let Focus::Dialog(_) = &self.focus {
-      dialog.draw(w)?;
-    } else {
-      if let Some(request) = &self.request {
-    //  let tb: TextBox = TextBox::from(
-    //      self.frame.get_view_port().top_row()
-    //    ).reference(
-    //      &vec![format!("requesting {}", request.url)],
-    //      |s| StyledText::from(s.clone())
-    //    );
-    //  tb.draw(writer)?;
-        self.tabs.draw(w)?;
-      } else {
-        self.tabs.draw(w)?;
-      }
-    }
+    self.layout.frame.draw_banner(&banner_text, w)?;
+    self.layout.frame.draw_footer(&self.guide, w)?;
+    self.layout.draw(w)?;
     w.flush()
+ // if let Focus::Dialog(_) = &self.focus {
+ //   //dialog.draw(w)?;
+ // } else {
+ //   if let Some(request) = &self.request {
+ // //  let tb: TextBox = TextBox::from(
+ // //      self.frame.get_view_port().top_row()
+ // //    ).reference(
+ // //      &vec![format!("requesting {}", request.url)],
+ // //      |s| StyledText::from(s.clone())
+ // //    );
+ // //  tb.draw(writer)?;
+ //     self.tabs.draw(w)?;
+ //   } else {
+ //     self.tabs.draw(w)?;
+ //   }
+ // }
   }
 }

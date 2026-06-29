@@ -2,8 +2,6 @@
 
 use crate::{
   Assign,
-  Dialog, 
-  DlgInput,
   Action,
 };
 use crossterm::event::KeyCode;
@@ -149,16 +147,16 @@ impl UserKeys {
     }
   }
 
-  pub fn get_dlg_action(&self, dialog: &Dialog, kc: &KeyCode) 
-    -> Option<Action> 
-  {
-    match dialog.input {
-      DlgInput::Ack(_)    => self.get_ack_dialog_action(kc),
-      DlgInput::Text(_)    => self.get_ask_dialog_action(kc),
-      DlgInput::Edit(_)   => self.get_edit_dialog_action(kc),
-      DlgInput::Select(_) => self.get_select_dialog_action(kc),
-    }
-  }
+//pub fn get_dlg_action(&self, dialog: &Dialog, kc: &KeyCode) 
+//  -> Option<Action> 
+//{
+//  match dialog.input {
+//    DlgInput::Ack(_)    => self.get_ack_dialog_action(kc),
+//    DlgInput::Text(_)    => self.get_ask_dialog_action(kc),
+//    DlgInput::Edit(_)   => self.get_edit_dialog_action(kc),
+//    DlgInput::Select(_) => self.get_select_dialog_action(kc),
+//  }
+//}
 
   pub fn get_ack_dialog_action(&self, kc: &KeyCode) -> Option<Action> {
     Some(Action::Ack)

@@ -23,31 +23,31 @@ pub struct TabCursor {
   pub tabs:   Vec<Tab>,
 } 
 impl TabCursor {
-  pub fn with_style<T>(mut self, style: T) -> Self 
-  where T: Into<Style> + Copy
-  {
-    self.push_style(style);
-    self
-  }
+//pub fn with_style<T>(mut self, style: T) -> Self 
+//where T: Into<Style> + Copy
+//{
+//  self.push_style(style);
+//  self
+//}
 
-  pub fn push_style<T>(&mut self, style: T)
-  where T: Into<Style> + Copy
-  {
-    for tab in self.tabs.iter_mut() {
-      tab.get_page_params_mut().style = style.into();
-    }
-  }
+//pub fn push_style<T>(&mut self, style: T)
+//where T: Into<Style> + Copy
+//{
+//  for tab in self.tabs.iter_mut() {
+//    tab.get_page_params_mut().style = style.into();
+//  }
+//}
 
-  pub fn push_gem_style<F>(&mut self, func: F)
-  where F: Fn(&GemTag) -> TextStyle,
-  {
-    for tab in self.tabs.iter_mut() {
-      if let Tab::Gem(gem_tab) = tab {
-        let styles = gem_tab.tags.iter().map(|t| func(t)).collect();
-        gem_tab.params.set_text_styles(styles);
-      }
-    }
-  }
+//pub fn push_gem_style<F>(&mut self, func: F)
+//where F: Fn(&GemTag) -> TextStyle,
+//{
+//  for tab in self.tabs.iter_mut() {
+//    if let Tab::Gem(gem_tab) = tab {
+//      let styles = gem_tab.tags.iter().map(|t| func(t)).collect();
+//      gem_tab.params.set_text_styles(styles);
+//    }
+//  }
+//}
 
   pub fn get_url(&self) -> Option<&url::Url> {
     self.tabs
@@ -61,14 +61,14 @@ impl TabCursor {
       .and_then(|tab| tab.get_gem_tag(page))
   }
 
-  pub fn use_page_params_mut<F, T>(&mut self, func: F) -> Option<T>
-  where F: Fn(&mut PageParams) -> T
-  {
-    self.tabs
-      .get_mut(*self.cursor)
-      .map(|tab| tab.get_page_params_mut())
-      .map(|textbox| func(textbox))
-  }
+//pub fn use_page_params_mut<F, T>(&mut self, func: F) -> Option<T>
+//where F: Fn(&mut PageParams) -> T
+//{
+//  self.tabs
+//    .get_mut(*self.cursor)
+//    .map(|tab| tab.get_page_params_mut())
+//    .map(|textbox| func(textbox))
+//}
 
   pub fn add_gem_tab<F>(
     &mut self, 
