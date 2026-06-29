@@ -71,7 +71,7 @@ pub use crate::cursor::{
 pub use crate::tab::{
   Tab, 
   UrlTab, 
-  TabManager,
+  TabCursor,
 };
 pub use crate::rect::{
   Pos, 

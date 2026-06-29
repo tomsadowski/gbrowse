@@ -63,7 +63,7 @@ impl PageParams {
     self.style = style.into();
   }
 
-  pub fn style<S: Into<Style> + Copy>(mut self, style: S) -> Self {
+  pub fn with_style<S: Into<Style> + Copy>(mut self, style: S) -> Self {
     self.set_style(style);
     self
   }
@@ -89,7 +89,22 @@ impl PageParams {
 
   pub fn edit(mut self, b: bool) -> Self { self.set_edit(b); self }
 
-  pub fn set_text<T, F>(&mut self, text: &[T], get_text_style: F)
+  pub fn set_text<T>(&mut self, text: &[T])
+  where T: std::fmt::Display,
+  {
+    self.string_vec = text.iter().map(|t| t.to_string()).collect();
+    self.style_vec  = self.string_vec.iter()
+      .map(|t| TextStyle::default()).collect();
+  }
+
+  pub fn with_text<T>(mut self, text: &[T]) -> Self 
+  where T: std::fmt::Display,
+  {
+    self.set_text(text);
+    self
+  }
+
+  pub fn set_styled_text<T, F>(&mut self, text: &[T], get_text_style: F)
   where T: std::fmt::Display,
         F: Fn(&T) -> TextStyle,
   {
@@ -97,11 +112,12 @@ impl PageParams {
     self.style_vec  = text.iter().map(|t| get_text_style(t)).collect();
   }
 
-  pub fn with_text<T, F>(mut self, text: &[T], get_text_style: F) -> Self 
+  pub fn with_styled_text<T, F>(mut self, text: &[T], get_text_style: F) 
+    -> Self 
   where T: std::fmt::Display,
         F: Fn(&T) -> TextStyle,
   {
-    self.set_text(text, get_text_style);
+    self.set_styled_text(text, get_text_style);
     self
   }
 
@@ -126,11 +142,11 @@ impl PageParams {
     }
   }
 
-  pub fn get_current_param_string(&self, page: &Page) -> String {
+  pub fn get_string(&self, page: &Page) -> &str {
     self.string_vec
       .get(*page.point.y)
-      .map(|t| t.to_string())
-      .unwrap_or("empty".into())
+      .map(|s| s.as_str())
+      .unwrap_or("empty")
   }
 
   pub fn draw<W: std::io::Write>(
@@ -164,10 +180,14 @@ impl Page {
     self.point.set_linear_head(&self.matrix, linear_head);
   }
 
-  pub fn get_current_index(&self) -> usize {
+  pub fn get_index(&self) -> usize {
     self.indexes.get(*self.point.y)
       .map(|u| u.clone())
       .unwrap_or(usize::MIN)
+  }
+
+  pub fn get_string(&self) -> Option<String> {
+    self.matrix.get(*self.point.y).map(|c| c.iter().collect())
   }
 
   pub fn get_view(&self, axis: CursorView) -> Vec<(&usize, &Vec<char>)> {
@@ -177,10 +197,6 @@ impl Page {
       .skip(axis.scroll)
       .take(usize::from(axis.size))
       .collect()
-  }
-
-  pub fn get_current_string(&self) -> Option<String> {
-    self.matrix.get(*self.point.y).map(|c| c.iter().collect())
   }
 
   pub fn delete(&mut self) -> bool {
@@ -209,13 +225,6 @@ impl Page {
 
   pub fn move_up(&mut self, delta: usize) -> bool {
     self.point.move_up(&self.matrix, delta)
-  }
-
-  pub fn get_current_param_string(&self, strings: &Vec<String>) -> String {
-    strings
-      .get(*self.point.y)
-      .map(|t| t.to_string())
-      .unwrap_or("empty".into())
   }
 
   pub fn draw<W: std::io::Write>(

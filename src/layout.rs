@@ -9,10 +9,7 @@ use crate::{
   Page,
   PageParams,
 };
-use std::{
-  collections::HashMap,
-  rc::Rc,
-};
+use std::collections::HashMap;
 
 
 pub trait GetHeight { 
@@ -54,14 +51,14 @@ impl GetHeight for PageViewList {
 
 pub struct PageViewParams {
   pub max_height:   Option<u16>,
-  pub write_cursor: bool,
+  pub draw_point: bool,
   pub frame_params: FrameParams,
-  pub page_params:  Rc<PageParams>,
+  pub page_params:  PageParams,
 }
-impl From<Rc<PageParams>> for PageViewParams {
-  fn from(page_params: Rc<PageParams>) -> Self {
+impl From<PageParams> for PageViewParams {
+  fn from(page_params: PageParams) -> Self {
     Self {
-      write_cursor: false,
+      draw_point: false,
       max_height:   None,
       frame_params: FrameParams::init(),
       page_params,
@@ -69,11 +66,24 @@ impl From<Rc<PageParams>> for PageViewParams {
   }
 }
 impl PageViewParams {
-  pub fn with_write_cursor(mut self, write_cursor: bool) 
-    -> Self { self.set_write_cursor(write_cursor); self }
+  pub fn draw<W: std::io::Write>(
+    &self, 
+    page:   &Page, 
+    view:   &PointView, 
+    writer: &mut W
+  ) -> std::io::Result<()> {
+    self.page_params.draw(page, view, writer)?;
+    if self.draw_point {
+      view.draw(writer)?;
+    }
+    Ok(())
+  }
 
-  pub fn set_write_cursor(&mut self, write_cursor: bool) {
-    self.write_cursor = write_cursor;
+  pub fn with_draw_point(mut self, b: bool) 
+    -> Self { self.set_draw_point(b); self }
+
+  pub fn set_draw_point(&mut self, b: bool) {
+    self.draw_point = b;
   }
 
   pub fn with_max_height(mut self, max_height: Option<u16>) 
@@ -164,6 +174,21 @@ pub struct PageView {
   pub page:         Page,
 }
 impl PageView {
+  pub fn draw<W: std::io::Write>(&self, writer: &mut W) 
+    -> std::io::Result<()> 
+  {
+    self.view_params.draw(&self.page, &self.point_view, writer)?;
+    Ok(())
+  }
+
+  pub fn get_param_string(&self) -> &str {
+    self.view_params.page_params.get_string(&self.page)
+  }
+
+  pub fn get_page_string(&self) -> Option<String> {
+    self.page.get_string()
+  }
+
   pub fn rebuild(&mut self, rect: &Rect) {
     self.view_params.rebuild(&mut self.page, &mut self.point_view, rect);
   }
@@ -189,6 +214,23 @@ impl From<PageView> for PageViewList {
 }
 
 impl PageViewList {
+  pub fn draw<W: std::io::Write>(&self, writer: &mut W) 
+    -> std::io::Result<()> 
+  {
+    if let Some(view) = self.get_page_view() {
+      view.draw(writer)?;
+    }
+    Ok(())
+  }
+
+  pub fn get_page_view(&self) -> Option<&PageView> {
+    self.views.get(*self.cursor)
+  }
+
+  pub fn get_page_view_mut(&mut self) -> Option<&mut PageView> {
+    self.views.get_mut(*self.cursor)
+  }
+
   pub fn insert(&mut self, view: PageView) {
     self.cursor.insert(&mut self.views, view);
   }
@@ -211,7 +253,7 @@ pub struct Layout {
   pub max_rect:     Rect,
   pub frame_params: FrameParams,
   pub frame:        Frame,
-  pub view_map:     HashMap<u16, PageViewList>,
+  pub map:          HashMap<u16, PageViewList>,
 }
 
 impl From<Rect> for Layout {
@@ -221,37 +263,58 @@ impl From<Rect> for Layout {
       frame,
       max_rect:     rect,
       frame_params: FrameParams::init(),
-      view_map:     HashMap::default(),
+      map:          HashMap::default(),
     }
   }
 }
 
 impl Layout {
+  pub fn draw<W: std::io::Write>(&self, writer: &mut W) 
+    -> std::io::Result<()> 
+  {
+    self.for_each_sorted(|v| v.draw(writer));
+    Ok(())
+  }
+
+  pub fn get_page_view_mut(&mut self, key: u16) -> Option<&mut PageView> {
+    self.map
+      .get_mut(&key)
+      .and_then(|v| v.get_page_view_mut())
+  }
+
   fn get_sorted_keys(&self) -> Vec<u16> {
-    let mut keys: Vec<_> = self.view_map.keys().map(|k| k.clone()).collect();
+    let mut keys: Vec<_> = self.map.keys().map(|k| k.clone()).collect();
     keys.sort();
     keys
   }
 
-  fn for_each<F: FnMut(&mut PageViewList)>(&mut self, mut func: F) {
+  fn for_each_sorted<F, T>(&self, mut func: F)
+  where F: FnMut(&PageViewList) -> T
+  {
     for k in self.get_sorted_keys().iter() {
-      if let Some(view_list) = self.view_map.get_mut(k) {
-        func(view_list);
-      }
+      if let Some(v) = self.map.get(k) { func(v); }
     }
   }
 
-  fn resize(&mut self) {
+  fn for_each_sorted_mut<F>(&mut self, mut func: F) 
+  where F: FnMut(&mut PageViewList)
+  {
+    for k in self.get_sorted_keys().iter() {
+      if let Some(v) = self.map.get_mut(k) { func(v); }
+    }
+  }
+
+  fn push_resize(&mut self) {
     let mut rect = self.frame.inner_rect;
-    self.for_each(|view_list| {
+    self.for_each_sorted_mut(|view_list| {
       view_list.resize(&rect);
       rect = rect.shift_north((view_list.get_height() as i16) * -1);
     });
   }
 
-  fn rebuild(&mut self) {
+  fn push_rebuild(&mut self) {
     let mut rect = self.frame.inner_rect;
-    self.for_each(|view_list| {
+    self.for_each_sorted_mut(|view_list| {
       view_list.rebuild(&rect);
       rect = rect.shift_north((view_list.get_height() as i16) * -1);
     });
@@ -260,12 +323,12 @@ impl Layout {
   fn get_rect_for_key(&self, key: u16) -> Rect {
     let mut rect = self.frame.inner_rect;
     for k in self.get_sorted_keys().iter().take_while(|k| **k < key) {
-      if let Some(view_list) = self.view_map.get(k) {
+      if let Some(view_list) = self.map.get(k) {
         rect = rect.shift_north((view_list.get_height() as i16) * -1);
       }
     }
     for k in self.get_sorted_keys().iter().rev().take_while(|k| **k > key) {
-      if let Some(view_list) = self.view_map.get(k) {
+      if let Some(view_list) = self.map.get(k) {
         rect = rect.shift_south((view_list.get_height() as i16) * -1);
       }
     }
@@ -275,28 +338,39 @@ impl Layout {
   pub fn set_max_rect(&mut self, rect: Rect) {
     self.max_rect = rect;
     self.frame = self.frame_params.build_from_outer(&self.max_rect);
-    self.rebuild();
+    self.push_rebuild();
   }
 
-  pub fn with_frame_params(mut self, frame_params: FrameParams) 
-    -> Self { self.set_frame_params(frame_params); self }
+  pub fn with_frame_params(mut self, params: FrameParams) 
+    -> Self { self.set_frame_params(params); self }
 
-  pub fn set_frame_params(&mut self, frame_params: FrameParams) {
-    self.frame_params = frame_params;
+  pub fn set_frame_params(&mut self, params: FrameParams) {
+    self.frame_params = params;
     self.frame = self.frame_params.build_from_outer(&self.max_rect);
-    self.rebuild();
+    self.push_rebuild();
+  }
+
+  pub fn resize(&mut self, rect: Rect) {
+    self.max_rect = rect;
+    self.frame = self.frame_params.build_from_outer(&self.max_rect);
+    self.push_rebuild();
   }
 
   pub fn insert(&mut self, key: u16, view_params: PageViewParams) {
     let rect = self.get_rect_for_key(key);
     let view = view_params.build(&rect);
-    if let Some(view_list) = self.view_map.get_mut(&key) {
+    if let Some(view_list) = self.map.get_mut(&key) {
       view_list.insert(view);
     } else {
-      self.view_map.insert(key, view.into());
+      self.map.insert(key, view.into());
     }
   }
 
-  pub fn remove(&mut self, handle: u16) {
+  pub fn remove_list(&mut self, handle: u16) -> bool {
+    self.map.remove(&handle).is_some()
+  }
+
+  pub fn remove(&mut self, handle: u16) -> bool {
+    self.map.remove(&handle).is_some()
   }
 }

@@ -49,10 +49,10 @@ pub const MENU: [&str; 4] = [
   VIEW_SETTINGS, 
 ];
 
-pub const MSG: u8 = 0;
-pub const DLG_1: u8 = 1;
-pub const DLG_2: u8 = 2;
-pub const TAB: u8 = 3;
+pub const MSG: u16 = 0;
+pub const DLG_1: u16 = 1;
+pub const DLG_2: u16 = 2;
+pub const TAB: u16 = 3;
 
 pub const DATA_PATH:   &str = "gdata";
 pub const SAVE_FILE:   &str = "gdata/urls";

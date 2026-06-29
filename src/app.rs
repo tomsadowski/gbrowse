@@ -6,9 +6,10 @@ use crate::{
   Dim,
   user,
   User, 
+  TextStyle,
   UserTable,
   user_from_str,
-  TabManager,
+  TabCursor,
   Request,
   Layout,
   DlgInput, 
@@ -16,6 +17,7 @@ use crate::{
   Action,
   Rect, 
   PageViewParams,
+  PageParams,
   GemTag, 
   Status, 
   StatusText,
@@ -46,12 +48,12 @@ pub enum Msg {
 }
 
 pub enum Focus {
-  Tab, Dialog(Task, Dialog),
+  Tab, Dialog(Task),
 }
 
 pub struct App {
   pub user:        User,
-  pub tabs:        TabManager,
+  pub tabs:        TabCursor,
   pub layout:      Layout,
   pub focus:       Focus,
   pub request:     Option<Request>,
@@ -70,7 +72,7 @@ impl App {
       .with_frame_params(user.get_frame_params());
     let mut app = Self {
       guide:       "".into(),
-      tabs:        TabManager::default().with_style(user.style.general),
+      tabs:        TabCursor::default().with_style(user.style.general),
       request:     None,
       focus:       Focus::Tab,
       new_dlg:     false,
@@ -101,13 +103,19 @@ impl App {
 
   fn focus_ack_dialog(&mut self, prompt: String) {
     self.guide = format!("Press any key to acknowledge");
-    let dlg = Dialog::ack(
-      self.frame,
-      self.user.style.info, 
-      &prompt, 
-      &self.guide, 
+    let dlg_1 = PageViewParams::from(
+      PageParams::init()
+        .with_text(&vec![prompt])
+        .with_style(self.user.style.info)
     );
-    self.focus = Focus::Dialog(Task::Default, dlg);
+    let dlg_2 = PageViewParams::from(
+      PageParams::init()
+        .with_text(&vec![self.guide.clone()])
+        .with_style(self.user.style.info)
+    ).with_frame_params(self.user.get_dialog_frame_params());
+    self.layout.insert(DLG_1, dlg_1);
+    self.layout.insert(DLG_2, dlg_2);
+    self.focus = Focus::Dialog(Task::Default);
     self.new_dlg = true;
   }
 
@@ -115,22 +123,38 @@ impl App {
     self.guide = format!(
       "{} yes {} no", self.user.keys.yes, self.user.keys.no
     );
-    let dlg = Dialog::ask(
-      self.frame,
-      self.user.style.info, 
-      prompt, 
-      &self.guide,
+    let dlg_1 = PageViewParams::from(
+      PageParams::init()
+        .with_text(&vec![prompt])
+        .with_style(self.user.style.info)
     );
-    self.focus = Focus::Dialog(task, dlg);
+    let dlg_2 = PageViewParams::from(
+      PageParams::init()
+        .with_text(&vec![self.guide.clone()])
+        .with_style(self.user.style.info)
+    ).with_frame_params(self.user.get_dialog_frame_params());
+    self.layout.insert(DLG_1, dlg_1);
+    self.layout.insert(DLG_2, dlg_2);
+    self.focus = Focus::Dialog(task);
     self.new_dlg = true;
   }
 
   fn focus_edit_dialog(&mut self, task: Task, prompt: &str, text: &str) {
     self.guide = format!("Press {} to cancel", self.user.keys.cancel);
-    self.focus = Focus::Dialog(
-      task, 
-      Dialog::edit(self.frame, self.user.style.info, prompt, text)
+    let dlg_1 = PageViewParams::from(
+      PageParams::init()
+        .with_text(&vec![prompt])
+        .with_style(self.user.style.info)
     );
+    let dlg_2 = PageViewParams::from(
+      PageParams::init()
+        .with_text(&vec![text])
+        .with_style(self.user.style.info)
+        .edit(true)
+    )
+    .with_frame_params(self.user.get_dialog_frame_params())
+    .with_draw_point(true);
+    self.focus = Focus::Dialog(task);
     self.new_dlg = true;
   }
 
@@ -140,14 +164,20 @@ impl App {
     prompt: &str, 
     options: Vec<String>
   ) {
-    let dlg = Dialog::select(
-      self.frame,
-      self.user.style.info, 
-      prompt, 
-      options, 
+    let dlg_1 = PageViewParams::from(
+      PageParams::init()
+        .with_text(&vec![prompt])
+        .with_style(self.user.style.info)
     );
+    let dlg_2 = PageViewParams::from(
+      PageParams::init()
+        .with_text(&options)
+        .with_style(self.user.style.info)
+    )
+    .with_frame_params(self.user.get_dialog_frame_params())
+    .with_draw_point(true);
     self.guide = format!("Press {} to select", self.user.keys.select);
-    self.focus = Focus::Dialog(task, dlg);
+    self.focus = Focus::Dialog(task);
     self.new_dlg = true;
   }
 
@@ -183,16 +213,12 @@ impl App {
       }
       _ => {
         let params = self.tabs.add_gem_tab(
-          &url, 
-          gemini::parse_doc(&content), 
-          |g| self.user.get_style_from_gem_text(g),
-        );
-        self.layout.insert(11, PageViewParams::from(params));
-        self.tabs.use_page_params_mut(
-          |textbox| {
-            textbox.style = self.user.style.general.into();
-          }
-        );
+            &url, 
+            gemini::parse_doc(&content), 
+            |g| self.user.get_style_from_gem_text(g),
+          )
+          .with_style(self.user.style.general);
+        self.layout.insert(TAB, PageViewParams::from(params));
         self.tab_changed = true;
       }
     };
@@ -237,14 +263,6 @@ impl App {
     }
   }
 
-  pub fn push_size(&mut self) {
-    if let Focus::Dialog(_, dialog) = &mut self.focus {
-      dialog.resize(self.frame);
-    }
-    self.tabs.resize(self.frame);
-    self.clear = true;
-  }
-
   pub fn push_style(&mut self) {
     self.frame = self.user.get_frame(self.frame.screen);
     self.push_size();
@@ -274,21 +292,22 @@ impl App {
     self.clear       = false;
     self.tab_changed = false;
     self.new_dlg     = false;
-    self.tabs.reset_state();
     match (message, &mut self.focus) {
       (Msg::Quit, _) => {
         self.quit = true;
       }
       (Msg::Resize(w, h), focus) => {
-        self.frame.resize(Rect::from(Dim(*w, *h)));
-        self.push_size();
+        self.layout.resize(Rect::from(Dim(*w, *h)));
       }
-      (Msg::Action(action), Focus::Dialog(task, dlg)) 
-        => match (&mut dlg.input, action, task) 
-      {
-        (DlgInput::Select(textbox), Action::Select, Task::NewTab) => {
+      (Msg::Action(action), Focus::Dialog(task)) => 
+        match (
+          self.layout.get_page_view_mut(DLG_2),
+          action,
+          task
+        ) {
+        (Some(view), Action::Select, Task::NewTab) => {
           if let Some(link) = self.user.urls.get(
-            textbox.get_current_index()
+            view.page.get_index()
           ) {
             let link = link.clone();
             self.select_link(&link);
@@ -296,9 +315,9 @@ impl App {
             self.focus_tabs();
           }
         }
-        (DlgInput::Select(textbox), Action::Select, Task::ChangeKeys) => {
+        (Some(view), Action::Select, Task::ChangeKeys) => {
           match std::fs::read_to_string(
-            user::get_keys_file(&textbox.get_current_param_string())
+            user::get_keys_file(&view.get_param_string())
           ) {
             Err(e) => self.focus_ack_dialog(format!("Problem: {e}")),
             Ok(s)  => if let Err(e) = self.user.keys.update_from_str(&s) {
@@ -308,9 +327,9 @@ impl App {
             }
           }
         }
-        (DlgInput::Select(textbox), Action::Select, Task::ChangeStyle) => {
+        (Some(view), Action::Select, Task::ChangeStyle) => {
           match std::fs::read_to_string(
-            user::get_styles_file(&textbox.get_current_param_string())
+            user::get_styles_file(&view.get_param_string())
           ) {
             Err(e) => self.focus_ack_dialog(e.to_string()),
             Ok(s)  => if let Err(e) = self.user.style.update_from_str(&s) {
@@ -322,8 +341,8 @@ impl App {
             }
           }
         }
-        (DlgInput::Select(textbox), Action::Select, Task::Menu) => {
-          match MENU[textbox.get_current_index()] {
+        (Some(view), Action::Select, Task::Menu) => {
+          match MENU[view.page.get_index()] {
             MANUAL => {
               self.focus_ack_dialog("View manual".into());
             }
@@ -351,7 +370,7 @@ impl App {
             _ => self.focus_tabs(),
           }
         }
-        (DlgInput::Edit(editbox), Action::Enter, Task::Init(_)) => {
+        (Some(editbox), Action::Enter, Task::Init(_)) => {
           let url_str = editbox.get_current_string().unwrap();
           match url::Url::parse(&url_str) {
             Err(e) => 
@@ -367,13 +386,13 @@ impl App {
             }
           }
         }
-        (DlgInput::Edit(editbox), Action::Cancel, Task::Init(url_str)) => {
+        (Some(editbox), Action::Cancel, Task::Init(url_str)) => {
           let url_str = url_str.clone();
           self.focus_ask_dialog(
             Task::Init(url_str), "Exit application?".into()
           )
         }
-        (DlgInput::Edit(editbox), Action::Enter, Task::Reply(url)) => {
+        (Some(editbox), Action::Enter, Task::Reply(url)) => {
           let text = editbox
             .get_current_string()
             .unwrap()
@@ -390,7 +409,7 @@ impl App {
             }
           }
         }
-        (DlgInput::Edit(editbox), Action::Enter, Task::NewTab) => {
+        (Some(editbox), Action::Enter, Task::NewTab) => {
           match url::Url::parse(
             &editbox.get_current_string().unwrap()
           ) {
@@ -441,17 +460,22 @@ impl App {
         (_,   Action::Cancel, _) => {
           self.focus_tabs();
         }
-        (DlgInput::Select(textbox), action, _) => {
+        (Some(textbox), action, _) => {
           action.update(textbox);
         }
-        (DlgInput::Edit(editbox),   action, _) => {
+        (Some(editbox),   action, _) => {
           action.update_edit(editbox);
         }
         (_, _, _) => {
           self.focus_tabs();
         }
       }
-      (Msg::Action(Action::SaveUrl), Focus::Tab) => {
+      (Msg::Action(Action::SaveUrl), Focus::Tab) 
+        => match (
+
+          self.layout.get_page_view_mut(TAB)
+        )
+      {
         if let Some(url) = self.tabs.get_url() {
           match self.user.save_url(url) {
             Err(e) => self.focus_ack_dialog(e),
@@ -558,7 +582,7 @@ impl App {
     let banner_text = self.tabs.get_banner_text();
     self.frame.draw_banner(&banner_text, w)?;
     self.frame.draw_footer(&self.guide, w)?;
-    if let Focus::Dialog(_, dialog) = &self.focus {
+    if let Focus::Dialog(_) = &self.focus {
       dialog.draw(w)?;
     } else {
       if let Some(request) = &self.request {

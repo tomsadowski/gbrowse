@@ -18,11 +18,11 @@ use url::Url;
 
 
 #[derive(Default)]
-pub struct TabManager {
+pub struct TabCursor {
   pub cursor: Cursor,
   pub tabs:   Vec<Tab>,
 } 
-impl TabManager {
+impl TabCursor {
   pub fn with_style<T>(mut self, style: T) -> Self 
   where T: Into<Style> + Copy
   {
@@ -75,22 +75,21 @@ impl TabManager {
     url:            &url::Url, 
     source:         Vec<GemText>, 
     get_text_style: F
-  ) -> Rc<PageParams>
+  ) -> PageParams
   where F: Fn(&GemText) -> TextStyle,
   {
-    let params = PageParams::init().with_text(&source, get_text_style);
+    let params = PageParams::init().with_styled_text(&source, get_text_style);
     let (tags, text): (Vec<GemTag>, Vec<String>) = source
       .into_iter()
       .map(|gemtext| (gemtext.tag, gemtext.text))
       .unzip();
-    let new_tab = Tab::Gem(UrlTab::new(url, tags, params));
+    let new_tab = Tab::Gem(UrlTab::new(url, tags));
     self.cursor.insert_or_move(
       &mut self.tabs, 
       |tab| tab.get_url() == Some(url), 
       new_tab
     );
-    self.tabs.get(*self.cursor).map(|t| t.get_page_params())
-      .expect("could not retrieve that which we just placed")
+    params
   }
 
   pub fn get_banner_text(&self) -> String {
@@ -155,44 +154,22 @@ impl Tab {
       .get_gem_tab()
       .and_then(|gem_tab| gem_tab.get_current_tag(page))
   }
-
-  pub fn get_page_params(&self) -> Rc<PageParams> {
-    match self {
-      Tab::Text(_, textbox) |
-      Tab::Gem(   UrlTab {params: textbox, ..}) | 
-      Tab::Gopher(UrlTab {params: textbox, ..}) => textbox.clone(),
-    }
-  }
-
-  pub fn get_page_params_mut(&mut self) -> &mut PageParams {
-    match self {
-      Tab::Text(_, params) |
-      Tab::Gem(   UrlTab {params, ..}) | 
-      Tab::Gopher(UrlTab {params, ..}) => params,
-    }
-  }
 }
 
 pub struct UrlTab<T> {
-  pub url:    Url,
-  pub tags:   Vec<T>,
-  pub params: Rc<PageParams>,
+  pub url:  Url,
+  pub tags: Vec<T>,
 } 
 
 impl<T> UrlTab<T> {
-  pub fn new(url: &Url, tags: Vec<T>, page_params: PageParams) -> Self {
+  pub fn new(url: &Url, tags: Vec<T>) -> Self {
     Self {
       url: url.clone(),
-      params: Rc::new(page_params),
       tags,
     }
   }
 
-  pub fn moop(&mut self) {
-    self.params.style = Style::default();
-  }
-
   pub fn get_current_tag(&self, page: &Page) -> Option<&T> {
-    self.tags.get(page.get_current_index())
+    self.tags.get(page.get_index())
   }
 }
