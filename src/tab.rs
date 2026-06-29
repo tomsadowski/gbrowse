@@ -20,24 +20,21 @@ use url::Url;
 #[derive(Default)]
 pub struct TabManager {
   pub cursor: Cursor,
-  pub urls:   Vec<Url>,
-  pub tabs:   HashMap<Url, Tab>,
+  pub tabs:   Vec<Tab>,
 } 
 impl TabManager {
-  pub fn with_style<T: Into<Style> + Copy>(mut self, style: T) -> Self {
-    self.style = style.into();
-    for tab in self.tabs.iter_mut() {
-      tab.get_page_params_mut().style = self.style;
-    }
+  pub fn with_style<T>(mut self, style: T) -> Self 
+  where T: Into<Style> + Copy
+  {
+    self.push_style(style);
     self
   }
 
   pub fn push_style<T>(&mut self, style: T)
   where T: Into<Style> + Copy
   {
-    self.style = style.into();
     for tab in self.tabs.iter_mut() {
-      tab.get_page_params_mut().style = self.style;
+      tab.get_page_params_mut().style = style.into();
     }
   }
 
@@ -47,8 +44,7 @@ impl TabManager {
     for tab in self.tabs.iter_mut() {
       if let Tab::Gem(gem_tab) = tab {
         let styles = gem_tab.tags.iter().map(|t| func(t)).collect();
-        gem_tab.page_params.set_styles(styles);
-        gem_tab.page_params.style = self.style;
+        gem_tab.params.set_text_styles(styles);
       }
     }
   }
@@ -79,21 +75,22 @@ impl TabManager {
     url:            &url::Url, 
     source:         Vec<GemText>, 
     get_text_style: F
-  ) -> Option<Rc<&PageParams>> 
-  where F: Fn(&GemTag) -> TextStyle,
+  ) -> Rc<PageParams>
+  where F: Fn(&GemText) -> TextStyle,
   {
+    let params = PageParams::init().with_text(&source, get_text_style);
     let (tags, text): (Vec<GemTag>, Vec<String>) = source
       .into_iter()
       .map(|gemtext| (gemtext.tag, gemtext.text))
       .unzip();
-    let styles  = tags.iter().map(|tag| get_text_style(tag)).collect();
-    let new_tab = Tab::Gem(UrlTab::new(url, tags, text, styles));
+    let new_tab = Tab::Gem(UrlTab::new(url, tags, params));
     self.cursor.insert_or_move(
       &mut self.tabs, 
       |tab| tab.get_url() == Some(url), 
       new_tab
     );
     self.tabs.get(*self.cursor).map(|t| t.get_page_params())
+      .expect("could not retrieve that which we just placed")
   }
 
   pub fn get_banner_text(&self) -> String {
@@ -111,14 +108,14 @@ impl TabManager {
 }
 
 pub enum Tab {
-  Text  (String, PageParams),
+  Text  (String, Rc<PageParams>),
   Gem   (UrlTab<GemTag>),
   Gopher(UrlTab<String>),
 }
 
 impl Default for Tab {
   fn default() -> Self {
-    Self::Text("".into(), PageParams::default())
+    Self::Text("".into(), Rc::new(PageParams::default()))
   }
 }
 
@@ -159,41 +156,40 @@ impl Tab {
       .and_then(|gem_tab| gem_tab.get_current_tag(page))
   }
 
-  pub fn get_page_params(&self) -> Rc<&PageParams> {
+  pub fn get_page_params(&self) -> Rc<PageParams> {
     match self {
       Tab::Text(_, textbox) |
-      Tab::Gem(   UrlTab {page_params: textbox, ..}) | 
-      Tab::Gopher(UrlTab {page_params: textbox, ..}) => Rc::new(textbox),
+      Tab::Gem(   UrlTab {params: textbox, ..}) | 
+      Tab::Gopher(UrlTab {params: textbox, ..}) => textbox.clone(),
     }
   }
 
   pub fn get_page_params_mut(&mut self) -> &mut PageParams {
     match self {
       Tab::Text(_, params) |
-      Tab::Gem(   UrlTab {page_params: params, ..}) | 
-      Tab::Gopher(UrlTab {page_params: params, ..}) => params,
+      Tab::Gem(   UrlTab {params, ..}) | 
+      Tab::Gopher(UrlTab {params, ..}) => params,
     }
   }
 }
 
 pub struct UrlTab<T> {
-  pub url:     url::Url,
-  pub tags:    Vec<T>,
-  pub page_params: PageParams,
+  pub url:    Url,
+  pub tags:   Vec<T>,
+  pub params: Rc<PageParams>,
 } 
 
 impl<T> UrlTab<T> {
-  pub fn new(
-    url:    &url::Url, 
-    tags:   Vec<T>, 
-    text:   Vec<String>,
-    styles: Vec<TextStyle>,
-  ) -> Self {
+  pub fn new(url: &Url, tags: Vec<T>, page_params: PageParams) -> Self {
     Self {
-      page_params: PageParams::init().text(text, styles),
-      url:     url.clone(),
+      url: url.clone(),
+      params: Rc::new(page_params),
       tags,
     }
+  }
+
+  pub fn moop(&mut self) {
+    self.params.style = Style::default();
   }
 
   pub fn get_current_tag(&self, page: &Page) -> Option<&T> {

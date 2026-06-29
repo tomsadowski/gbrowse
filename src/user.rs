@@ -6,6 +6,7 @@ use crate::{
   Frame, 
   FrameParams,
   GemTag, 
+  GemText,
   TextStyle,
   Rect,
   constants::*,
@@ -170,8 +171,16 @@ impl User {
     self.style.get_frame_params()
   }
 
-  pub fn get_gem_style(&self, gemtext: &GemTag) -> TextStyle {
-    self.style.get_gem_style(gemtext)
+  pub fn get_dialog_frame_params(&self) -> FrameParams {
+    self.style.get_dialog_frame_params()
+  }
+
+  pub fn get_style_from_gem_text(&self, gemtext: &GemText) -> TextStyle {
+    self.style.get_style_from_gem_text(gemtext)
+  }
+
+  pub fn get_style_from_gem_tag(&self, gemtag: &GemTag) -> TextStyle {
+    self.style.get_style_from_gem_tag(gemtag)
   }
 }
 

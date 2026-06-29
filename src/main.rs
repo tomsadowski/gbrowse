@@ -52,8 +52,9 @@ pub use crate::frame::{
 };
 pub use crate::layout::{
   Layout,
-  View,
   PageView,
+  PageViewParams,
+  PageViewList,
 };
 pub use crate::user::{
   User,

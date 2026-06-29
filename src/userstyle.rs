@@ -8,6 +8,7 @@ use crate::{
   BorderStyle,
   TextStyle,
   GemTag,
+  GemText,
   Frame,
   FrameParams,
   Style,
@@ -46,7 +47,19 @@ impl UserStyle {
       .border_style(self.border)
   }
 
-  pub fn get_gem_style(&self, tag: &GemTag) -> TextStyle {
+  pub fn get_dialog_frame_params(&self) -> FrameParams {
+    FrameParams::init()
+      .banner_style(self.banner)
+      .footer_style(self.banner)
+      .margin_style(self.general)
+      .border_style(self.border)
+  }
+
+  pub fn get_style_from_gem_text(&self, text: &GemText) -> TextStyle {
+    self.get_style_from_gem_tag(&text.tag)
+  }
+
+  pub fn get_style_from_gem_tag(&self, tag: &GemTag) -> TextStyle {
     match tag {
       GemTag::HeadingOne   => self.heading1.into(),
       GemTag::HeadingTwo   => self.heading2.into(),
@@ -341,4 +354,3 @@ impl std::str::FromStr for BorderField {
     }
   }
 }
-

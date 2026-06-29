@@ -59,34 +59,50 @@ pub struct PageParams {
 impl PageParams {
   pub fn init() -> Self { Self::default() }
 
-  pub fn style<S: Into<Style> + Copy>(mut self, style: S) -> Self {
+  pub fn set_style<S: Into<Style> + Copy>(&mut self, style: S) {
     self.style = style.into();
+  }
+
+  pub fn style<S: Into<Style> + Copy>(mut self, style: S) -> Self {
+    self.set_style(style);
     self
+  }
+
+  pub fn set_text_styles(&mut self, styles: Vec<TextStyle>) 
+    -> Result<(), String> 
+  {
+    if styles.len() < self.string_vec.len() {
+      Err("styles vec shorter than string vec".into())
+    } else {
+      self.style_vec = styles;
+      Ok(())
+    }
+  }
+
+  pub fn with_text_styles(mut self, styles: Vec<TextStyle>) 
+    -> Result<Self, String> 
+  {
+    self.set_text_styles(styles).map(|_| self)
   }
 
   pub fn set_edit(&mut self, b: bool) { self.edit = b; }
-  pub fn edit(mut self, b: bool) -> Self {
-    self.set_edit(b);
+
+  pub fn edit(mut self, b: bool) -> Self { self.set_edit(b); self }
+
+  pub fn set_text<T, F>(&mut self, text: &[T], get_text_style: F)
+  where T: std::fmt::Display,
+        F: Fn(&T) -> TextStyle,
+  {
+    self.string_vec = text.iter().map(|t| t.to_string()).collect();
+    self.style_vec  = text.iter().map(|t| get_text_style(t)).collect();
+  }
+
+  pub fn with_text<T, F>(mut self, text: &[T], get_text_style: F) -> Self 
+  where T: std::fmt::Display,
+        F: Fn(&T) -> TextStyle,
+  {
+    self.set_text(text, get_text_style);
     self
-  }
-
-  pub fn set_text(&mut self, text: Vec<String>, styles: Vec<TextStyle>) {
-    let buffed_styles: Vec<_> = if styles.len() < text.len() {
-      text.iter().map(|_| TextStyle::default()).collect()
-    } else {
-      styles
-    };
-    self.string_vec = text;
-    self.set_styles(buffed_styles);
-  }
-
-  pub fn text(mut self, text: Vec<String>, styles: Vec<TextStyle>) -> Self {
-    self.set_text(text, styles);
-    self
-  }
-
-  pub fn set_styles(&mut self, styles: Vec<TextStyle>) {
-    self.style_vec = styles;
   }
 
   pub fn build(&self, width: u16) -> Page {
@@ -205,7 +221,7 @@ impl Page {
   pub fn draw<W: std::io::Write>(
     &self, 
     style:      &Style,
-    style_vec:  &Vec<TextStyle>,
+    style_vec:  &[TextStyle],
     point_view: &PointView, 
     writer:     &mut W
   ) -> std::io::Result<()> {

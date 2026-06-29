@@ -15,6 +15,7 @@ use crate::{
   Dialog,
   Action,
   Rect, 
+  PageViewParams,
   GemTag, 
   Status, 
   StatusText,
@@ -181,12 +182,12 @@ impl App {
         self.focus_ack_dialog(status.text);
       }
       _ => {
-        self.tabs.add_gem_tab(
+        let params = self.tabs.add_gem_tab(
           &url, 
           gemini::parse_doc(&content), 
-          |g| self.user.get_gem_style(g),
+          |g| self.user.get_style_from_gem_text(g),
         );
-        self.layout.insert_page(11, self.tabs.get_current_page_params());
+        self.layout.insert(11, PageViewParams::from(params));
         self.tabs.use_page_params_mut(
           |textbox| {
             textbox.style = self.user.style.general.into();
@@ -249,7 +250,7 @@ impl App {
     self.push_size();
     self.tabs.push_style(self.user.style.general);
     self.tabs.push_gem_style(
-      |gem| self.user.get_gem_style(gem)
+      |gem| self.user.get_style_from_gem_tag(gem)
     );
   }
 
