@@ -339,9 +339,7 @@ impl Layout {
     let view = view_params.build(&rect);
     self.map
       .get_mut(&key)
-      .map(|cursor_vec| 
-        insert.apply_to_vec(cursor_vec, view)
-      );
+      .map(|cursor_vec| insert.apply_to_vec(cursor_vec, view));
   }
 
   pub fn insert(&mut self, key: u16, view_params: PageViewParams) {
