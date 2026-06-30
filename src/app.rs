@@ -98,6 +98,8 @@ impl App {
   pub fn focus_tabs(&mut self) {
     self.focus = Focus::Tab;
     self.guide = format!("Press {} for menu", self.user.keys.menu);
+    self.layout.remove_list(DLG_1);
+    self.layout.remove_list(DLG_2);
   }
 
   fn get_dlg_params(&self, prompt: &[String], text: &[String])
