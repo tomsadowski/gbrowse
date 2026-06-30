@@ -569,7 +569,7 @@ impl App {
     }
   }
 
-  pub fn draw<W: std::io::Write>(&self, w: &mut W) -> std::io::Result<()> {
+  pub fn draw(&self, w: &mut impl std::io::Write) -> std::io::Result<()> {
     use crossterm::{QueueableCommand, cursor, terminal};
     w.queue(cursor::Hide)?;
     if self.clear {

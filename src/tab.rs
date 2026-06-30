@@ -18,15 +18,12 @@ use url::Url;
 
 
 impl CursorVec<Tab> {
-  pub fn push_gem_style<F, S>(
+  pub fn push_gem_style(
     &mut self, 
     layout: &mut Layout,
-    style:  S,
-    func:   F,
-  ) 
-  where F: Fn(&GemTag) -> TextStyle,
-        S: Into<Style> + Copy,
-  {
+    style:  impl Into<Style> + Copy,
+    func:   impl Fn(&GemTag) -> TextStyle,
+  ) {
     if let Some(views) = layout.map.get_mut(&TAB) {
       for (tab, view) in self.vec.iter_mut().zip(views.iter_mut()) {
         if let Tab::Gem(tab) = tab {
@@ -38,32 +35,25 @@ impl CursorVec<Tab> {
       layout.push_rebuild();
     }
   }
-
-  pub fn add_gem_tab<F, S>(
+  pub fn add_gem_tab(
     &mut self, 
     layout:         &mut Layout,
     url:            &url::Url, 
     source:         Vec<GemText>, 
-    style:          S,
-    get_text_style: F
-  ) 
-  where F: Fn(&GemText) -> TextStyle,
-        S: Into<Style> + Copy,
-  {
-    let params = PageParams::init().with_styled_text(&source, get_text_style);
+    style:          impl Into<Style> + Copy,
+    get_text_style: impl Fn(&GemText) -> TextStyle,
+  ) {
+    let params = PageParams::init()
+      .with_styled_text(&source, get_text_style);
     let (tags, text): (Vec<GemTag>, Vec<String>) = source
       .into_iter()
       .map(|gemtext| (gemtext.tag, gemtext.text))
       .unzip();
-    let new_tab = Tab::Gem(UrlTab::new(url, tags));
-    if let Some(cursor_insert) = self.cursor.insert_unique_with(
-      &mut self.vec, 
+    if let Some(insert_command) = self.insert_unique_with(
       |tab| tab.get_url() == Some(url), 
-      new_tab
+      Tab::Gem(UrlTab::new(url, tags)),
     ) {
-      layout.apply_insert_command(
-        TAB, cursor_insert, PageViewParams::from(params)
-      );
+      layout.apply_insert_command(TAB, insert_command, params.into());
     }
   }
   pub fn get_url(&self) -> Option<&url::Url> {

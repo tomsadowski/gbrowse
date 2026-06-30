@@ -67,11 +67,11 @@ impl From<PageParams> for PageViewParams {
   }
 }
 impl PageViewParams {
-  pub fn draw<W: std::io::Write>(
+  pub fn draw(
     &self, 
     page:   &Page, 
     view:   &PointView, 
-    writer: &mut W
+    writer: &mut impl std::io::Write,
   ) -> std::io::Result<()> {
     self.page_params.draw(page, view, writer)?;
     if self.draw_point {
@@ -175,7 +175,7 @@ pub struct PageView {
   pub page:         Page,
 }
 impl PageView {
-  pub fn draw<W: std::io::Write>(&self, writer: &mut W) 
+  pub fn draw(&self, writer: &mut impl std::io::Write) 
     -> std::io::Result<()> 
   {
     self.view_params.draw(&self.page, &self.point_view, writer)?;
@@ -201,7 +201,7 @@ impl PageView {
 }
 
 impl CursorVec<PageView> {
-  pub fn draw<W: std::io::Write>(&self, writer: &mut W) 
+  pub fn draw(&self, writer: &mut impl std::io::Write) 
     -> std::io::Result<()> 
   {
     if let Some(view) = self.get_current() {
@@ -244,7 +244,7 @@ impl From<Rect> for Layout {
 }
 
 impl Layout {
-  pub fn draw<W: std::io::Write>(&self, writer: &mut W) 
+  pub fn draw(&self, writer: &mut impl std::io::Write) 
     -> std::io::Result<()> 
   {
     self.for_each_sorted(|v| v.draw(writer));
