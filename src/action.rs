@@ -32,7 +32,30 @@ pub enum Action {
   No, 
   Cancel,
 }
-
+impl std::str::FromStr for Action {
+  type Err = String;
+  fn from_str(s: &str) -> Result<Self, Self::Err> {
+    match s {
+      "load_url"    => Ok(Self::LoadUrl),
+      "save_url"    => Ok(Self::SaveUrl),
+      "move_up"     => Ok(Self::MoveUp),
+      "menu"        => Ok(Self::Menu),
+      "move_down"   => Ok(Self::MoveDown),
+      "move_left"   => Ok(Self::MoveLeft),
+      "move_right"  => Ok(Self::MoveRight),
+      "cycle_left"  => Ok(Self::CycleLeft),
+      "cycle_right" => Ok(Self::CycleRight),
+      "delete_tab"  => Ok(Self::DelTab),
+      "new_tab"     => Ok(Self::NewTab),
+      "select"      => Ok(Self::Select),
+      "ack"         => Ok(Self::Ack),
+      "yes"         => Ok(Self::Yes),
+      "no"          => Ok(Self::No),
+      "cancel"      => Ok(Self::Cancel),
+      s => Err(format!("Keys table does not contain field {s}")),
+    }
+  }
+}
 impl Action {
   pub fn update(&self, page: &mut crate::Page) {
     match self {
@@ -60,31 +83,6 @@ impl Action {
       Action::MoveDown  => {textbox.move_down(1);}
       Action::MoveUp    => {textbox.move_up(1);}
       _ => {}
-    }
-  }
-}
-
-impl std::str::FromStr for Action {
-  type Err = String;
-  fn from_str(s: &str) -> Result<Self, Self::Err> {
-    match s {
-      "load_url"    => Ok(Self::LoadUrl),
-      "save_url"    => Ok(Self::SaveUrl),
-      "move_up"     => Ok(Self::MoveUp),
-      "menu"        => Ok(Self::Menu),
-      "move_down"   => Ok(Self::MoveDown),
-      "move_left"   => Ok(Self::MoveLeft),
-      "move_right"  => Ok(Self::MoveRight),
-      "cycle_left"  => Ok(Self::CycleLeft),
-      "cycle_right" => Ok(Self::CycleRight),
-      "delete_tab"  => Ok(Self::DelTab),
-      "new_tab"     => Ok(Self::NewTab),
-      "select"      => Ok(Self::Select),
-      "ack"         => Ok(Self::Ack),
-      "yes"         => Ok(Self::Yes),
-      "no"          => Ok(Self::No),
-      "cancel"      => Ok(Self::Cancel),
-      s => Err(format!("Keys table does not contain field {s}")),
     }
   }
 }

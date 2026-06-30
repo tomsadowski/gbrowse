@@ -71,7 +71,7 @@ impl App {
       .with_frame_params(user.get_frame_params());
     let mut app = Self {
       guide:       "".into(),
-      tabs:        CursorVec::default(),//.with_style(user.style.general),
+      tabs:        CursorVec::default(),
       request:     None,
       focus:       Focus::Tab,
       new_dlg:     false,
@@ -100,18 +100,27 @@ impl App {
     self.guide = format!("Press {} for menu", self.user.keys.menu);
   }
 
-  fn focus_ack_dialog(&mut self, prompt: String) {
-    self.guide = format!("Press any key to acknowledge");
+  fn get_dlg_params(&self, prompt: &[String], text: &[String])
+    -> (PageViewParams, PageViewParams) 
+  {
     let dlg_1 = PageViewParams::from(
       PageParams::init()
-        .with_text(&vec![prompt])
+        .with_text(prompt)
         .with_style(self.user.style.info)
     );
     let dlg_2 = PageViewParams::from(
       PageParams::init()
-        .with_text(&vec![self.guide.clone()])
+        .with_text(text)
         .with_style(self.user.style.info)
     ).with_frame_params(self.user.get_dialog_frame_params());
+    (dlg_1, dlg_2)
+  }
+
+  fn focus_ack_dialog(&mut self, prompt: String) {
+    self.guide = format!("Press any key to acknowledge");
+    let (dlg_1, dlg_2) = self.get_dlg_params(
+      &vec![prompt], &vec![self.guide.clone()]
+    );
     self.layout.insert(DLG_1, dlg_1);
     self.layout.insert(DLG_2, dlg_2);
     self.focus = Focus::Dialog(Task::Default);
@@ -122,16 +131,9 @@ impl App {
     self.guide = format!(
       "{} yes {} no", self.user.keys.yes, self.user.keys.no
     );
-    let dlg_1 = PageViewParams::from(
-      PageParams::init()
-        .with_text(&vec![prompt])
-        .with_style(self.user.style.info)
+    let (dlg_1, dlg_2) = self.get_dlg_params(
+      &vec![prompt.into()], &vec![self.guide.clone()]
     );
-    let dlg_2 = PageViewParams::from(
-      PageParams::init()
-        .with_text(&vec![self.guide.clone()])
-        .with_style(self.user.style.info)
-    ).with_frame_params(self.user.get_dialog_frame_params());
     self.layout.insert(DLG_1, dlg_1);
     self.layout.insert(DLG_2, dlg_2);
     self.focus = Focus::Dialog(task);
@@ -140,10 +142,8 @@ impl App {
 
   fn focus_edit_dialog(&mut self, task: Task, prompt: &str, text: &str) {
     self.guide = format!("Press {} to cancel", self.user.keys.cancel);
-    let dlg_1 = PageViewParams::from(
-      PageParams::init()
-        .with_text(&vec![prompt])
-        .with_style(self.user.style.info)
+    let (dlg_1, dlg_2) = self.get_dlg_params(
+      &vec![prompt.into()], &vec![text.into()]
     );
     let dlg_2 = PageViewParams::from(
       PageParams::init()
@@ -153,6 +153,8 @@ impl App {
     )
     .with_frame_params(self.user.get_dialog_frame_params())
     .with_draw_point(true);
+    self.layout.insert(DLG_1, dlg_1);
+    self.layout.insert(DLG_2, dlg_2);
     self.focus = Focus::Dialog(task);
     self.new_dlg = true;
   }
@@ -163,18 +165,12 @@ impl App {
     prompt: &str, 
     options: Vec<String>
   ) {
-    let dlg_1 = PageViewParams::from(
-      PageParams::init()
-        .with_text(&vec![prompt])
-        .with_style(self.user.style.info)
+    let (dlg_1, mut dlg_2) = self.get_dlg_params(
+      &vec![prompt.into()], &options
     );
-    let dlg_2 = PageViewParams::from(
-      PageParams::init()
-        .with_text(&options)
-        .with_style(self.user.style.info)
-    )
-    .with_frame_params(self.user.get_dialog_frame_params())
-    .with_draw_point(true);
+    dlg_2.set_draw_point(true);
+    self.layout.insert(DLG_1, dlg_1);
+    self.layout.insert(DLG_2, dlg_2);
     self.guide = format!("Press {} to select", self.user.keys.select);
     self.focus = Focus::Dialog(task);
     self.new_dlg = true;
@@ -294,7 +290,7 @@ impl App {
       (Msg::Quit, _) => {
         self.quit = true;
       }
-      (Msg::Resize(w, h), focus) => {
+      (Msg::Resize(w, h), _) => {
         self.layout.resize(Rect::from(Dim(*w, *h)));
       }
       (Msg::Action(action), Focus::Dialog(task)) => 
@@ -539,23 +535,25 @@ impl App {
   }
 
   pub fn get_update(&self, event: crossterm::event::Event) -> Option<Msg> {
-    use crossterm::event;
+    use crossterm::event::{
+      Event, KeyEvent, KeyEventKind, KeyModifiers, KeyCode,
+    };
     match event {
-      event::Event::Resize(w, h) => {
+      Event::Resize(w, h) => {
         Some(Msg::Resize(w, h))
       }
-      event::Event::Key(
-        event::KeyEvent {
-          modifiers: event::KeyModifiers::CONTROL, 
-          code:      event::KeyCode::Char('c'), 
+      Event::Key(
+        KeyEvent {
+          modifiers: KeyModifiers::CONTROL, 
+          code:      KeyCode::Char('c'), 
           ..
         }
       ) => {
         Some(Msg::Quit)
       }
-      event::Event::Key(
-        event::KeyEvent {
-          kind: event::KeyEventKind::Press, 
+      Event::Key(
+        KeyEvent {
+          kind: KeyEventKind::Press, 
           code: kc, 
           ..
         }

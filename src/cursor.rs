@@ -56,10 +56,11 @@ impl<T> CursorVec<T> {
   pub fn apply_command(&mut self, cmd: CursorCommand<T>) {
     cmd.apply_to_vec(self)
   }
-  pub fn insert_unique_with<F>(&mut self, is_equal: F, unit: T) 
-    -> Option<InsertCommand> 
-  where F: Fn(&T) -> bool,
-  {
+  pub fn insert_unique_with(
+    &mut self, 
+    is_equal: impl Fn(&T) -> bool, 
+    unit:     T
+  ) -> Option<InsertCommand> {
     self.cursor.insert_unique_with(&mut self.vec, is_equal, unit)
   }
 }
@@ -70,13 +71,19 @@ pub enum CursorCommand<T> {
   Insert(InsertCommand, T),
 }
 impl<T> From<MoveCommand> for CursorCommand<T> {
-  fn from(cmd: MoveCommand) -> Self { Self::Move(cmd) }
+  fn from(cmd: MoveCommand) -> Self {
+    Self::Move(cmd)
+  }
 }
 impl<T> From<RemoveCommand> for CursorCommand<T> {
-  fn from(cmd: RemoveCommand) -> Self { Self::Remove(cmd) }
+  fn from(cmd: RemoveCommand) -> Self {
+    Self::Remove(cmd)
+  }
 }
 impl<T> From<(InsertCommand, T)> for CursorCommand<T> {
-  fn from((cmd, t): (InsertCommand, T)) -> Self { Self::Insert(cmd, t) }
+  fn from((cmd, t): (InsertCommand, T)) -> Self {
+    Self::Insert(cmd, t)
+  }
 }
 impl<T> CursorCommand<T> {
   pub fn apply_to_vec(self, vec: &mut CursorVec<T>) {
@@ -221,14 +228,12 @@ impl Cursor {
       Some(RemoveCommand(self.head, MoveCommand::Move(-1)))
     } 
   }
-  pub fn insert_unique_with<T, F>(
+  pub fn insert_unique_with<T>(
     &mut self, 
     vec:        &mut Vec<T>, 
-    is_equal:   F, 
+    is_equal:   impl Fn(&T) -> bool, 
     unit:       T
-  ) -> Option<InsertCommand>
-  where F: Fn(&T) -> bool,
-  {
+  ) -> Option<InsertCommand> {
     if let Some((idx, _)) = vec
       .iter_mut()
       .enumerate()

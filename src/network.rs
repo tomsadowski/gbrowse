@@ -6,7 +6,6 @@ pub struct Request {
   pub rx:     std::sync::mpsc::Receiver<Result<(String, String), String>>,
   pub handle: std::thread::JoinHandle<()>,
 }
-
 impl Request {
   pub fn new(url: &url::Url, timeout: u64) -> Self {
     use std::sync::mpsc;
