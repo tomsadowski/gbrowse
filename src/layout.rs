@@ -238,14 +238,18 @@ impl Layout {
     keys.sort();
     keys
   }
-  fn for_each_sorted<F, T>(&self, mut func: F)
-  where F: FnMut(&CursorVec<PageView>) -> T {
+  fn for_each_sorted<T>(
+    &self, 
+    mut func: impl FnMut(&CursorVec<PageView>) -> T
+  ) {
     for k in self.get_sorted_keys().iter() {
       if let Some(v) = self.map.get(k) { func(v); }
     }
   }
-  fn for_each_sorted_mut<F>(&mut self, mut func: F) 
-  where F: FnMut(&mut CursorVec<PageView>) {
+  fn for_each_sorted_mut(
+    &mut self, 
+    mut  func: impl FnMut(&mut CursorVec<PageView>)
+  ) {
     for k in self.get_sorted_keys().iter() {
       if let Some(v) = self.map.get_mut(k) { func(v); }
     }
@@ -295,6 +299,20 @@ impl Layout {
     self.max_rect = rect;
     self.frame = self.frame_params.build_from_outer(&self.max_rect);
     self.push_rebuild();
+  }
+  pub fn apply_move_command(
+    &mut self, key: u16, move_cmd: MoveCommand, 
+  ) {
+    self.map
+      .get_mut(&key)
+      .map(|cursor_vec| move_cmd.apply_to_vec(cursor_vec));
+  }
+  pub fn apply_remove_command(
+    &mut self, key: u16, remove_cmd: RemoveCommand, 
+  ) {
+    self.map
+      .get_mut(&key)
+      .map(|cursor_vec| remove_cmd.apply_to_vec(cursor_vec));
   }
   pub fn apply_insert_command(
     &mut self, 

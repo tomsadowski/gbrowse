@@ -98,9 +98,7 @@ impl FrameParams {
     self.footer = style.into();
     self
   }
-  pub fn margin_style<T>(mut self, style: T) -> Self 
-  where T: Into<Style> + Copy
-  {
+  pub fn margin_style(mut self, style: impl Into<Style> + Copy) -> Self {
     self.margin = style.into();
     self
   }
