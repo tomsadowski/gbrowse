@@ -9,7 +9,7 @@ use crate::{
   Page,
   PageParams,
   CursorVec,
-  Insert, Rmv, Mov,
+  Insert, Remove, Move,
 };
 use std::collections::HashMap;
 
@@ -340,7 +340,7 @@ impl Layout {
     self.map
       .get_mut(&key)
       .map(|cursor_vec| 
-        insert.apply_vec(cursor_vec, view)
+        insert.apply_to_vec(cursor_vec, view)
       );
   }
 

@@ -47,15 +47,15 @@ impl<T> CursorVec<T> {
     self.vec.get_mut(*self.cursor)
   }
 
-  pub fn remove(&mut self) -> Option<Rmv> {
+  pub fn remove(&mut self) -> Option<Remove> {
     self.cursor.remove(&mut self.vec)
   }
 
-  pub fn delete(&mut self) -> Option<Rmv> {
+  pub fn delete(&mut self) -> Option<Remove> {
     self.cursor.delete(&mut self.vec)
   }
 
-  pub fn backspace(&mut self) -> Option<Rmv> {
+  pub fn backspace(&mut self) -> Option<Remove> {
     self.cursor.backspace(&mut self.vec)
   }
 
@@ -72,55 +72,52 @@ impl<T> CursorVec<T> {
 }
 
 
-pub enum Mov {
-  Mov(isize),
-  Wrapped(isize),
+pub enum Move {
+  Move(isize), Wrapped(isize),
 }
-
-pub struct Rmv(usize, Mov);
 
 pub enum Insert { 
-  Insert(usize, Mov), Push(Mov),
+  Insert(usize, Move), Push(Move),
 }
 
-impl Mov {
+pub struct Remove(usize, Move);
+
+impl Move {
   pub fn apply<T>(&self, cursor: &mut Cursor, vec: &Vec<T>) -> isize {
     match self {
-      Self::Mov(i)     => cursor.move_head(vec, *i),
+      Self::Move(i)    => cursor.move_head(vec, *i),
       Self::Wrapped(i) => cursor.move_wrapped(vec, *i),
     }
   }
 
-  pub fn apply_vec<T>(&self, vec: &mut CursorVec<T>) -> isize {
+  pub fn apply_to_vec<T>(&self, vec: &mut CursorVec<T>) -> isize {
     match self {
-      Self::Mov(i)     => vec.cursor.move_head(&vec.vec, *i),
+      Self::Move(i)    => vec.cursor.move_head(&vec.vec, *i),
       Self::Wrapped(i) => vec.cursor.move_wrapped(&vec.vec, *i),
     }
   }
 }
 
-impl Rmv {
-  pub fn apply_mod<T>(&self, vec: &mut Vec<T>) -> &Mov {
-    let Self(u, mov) = self;
-    vec.remove(*u);
-    mov
+impl Remove {
+  pub fn apply<T>(&self, vec: &mut Vec<T>) -> &Move {
+    vec.remove(self.0); &self.1
   }
 
-  pub fn apply_vec<T>(&self, vec: &mut CursorVec<T>) {
-    self.apply_mod(&mut vec.vec).apply_vec(vec);
+  pub fn apply_to_vec<T>(&self, vec: &mut CursorVec<T>) {
+    self.apply(&mut vec.vec).apply_to_vec(vec);
   }
 }
 
 impl Insert {
-  pub fn apply_mod<T>(&self, vec: &mut Vec<T>, t: T) -> &Mov {
+  pub fn apply<T>(&self, vec: &mut Vec<T>, t: T) -> &Move {
     match self {
       Self::Insert(u, mov) => { vec.insert(*u, t); mov }
       Self::Push(mov)      => { vec.push(t);       mov }
     }
   }
 
-  pub fn apply_vec<T>(&self, vec: &mut CursorVec<T>, t: T) {
-    self.apply_mod(&mut vec.vec, t).apply_vec(vec);
+  pub fn apply_to_vec<T>(&self, vec: &mut CursorVec<T>, t: T) {
+    self.apply(&mut vec.vec, t).apply_to_vec(vec);
   }
 }
 
@@ -201,29 +198,29 @@ impl Cursor {
     }
   }
 
-  pub fn remove<T>(&mut self, vec: &mut Vec<T>) -> Option<Rmv> {
+  pub fn remove<T>(&mut self, vec: &mut Vec<T>) -> Option<Remove> {
     if self.head < vec.len() {
       vec.remove(self.head);
       let head = self.head;
       let mv   = self.move_wrapped(vec, -1);
-      Some(Rmv(head, Mov::Wrapped(-1)))
+      Some(Remove(head, Move::Wrapped(-1)))
     } else {None}
   }
 
-  pub fn delete<T>(&self, vec: &mut Vec<T>) -> Option<Rmv> {
+  pub fn delete<T>(&self, vec: &mut Vec<T>) -> Option<Remove> {
     if self.head < vec.len() {
       vec.remove(self.head);
-      Some(Rmv(self.head, Mov::Mov(0)))
+      Some(Remove(self.head, Move::Move(0)))
     } else {None}
   }
 
   pub fn backspace<T>(&mut self, vec: &mut Vec<T>) 
-    -> Option<Rmv>
+    -> Option<Remove>
   {
     if self.peek_move(vec, -1) == 0 {
       self.move_head(vec, -1);
       vec.remove(self.head);
-      Some(Rmv(self.head, Mov::Mov(-1)))
+      Some(Remove(self.head, Move::Move(-1)))
     } else {None}
   }
 
@@ -244,16 +241,16 @@ impl Cursor {
       None
     } else if vec.len() == 0 {
       vec.push(unit);
-      Some(Insert::Push(Mov::Mov(0)))
+      Some(Insert::Push(Move::Move(0)))
     } else if self.head + 1 == vec.len() {
       vec.push(unit);
       self.head += 1;
-      Some(Insert::Push(Mov::Mov(1)))
+      Some(Insert::Push(Move::Move(1)))
     }
     else {
       self.head += 1;
       vec.insert(self.head, unit);
-      Some(Insert::Insert(self.head, Mov::Mov(1)))
+      Some(Insert::Insert(self.head, Move::Move(1)))
     }
   }
 
@@ -261,12 +258,12 @@ impl Cursor {
     if self.head + 1 == vec.len() || vec.len() == 0 {
       vec.push(c);
       self.move_head(vec, 1);
-      Insert::Push(Mov::Mov(1))
+      Insert::Push(Move::Move(1))
     } else {
       let head = self.head;
       vec.insert(self.head, c);
       self.move_head(vec, 1);
-      Insert::Insert(head, Mov::Mov(1))
+      Insert::Insert(head, Move::Move(1))
     }
   }
 

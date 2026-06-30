@@ -6,6 +6,8 @@ use crate::{
   Dim,
   user,
   User, 
+  CursorVec,
+  Tab,
   TextStyle,
   UserTable,
   user_from_str,
@@ -50,7 +52,7 @@ pub enum Focus {
 
 pub struct App {
   pub user:        User,
-  pub tabs:        TabCursor,
+  pub tabs:        CursorVec<Tab>,
   pub layout:      Layout,
   pub focus:       Focus,
   pub request:     Option<Request>,
@@ -69,7 +71,7 @@ impl App {
       .with_frame_params(user.get_frame_params());
     let mut app = Self {
       guide:       "".into(),
-      tabs:        TabCursor::default(),//.with_style(user.style.general),
+      tabs:        CursorVec::default(),//.with_style(user.style.general),
       request:     None,
       focus:       Focus::Tab,
       new_dlg:     false,
@@ -209,13 +211,12 @@ impl App {
         self.focus_ack_dialog(status.text);
       }
       _ => {
-        let params = self.tabs.add_gem_tab(
-            &url, 
-            gemini::parse_doc(&content), 
-            |g| self.user.get_style_from_gem_text(g),
-          )
-          .with_style(self.user.style.general);
-        self.layout.insert(TAB, PageViewParams::from(params));
+        self.tabs.add_gem_tab(
+          &mut self.layout,
+          &url, 
+          gemini::parse_doc(&content), 
+          |g| self.user.get_style_from_gem_text(g),
+        );
         self.tab_changed = true;
       }
     };
