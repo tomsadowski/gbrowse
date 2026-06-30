@@ -11,6 +11,7 @@ mod userkeys;
 mod userstyle;
 mod cursor;
 mod tab;
+mod dlg;
 mod color;
 mod rect;
 mod frame;
@@ -23,6 +24,8 @@ mod layout;
 mod util;
 mod constants;
 
+pub use crate::dlg::{
+};
 pub use crate::userkeys::{
   UserKeys,
 };
