@@ -34,16 +34,16 @@ pub enum Action {
 }
 
 impl Action {
-  pub fn update(&self, textbox: &mut crate::Page) {
+  pub fn update(&self, page: &mut crate::Page) {
     match self {
-      Action::PageDown  => {textbox.move_down(15);}
-      Action::PageUp    => {textbox.move_up(15);}
-      Action::Bottom    => {textbox.move_down(textbox.matrix.len());}
-      Action::Top       => {textbox.move_up(textbox.matrix.len());}
-      Action::MoveDown  => {textbox.move_down(1);}
-      Action::MoveUp    => {textbox.move_up(1);}
-      Action::MoveLeft  => {textbox.move_left(1);}
-      Action::MoveRight => {textbox.move_right(1);}
+      Action::PageDown  => {page.move_down(15);}
+      Action::PageUp    => {page.move_up(15);}
+      Action::Bottom    => {page.move_down(page.matrix.len());}
+      Action::Top       => {page.move_up(page.matrix.len());}
+      Action::MoveDown  => {page.move_down(1);}
+      Action::MoveUp    => {page.move_up(1);}
+      Action::MoveLeft  => {page.move_left(1);}
+      Action::MoveRight => {page.move_right(1);}
       _ => {}
     }
   }

@@ -215,6 +215,7 @@ impl App {
           &mut self.layout,
           &url, 
           gemini::parse_doc(&content), 
+          self.user.style.general,
           |g| self.user.get_style_from_gem_text(g),
         );
         self.tab_changed = true;
@@ -262,12 +263,11 @@ impl App {
   }
 
   pub fn push_style(&mut self) {
-//  self.frame = self.user.get_frame(self.frame.screen);
-//  self.push_size();
-//  self.tabs.push_style(self.user.style.general);
-//  self.tabs.push_gem_style(
-//    |gem| self.user.get_style_from_gem_tag(gem)
-//  );
+    self.tabs.push_gem_style(
+      &mut self.layout,
+      self.user.style.general,
+      |gem| self.user.get_style_from_gem_tag(gem)
+    );
   }
 
   pub fn select_link(&mut self, url_str: &str) {

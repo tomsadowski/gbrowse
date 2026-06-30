@@ -9,7 +9,10 @@ use crate::{
   Page,
   PageParams,
   CursorVec,
-  Insert, Remove, Move,
+  CursorCommand,
+  InsertCommand, 
+  RemoveCommand, 
+  MoveCommand,
 };
 use std::collections::HashMap;
 
@@ -17,25 +20,21 @@ use std::collections::HashMap;
 pub trait GetHeight { 
   fn get_height(&self) -> u16; 
 }
-
 impl<T> GetHeight for Vec<T> {
   fn get_height(&self) -> u16 { 
     u16::try_from(self.len()).unwrap_or(u16::MAX)
   }
 }
-
 impl GetHeight for Page {
   fn get_height(&self) -> u16 {
     self.matrix.get_height()
   }
 }
-
 impl GetHeight for Frame {
   fn get_height(&self) -> u16 {
     self.border_rect.height()
   }
 }
-
 impl GetHeight for PageView {
   fn get_height(&self) -> u16 {
     self.frame.border_rect.height()
@@ -53,7 +52,7 @@ impl GetHeight for CursorVec<PageView> {
 
 pub struct PageViewParams {
   pub max_height:   Option<u16>,
-  pub draw_point: bool,
+  pub draw_point:   bool,
   pub frame_params: FrameParams,
   pub page_params:  PageParams,
 }
@@ -288,7 +287,7 @@ impl Layout {
     });
   }
 
-  fn push_rebuild(&mut self) {
+  pub fn push_rebuild(&mut self) {
     let mut rect = self.frame.inner_rect;
     self.for_each_sorted_mut(|view_list| {
       view_list.rebuild(&rect);
@@ -332,14 +331,17 @@ impl Layout {
     self.push_rebuild();
   }
 
-  pub fn apply_insert(
-    &mut self, key: u16, insert: Insert, view_params: PageViewParams
+  pub fn apply_insert_command(
+    &mut self, 
+    key: u16, 
+    insert_cmd:  InsertCommand, 
+    view_params: PageViewParams
   ) {
     let rect = self.get_rect_for_key(key);
     let view = view_params.build(&rect);
     self.map
       .get_mut(&key)
-      .map(|cursor_vec| insert.apply_to_vec(cursor_vec, view));
+      .map(|cursor_vec| insert_cmd.apply_to_vec(cursor_vec, view));
   }
 
   pub fn insert(&mut self, key: u16, view_params: PageViewParams) {

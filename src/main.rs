@@ -63,9 +63,10 @@ pub use crate::user::{
 pub use crate::cursor::{
   Cursor, 
   CursorVec,
-  Move,
-  Remove,
-  Insert,
+  CursorCommand,
+  MoveCommand,
+  RemoveCommand,
+  InsertCommand,
   Point,
   PointView,
   CursorView,

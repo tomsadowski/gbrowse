@@ -6,7 +6,6 @@ pub struct CursorVec<T> {
   pub cursor: Cursor,
   pub vec:    Vec<T>,
 }
-
 impl<T> From<T> for CursorVec<T> {
   fn from(t: T) -> Self {
     Self {
@@ -15,7 +14,6 @@ impl<T> From<T> for CursorVec<T> {
     }
   }
 }
-
 impl<T> From<Vec<T>> for CursorVec<T> {
   fn from(vec: Vec<T>) -> Self {
     Self {
@@ -24,16 +22,13 @@ impl<T> From<Vec<T>> for CursorVec<T> {
     }
   }
 }
-
 impl<T> std::ops::Deref for CursorVec<T> {
   type Target = Vec<T>;
   fn deref(&self) -> &Self::Target {&self.vec}
 }
-
 impl<T> std::ops::DerefMut for CursorVec<T> {
   fn deref_mut(&mut self) -> &mut Self::Target { &mut self.vec }
 }
-
 impl<T> CursorVec<T> {
   pub fn move_head(&mut self, mut idelta: isize) -> isize {
     self.cursor.move_head(&self.vec, idelta)
@@ -47,49 +42,69 @@ impl<T> CursorVec<T> {
     self.vec.get_mut(*self.cursor)
   }
 
-  pub fn remove(&mut self) -> Option<Remove> {
+  pub fn remove(&mut self) -> Option<RemoveCommand> {
     self.cursor.remove(&mut self.vec)
   }
 
-  pub fn delete(&mut self) -> Option<Remove> {
+  pub fn delete(&mut self) -> Option<RemoveCommand> {
     self.cursor.delete(&mut self.vec)
   }
 
-  pub fn backspace(&mut self) -> Option<Remove> {
+  pub fn backspace(&mut self) -> Option<RemoveCommand> {
     self.cursor.backspace(&mut self.vec)
   }
 
-  pub fn insert(&mut self, t: T) -> Insert {
+  pub fn insert(&mut self, t: T) -> InsertCommand {
     self.cursor.insert(&mut self.vec, t)
   }
 
+  pub fn apply_command(&mut self, cmd: CursorCommand<T>) {
+    cmd.apply_to_vec(self)
+  }
+
   pub fn insert_unique_with<F>(&mut self, is_equal: F, unit: T) 
-    -> Option<Insert> 
+    -> Option<InsertCommand> 
   where F: Fn(&T) -> bool,
   {
     self.cursor.insert_unique_with(&mut self.vec, is_equal, unit)
   }
 }
 
-
-pub enum Move {
-  Move(isize), Wrapped(isize),
+pub enum CursorCommand<T> {
+  Move(MoveCommand),
+  Remove(RemoveCommand),
+  Insert(InsertCommand, T),
+}
+impl<T> From<MoveCommand> for CursorCommand<T> {
+  fn from(cmd: MoveCommand) -> Self { Self::Move(cmd) }
+}
+impl<T> From<RemoveCommand> for CursorCommand<T> {
+  fn from(cmd: RemoveCommand) -> Self { Self::Remove(cmd) }
+}
+impl<T> From<(InsertCommand, T)> for CursorCommand<T> {
+  fn from((cmd, t): (InsertCommand, T)) -> Self { Self::Insert(cmd, t) }
+}
+impl<T> CursorCommand<T> {
+  pub fn apply_to_vec(self, vec: &mut CursorVec<T>) {
+    match self {
+      Self::Move(move_cmd)        => { move_cmd.apply_to_vec(vec); }
+      Self::Remove(remove_cmd)    => { remove_cmd.apply_to_vec(vec); }
+      Self::Insert(insert_cmd, t) => { insert_cmd.apply_to_vec(vec, t); }
+    }
+  }
 }
 
-pub enum Insert { 
-  Insert(usize, Move), Push(Move),
+pub enum MoveCommand {
+  Move(isize), 
+  Wrapped(isize),
 }
-
-pub struct Remove(usize, Move);
-
-impl Move {
+impl MoveCommand {
   pub fn apply<T>(&self, cursor: &mut Cursor, vec: &Vec<T>) -> isize {
     match self {
       Self::Move(i)    => cursor.move_head(vec, *i),
       Self::Wrapped(i) => cursor.move_wrapped(vec, *i),
     }
   }
-
   pub fn apply_to_vec<T>(&self, vec: &mut CursorVec<T>) -> isize {
     match self {
       Self::Move(i)    => vec.cursor.move_head(&vec.vec, *i),
@@ -98,24 +113,27 @@ impl Move {
   }
 }
 
-impl Remove {
-  pub fn apply<T>(&self, vec: &mut Vec<T>) -> &Move {
+pub struct RemoveCommand(usize, MoveCommand);
+impl RemoveCommand {
+  pub fn apply<T>(&self, vec: &mut Vec<T>) -> &MoveCommand {
     vec.remove(self.0); &self.1
   }
-
   pub fn apply_to_vec<T>(&self, vec: &mut CursorVec<T>) {
     self.apply(&mut vec.vec).apply_to_vec(vec);
   }
 }
 
-impl Insert {
-  pub fn apply<T>(&self, vec: &mut Vec<T>, t: T) -> &Move {
+pub enum InsertCommand { 
+  Insert(usize, MoveCommand), 
+  Push(MoveCommand),
+}
+impl InsertCommand {
+  pub fn apply<T>(&self, vec: &mut Vec<T>, t: T) -> &MoveCommand {
     match self {
       Self::Insert(u, mov) => { vec.insert(*u, t); mov }
       Self::Push(mov)      => { vec.push(t);       mov }
     }
   }
-
   pub fn apply_to_vec<T>(&self, vec: &mut CursorVec<T>, t: T) {
     self.apply(&mut vec.vec, t).apply_to_vec(vec);
   }
@@ -127,48 +145,38 @@ pub struct Cursor {
   head: usize,
   buff: bool,
 }
-
 impl std::ops::Deref for Cursor {
   type Target = usize;
   fn deref(&self) -> &Self::Target {&self.head}
 }
-
 impl std::ops::DerefMut for Cursor {
   fn deref_mut(&mut self) -> &mut Self::Target {&mut self.head}
 }
-
 impl Cursor {
   pub fn editor<T>(mut self, vec: &Vec<T>) -> Self {
     self.make_editor(vec);
     self
   }
-
   pub fn make_editor<T>(&mut self, vec: &Vec<T>) {
     self.buff = true;
     self.move_to_end(vec);
   }
-
   pub fn get_max<T>(&self, vec: &Vec<T>) -> usize {
     if self.buff { vec.len() } 
     else         { vec.len().saturating_sub(1) }
   }
-
   pub fn peek_move<T>(&self, vec: &Vec<T>, idelta: isize) -> isize {
     self.clone().move_head(vec, idelta)
   }
-
   pub fn fit<T>(&mut self, vec: &Vec<T>, new_head: usize) {
     self.head = self.get_max(vec).min(new_head);
   }
-
   pub fn move_to_start(&mut self) {
     self.head = 0;
   }
-
   pub fn move_to_end<T>(&mut self, vec: &Vec<T>) {
     self.head = self.get_max(vec);
   }
-
   pub fn move_wrapped<T>(&mut self, vec: &Vec<T>, mut idelta: isize) -> isize {
     let     imax       = self.get_max(vec) as isize;
     let mut iremainder = self.move_head(vec, idelta);
@@ -181,7 +189,6 @@ impl Cursor {
       )
     }
   }
-
   pub fn move_head<T>(&mut self, vec: &Vec<T>, mut idelta: isize) -> isize {
     let ihead     = self.head as isize;
     let imax      = self.get_max(vec) as isize;
@@ -197,39 +204,35 @@ impl Cursor {
       0
     }
   }
-
-  pub fn remove<T>(&mut self, vec: &mut Vec<T>) -> Option<Remove> {
+  pub fn remove<T>(&mut self, vec: &mut Vec<T>) -> Option<RemoveCommand> {
     if self.head < vec.len() {
       vec.remove(self.head);
       let head = self.head;
       let mv   = self.move_wrapped(vec, -1);
-      Some(Remove(head, Move::Wrapped(-1)))
+      Some(RemoveCommand(head, MoveCommand::Wrapped(-1)))
     } else {None}
   }
-
-  pub fn delete<T>(&self, vec: &mut Vec<T>) -> Option<Remove> {
+  pub fn delete<T>(&self, vec: &mut Vec<T>) -> Option<RemoveCommand> {
     if self.head < vec.len() {
       vec.remove(self.head);
-      Some(Remove(self.head, Move::Move(0)))
+      Some(RemoveCommand(self.head, MoveCommand::Move(0)))
     } else {None}
   }
-
   pub fn backspace<T>(&mut self, vec: &mut Vec<T>) 
-    -> Option<Remove>
+    -> Option<RemoveCommand>
   {
     if self.peek_move(vec, -1) == 0 {
       self.move_head(vec, -1);
       vec.remove(self.head);
-      Some(Remove(self.head, Move::Move(-1)))
+      Some(RemoveCommand(self.head, MoveCommand::Move(-1)))
     } else {None}
   }
-
   pub fn insert_unique_with<T, F>(
     &mut self, 
     vec:        &mut Vec<T>, 
     is_equal:   F, 
     unit:       T
-  ) -> Option<Insert>
+  ) -> Option<InsertCommand>
   where F: Fn(&T) -> bool,
   {
     if let Some((idx, _)) = vec
@@ -241,32 +244,30 @@ impl Cursor {
       None
     } else if vec.len() == 0 {
       vec.push(unit);
-      Some(Insert::Push(Move::Move(0)))
+      Some(InsertCommand::Push(MoveCommand::Move(0)))
     } else if self.head + 1 == vec.len() {
       vec.push(unit);
       self.head += 1;
-      Some(Insert::Push(Move::Move(1)))
+      Some(InsertCommand::Push(MoveCommand::Move(1)))
     }
     else {
       self.head += 1;
       vec.insert(self.head, unit);
-      Some(Insert::Insert(self.head, Move::Move(1)))
+      Some(InsertCommand::Insert(self.head, MoveCommand::Move(1)))
     }
   }
-
-  pub fn insert<T>(&mut self, vec: &mut Vec<T>, c: T) -> Insert {
+  pub fn insert<T>(&mut self, vec: &mut Vec<T>, c: T) -> InsertCommand {
     if self.head + 1 == vec.len() || vec.len() == 0 {
       vec.push(c);
       self.move_head(vec, 1);
-      Insert::Push(Move::Move(1))
+      InsertCommand::Push(MoveCommand::Move(1))
     } else {
       let head = self.head;
       vec.insert(self.head, c);
       self.move_head(vec, 1);
-      Insert::Insert(head, Move::Move(1))
+      InsertCommand::Insert(head, MoveCommand::Move(1))
     }
   }
-
   pub fn get_weighted_head(&self, vec: Vec<char>) -> usize {
     use unicode_width::UnicodeWidthChar;
     vec

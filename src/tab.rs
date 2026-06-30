@@ -14,68 +14,42 @@ use crate::{
   PageViewParams,
   constants::*,
 };
-use std::{
-  collections::HashMap,
-  rc::Rc,
-};
 use url::Url;
 
 
 impl CursorVec<Tab> {
-//pub fn with_style<T>(mut self, style: T) -> Self 
-//where T: Into<Style> + Copy
-//{
-//  self.push_style(style);
-//  self
-//}
-
-//pub fn push_style<T>(&mut self, style: T)
-//where T: Into<Style> + Copy
-//{
-//  for tab in self.tabs.iter_mut() {
-//    tab.get_page_params_mut().style = style.into();
-//  }
-//}
-
-//pub fn push_gem_style<F>(&mut self, func: F)
-//where F: Fn(&GemTag) -> TextStyle,
-//{
-//  for tab in self.tabs.iter_mut() {
-//    if let Tab::Gem(gem_tab) = tab {
-//      let styles = gem_tab.tags.iter().map(|t| func(t)).collect();
-//      gem_tab.params.set_text_styles(styles);
-//    }
-//  }
-//}
-
-  pub fn get_url(&self) -> Option<&url::Url> {
-    self.vec
-      .get(*self.cursor)
-      .and_then(|tab| tab.get_url())
+  pub fn push_gem_style<F, S>(
+    &mut self, 
+    layout: &mut Layout,
+    style:  S,
+    func:   F,
+  ) 
+  where F: Fn(&GemTag) -> TextStyle,
+        S: Into<Style> + Copy,
+  {
+    if let Some(views) = layout.map.get_mut(&TAB) {
+      for (tab, view) in self.vec.iter_mut().zip(views.iter_mut()) {
+        if let Tab::Gem(tab) = tab {
+          let styles = tab.tags.iter().map(|t| func(t)).collect();
+          view.view_params.page_params.set_text_styles(styles);
+          view.view_params.page_params.set_style(style);
+        }
+      }
+      layout.push_rebuild();
+    }
   }
 
-  pub fn get_gem_tag(&self, page: &Page) -> Option<&GemTag> {
-    self.vec
-      .get(*self.cursor)
-      .and_then(|tab| tab.get_gem_tag(page))
-  }
-
-//pub fn use_page_params_mut<F, T>(&mut self, func: F) -> Option<T>
-//where F: Fn(&mut PageParams) -> T
-//{
-//  self.tabs
-//    .get_mut(*self.cursor)
-//    .map(|tab| tab.get_page_params_mut())
-//    .map(|textbox| func(textbox))
-//}
-
-  pub fn add_gem_tab<F>(
+  pub fn add_gem_tab<F, S>(
     &mut self, 
     layout:         &mut Layout,
     url:            &url::Url, 
     source:         Vec<GemText>, 
+    style:          S,
     get_text_style: F
-  ) where F: Fn(&GemText) -> TextStyle {
+  ) 
+  where F: Fn(&GemText) -> TextStyle,
+        S: Into<Style> + Copy,
+  {
     let params = PageParams::init().with_styled_text(&source, get_text_style);
     let (tags, text): (Vec<GemTag>, Vec<String>) = source
       .into_iter()
@@ -87,10 +61,21 @@ impl CursorVec<Tab> {
       |tab| tab.get_url() == Some(url), 
       new_tab
     ) {
-      layout.apply_insert(TAB, cursor_insert, PageViewParams::from(params));
+      layout.apply_insert_command(
+        TAB, cursor_insert, PageViewParams::from(params)
+      );
     }
   }
-
+  pub fn get_url(&self) -> Option<&url::Url> {
+    self.vec
+      .get(*self.cursor)
+      .and_then(|tab| tab.get_url())
+  }
+  pub fn get_gem_tag(&self, page: &Page) -> Option<&GemTag> {
+    self.vec
+      .get(*self.cursor)
+      .and_then(|tab| tab.get_gem_tag(page))
+  }
   pub fn get_banner_text(&self) -> String {
     match self.vec.get(*self.cursor).map(
       |tab| match tab {
@@ -106,17 +91,15 @@ impl CursorVec<Tab> {
 }
 
 pub enum Tab {
-  Text  (String, Rc<PageParams>),
+  Text  (String, PageParams),
   Gem   (UrlTab<GemTag>),
   Gopher(UrlTab<String>),
 }
-
 impl Default for Tab {
   fn default() -> Self {
-    Self::Text("".into(), Rc::new(PageParams::default()))
+    Self::Text("".into(), PageParams::default())
   }
 }
-
 impl Tab {
   pub fn get_heading(&self) -> &str {
     match self {
@@ -125,7 +108,6 @@ impl Tab {
       Tab::Text(heading, _)         => heading,
     }
   }
-
   pub fn get_url(&self) -> Option<&url::Url> {
     match self {
       Tab::Gem(   UrlTab {url, ..}) | 
@@ -133,21 +115,17 @@ impl Tab {
       _                             => None,
     }
   }
-
   pub fn get_gem_tab(&self) ->  Option<&UrlTab<GemTag>> {
     if let Tab::Gem(tab) = self {Some(tab)} else {None}
   }
-
   pub fn get_gopher_tab(&self) ->  Option<&UrlTab<String>> {
     if let Tab::Gopher(tab) = self {Some(tab)} else {None}
   }
-
   pub fn get_text_tab(&self) ->  Option<(&str, &PageParams)> {
     if let Tab::Text(heading, params) = self {
       Some((heading, params))
     } else {None}
   }
-
   pub fn get_gem_tag(&self, page: &Page) -> Option<&GemTag> {
     self
       .get_gem_tab()
@@ -159,12 +137,10 @@ pub struct UrlTab<T> {
   pub url:  Url,
   pub tags: Vec<T>,
 } 
-
 impl<T> UrlTab<T> {
   pub fn new(url: &Url, tags: Vec<T>) -> Self {
     Self { url: url.clone(), tags }
   }
-
   pub fn get_current_tag(&self, page: &Page) -> Option<&T> {
     self.tags.get(page.get_index())
   }
