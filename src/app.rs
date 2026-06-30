@@ -9,7 +9,6 @@ use crate::{
   TextStyle,
   UserTable,
   user_from_str,
-  TabCursor,
   Request,
   Layout,
   Action,
@@ -440,7 +439,7 @@ impl App {
           self.spawn_request(&url);
         }
         (_, Action::Yes, Task::DelTab) => {
-          if self.tabs.cursor.remove(&mut self.tabs.tabs).is_some() {
+          if self.tabs.cursor.remove(&mut self.tabs.vec).is_some() {
             let url_str = self.user.init_url.clone();
             self.focus_edit_dialog(
               Task::Init(url_str.clone()), 
@@ -497,12 +496,12 @@ impl App {
           }
         (Some(view), Action::CycleLeft) => {
           self.tab_changed = {
-            self.tabs.cursor.move_wrapped(&self.tabs.tabs, -1); true
+            self.tabs.cursor.move_wrapped(&self.tabs.vec, -1); true
           };
         }
         (Some(view), Action::CycleRight) => {
           self.tab_changed = {
-            self.tabs.cursor.move_wrapped(&self.tabs.tabs, 1); true
+            self.tabs.cursor.move_wrapped(&self.tabs.vec, 1); true
           };
         }
         (Some(view), Action::LoadUrl) => {

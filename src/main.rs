@@ -62,9 +62,10 @@ pub use crate::user::{
 };
 pub use crate::cursor::{
   Cursor, 
-  CursorList,
-  CursorRemove,
-  CursorInsert,
+  CursorVec,
+  Mov,
+  Rmv,
+  Insert,
   Point,
   PointView,
   CursorView,
@@ -72,7 +73,6 @@ pub use crate::cursor::{
 pub use crate::tab::{
   Tab, 
   UrlTab, 
-  TabCursor,
 };
 pub use crate::rect::{
   Pos, 

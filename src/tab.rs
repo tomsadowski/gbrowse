@@ -5,10 +5,14 @@ use crate::{
   Cursor, 
   Style, 
   PageParams, 
+  PageView,
+  CursorVec,
   Page,
   GemText,
   GemTag,
   Layout,
+  PageViewParams,
+  constants::*,
 };
 use std::{
   collections::HashMap,
@@ -17,12 +21,7 @@ use std::{
 use url::Url;
 
 
-#[derive(Default)]
-pub struct TabCursor {
-  pub cursor: Cursor,
-  pub tabs:   Vec<Tab>,
-} 
-impl TabCursor {
+impl CursorVec<Tab> {
 //pub fn with_style<T>(mut self, style: T) -> Self 
 //where T: Into<Style> + Copy
 //{
@@ -50,13 +49,13 @@ impl TabCursor {
 //}
 
   pub fn get_url(&self) -> Option<&url::Url> {
-    self.tabs
+    self.vec
       .get(*self.cursor)
       .and_then(|tab| tab.get_url())
   }
 
   pub fn get_gem_tag(&self, page: &Page) -> Option<&GemTag> {
-    self.tabs
+    self.vec
       .get(*self.cursor)
       .and_then(|tab| tab.get_gem_tag(page))
   }
@@ -72,28 +71,28 @@ impl TabCursor {
 
   pub fn add_gem_tab<F>(
     &mut self, 
+    layout:         &mut Layout,
     url:            &url::Url, 
     source:         Vec<GemText>, 
     get_text_style: F
-  ) -> PageParams
-  where F: Fn(&GemText) -> TextStyle,
-  {
+  ) where F: Fn(&GemText) -> TextStyle {
     let params = PageParams::init().with_styled_text(&source, get_text_style);
     let (tags, text): (Vec<GemTag>, Vec<String>) = source
       .into_iter()
       .map(|gemtext| (gemtext.tag, gemtext.text))
       .unzip();
     let new_tab = Tab::Gem(UrlTab::new(url, tags));
-    self.cursor.insert_unique_with(
-      &mut self.tabs, 
+    if let Some(cursor_insert) = self.cursor.insert_unique_with(
+      &mut self.vec, 
       |tab| tab.get_url() == Some(url), 
       new_tab
-    );
-    params
+    ) {
+      layout.apply_insert(TAB, cursor_insert, PageViewParams::from(params));
+    }
   }
 
   pub fn get_banner_text(&self) -> String {
-    match self.tabs.get(*self.cursor).map(
+    match self.vec.get(*self.cursor).map(
       |tab| match tab {
         Tab::Gem   (UrlTab {url, ..}) | 
         Tab::Gopher(UrlTab {url, ..}) => url.to_string(),
@@ -101,7 +100,7 @@ impl TabCursor {
       }
     ) {
       None    => format!("Empty"),
-      Some(s) => format!("{}/{} - {s}", *self.cursor + 1, self.tabs.len()),
+      Some(s) => format!("{}/{} - {s}", *self.cursor + 1, self.vec.len()),
     }
   }
 }

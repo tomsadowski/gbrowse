@@ -8,7 +8,8 @@ use crate::{
   PointView,
   Page,
   PageParams,
-  CursorList,
+  CursorVec,
+  Insert, Rmv, Mov,
 };
 use std::collections::HashMap;
 
@@ -41,7 +42,7 @@ impl GetHeight for PageView {
   }
 }
 
-impl GetHeight for CursorList<PageView> {
+impl GetHeight for CursorVec<PageView> {
   fn get_height(&self) -> u16 {
     self
       .get_current()
@@ -200,7 +201,7 @@ impl PageView {
   }
 }
 
-impl CursorList<PageView> {
+impl CursorVec<PageView> {
   pub fn draw<W: std::io::Write>(&self, writer: &mut W) 
     -> std::io::Result<()> 
   {
@@ -228,7 +229,7 @@ pub struct Layout {
   pub max_rect:     Rect,
   pub frame_params: FrameParams,
   pub frame:        Frame,
-  pub map:          HashMap<u16, CursorList<PageView>>,
+  pub map:          HashMap<u16, CursorVec<PageView>>,
 }
 
 impl From<Rect> for Layout {
@@ -264,7 +265,7 @@ impl Layout {
   }
 
   fn for_each_sorted<F, T>(&self, mut func: F)
-  where F: FnMut(&CursorList<PageView>) -> T
+  where F: FnMut(&CursorVec<PageView>) -> T
   {
     for k in self.get_sorted_keys().iter() {
       if let Some(v) = self.map.get(k) { func(v); }
@@ -272,7 +273,7 @@ impl Layout {
   }
 
   fn for_each_sorted_mut<F>(&mut self, mut func: F) 
-  where F: FnMut(&mut CursorList<PageView>)
+  where F: FnMut(&mut CursorVec<PageView>)
   {
     for k in self.get_sorted_keys().iter() {
       if let Some(v) = self.map.get_mut(k) { func(v); }
@@ -329,6 +330,18 @@ impl Layout {
     self.max_rect = rect;
     self.frame = self.frame_params.build_from_outer(&self.max_rect);
     self.push_rebuild();
+  }
+
+  pub fn apply_insert(
+    &mut self, key: u16, insert: Insert, view_params: PageViewParams
+  ) {
+    let rect = self.get_rect_for_key(key);
+    let view = view_params.build(&rect);
+    self.map
+      .get_mut(&key)
+      .map(|cursor_vec| 
+        insert.apply_vec(cursor_vec, view)
+      );
   }
 
   pub fn insert(&mut self, key: u16, view_params: PageViewParams) {
