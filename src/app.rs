@@ -10,6 +10,7 @@ use crate::{
   Tab,
   TextStyle,
   Dlg,
+  DlgType,
   UserTable,
   user_from_str,
   Request,
@@ -48,7 +49,7 @@ pub enum Msg {
 }
 
 pub enum Focus {
-  Tab, Dialog(Task),
+  Tab, Dlg(DlgType, Task),
 }
 
 pub struct App {
@@ -68,7 +69,7 @@ impl App {
     let user_text = std::fs::read_to_string(path).unwrap_or_default();
     let user: User = user_from_str(&user_text).unwrap_or_default();
     let layout = Layout::from(Rect::from(Dim(w, h)))
-      .with_frame_params(user.get_frame_params());
+      .with_frame_params(user.style.get_frame_params());
     let mut app = Self {
       guide:       "".into(),
       tabs:        CursorVec::default(),
@@ -102,39 +103,40 @@ impl App {
   }
 
   fn focus_ack_dialog(&mut self, prompt: String) {
-    Dlg::from(&self.user).prompt(&prompt).ack().add(&mut self.layout);
-    self.focus = Focus::Dialog(Task::Default);
+    self.focus = Focus::Dlg(
+      Dlg::from(&self.user).prompt(&prompt).ack(&mut self.layout),
+      Task::Default
+    );
   }
 
   fn focus_ask_dialog(&mut self, task: Task, prompt: &str) {
-    Dlg::from(&self.user).prompt(&prompt).ask().add(&mut self.layout);
-    self.focus = Focus::Dialog(task);
+    self.focus = Focus::Dlg(
+      Dlg::from(&self.user).prompt(&prompt).ask(&mut self.layout),
+      task
+    );
     self.guide = format!(
       "{} yes {} no", self.user.keys.yes, self.user.keys.no
     );
   }
 
   fn focus_edit_dialog(&mut self, task: Task, prompt: &str, text: &str) {
-    Dlg::from(&self.user)
-      .prompt(&prompt)
-      .edit(text)
-      .add(&mut self.layout);
+    self.focus = Focus::Dlg(
+      Dlg::from(&self.user).prompt(&prompt).edit(text, &mut self.layout),
+      task
+    );
     self.guide = format!("Press {} to cancel", self.user.keys.cancel);
-    self.focus = Focus::Dialog(task);
   }
 
   fn focus_select_dialog(
-    &mut self, 
-    task: Task, 
-    prompt: &str, 
-    options: Vec<String>
+    &mut self, task: Task, prompt: &str, options: Vec<String>
   ) {
-    Dlg::from(&self.user)
-      .prompt(&prompt)
-      .select(options)
-      .add(&mut self.layout);
+    self.focus = Focus::Dlg(
+      Dlg::from(&self.user)
+        .prompt(&prompt)
+        .select(options, &mut self.layout),
+      task
+    );
     self.guide = format!("Press {} to select", self.user.keys.select);
-    self.focus = Focus::Dialog(task);
   }
 
   fn join_gemdoc(&mut self, url: url::Url, response: String, content: String) {
@@ -173,7 +175,7 @@ impl App {
           &url, 
           gemini::parse_doc(&content), 
           self.user.style.general,
-          |g| self.user.get_style_from_gem_text(g),
+          |g| self.user.style.get_style_from_gem_text(g),
         );
         self.tab_changed = true;
       }
@@ -223,7 +225,7 @@ impl App {
     self.tabs.push_gem_style(
       &mut self.layout,
       self.user.style.general,
-      |gem| self.user.get_style_from_gem_tag(gem)
+      |gem| self.user.style.get_style_from_gem_tag(gem)
     );
   }
 
@@ -253,7 +255,7 @@ impl App {
       (Msg::Resize(w, h), _) => {
         self.layout.resize(Rect::from(Dim(*w, *h)));
       }
-      (Msg::Action(action), Focus::Dialog(task)) => 
+      (Msg::Action(action), Focus::Dlg(dlg_type, task)) => 
         match (
           self.layout.get_page_view_mut(DLG_2),
           action,
@@ -518,7 +520,7 @@ impl App {
           ..
         }
       ) => match &self.focus {
-        Focus::Dialog(_) => 
+        Focus::Dlg(dlg_type, _) => 
           self.user.keys.get_tab_action(&kc).map(Msg::Action),
         Focus::Tab => 
           self.user.keys.get_tab_action(&kc).map(Msg::Action),

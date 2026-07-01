@@ -26,6 +26,7 @@ mod constants;
 
 pub use crate::dlg::{
   Dlg,
+  DlgType,
 };
 pub use crate::userkeys::{
   UserKeys,

@@ -3,6 +3,7 @@
 use crate::{
   Assign,
   Action,
+  DlgType,
 };
 use crossterm::event::KeyCode;
 
@@ -29,7 +30,6 @@ pub struct UserKeys {
   pub no:          KeyCode,
   pub cancel:      KeyCode,
 } 
-
 impl Default for UserKeys {
   fn default() -> Self {
     Self {
@@ -55,7 +55,6 @@ impl Default for UserKeys {
     }
   }
 }
-
 impl Assign for UserKeys {
   type Field = Action;
   fn assign(&mut self, f: Self::Field, v: toml::Value) -> Result<(), String> {
@@ -147,16 +146,16 @@ impl UserKeys {
     }
   }
 
-//pub fn get_dlg_action(&self, dialog: &Dialog, kc: &KeyCode) 
-//  -> Option<Action> 
-//{
-//  match dialog.input {
-//    DlgInput::Ack(_)    => self.get_ack_dialog_action(kc),
-//    DlgInput::Text(_)    => self.get_ask_dialog_action(kc),
-//    DlgInput::Edit(_)   => self.get_edit_dialog_action(kc),
-//    DlgInput::Select(_) => self.get_select_dialog_action(kc),
-//  }
-//}
+  pub fn get_dlg_action(&self, dlg_type: &DlgType, kc: &KeyCode) 
+    -> Option<Action> 
+  {
+    match dlg_type {
+      DlgType::Ack    => self.get_ack_dialog_action(kc),
+      DlgType::Ask    => self.get_ask_dialog_action(kc),
+      DlgType::Edit   => self.get_edit_dialog_action(kc),
+      DlgType::Select => self.get_select_dialog_action(kc),
+    }
+  }
 
   pub fn get_ack_dialog_action(&self, kc: &KeyCode) -> Option<Action> {
     Some(Action::Ack)

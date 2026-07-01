@@ -35,7 +35,6 @@ pub struct UserStyle {
   pub quote:           TextStyle,
   pub list:            TextStyle,
 } 
-
 impl UserStyle {
   pub fn get_frame_params(&self) -> FrameParams {
     FrameParams::init()
@@ -72,7 +71,6 @@ impl UserStyle {
     }
   }
 }
-
 impl Assign for UserStyle {
   type Field = StyleTableField;
   fn assign(&mut self, f: Self::Field, v: toml::Value) -> Result<(), String> {
@@ -112,7 +110,6 @@ impl Assign for UserStyle {
     Ok(())
   }
 }
-
 impl Assign for Style {
   type Field = StyleField;
   fn assign(&mut self, f: Self::Field, v: toml::Value) -> Result<(), String> {
@@ -138,7 +135,6 @@ impl Assign for Style {
     Ok(())
   }
 }
-
 impl Assign for Margins {
   type Field = MarginField;
   fn assign(&mut self, f: Self::Field, v: toml::Value) -> Result<(), String> {
@@ -160,7 +156,6 @@ impl Assign for Margins {
     Ok(())
   }
 }
-
 impl Assign for BorderStyle {
   type Field = BorderField;
   fn assign(&mut self, f: Self::Field, v: toml::Value) -> Result<(), String> {
@@ -222,7 +217,6 @@ impl Assign for BorderStyle {
     Ok(())
   }
 }
-
 impl Assign for TextStyle {
   type Field = TextField;
   fn assign(&mut self, f: Self::Field, v: toml::Value) -> Result<(), String> {
@@ -243,14 +237,17 @@ impl Assign for TextStyle {
 }
 
 #[derive(Debug)]
-pub enum ColorField {Fg, Bg}
-
+pub enum ColorField {
+  Fg, Bg
+}
 #[derive(Debug)]
-pub enum AttributeField {Bold, Underline}
-
+pub enum AttributeField {
+  Bold, Underline
+}
 #[derive(Debug)]
-pub enum StyleMarginField {Text, Screen}
-
+pub enum StyleMarginField {
+  Text, Screen
+}
 #[derive(Debug)]
 pub enum StyleTextField {
   General,
@@ -271,7 +268,6 @@ pub enum StyleTextField {
 pub enum StyleTableField {
   Border, Margin(StyleMarginField), Text(StyleTextField),
 }
-
 impl std::str::FromStr for StyleTableField {
   type Err = String;
   fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -297,8 +293,9 @@ impl std::str::FromStr for StyleTableField {
 }
 
 #[derive(Debug)]
-pub enum MarginField {North, South, East, West}
-
+pub enum MarginField {
+  North, South, East, West
+}
 impl std::str::FromStr for MarginField {
   type Err = String;
   fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -313,8 +310,9 @@ impl std::str::FromStr for MarginField {
 }
 
 #[derive(Debug)]
-pub enum StyleField {Color(ColorField), Attribute(AttributeField)}
-
+pub enum StyleField {
+  Color(ColorField), Attribute(AttributeField)
+}
 impl std::str::FromStr for StyleField {
   type Err = String;
   fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -329,8 +327,9 @@ impl std::str::FromStr for StyleField {
 }
 
 #[derive(Debug)]
-pub enum TextField {Wrap, Style(StyleField)}
-
+pub enum TextField {
+  Wrap, Style(StyleField)
+}
 impl std::str::FromStr for TextField {
   type Err = String;
   fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -342,8 +341,9 @@ impl std::str::FromStr for TextField {
 }
 
 #[derive(Debug)]
-pub enum BorderField {Style(StyleField), Corner, Bracket}
-
+pub enum BorderField {
+  Style(StyleField), Corner, Bracket
+}
 impl std::str::FromStr for BorderField {
   type Err = String;
   fn from_str(s: &str) -> Result<Self, Self::Err> {

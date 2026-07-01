@@ -78,7 +78,6 @@ pub struct User {
   pub keys:           UserKeys,
   pub urls:           Vec<String>,
 } 
-
 impl Default for User {
   fn default() -> Self {
     let urls: Vec<String> = match std::fs::read_to_string(&SAVE_FILE) {
@@ -95,7 +94,6 @@ impl Default for User {
     }
   }
 }
-
 impl Assign for User {
   type Field = UserField;
   fn assign(&mut self, f: Self::Field, v: toml::Value) -> Result<(), String> {
@@ -166,22 +164,6 @@ impl User {
       }
     }
   }
-
-  pub fn get_frame_params(&self) -> FrameParams {
-    self.style.get_frame_params()
-  }
-
-  pub fn get_dialog_frame_params(&self) -> FrameParams {
-    self.style.get_dialog_frame_params()
-  }
-
-  pub fn get_style_from_gem_text(&self, gemtext: &GemText) -> TextStyle {
-    self.style.get_style_from_gem_text(gemtext)
-  }
-
-  pub fn get_style_from_gem_tag(&self, gemtag: &GemTag) -> TextStyle {
-    self.style.get_style_from_gem_tag(gemtag)
-  }
 }
 
 #[derive(Debug)]
@@ -192,7 +174,6 @@ pub enum UserField {
   Style, 
   Keys,
 }
-
 impl std::str::FromStr for UserField {
   type Err = String;
   fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -207,7 +188,6 @@ impl std::str::FromStr for UserField {
     }
   }
 }
-
 impl ToString for UserField {
   fn to_string(&self) -> String {
     match self {
@@ -219,7 +199,6 @@ impl ToString for UserField {
     }
   }
 }
-
 impl UserField {
   pub fn get_select(&self) -> Vec<(Self, String)> {
     vec![
