@@ -49,6 +49,7 @@ impl GetHeight for CursorVec<PageView> {
   }
 }
 
+#[derive(Default)]
 pub struct PageViewParams {
   pub max_height:   Option<u16>,
   pub draw_point:   bool,

@@ -12,65 +12,78 @@ use crate::{
 };
 
 
-pub struct Dlg<'a>(pub &'a User, pub &'a mut Layout);
+pub struct Dlg<'a> {
+  user:   &'a User, 
+  header: PageViewParams,
+  body:   PageViewParams,
+}
+
+impl<'a> From<&'a User> for Dlg<'a> {
+  fn from(user: &'a User) -> Self {
+    Self {
+      header: PageViewParams::default(),
+      body:   PageViewParams::default(),
+      user
+    }
+  }
+}
 
 impl<'a> Dlg<'a> { 
-  pub fn prompt(&mut self, prompt: &str) -> &mut Self {
-    self.1.insert(
-      DLG_1, 
-      PageParams::init()
-        .with_text(&vec![prompt.to_string()])
-        .with_style(self.0.style.info).into()
-    );
+  pub fn add(self, layout: &mut Layout) {
+    layout.insert(DLG_1, self.header);
+    layout.insert(DLG_2, self.body);
+  }
+
+  pub fn prompt(mut self, prompt: &str) -> Self {
+    self.header = PageParams::init()
+      .with_text(&vec![prompt.to_string()])
+      .with_style(self.user.style.info)
+      .into();
     self
   }
 
-  pub fn ack(&mut self) {
-    let guide = format!("Press any key to acknowledge");
-    let dlg_2 = PageViewParams::from(
+  pub fn ack(mut self) -> Self {
+    self.body = PageViewParams::from(
       PageParams::init()
-        .with_text(&vec![guide])
-        .with_style(self.0.style.info)
-    ).with_frame_params(self.0.get_dialog_frame_params());
-    self.1.insert(DLG_2, dlg_2);
+        .with_text(&vec![format!("Press any key to acknowledge")])
+        .with_style(self.user.style.info)
+    ).with_frame_params(self.user.get_dialog_frame_params());
+    self
   }
 
-  pub fn ask(&mut self) {
+  pub fn ask(mut self) -> Self {
     let guide = format!(
-      "{} yes {} no", self.0.keys.yes, self.0.keys.no
+      "{} yes {} no", self.user.keys.yes, self.user.keys.no
     );
-    let dlg_2 = PageViewParams::from(
+    self.body = PageViewParams::from(
       PageParams::init()
         .with_text(&vec![guide])
-        .with_style(self.0.style.info)
-    ).with_frame_params(self.0.get_dialog_frame_params());
-    self.1.insert(DLG_2, dlg_2);
+        .with_style(self.user.style.info)
+    ).with_frame_params(self.user.get_dialog_frame_params());
+    self
   }
 
-  pub fn edit(&mut self, text: &str) {
-    self.1.insert(
-      DLG_2, 
+  pub fn edit(mut self, text: &str) -> Self {
+    self.body = 
       PageViewParams::from(
         PageParams::init()
           .with_text(&vec![text])
-          .with_style(self.0.style.info)
+          .with_style(self.user.style.info)
           .edit(true)
       )
-      .with_frame_params(self.0.get_dialog_frame_params())
-      .with_draw_point(true)
-    );
+      .with_frame_params(self.user.get_dialog_frame_params())
+      .with_draw_point(true);
+    self
   }
 
-  pub fn select(&mut self, options: Vec<String>) {
-    self.1.insert(
-      DLG_2, 
-      PageViewParams::from(
-        PageParams::init()
-          .with_text(&options)
-          .with_style(self.0.style.info)
-        )
-        .with_frame_params(self.0.get_dialog_frame_params())
-        .with_draw_point(true)
-    );
+  pub fn select(mut self, options: Vec<String>) -> Self {
+    self.body = PageViewParams::from(
+      PageParams::init()
+        .with_text(&options)
+        .with_style(self.user.style.info)
+      )
+      .with_frame_params(self.user.get_dialog_frame_params())
+      .with_draw_point(true);
+    self
   }
 }

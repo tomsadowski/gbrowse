@@ -102,16 +102,12 @@ impl App {
   }
 
   fn focus_ack_dialog(&mut self, prompt: String) {
-    Dlg(&self.user, &mut self.layout)
-      .prompt(&prompt)
-      .ack();
-    self.focus   = Focus::Dialog(Task::Default);
+    Dlg::from(&self.user).prompt(&prompt).ack().add(&mut self.layout);
+    self.focus = Focus::Dialog(Task::Default);
   }
 
   fn focus_ask_dialog(&mut self, task: Task, prompt: &str) {
-    Dlg(&self.user, &mut self.layout)
-      .prompt(&prompt)
-      .ask();
+    Dlg::from(&self.user).prompt(&prompt).ask().add(&mut self.layout);
     self.focus = Focus::Dialog(task);
     self.guide = format!(
       "{} yes {} no", self.user.keys.yes, self.user.keys.no
@@ -119,9 +115,10 @@ impl App {
   }
 
   fn focus_edit_dialog(&mut self, task: Task, prompt: &str, text: &str) {
-    Dlg(&self.user, &mut self.layout)
+    Dlg::from(&self.user)
       .prompt(&prompt)
-      .edit(text);
+      .edit(text)
+      .add(&mut self.layout);
     self.guide = format!("Press {} to cancel", self.user.keys.cancel);
     self.focus = Focus::Dialog(task);
   }
@@ -132,9 +129,10 @@ impl App {
     prompt: &str, 
     options: Vec<String>
   ) {
-    Dlg(&self.user, &mut self.layout)
+    Dlg::from(&self.user)
       .prompt(&prompt)
-      .select(options);
+      .select(options)
+      .add(&mut self.layout);
     self.guide = format!("Press {} to select", self.user.keys.select);
     self.focus = Focus::Dialog(task);
   }
