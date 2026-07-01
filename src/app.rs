@@ -103,58 +103,30 @@ impl App {
     self.layout.remove_list(DLG_2);
   }
 
-  fn get_dlg_params(&self, prompt: &[String], text: &[String])
-    -> (PageViewParams, PageViewParams) 
-  {
-    let dlg_1 = PageViewParams::from(
-      PageParams::init()
-        .with_text(prompt)
-        .with_style(self.user.style.info)
-    );
-    let dlg_2 = PageViewParams::from(
-      PageParams::init()
-        .with_text(text)
-        .with_style(self.user.style.info)
-    ).with_frame_params(self.user.get_dialog_frame_params());
-    (dlg_1, dlg_2)
-  }
-
   fn focus_ack_dialog(&mut self, prompt: String) {
-    self.focus   = Focus::Dialog(Task::Default);
-    self.new_dlg = true;
     Dlg(&self.user, &mut self.layout)
       .prompt(&prompt)
       .ack();
-  }
-
-  fn focus_ask_dialog(&mut self, task: Task, prompt: &str) {
-    self.guide = format!(
-      "{} yes {} no", self.user.keys.yes, self.user.keys.no
-    );
-    let (dlg_1, dlg_2) = self.get_dlg_params(
-      &vec![prompt.into()], &vec![self.guide.clone()]
-    );
-    self.layout.insert(DLG_1, dlg_1);
-    self.layout.insert(DLG_2, dlg_2);
-    self.focus = Focus::Dialog(task);
+    self.focus   = Focus::Dialog(Task::Default);
     self.new_dlg = true;
   }
 
-  fn focus_edit_dialog(&mut self, task: Task, prompt: &str, text: &str) {
-    self.guide = format!("Press {} to cancel", self.user.keys.cancel);
-    let (dlg_1, dlg_2) = self.get_dlg_params(
-      &vec![prompt.into()], &vec![text.into()]
+  fn focus_ask_dialog(&mut self, task: Task, prompt: &str) {
+    Dlg(&self.user, &mut self.layout)
+      .prompt(&prompt)
+      .ask();
+    self.focus = Focus::Dialog(task);
+    self.new_dlg = true;
+    self.guide = format!(
+      "{} yes {} no", self.user.keys.yes, self.user.keys.no
     );
-    let dlg_2 = PageViewParams::from(
-      PageParams::init()
-        .with_text(&vec![text])
-        .with_style(self.user.style.info)
-        .edit(true)
-    )
-    .with_frame_params(self.user.get_dialog_frame_params())
-    .with_draw_point(true);
-    self.layout.insert(DLG_1, dlg_1);
-    self.layout.insert(DLG_2, dlg_2);
+  }
+
+  fn focus_edit_dialog(&mut self, task: Task, prompt: &str, text: &str) {
+    Dlg(&self.user, &mut self.layout)
+      .prompt(&prompt)
+      .edit(text);
+    self.guide = format!("Press {} to cancel", self.user.keys.cancel);
     self.focus = Focus::Dialog(task);
     self.new_dlg = true;
   }
@@ -165,12 +137,9 @@ impl App {
     prompt: &str, 
     options: Vec<String>
   ) {
-    let (dlg_1, mut dlg_2) = self.get_dlg_params(
-      &vec![prompt.into()], &options
-    );
-    dlg_2.set_draw_point(true);
-    self.layout.insert(DLG_1, dlg_1);
-    self.layout.insert(DLG_2, dlg_2);
+    Dlg(&self.user, &mut self.layout)
+      .prompt(&prompt)
+      .select(options);
     self.guide = format!("Press {} to select", self.user.keys.select);
     self.focus = Focus::Dialog(task);
     self.new_dlg = true;
