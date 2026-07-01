@@ -13,6 +13,7 @@ use crate::{
 
 
 pub struct Dlg<'a>(pub &'a User, pub &'a mut Layout);
+
 impl<'a> Dlg<'a> { 
   pub fn prompt(&mut self, prompt: &str) -> &mut Self {
     self.1.insert(

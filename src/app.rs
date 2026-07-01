@@ -58,7 +58,6 @@ pub struct App {
   pub focus:       Focus,
   pub request:     Option<Request>,
   pub guide:       String,
-  pub new_dlg:     bool,
   pub clear:       bool,
   pub tab_changed: bool,
   pub quit:        bool,
@@ -75,7 +74,6 @@ impl App {
       tabs:        CursorVec::default(),
       request:     None,
       focus:       Focus::Tab,
-      new_dlg:     false,
       tab_changed: true,
       clear:       true,
       quit:        false,
@@ -108,7 +106,6 @@ impl App {
       .prompt(&prompt)
       .ack();
     self.focus   = Focus::Dialog(Task::Default);
-    self.new_dlg = true;
   }
 
   fn focus_ask_dialog(&mut self, task: Task, prompt: &str) {
@@ -116,7 +113,6 @@ impl App {
       .prompt(&prompt)
       .ask();
     self.focus = Focus::Dialog(task);
-    self.new_dlg = true;
     self.guide = format!(
       "{} yes {} no", self.user.keys.yes, self.user.keys.no
     );
@@ -128,7 +124,6 @@ impl App {
       .edit(text);
     self.guide = format!("Press {} to cancel", self.user.keys.cancel);
     self.focus = Focus::Dialog(task);
-    self.new_dlg = true;
   }
 
   fn focus_select_dialog(
@@ -142,7 +137,6 @@ impl App {
       .select(options);
     self.guide = format!("Press {} to select", self.user.keys.select);
     self.focus = Focus::Dialog(task);
-    self.new_dlg = true;
   }
 
   fn join_gemdoc(&mut self, url: url::Url, response: String, content: String) {
@@ -254,7 +248,6 @@ impl App {
   pub fn update(&mut self, message: &Msg) {
     self.clear       = false;
     self.tab_changed = false;
-    self.new_dlg     = false;
     match (message, &mut self.focus) {
       (Msg::Quit, _) => {
         self.quit = true;
