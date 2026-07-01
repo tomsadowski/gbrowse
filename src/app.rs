@@ -9,6 +9,7 @@ use crate::{
   CursorVec,
   Tab,
   TextStyle,
+  Dlg,
   UserTable,
   user_from_str,
   Request,
@@ -119,14 +120,11 @@ impl App {
   }
 
   fn focus_ack_dialog(&mut self, prompt: String) {
-    self.guide = format!("Press any key to acknowledge");
-    let (dlg_1, dlg_2) = self.get_dlg_params(
-      &vec![prompt], &vec![self.guide.clone()]
-    );
-    self.layout.insert(DLG_1, dlg_1);
-    self.layout.insert(DLG_2, dlg_2);
-    self.focus = Focus::Dialog(Task::Default);
+    self.focus   = Focus::Dialog(Task::Default);
     self.new_dlg = true;
+    Dlg(&self.user, &mut self.layout)
+      .prompt(&prompt)
+      .ack();
   }
 
   fn focus_ask_dialog(&mut self, task: Task, prompt: &str) {

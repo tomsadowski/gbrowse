@@ -25,6 +25,7 @@ mod util;
 mod constants;
 
 pub use crate::dlg::{
+  Dlg,
 };
 pub use crate::userkeys::{
   UserKeys,
