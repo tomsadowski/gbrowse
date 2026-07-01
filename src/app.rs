@@ -53,7 +53,7 @@ pub enum Focus {
 }
 
 pub struct App {
-  pub user:        User,
+  pub params:        User,
   pub tabs:        CursorVec<Tab>,
   pub layout:      Layout,
   pub focus:       Focus,
@@ -79,13 +79,13 @@ impl App {
       clear:       true,
       quit:        false,
       layout,
-      user,
+      params: user,
     };
-    match url::Url::parse(&app.user.init_url) {
-      Err(e) => app.focus_edit_dialog(
-        Task::Init(app.user.init_url.clone()), 
+    match url::Url::parse(&app.params.init_url) {
+      Err(e) => app.edit_dlg(
+        Task::Init(app.params.init_url.clone()), 
         &format!("Try again: {e}"), 
-        &app.user.init_url.clone(),
+        &app.params.init_url.clone(),
       ),
       Ok(url) => {
         app.focus_tabs();
@@ -97,85 +97,80 @@ impl App {
 
   pub fn focus_tabs(&mut self) {
     self.focus = Focus::Tab;
-    self.guide = format!("Press {} for menu", self.user.keys.menu);
+    self.guide = format!("Press {} for menu", self.params.keys.menu);
     self.layout.remove_list(DLG_1);
     self.layout.remove_list(DLG_2);
   }
 
-  fn focus_ack_dialog(&mut self, prompt: String) {
+  fn ack_dlg(&mut self, prompt: &str) {
     self.focus = Focus::Dlg(
-      Dlg::from(&self.user).prompt(&prompt).ack(&mut self.layout),
+      self.params.dlg(&prompt).ack(&mut self.layout),
       Task::Default
     );
   }
 
-  fn focus_ask_dialog(&mut self, task: Task, prompt: &str) {
+  fn ask_dlg(&mut self, task: Task, prompt: &str) {
     self.focus = Focus::Dlg(
-      Dlg::from(&self.user).prompt(&prompt).ask(&mut self.layout),
+      self.params.dlg(&prompt).ask(&mut self.layout),
       task
-    );
-    self.guide = format!(
-      "{} yes {} no", self.user.keys.yes, self.user.keys.no
     );
   }
 
-  fn focus_edit_dialog(&mut self, task: Task, prompt: &str, text: &str) {
+  fn edit_dlg(&mut self, task: Task, prompt: &str, text: &str) {
     self.focus = Focus::Dlg(
-      Dlg::from(&self.user).prompt(&prompt).edit(text, &mut self.layout),
+      self.params.dlg(&prompt).edit(text, &mut self.layout),
       task
     );
-    self.guide = format!("Press {} to cancel", self.user.keys.cancel);
   }
 
-  fn focus_select_dialog(
-    &mut self, task: Task, prompt: &str, options: Vec<String>
-  ) {
+  fn select_dlg(&mut self, task: Task, prompt: &str, options: Vec<String>) {
     self.focus = Focus::Dlg(
-      Dlg::from(&self.user)
-        .prompt(&prompt)
-        .select(options, &mut self.layout),
+      self.params.dlg(&prompt).select(options, &mut self.layout),
       task
     );
-    self.guide = format!("Press {} to select", self.user.keys.select);
   }
 
   fn join_gemdoc(&mut self, url: url::Url, response: String, content: String) {
     let Ok(status) = StatusText::try_from(response.as_str()) else {
-      self.focus_ack_dialog(
-        format!("Response {response} is not valid for gemini protocol")
+      self.ack_dlg(
+        &format!("Response {response} is not valid for gemini protocol")
       );
       return
     };
     match status.tag {
       Status::InputExpected | 
-      Status::InputExpectedSensitive => {
-        self.focus_edit_dialog(
+      Status::InputExpectedSensitive => 
+        self.focus = Focus::Dlg(
+          self.params.dlg(&status.text).edit("", &mut self.layout),
           Task::Reply(url.clone()), 
-          &status.text, ""
-        );
-      }
+        ),
       Status::RedirectTemporary | 
       Status::RedirectPermanent => match url::Url::parse(&status.text) {
-        Err(e) => self.focus_ack_dialog(
-          format!("Redirects to invalid URL. {e}")
+        Err(e) => self.focus = Focus::Dlg(
+          self.params
+            .dlg(&format!("Redirects to invalid URL. {e}"))
+            .ack(&mut self.layout),
+          Task::Default,
         ),
-        Ok(url) => self.focus_ask_dialog(
+        Ok(url) => self.focus = Focus::Dlg(
+          self.params.dlg(&status.text).ask(&mut self.layout),
           Task::Go(url.clone()), 
-          &status.text
         ),
       }
       Status::CertRequiredClient |
       Status::CertRequiredTransient |
-      Status::CertRequiredAuthorized => {
-        self.focus_ack_dialog(status.text);
-      }
+      Status::CertRequiredAuthorized => 
+        self.focus = Focus::Dlg(
+          self.params.dlg(&status.text).ack(&mut self.layout),
+          Task::Default,
+        ),
       _ => {
         self.tabs.add_gem_tab(
           &mut self.layout,
           &url, 
           gemini::parse_doc(&content), 
-          self.user.style.general,
-          |g| self.user.style.get_style_from_gem_text(g),
+          self.params.style.general,
+          |g| self.params.style.get_style_from_gem_text(g),
         );
         self.tab_changed = true;
       }
@@ -191,7 +186,10 @@ impl App {
     }
     match request.rx.recv().unwrap() {
       Err(e) => {
-        self.focus_ack_dialog(e);
+        self.focus = Focus::Dlg(
+          self.params.dlg(&e).ack(&mut self.layout),
+          Task::Default,
+        );
         self.request = None;
         true
       }
@@ -207,15 +205,23 @@ impl App {
   pub fn spawn_request(&mut self, url: &url::Url) {
     match (&mut self.request, url.scheme()) {
       (None, "gemini") => self.request = Some(
-        Request::new(&url, self.user.timeout)
+        Request::new(&url, self.params.timeout)
       ),
-      (None, scheme) => self.focus_ack_dialog(
-        format!("Protocol {scheme} not yet supported")
-      ),
+      (None, scheme) => {
+        self.focus = Focus::Dlg(
+          self.params
+            .dlg(&format!("Protocol {scheme} not yet supported"))
+            .ack(&mut self.layout),
+          Task::Default,
+        );
+      }
       (Some(request), _) => {
         let url = request.url.to_string();
-        self.focus_ack_dialog(
-          format!("still processing request for {url}")
+        self.focus = Focus::Dlg(
+          self.params
+            .dlg(&format!("still processing request for {url}"))
+            .ack(&mut self.layout),
+          Task::Default,
         );
       }
     }
@@ -224,8 +230,8 @@ impl App {
   pub fn push_style(&mut self) {
     self.tabs.push_gem_style(
       &mut self.layout,
-      self.user.style.general,
-      |gem| self.user.style.get_style_from_gem_tag(gem)
+      self.params.style.general,
+      |gem| self.params.style.get_style_from_gem_tag(gem)
     );
   }
 
@@ -235,12 +241,12 @@ impl App {
       .map(|url| util::join_if_relative(&url, url_str)) 
     {
       None => {},
-      Some(Err(e)) => self.focus_ack_dialog(
-        format!("{url_str} -- Invalid URL. {e}")
-      ),
+      Some(Err(e)) => {
+        self.ack_dlg(&format!("{url_str} -- Invalid URL. {e}"));
+      }
       Some(Ok(url)) => {
         let prompt = &format!("{url} -- Make request?");
-        self.focus_ask_dialog(Task::Go(url.into()), prompt);
+        self.ask_dlg(Task::Go(url.into()), prompt);
       } 
     }
   }
@@ -262,7 +268,7 @@ impl App {
           task
         ) {
         (Some(view), Action::Select, Task::NewTab) => {
-          if let Some(link) = self.user.urls.get(
+          if let Some(link) = self.params.urls.get(
             view.page.get_index()
           ) {
             let link = link.clone();
@@ -275,9 +281,11 @@ impl App {
           match std::fs::read_to_string(
             user::get_keys_file(&view.get_param_string())
           ) {
-            Err(e) => self.focus_ack_dialog(format!("Problem: {e}")),
-            Ok(s)  => if let Err(e) = self.user.keys.update_from_str(&s) {
-              self.focus_ack_dialog(format!("Problem: {e}"));
+            Err(e) => {
+              self.ack_dlg(&format!("Problem: {e}"))
+            }
+            Ok(s) => if let Err(e) = self.params.keys.update_from_str(&s) {
+              self.ack_dlg(&format!("Problem: {e}"));
             } else {
               self.focus_tabs();
             }
@@ -287,9 +295,9 @@ impl App {
           match std::fs::read_to_string(
             user::get_styles_file(&view.get_param_string())
           ) {
-            Err(e) => self.focus_ack_dialog(e.to_string()),
-            Ok(s)  => if let Err(e) = self.user.style.update_from_str(&s) {
-              self.focus_ack_dialog(e.to_string());
+            Err(e) => self.ack_dlg(&e.to_string()),
+            Ok(s)  => if let Err(e) = self.params.style.update_from_str(&s) {
+              self.ack_dlg(&e.to_string());
               self.push_style();
             } else {
               self.focus_tabs();
@@ -300,28 +308,26 @@ impl App {
         (Some(view), Action::Select, Task::Menu) => {
           match MENU[view.page.get_index()] {
             MANUAL => {
-              self.focus_ack_dialog("View manual".into());
+              self.ack_dlg("View manual".into());
             }
             CHANGE_KEYS => match util::get_entries(KEYS_PATH) {
-              Err(e)    => self.focus_ack_dialog(e),
-              Ok(entry) => self.focus_select_dialog(
+              Err(e)    => self.ack_dlg(&e),
+              Ok(entry) => self.select_dlg(
                 Task::ChangeKeys, "Choose keys", entry
               ),
             }
             CHANGE_STYLE => match util::get_entries(STYLES_PATH) {
-              Err(e)    => self.focus_ack_dialog(e),
-              Ok(entry) => self.focus_select_dialog(
-                Task::ChangeStyle, "Choose style", entry
+              Err(e)    => self.ack_dlg(&e),
+              Ok(entry) => self.select_dlg(
+                Task::ChangeStyle, "Choose Style", entry
               ),
             }
             VIEW_SETTINGS => {
-              let text = format!("{:#?}", self.user)
+              let text = format!("{:#?}", self.params)
                 .lines()
                 .map(|s| s.into())
                 .collect();
-              self.focus_select_dialog(
-                Task::Default, "Current Settings", text
-              );
+              self.select_dlg(Task::Default, "Current Settings", text);
             }
             _ => self.focus_tabs(),
           }
@@ -329,12 +335,14 @@ impl App {
         (Some(view), Action::Enter, Task::Init(_)) => {
           let url_str = view.get_page_string().unwrap();
           match url::Url::parse(&url_str) {
-            Err(e) => 
-              self.focus_edit_dialog(
+            Err(e) => {
+              self.focus = Focus::Dlg(
+                self.params
+                  .dlg(&format!("Invalid URL. {e}"))
+                  .edit(&url_str, &mut self.layout),
                 Task::Init(url_str.clone()),
-                &format!("Invalid URL. {}", e), 
-                &url_str
-              ),
+              );
+            }
             Ok(url) => {
               self.focus_tabs();
               self.tab_changed = true;
@@ -344,9 +352,7 @@ impl App {
         }
         (Some(editbox), Action::Cancel, Task::Init(url_str)) => {
           let url_str = url_str.clone();
-          self.focus_ask_dialog(
-            Task::Init(url_str), "Exit application?".into()
-          )
+          self.ask_dlg(Task::Init(url_str), "Exit application?");
         }
         (Some(view), Action::Enter, Task::Reply(url)) => {
           let text = view
@@ -355,9 +361,9 @@ impl App {
             .trim()
             .replace(" ", "%20");
           match url.clone().join(&format!("?{text}")) {
-            Err(e) => self.focus_ack_dialog(
-              format!("Invalid URL. {e}")
-            ),
+            Err(e) => {
+              self.ack_dlg(&format!("Invalid URL. {e}"));
+            }
             Ok(url) => {
               self.focus_tabs();
               self.tab_changed = true;
@@ -369,10 +375,9 @@ impl App {
           match url::Url::parse(
             &view.get_page_string().unwrap()
           ) {
-            Err(e) => 
-              self.focus_ack_dialog(
-                format!("Invalid URL. {e}")
-              ),
+            Err(e) => {
+              self.ack_dlg(&format!("Invalid URL: {e}"));
+            }
             Ok(url) => {
               self.focus_tabs();
               self.tab_changed = true;
@@ -383,10 +388,11 @@ impl App {
         (_, Action::Cancel, Task::Init(url_str)) |
         (_, Action::No,     Task::Init(url_str)) => {
           let url_str = url_str.clone();
-          self.focus_edit_dialog(
+          self.focus = Focus::Dlg(
+            self.params
+              .dlg(&format!("Enter URL: "))
+              .edit(&url_str, &mut self.layout),
             Task::Init(url_str.clone()), 
-            &format!("Enter URL: "), 
-            &url_str
           );
         }
         (_, Action::Yes, Task::Init(_)) => {
@@ -399,11 +405,12 @@ impl App {
         }
         (_, Action::Yes, Task::DelTab) => {
           if self.tabs.cursor.remove(&mut self.tabs.vec).is_some() {
-            let url_str = self.user.init_url.clone();
-            self.focus_edit_dialog(
+            let url_str = self.params.init_url.clone();
+            self.focus = Focus::Dlg(
+              self.params
+                .dlg(&format!("Enter URL: "))
+                .edit(&url_str, &mut self.layout),
               Task::Init(url_str.clone()), 
-              &format!("Enter URL: "), 
-              &url_str
             );
           } else {
             self.tab_changed = true;
@@ -433,58 +440,73 @@ impl App {
         (None, _) => {}
         (Some(view), Action::SaveUrl) => 
           if let Some(url) = self.tabs.get_url() {
-            match self.user.save_url(url) {
-              Err(e) => self.focus_ack_dialog(e),
-              Ok(()) => self.focus_ack_dialog(
-                format!("Saved URL: {url}")
-              ),
+            match self.params.save_url(url) {
+              Err(e) => {
+                self.ack_dlg(&e);
+              }
+              Ok(()) => {
+                self.ack_dlg(&format!("Saved URL: {url}"));
+              }
             }
           }
         (Some(view), Action::Select) => 
           match self.tabs.get_gem_tag(&view.page) {
-            None => self.focus_ack_dialog(
-              format!("You've selected nothing")
-            ),
+            None => {
+              self.ack_dlg(&format!("You've selected nothing"));
+            }
             Some(GemTag::Link(link)) => {
               let link = link.clone();
               self.select_link(&link);
             }
-            Some(gemtag) => self.focus_ack_dialog(
-              format!("You've selected {gemtag:?}")
-            ),
+            Some(gemtag) => {
+              self.focus = Focus::Dlg(
+                self.params
+                  .dlg(&format!("You've selected {gemtag:?}"))
+                  .ack(&mut self.layout),
+                Task::Default,
+              );
+            }
           }
         (Some(view), Action::CycleLeft) => {
-          self.tab_changed = {
-            self.tabs.cursor.move_wrapped(&self.tabs.vec, -1); true
-          };
+          self.tabs.cursor.move_wrapped(&self.tabs.vec, -1);
+          self.tab_changed = true;
         }
         (Some(view), Action::CycleRight) => {
-          self.tab_changed = {
-            self.tabs.cursor.move_wrapped(&self.tabs.vec, 1); true
-          };
+          self.tabs.cursor.move_wrapped(&self.tabs.vec, 1);
+          self.tab_changed = true;
         }
         (Some(view), Action::LoadUrl) => {
-          self.focus_select_dialog(
+          self.focus = Focus::Dlg(
+            self.params
+              .dlg("Choose URL: ")
+              .select(
+                self.params.urls.clone(),
+                &mut self.layout
+              ),
             Task::NewTab, 
-            "Choose URL: ", 
-            self.user.urls.clone()
           );
         }
         (Some(view), Action::Menu) => {
-          self.focus_select_dialog(
+          self.focus = Focus::Dlg(
+            self.params
+              .dlg("Choose: ")
+              .select(
+                MENU.iter().map(|s| s.to_string()).collect(),
+                &mut self.layout
+              ),
             Task::Menu, 
-            "Choose: ", 
-            MENU.iter().map(|s| s.to_string()).collect()
           );
         }
         (Some(view), Action::NewTab) => {
-          self.focus_edit_dialog(
-            Task::NewTab, "enter path: ", ""
+          self.focus = Focus::Dlg(
+            self.params.dlg("enter path: ").edit("", &mut self.layout),
+            Task::NewTab, 
           );
         }
         (Some(view), Action::DelTab) => {
-          self.focus_ask_dialog(
-            Task::DelTab, "Delete current tab?"
+          self.focus = Focus::Dlg(
+            self.params.dlg("Delete current tab?").ask(&mut self.layout),
+            Task::DelTab, 
           );
         }
         (Some(view), action) => {
@@ -521,9 +543,9 @@ impl App {
         }
       ) => match &self.focus {
         Focus::Dlg(dlg_type, _) => 
-          self.user.keys.get_tab_action(&kc).map(Msg::Action),
+          self.params.keys.get_tab_action(&kc).map(Msg::Action),
         Focus::Tab => 
-          self.user.keys.get_tab_action(&kc).map(Msg::Action),
+          self.params.keys.get_tab_action(&kc).map(Msg::Action),
       }
       _ => None,
     }

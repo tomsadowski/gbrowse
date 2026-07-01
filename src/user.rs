@@ -9,6 +9,7 @@ use crate::{
   GemText,
   TextStyle,
   Rect,
+  Dlg,
   constants::*,
 };
 
@@ -137,8 +138,11 @@ impl Assign for User {
     Ok(())
   }
 }
-
 impl User {
+  pub fn dlg<'a>(&'a self, prompt: &str) -> Dlg<'a> {
+    Dlg::from(self).prompt(prompt)
+  }
+
   pub fn save_url(&mut self, url: &url::Url) -> Result<(), String> {
     let url_str = url.to_string();
     if self.urls.iter().any(|url| **url == url_str) {
