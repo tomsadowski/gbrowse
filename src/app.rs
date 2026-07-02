@@ -154,11 +154,10 @@ impl App {
       Status::CertRequiredAuthorized => self.ack_dlg(&status.text),
       _ => {
         self.tabs.add_gem_tab(
+          &self.params,
           &mut self.layout,
           &url, 
           gemini::parse_doc(&content), 
-          self.params.style.general,
-          |g| self.params.style.get_style_from_gem_text(g),
         );
         self.tab_changed = true;
       }
@@ -507,14 +506,16 @@ impl App {
 
   pub fn draw(&self, w: &mut impl std::io::Write) -> std::io::Result<()> {
     use crossterm::{QueueableCommand, cursor, terminal};
+    eprintln!("frame: {:#?} \n max: {:#?} ", 
+      self.layout.frame, self.layout.max_rect);
     w.queue(cursor::Hide)?;
     if self.clear {
       w.queue(terminal::Clear(terminal::ClearType::All))?;
       self.layout.frame.draw(w)?;
     }
     let banner_text = self.tabs.get_banner_text();
-    self.layout.frame.draw_banner(&banner_text, w)?;
-    self.layout.frame.draw_footer(&self.guide, w)?;
+ // self.layout.frame.draw_banner(&banner_text, w)?;
+ // self.layout.frame.draw_footer(&self.guide, w)?;
     self.layout.draw(w)?;
     w.flush()
  // if let Focus::Dialog(_) = &self.focus {

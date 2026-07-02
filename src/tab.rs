@@ -1,6 +1,7 @@
 // src/tab.rs
 
 use crate::{
+  User,
   TextStyle, 
   Cursor, 
   Style, 
@@ -36,6 +37,29 @@ impl CursorVec<Tab> {
     }
   }
   pub fn add_gem_tab(
+    &mut self, 
+    params:         &User,
+    layout:         &mut Layout,
+    url:            &url::Url, 
+    source:         Vec<GemText>, 
+  ) {
+    let params = PageParams::init()
+      .with_styled_text(
+        &source, 
+        |g| params.style.get_style_from_gem_text(g),
+      ).with_style(params.style.general);
+    let (tags, text): (Vec<GemTag>, Vec<String>) = source
+      .into_iter()
+      .map(|gemtext| (gemtext.tag, gemtext.text))
+      .unzip();
+    if let Some(insert_command) = self.insert_unique_with(
+      |tab| tab.get_url() == Some(url), 
+      Tab::Gem(UrlTab::new(url, tags)),
+    ) {
+      layout.apply_insert_command(TAB, insert_command, params.into());
+    }
+  }
+  pub fn add_bem_tab(
     &mut self, 
     layout:         &mut Layout,
     url:            &url::Url, 

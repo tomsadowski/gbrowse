@@ -37,7 +37,7 @@ impl Pos {
   pub fn y(&self) -> u16 { self.1 }
 }
 
-#[derive(Copy, Clone, Default)]
+#[derive(Copy, Debug, Clone, Default)]
 pub struct Rect {
   x: u16,
   y: u16,

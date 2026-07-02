@@ -71,7 +71,7 @@ impl BorderStyle {
   }
 }
 
-#[derive(Copy, Default, Clone)]
+#[derive(Copy, Debug, Default, Clone)]
 pub struct FrameParams {
   pub text_margin:   Margins,
   pub screen_margin: Margins,
@@ -112,9 +112,10 @@ impl FrameParams {
     let border_rect = 
       if let None = self.border { outer_rect } 
       else { outer_rect.shift_x(1).shift_y(1) };
+    let screen = self.screen_margin.get_from_inner(&border_rect);
     Frame {
       style: self.clone(),
-      screen: rect.clone(),
+      screen,
       border_rect,
       outer_rect,
       inner_rect,
@@ -136,7 +137,7 @@ impl FrameParams {
   }
 }
 
-#[derive(Copy, Default, Clone)]
+#[derive(Copy, Debug, Default, Clone)]
 pub struct Frame {
   pub style:         FrameParams,
   pub screen:        Rect,
