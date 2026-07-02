@@ -111,9 +111,8 @@ impl Assign for User {
       }
       // read style from another file
       (UserField::Style, Value::String(v)) => {
-        self.style.update_from_str(
-          &std::fs::read_to_string(get_styles_file(&v))
-            .map_err(|e| e.to_string())?
+        self.style.update_from_str(&std::fs::
+          read_to_string(get_styles_file(&v)).map_err(|e| e.to_string())?
         )?;
       }
       // read style from this file
@@ -122,9 +121,8 @@ impl Assign for User {
       }
       // read keys from another file
       (UserField::Keys, Value::String(v)) => {
-        self.keys.update_from_str(
-          &std::fs::read_to_string(get_keys_file(&v))
-            .map_err(|e| e.to_string())?
+        self.keys.update_from_str(&std::fs::
+          read_to_string(get_keys_file(&v)).map_err(|e| e.to_string())?
         )?;
       }
       // read keys from this file
