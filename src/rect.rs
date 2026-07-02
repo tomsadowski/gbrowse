@@ -77,27 +77,27 @@ impl Rect {
 
   pub fn shift_north(&self, idelta: i16) -> Self {
     let mut rect = self.clone();
-    rect.y = (rect.y as i16).saturating_add(idelta) as u16;
-    rect.h = (rect.h as i16).saturating_sub(idelta) as u16;
+    rect.y = (rect.y as i16 + (idelta * idelta.signum())) as u16;
+    rect.h = (rect.h as i16 + idelta) as u16;
     rect
   }
 
   pub fn shift_south(&self, idelta: i16) -> Self {
     let mut rect = self.clone();
-    rect.h = (rect.h as i16).saturating_sub(idelta) as u16;
+    rect.h = (rect.h as i16 + idelta) as u16;
     rect
   }
 
   pub fn shift_east(&self, idelta: i16) -> Self {
     let mut rect = self.clone();
-    rect.w = (rect.w as i16).saturating_sub(idelta) as u16;
+    rect.w = (rect.w as i16 + idelta) as u16;
     rect
   }
 
   pub fn shift_west(&self, idelta: i16) -> Self {
     let mut rect = self.clone();
-    rect.x = (rect.x as i16).saturating_add(idelta) as u16;
-    rect.w = (rect.w as i16).saturating_sub(idelta) as u16;
+    rect.x = (rect.x as i16 + (idelta * idelta.signum())) as u16;
+    rect.w = (rect.w as i16 + idelta) as u16;
     rect
   }
 
