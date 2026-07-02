@@ -226,7 +226,12 @@ impl From<Rect> for Layout {
 impl Layout {
   pub fn draw(&self, writer: &mut impl std::io::Write) 
   -> std::io::Result<()> {
-    self.for_each_sorted(|v| v.draw(writer));
+    //self.for_each_sorted(|v| v.draw(writer));
+    for k in self.get_sorted_keys().iter() {
+      if let Some(v) = self.map.get(k) { 
+        v.draw(writer)?; 
+      }
+    }
     Ok(())
   }
   pub fn get_page_view_mut(&mut self, key: u16) -> Option<&mut PageView> {
@@ -301,21 +306,21 @@ impl Layout {
     self.frame = self.frame_params.build_from_outer(&self.max_rect);
     self.push_rebuild();
   }
-  pub fn apply_move_command(
+  pub fn apply_move(
     &mut self, key: u16, move_cmd: MoveCommand, 
   ) {
     self.map
       .get_mut(&key)
       .map(|cursor_vec| move_cmd.apply_to_vec(cursor_vec));
   }
-  pub fn apply_remove_command(
+  pub fn apply_remove(
     &mut self, key: u16, remove_cmd: RemoveCommand, 
   ) {
     self.map
       .get_mut(&key)
       .map(|cursor_vec| remove_cmd.apply_to_vec(cursor_vec));
   }
-  pub fn apply_insert_command(
+  pub fn apply_insert(
     &mut self, 
     key: u16, 
     insert_cmd:  InsertCommand, 

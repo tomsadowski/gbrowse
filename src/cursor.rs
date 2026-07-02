@@ -35,6 +35,9 @@ impl<T> CursorVec<T> {
   pub fn move_head(&mut self, mut idelta: isize) -> isize {
     self.cursor.move_head(&self.vec, idelta)
   }
+  pub fn move_wrapped(&mut self, mut idelta: isize) -> MoveCommand {
+    self.cursor.move_wrapped(&self.vec, idelta)
+  }
   pub fn get_current(&self) -> Option<&T> {
     self.vec.get(*self.cursor)
   }
@@ -96,20 +99,20 @@ impl<T> CursorCommand<T> {
 }
 
 pub enum MoveCommand {
+  Set(usize),
   Move(isize), 
-  Wrapped(isize),
 }
 impl MoveCommand {
   pub fn apply<T>(&self, cursor: &mut Cursor, vec: &Vec<T>) -> isize {
     match self {
+      Self::Set(u)     => {cursor.head = *u; 0},
       Self::Move(i)    => cursor.move_head(vec, *i),
-      Self::Wrapped(i) => cursor.move_wrapped(vec, *i),
     }
   }
   pub fn apply_to_vec<T>(&self, vec: &mut CursorVec<T>) -> isize {
     match self {
+      Self::Set(u)     => {vec.cursor.head = *u; 0},
       Self::Move(i)    => vec.cursor.move_head(&vec.vec, *i),
-      Self::Wrapped(i) => vec.cursor.move_wrapped(&vec.vec, *i),
     }
   }
 }
@@ -177,10 +180,13 @@ impl Cursor {
   pub fn move_to_end<T>(&mut self, vec: &Vec<T>) {
     self.head = self.get_max(vec);
   }
-  pub fn move_wrapped<T>(&mut self, vec: &Vec<T>, mut idelta: isize) -> isize {
+  pub fn move_wrapped<T>(&mut self, vec: &Vec<T>, mut idelta: isize) 
+  -> MoveCommand {
     let     imax       = self.get_max(vec) as isize;
     let mut iremainder = self.move_head(vec, idelta);
-    if iremainder == 0 {0} else {
+    if iremainder == 0 {
+      MoveCommand::Set(self.head)
+    } else {
       self.move_head(vec, 
         vec.len() as isize * iremainder.signum() * -1
       );
@@ -210,7 +216,7 @@ impl Cursor {
       vec.remove(self.head);
       let head = self.head;
       let mv   = self.move_wrapped(vec, -1);
-      Some(RemoveCommand(head, MoveCommand::Wrapped(-1)))
+      Some(RemoveCommand(head, MoveCommand::Set(self.head)))
     }
   }
   pub fn delete<T>(&self, vec: &mut Vec<T>) -> Option<RemoveCommand> {

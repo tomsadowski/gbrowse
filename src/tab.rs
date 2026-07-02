@@ -56,7 +56,7 @@ impl CursorVec<Tab> {
       |tab| tab.get_url() == Some(url), 
       Tab::Gem(UrlTab::new(url, tags)),
     ) {
-      layout.apply_insert_command(TAB, insert_command, params.into());
+      layout.apply_insert(TAB, insert_command, params.into());
     }
   }
   pub fn add_bem_tab(
@@ -77,7 +77,7 @@ impl CursorVec<Tab> {
       |tab| tab.get_url() == Some(url), 
       Tab::Gem(UrlTab::new(url, tags)),
     ) {
-      layout.apply_insert_command(TAB, insert_command, params.into());
+      layout.apply_insert(TAB, insert_command, params.into());
     }
   }
   pub fn get_url(&self) -> Option<&url::Url> {

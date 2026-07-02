@@ -233,9 +233,10 @@ impl App {
     } else if let Msg::Resize(w, h) = message {
       self.layout.resize(Rect::from(Dim(*w, *h)));
     } 
-    else if let Msg::Action(action) = message &&
-            let Focus::Tab = &mut self.focus &&
-            let Some(view) = self.layout.get_page_view_mut(TAB)
+    else if 
+      let Msg::Action(action) = message &&
+      let Focus::Tab = &mut self.focus &&
+      let Some(view) = self.layout.get_page_view_mut(TAB)
     {
       match action {
         Action::SaveUrl => if let Some(url) = self.tabs.get_url() {
@@ -257,11 +258,13 @@ impl App {
           ),
         }
         Action::CycleLeft => {
-          self.tabs.cursor.move_wrapped(&self.tabs.vec, -1);
+          let cmd = self.tabs.move_wrapped(-1);
+          self.layout.apply_move(TAB, cmd);
           self.tab_changed = true;
         }
         Action::CycleRight => {
-          self.tabs.cursor.move_wrapped(&self.tabs.vec, 1);
+          let cmd = self.tabs.move_wrapped(1);
+          self.layout.apply_move(TAB, cmd);
           self.tab_changed = true;
         }
         Action::LoadUrl => self.select_dlg(
@@ -281,9 +284,10 @@ impl App {
         action => action.update(&mut view.page),
       }
     }
-    else if let Msg::Action(action) = message &&
-            let Focus::Dlg(dlg_type, task) = &mut self.focus &&
-            let Some(view) = self.layout.get_page_view_mut(DLG_2)
+    else if 
+      let Msg::Action(action) = message &&
+      let Focus::Dlg(dlg_type, task) = &mut self.focus &&
+      let Some(view) = self.layout.get_page_view_mut(DLG_2)
     {
       match (task, action, dlg_type) {
         (Task::NewTab, Action::Select, DlgType::Select) => {
@@ -483,16 +487,16 @@ impl App {
 
   pub fn draw(&self, w: &mut impl std::io::Write) -> std::io::Result<()> {
     use crossterm::{QueueableCommand, cursor, terminal};
-    eprintln!("frame: {:#?} \n max: {:#?} ", 
-      self.layout.frame, self.layout.max_rect);
+  //eprintln!("frame: {:#?} \n max: {:#?} ", 
+  //  self.layout.frame, self.layout.max_rect);
     w.queue(cursor::Hide)?;
     if self.clear {
       w.queue(terminal::Clear(terminal::ClearType::All))?;
       self.layout.frame.draw(w)?;
     }
     let banner_text = self.tabs.get_banner_text();
- // self.layout.frame.draw_banner(&banner_text, w)?;
- // self.layout.frame.draw_footer(&self.guide, w)?;
+    self.layout.frame.draw_banner(&banner_text, w)?;
+    self.layout.frame.draw_footer(&self.guide, w)?;
     self.layout.draw(w)?;
     w.flush()
  // if let Focus::Dialog(_) = &self.focus {
