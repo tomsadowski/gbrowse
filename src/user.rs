@@ -79,6 +79,7 @@ pub struct User {
   pub keys:           UserKeys,
   pub urls:           Vec<String>,
 } 
+
 impl Default for User {
   fn default() -> Self {
     let urls: Vec<String> = match std::fs::read_to_string(&SAVE_FILE) {
@@ -95,6 +96,7 @@ impl Default for User {
     }
   }
 }
+
 impl Assign for User {
   type Field = UserField;
   fn assign(&mut self, f: Self::Field, v: toml::Value) -> Result<(), String> {
@@ -136,6 +138,7 @@ impl Assign for User {
     Ok(())
   }
 }
+
 impl User {
   pub fn dlg<'a>(&'a self, prompt: &str) -> Dlg<'a> {
     Dlg::from(self).prompt(prompt)

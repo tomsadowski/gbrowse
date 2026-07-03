@@ -1,7 +1,6 @@
    Compiling gbrowse v0.1.0 (/home/tsadowski/.local/source/gbrowse)
-    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.42s
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.45s
      Running `target/debug/gbrowse`
-corn
 PointView {
     pos: Pos(
         3,
@@ -11,13 +10,13 @@ PointView {
         head: 0,
         scroll: 0,
         cursor: 0,
-        size: 71,
+        size: 83,
     },
     y: CursorView {
         head: 0,
         scroll: 0,
         cursor: 0,
-        size: 28,
+        size: 27,
     },
 }
 PointView {
@@ -29,7 +28,385 @@ PointView {
         head: 0,
         scroll: 0,
         cursor: 0,
-        size: 71,
+        size: 83,
+    },
+    y: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 27,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 1,
+        scroll: 0,
+        cursor: 1,
+        size: 27,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 2,
+        scroll: 0,
+        cursor: 2,
+        size: 27,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 3,
+        scroll: 0,
+        cursor: 3,
+        size: 27,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 4,
+        scroll: 0,
+        cursor: 4,
+        size: 27,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 5,
+        scroll: 0,
+        cursor: 5,
+        size: 27,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 6,
+        scroll: 0,
+        cursor: 6,
+        size: 27,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 7,
+        scroll: 0,
+        cursor: 7,
+        size: 27,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 8,
+        scroll: 0,
+        cursor: 8,
+        size: 27,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 9,
+        scroll: 0,
+        cursor: 9,
+        size: 27,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 10,
+        scroll: 0,
+        cursor: 10,
+        size: 27,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 11,
+        scroll: 0,
+        cursor: 11,
+        size: 27,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 12,
+        scroll: 0,
+        cursor: 12,
+        size: 27,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 13,
+        scroll: 0,
+        cursor: 13,
+        size: 27,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 14,
+        scroll: 0,
+        cursor: 14,
+        size: 27,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 15,
+        scroll: 0,
+        cursor: 15,
+        size: 27,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 16,
+        scroll: 0,
+        cursor: 16,
+        size: 27,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 17,
+        scroll: 0,
+        cursor: 17,
+        size: 27,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 18,
+        scroll: 0,
+        cursor: 18,
+        size: 27,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 19,
+        scroll: 0,
+        cursor: 19,
+        size: 27,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 20,
+        scroll: 0,
+        cursor: 20,
+        size: 27,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
     },
     y: CursorView {
         head: 0,
@@ -47,7 +424,7 @@ PointView {
         head: 0,
         scroll: 0,
         cursor: 0,
-        size: 69,
+        size: 81,
     },
     y: CursorView {
         head: 0,
@@ -65,31 +442,13 @@ PointView {
         head: 0,
         scroll: 0,
         cursor: 0,
-        size: 71,
+        size: 83,
     },
     y: CursorView {
         head: 0,
         scroll: 0,
         cursor: 0,
-        size: 1,
-    },
-}
-PointView {
-    pos: Pos(
-        4,
-        5,
-    ),
-    x: CursorView {
-        head: 0,
-        scroll: 0,
-        cursor: 0,
-        size: 69,
-    },
-    y: CursorView {
-        head: 0,
-        scroll: 0,
-        cursor: 0,
-        size: 1,
+        size: 46,
     },
 }
 PointView {
@@ -101,31 +460,13 @@ PointView {
         head: 0,
         scroll: 0,
         cursor: 0,
-        size: 71,
+        size: 83,
     },
     y: CursorView {
         head: 0,
         scroll: 0,
         cursor: 0,
-        size: 1,
-    },
-}
-PointView {
-    pos: Pos(
-        4,
-        5,
-    ),
-    x: CursorView {
-        head: 0,
-        scroll: 0,
-        cursor: 0,
-        size: 69,
-    },
-    y: CursorView {
-        head: 0,
-        scroll: 0,
-        cursor: 0,
-        size: 1,
+        size: 46,
     },
 }
 PointView {
@@ -137,31 +478,13 @@ PointView {
         head: 0,
         scroll: 0,
         cursor: 0,
-        size: 71,
+        size: 83,
     },
     y: CursorView {
-        head: 0,
+        head: 1,
         scroll: 0,
-        cursor: 0,
-        size: 1,
-    },
-}
-PointView {
-    pos: Pos(
-        4,
-        5,
-    ),
-    x: CursorView {
-        head: 0,
-        scroll: 0,
-        cursor: 0,
-        size: 69,
-    },
-    y: CursorView {
-        head: 0,
-        scroll: 0,
-        cursor: 0,
-        size: 1,
+        cursor: 1,
+        size: 46,
     },
 }
 PointView {
@@ -173,30 +496,1398 @@ PointView {
         head: 0,
         scroll: 0,
         cursor: 0,
-        size: 71,
+        size: 83,
     },
     y: CursorView {
-        head: 0,
+        head: 2,
         scroll: 0,
-        cursor: 0,
-        size: 1,
+        cursor: 2,
+        size: 46,
     },
 }
 PointView {
     pos: Pos(
-        4,
-        5,
+        3,
+        3,
     ),
     x: CursorView {
         head: 0,
         scroll: 0,
         cursor: 0,
-        size: 69,
+        size: 83,
     },
     y: CursorView {
+        head: 3,
+        scroll: 0,
+        cursor: 3,
+        size: 46,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
         head: 0,
         scroll: 0,
         cursor: 0,
-        size: 1,
+        size: 83,
+    },
+    y: CursorView {
+        head: 4,
+        scroll: 0,
+        cursor: 4,
+        size: 46,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 5,
+        scroll: 0,
+        cursor: 5,
+        size: 46,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 6,
+        scroll: 0,
+        cursor: 6,
+        size: 46,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 7,
+        scroll: 0,
+        cursor: 7,
+        size: 46,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 8,
+        scroll: 0,
+        cursor: 8,
+        size: 46,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 9,
+        scroll: 0,
+        cursor: 9,
+        size: 46,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 10,
+        scroll: 0,
+        cursor: 10,
+        size: 46,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 11,
+        scroll: 0,
+        cursor: 11,
+        size: 46,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 12,
+        scroll: 0,
+        cursor: 12,
+        size: 46,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 13,
+        scroll: 0,
+        cursor: 13,
+        size: 46,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 14,
+        scroll: 0,
+        cursor: 14,
+        size: 46,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 15,
+        scroll: 0,
+        cursor: 15,
+        size: 46,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 16,
+        scroll: 0,
+        cursor: 16,
+        size: 46,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 17,
+        scroll: 0,
+        cursor: 17,
+        size: 46,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 18,
+        scroll: 0,
+        cursor: 18,
+        size: 46,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 19,
+        scroll: 0,
+        cursor: 19,
+        size: 46,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 20,
+        scroll: 0,
+        cursor: 20,
+        size: 46,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 21,
+        scroll: 0,
+        cursor: 21,
+        size: 46,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 22,
+        scroll: 0,
+        cursor: 22,
+        size: 46,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 23,
+        scroll: 0,
+        cursor: 23,
+        size: 46,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 24,
+        scroll: 0,
+        cursor: 24,
+        size: 46,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 25,
+        scroll: 0,
+        cursor: 25,
+        size: 46,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 26,
+        scroll: 0,
+        cursor: 26,
+        size: 46,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 27,
+        scroll: 0,
+        cursor: 27,
+        size: 46,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 28,
+        scroll: 0,
+        cursor: 28,
+        size: 46,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 29,
+        scroll: 0,
+        cursor: 29,
+        size: 46,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 30,
+        scroll: 0,
+        cursor: 30,
+        size: 46,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 31,
+        scroll: 0,
+        cursor: 31,
+        size: 46,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 32,
+        scroll: 0,
+        cursor: 32,
+        size: 46,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 33,
+        scroll: 0,
+        cursor: 33,
+        size: 46,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 34,
+        scroll: 0,
+        cursor: 34,
+        size: 46,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 35,
+        scroll: 0,
+        cursor: 35,
+        size: 46,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 36,
+        scroll: 0,
+        cursor: 36,
+        size: 46,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 37,
+        scroll: 0,
+        cursor: 37,
+        size: 46,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 38,
+        scroll: 0,
+        cursor: 38,
+        size: 46,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 39,
+        scroll: 0,
+        cursor: 39,
+        size: 46,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 40,
+        scroll: 0,
+        cursor: 40,
+        size: 46,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 41,
+        scroll: 0,
+        cursor: 41,
+        size: 46,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 42,
+        scroll: 0,
+        cursor: 42,
+        size: 46,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 43,
+        scroll: 0,
+        cursor: 43,
+        size: 46,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 44,
+        scroll: 0,
+        cursor: 44,
+        size: 46,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 45,
+        scroll: 0,
+        cursor: 45,
+        size: 46,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 46,
+        scroll: 1,
+        cursor: 45,
+        size: 46,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 47,
+        scroll: 2,
+        cursor: 45,
+        size: 46,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 48,
+        scroll: 3,
+        cursor: 45,
+        size: 46,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 49,
+        scroll: 4,
+        cursor: 45,
+        size: 46,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 50,
+        scroll: 5,
+        cursor: 45,
+        size: 46,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 51,
+        scroll: 6,
+        cursor: 45,
+        size: 46,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 52,
+        scroll: 7,
+        cursor: 45,
+        size: 46,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 53,
+        scroll: 8,
+        cursor: 45,
+        size: 46,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 54,
+        scroll: 9,
+        cursor: 45,
+        size: 46,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 21,
+        scroll: 0,
+        cursor: 21,
+        size: 27,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 22,
+        scroll: 0,
+        cursor: 22,
+        size: 27,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 23,
+        scroll: 0,
+        cursor: 23,
+        size: 27,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 24,
+        scroll: 0,
+        cursor: 24,
+        size: 27,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 25,
+        scroll: 0,
+        cursor: 25,
+        size: 27,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 26,
+        scroll: 0,
+        cursor: 26,
+        size: 27,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 26,
+        scroll: 0,
+        cursor: 26,
+        size: 27,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 26,
+        scroll: 0,
+        cursor: 26,
+        size: 27,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 26,
+        scroll: 0,
+        cursor: 26,
+        size: 27,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 26,
+        scroll: 0,
+        cursor: 26,
+        size: 27,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 26,
+        scroll: 0,
+        cursor: 26,
+        size: 27,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 26,
+        scroll: 0,
+        cursor: 26,
+        size: 27,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 26,
+        scroll: 0,
+        cursor: 26,
+        size: 27,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 26,
+        scroll: 0,
+        cursor: 26,
+        size: 27,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 26,
+        scroll: 0,
+        cursor: 26,
+        size: 27,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 26,
+        scroll: 0,
+        cursor: 26,
+        size: 27,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 26,
+        scroll: 0,
+        cursor: 26,
+        size: 27,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 26,
+        scroll: 0,
+        cursor: 26,
+        size: 27,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 26,
+        scroll: 0,
+        cursor: 26,
+        size: 27,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 26,
+        scroll: 0,
+        cursor: 26,
+        size: 27,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 26,
+        scroll: 0,
+        cursor: 26,
+        size: 27,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 26,
+        scroll: 0,
+        cursor: 26,
+        size: 27,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 26,
+        scroll: 0,
+        cursor: 26,
+        size: 27,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 26,
+        scroll: 0,
+        cursor: 26,
+        size: 27,
+    },
+}
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
+    },
+    y: CursorView {
+        head: 26,
+        scroll: 0,
+        cursor: 26,
+        size: 27,
     },
 }

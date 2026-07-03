@@ -66,7 +66,7 @@ impl From<PageParams> for PageViewParams {
   fn from(page_params: PageParams) -> Self {
     Self {
       draw_point: false,
-      max_height:   None,
+      max_height: None,
       frame_params: FrameParams::init(),
       page_params,
     }
@@ -79,7 +79,8 @@ impl PageViewParams {
     page:   &Page, 
     view:   &PointView, 
     writer: &mut impl std::io::Write,
-  ) -> std::io::Result<()> {
+  ) -> std::io::Result<()> 
+  {
     self.page_params.draw(page, view, writer)?;
     if self.draw_point {
       view.draw(writer)?;
@@ -194,6 +195,41 @@ impl PageView {
     Ok(())
   }
 
+  pub fn delete(&mut self) {
+    self.page.delete();
+    self.point_view.update(&self.page.point);
+  }
+
+  pub fn backspace(&mut self) {
+    self.page.backspace();
+    self.point_view.update(&self.page.point);
+  }
+
+  pub fn insert(&mut self, ch: char) {
+    self.page.insert(ch);
+    self.point_view.update(&self.page.point);
+  }
+
+  pub fn move_left(&mut self, delta: usize) {
+    self.page.move_left(delta);
+    self.point_view.update(&self.page.point);
+  }
+
+  pub fn move_right(&mut self, delta: usize) {
+    self.page.move_right(delta);
+    self.point_view.update(&self.page.point);
+  }
+
+  pub fn move_down(&mut self, delta: usize) {
+    self.page.move_down(delta);
+    self.point_view.update(&self.page.point);
+  }
+
+  pub fn move_up(&mut self, delta: usize) {
+    self.page.move_up(delta);
+    self.point_view.update(&self.page.point);
+  }
+
   pub fn get_param_string(&self) -> &str {
     self.view_params.page_params.get_string(&self.page)
   }
@@ -214,7 +250,8 @@ impl PageView {
 
 impl CursorVec<PageView> {
   pub fn draw(&self, writer: &mut impl std::io::Write) 
-  -> std::io::Result<()> {
+  -> std::io::Result<()> 
+  {
     if let Some(view) = self.get_current() {
       view.draw(writer)?;
     }
@@ -256,7 +293,8 @@ impl From<Rect> for Layout {
 
 impl Layout {
   pub fn draw(&self, writer: &mut impl std::io::Write) 
-  -> std::io::Result<()> {
+  -> std::io::Result<()> 
+  {
     //self.for_each_sorted(|v| v.draw(writer));
     for k in self.get_sorted_keys().iter() {
       if let Some(v) = self.map.get(k) { 

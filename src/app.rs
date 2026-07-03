@@ -281,7 +281,9 @@ impl App {
         Action::DelTab => self.ask_dlg(
           Task::DelTab, "Delete current tab?",
         ),
-        action => action.update(&mut view.page),
+        action => {
+          action.update(view);
+        }
       }
     }
     else if 
@@ -443,10 +445,10 @@ impl App {
           self.focus_tabs();
         }
         (_, action, DlgType::Edit) => {
-          action.update_edit(&mut view.page);
+          action.update_edit(view);
         }
         (_, action, _) => {
-          action.update(&mut view.page);
+          action.update(view);
         }
       }
     } 

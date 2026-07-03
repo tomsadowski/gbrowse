@@ -35,6 +35,7 @@ pub struct UserStyle {
   pub quote:           TextStyle,
   pub list:            TextStyle,
 } 
+
 impl UserStyle {
   pub fn get_frame_params(&self) -> FrameParams {
     FrameParams::init()

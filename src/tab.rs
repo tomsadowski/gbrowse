@@ -26,11 +26,15 @@ impl CursorVec<Tab> {
     url:            &url::Url, 
     source:         Vec<GemText>, 
   ) {
-    let params = PageParams::init()
-      .with_styled_text(
-        &source, 
-        |g| params.style.get_style_from_gem_text(g),
-      ).with_style(params.style.general);
+    let params = PageViewParams::from(
+      PageParams::init()
+        .with_styled_text(
+          &source, 
+          |g| params.style.get_style_from_gem_text(g),
+        )
+        .with_style(params.style.general)
+      )
+      .with_draw_point(true);
     let (tags, text): (Vec<GemTag>, Vec<String>) = source
       .into_iter()
       .map(|gemtext| (gemtext.tag, gemtext.text))
@@ -39,8 +43,7 @@ impl CursorVec<Tab> {
       |tab| tab.get_url() == Some(url), 
       Tab::Gem(UrlTab::new(url, tags)),
     ) {
-      eprintln!("corn");
-      layout.apply_insert(TAB, insert_command, params.into());
+      layout.apply_insert(TAB, insert_command, params);
     }
   }
 

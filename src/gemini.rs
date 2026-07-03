@@ -94,21 +94,26 @@ pub struct GemText {
   pub tag:  GemTag,
   pub text: String,
 }
+
 impl std::fmt::Display for GemText {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) 
-  -> Result<(), std::fmt::Error> {
+  -> Result<(), std::fmt::Error> 
+  {
     write!(f, "{}", self.text)
   }
 }
+
 impl From<(GemTag, String)> for GemText {
   fn from(item: (GemTag, String)) -> Self {
     Self {tag: item.0, text: item.1}
   }
 }
+
 impl GemText {
   pub fn preformat(s: String) -> Self {
     Self {tag: GemTag::PreFormat, text: s}
   }
+
   pub fn parse_line(line: &str) -> (GemTag, String) {
     if let Some(("```", _)) = line.split_at_checked(3) {
       (GemTag::PreFormat, "".into())
