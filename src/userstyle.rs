@@ -71,6 +71,7 @@ impl UserStyle {
     }
   }
 }
+
 impl Assign for UserStyle {
   type Field = StyleTableField;
   fn assign(&mut self, f: Self::Field, v: toml::Value) -> Result<(), String> {
@@ -110,6 +111,7 @@ impl Assign for UserStyle {
     Ok(())
   }
 }
+
 impl Assign for Style {
   type Field = StyleField;
   fn assign(&mut self, f: Self::Field, v: toml::Value) -> Result<(), String> {
@@ -135,6 +137,7 @@ impl Assign for Style {
     Ok(())
   }
 }
+
 impl Assign for Margins {
   type Field = MarginField;
   fn assign(&mut self, f: Self::Field, v: toml::Value) -> Result<(), String> {
@@ -156,6 +159,7 @@ impl Assign for Margins {
     Ok(())
   }
 }
+
 impl Assign for BorderStyle {
   type Field = BorderField;
   fn assign(&mut self, f: Self::Field, v: toml::Value) -> Result<(), String> {
@@ -217,6 +221,7 @@ impl Assign for BorderStyle {
     Ok(())
   }
 }
+
 impl Assign for TextStyle {
   type Field = TextField;
   fn assign(&mut self, f: Self::Field, v: toml::Value) -> Result<(), String> {
@@ -268,6 +273,7 @@ pub enum StyleTextField {
 pub enum StyleTableField {
   Border, Margin(StyleMarginField), Text(StyleTextField),
 }
+
 impl std::str::FromStr for StyleTableField {
   type Err = String;
   fn from_str(s: &str) -> Result<Self, Self::Err> {

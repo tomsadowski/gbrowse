@@ -67,6 +67,7 @@ pub use crate::user::{
 };
 pub use crate::cursor::{
   Cursor, 
+  PointMatrix,
   CursorVec,
   CursorCommand,
   MoveCommand,

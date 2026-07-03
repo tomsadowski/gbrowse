@@ -20,26 +20,31 @@ use std::collections::HashMap;
 pub trait GetHeight { 
   fn get_height(&self) -> u16; 
 }
+
 impl<T> GetHeight for Vec<T> {
   fn get_height(&self) -> u16 { 
     u16::try_from(self.len()).unwrap_or(u16::MAX)
   }
 }
+
 impl GetHeight for Page {
   fn get_height(&self) -> u16 {
     self.matrix.get_height()
   }
 }
+
 impl GetHeight for Frame {
   fn get_height(&self) -> u16 {
     self.border_rect.height()
   }
 }
+
 impl GetHeight for PageView {
   fn get_height(&self) -> u16 {
     self.frame.border_rect.height()
   }
 }
+
 impl GetHeight for CursorVec<PageView> {
   fn get_height(&self) -> u16 {
     self
@@ -56,6 +61,7 @@ pub struct PageViewParams {
   pub frame_params: FrameParams,
   pub page_params:  PageParams,
 }
+
 impl From<PageParams> for PageViewParams {
   fn from(page_params: PageParams) -> Self {
     Self {
@@ -66,6 +72,7 @@ impl From<PageParams> for PageViewParams {
     }
   }
 }
+
 impl PageViewParams {
   pub fn draw(
     &self, 
@@ -79,36 +86,46 @@ impl PageViewParams {
     }
     Ok(())
   }
+
   pub fn with_draw_point(mut self, b: bool) -> Self {
     self.set_draw_point(b); self
   }
+
   pub fn set_draw_point(&mut self, b: bool) {
     self.draw_point = b;
   }
+
   pub fn with_max_height(mut self, max_height: Option<u16>) -> Self {
     self.set_max_height(max_height); self 
   }
+
   pub fn set_max_height(&mut self, max_height: Option<u16>) {
     self.max_height = max_height;
   }
+
   pub fn with_frame_params(mut self, frame_params: FrameParams) -> Self {
     self.set_frame_params(frame_params); self 
   }
+
   pub fn set_frame_params(&mut self, frame_params: FrameParams) {
     self.frame_params = frame_params;
   }
+
   fn build_max_height(&self, rect: &Rect) -> u16 {
     self.max_height.unwrap_or(u16::MIN).min(rect.height())
   }
+
   fn build_max_rect(&self, rect: &Rect) -> Rect {
     let max_height = self.build_max_height(rect);
     rect.set_height(max_height)
   }
+
   fn build_max_frame(&self, rect: &Rect) -> Frame {
     self.frame_params.build_from_outer(
       &self.build_max_rect(rect)
     )
   }
+
   pub fn resize(
     &self, 
     page:       &Page, 
@@ -123,6 +140,7 @@ impl PageViewParams {
     }
     point_view.resize(&page.point, &frame.inner_rect);
   }
+
   pub fn rebuild(
     &self, 
     page:       &mut Page, 
@@ -138,6 +156,7 @@ impl PageViewParams {
     }
     point_view.resize(&page.point, &frame.inner_rect);
   }
+
   pub fn build(self, rect: &Rect) -> PageView {
     let mut frame = self.build_max_frame(rect);
     let page = self.page_params.build(
@@ -165,26 +184,33 @@ pub struct PageView {
   pub frame:        Frame,
   pub page:         Page,
 }
+
 impl PageView {
   pub fn draw(&self, writer: &mut impl std::io::Write) 
-  -> std::io::Result<()> {
+  -> std::io::Result<()> 
+  {
     self.view_params.draw(&self.page, &self.point_view, writer)?;
     Ok(())
   }
+
   pub fn get_param_string(&self) -> &str {
     self.view_params.page_params.get_string(&self.page)
   }
+
   pub fn get_page_string(&self) -> Option<String> {
     self.page.get_string()
   }
+
   pub fn rebuild(&mut self, rect: &Rect) {
     self.view_params.rebuild(&mut self.page, &mut self.point_view, rect);
   }
+
   // dont rewrap, only point_view changes
   pub fn resize(&mut self, rect: &Rect) {
     self.view_params.resize(&self.page, &mut self.point_view, rect);
   }
 }
+
 impl CursorVec<PageView> {
   pub fn draw(&self, writer: &mut impl std::io::Write) 
   -> std::io::Result<()> {
@@ -193,11 +219,13 @@ impl CursorVec<PageView> {
     }
     Ok(())
   }
+
   pub fn rebuild(&mut self, rect: &Rect) {
     for view in self.vec.iter_mut() {
       view.rebuild(rect);
     }
   }
+
   // dont rewrap, only point_view changes
   pub fn resize(&mut self, rect: &Rect) {
     for view in self.vec.iter_mut() {
@@ -212,6 +240,7 @@ pub struct Layout {
   pub frame:        Frame,
   pub map:          HashMap<u16, CursorVec<PageView>>,
 }
+
 impl From<Rect> for Layout {
   fn from(rect: Rect) -> Self {
     let frame = FrameParams::init().build_from_outer(&rect);
@@ -223,27 +252,32 @@ impl From<Rect> for Layout {
     }
   }
 }
+
 impl Layout {
   pub fn draw(&self, writer: &mut impl std::io::Write) 
   -> std::io::Result<()> {
     //self.for_each_sorted(|v| v.draw(writer));
     for k in self.get_sorted_keys().iter() {
       if let Some(v) = self.map.get(k) { 
+        eprintln!("{:#?}", k);
         v.draw(writer)?; 
       }
     }
     Ok(())
   }
+
   pub fn get_page_view_mut(&mut self, key: u16) -> Option<&mut PageView> {
     self.map
       .get_mut(&key)
       .and_then(|v| v.get_current_mut())
   }
+
   fn get_sorted_keys(&self) -> Vec<u16> {
     let mut keys: Vec<_> = self.map.keys().map(|k| k.clone()).collect();
     keys.sort();
     keys
   }
+
   fn for_each_sorted<T>(
     &self, 
     mut func: impl FnMut(&CursorVec<PageView>) -> T
@@ -252,14 +286,16 @@ impl Layout {
       if let Some(v) = self.map.get(k) { func(v); }
     }
   }
+
   fn for_each_sorted_mut(
     &mut self, 
-    mut  func: impl FnMut(&mut CursorVec<PageView>)
+    mut func: impl FnMut(&mut CursorVec<PageView>)
   ) {
     for k in self.get_sorted_keys().iter() {
       if let Some(v) = self.map.get_mut(k) { func(v); }
     }
   }
+
   fn push_resize(&mut self) {
     let mut rect = self.frame.inner_rect;
     self.for_each_sorted_mut(|view_list| {
@@ -267,6 +303,7 @@ impl Layout {
       rect = rect.shift_north((view_list.get_height() as i16) * -1);
     });
   }
+
   pub fn push_rebuild(&mut self) {
     let mut rect = self.frame.inner_rect;
     self.for_each_sorted_mut(|view_list| {
@@ -274,6 +311,7 @@ impl Layout {
       rect = rect.shift_north((view_list.get_height() as i16) * -1);
     });
   }
+
   fn get_rect_for_key(&self, key: u16) -> Rect {
     let mut rect = self.frame.inner_rect;
     for k in self.get_sorted_keys().iter().take_while(|k| **k < key) {
@@ -288,38 +326,41 @@ impl Layout {
     }
     rect
   }
+
   pub fn set_max_rect(&mut self, rect: Rect) {
     self.max_rect = rect;
     self.frame = self.frame_params.build_from_outer(&self.max_rect);
     self.push_rebuild();
   }
+
   pub fn with_frame_params(mut self, params: FrameParams) -> Self {
     self.set_frame_params(params); self
   }
+
   pub fn set_frame_params(&mut self, params: FrameParams) {
     self.frame_params = params;
     self.frame = self.frame_params.build_from_outer(&self.max_rect);
     self.push_rebuild();
   }
+
   pub fn resize(&mut self, rect: Rect) {
     self.max_rect = rect;
     self.frame = self.frame_params.build_from_outer(&self.max_rect);
     self.push_rebuild();
   }
-  pub fn apply_move(
-    &mut self, key: u16, move_cmd: MoveCommand, 
-  ) {
+
+  pub fn apply_move(&mut self, key: u16, move_cmd: MoveCommand) {
     self.map
       .get_mut(&key)
       .map(|cursor_vec| move_cmd.apply_to_vec(cursor_vec));
   }
-  pub fn apply_remove(
-    &mut self, key: u16, remove_cmd: RemoveCommand, 
-  ) {
+
+  pub fn apply_remove(&mut self, key: u16, remove_cmd: RemoveCommand) {
     self.map
       .get_mut(&key)
       .map(|cursor_vec| remove_cmd.apply_to_vec(cursor_vec));
   }
+
   pub fn apply_insert(
     &mut self, 
     key: u16, 
@@ -328,10 +369,13 @@ impl Layout {
   ) {
     let rect = self.get_rect_for_key(key);
     let view = view_params.build(&rect);
-    self.map
-      .get_mut(&key)
-      .map(|cursor_vec| insert_cmd.apply_to_vec(cursor_vec, view));
+    if let Some(cursor_vec) = self.map.get_mut(&key) {
+      insert_cmd.apply_to_vec(cursor_vec, view);
+    } else {
+      self.map.insert(key, view.into());
+    }
   }
+
   pub fn insert(&mut self, key: u16, view_params: PageViewParams) {
     let rect = self.get_rect_for_key(key);
     let view = view_params.build(&rect);
@@ -341,9 +385,11 @@ impl Layout {
       self.map.insert(key, view.into());
     }
   }
+
   pub fn remove_list(&mut self, handle: u16) -> bool {
     self.map.remove(&handle).is_some()
   }
+
   pub fn remove(&mut self, handle: u16) -> bool {
     self.map.remove(&handle).is_some()
   }

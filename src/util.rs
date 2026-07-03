@@ -33,13 +33,13 @@ pub fn get_entries(path: &str) -> Result<Vec<String>, String> {
 
 pub fn get_wrapped_text(input: &str, width: usize) -> Vec<Vec<char>> {
   use unicode_width::UnicodeWidthChar;
-  let     input:  Vec<_> = input.chars().collect();
+  let input: Vec<_> = input.chars().collect();
   let mut output: Vec<_> = vec![];
-  let mut start          = 0;
+  let mut start = 0;
   while start < input.len() {
     let mut accum_width  = 0;
     let mut text: Vec<_> = vec![];
-    let mut chars        = input[start..].iter();
+    let mut chars = input[start..].iter();
     while let Some(c) = chars.next() && accum_width < width {
       accum_width += &c.width().unwrap_or(0);
       text.push(c.clone());

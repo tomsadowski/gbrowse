@@ -1,947 +1,136 @@
    Compiling gbrowse v0.1.0 (/home/tsadowski/.local/source/gbrowse)
-    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.55s
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.41s
      Running `target/debug/gbrowse`
-frame: Frame {
-    style: FrameParams {
-        text_margin: Margins {
-            north: 1,
-            south: 1,
-            east: 4,
-            west: 4,
-        },
-        screen_margin: Margins {
-            north: 1,
-            south: 1,
-            east: 4,
-            west: 4,
-        },
-        border: Some(
-            BorderStyle {
-                style: Style {
-                    underline: false,
-                    bold: false,
-                    fg: Some(
-                        Rgb {
-                            r: 80,
-                            g: 88,
-                            b: 88,
-                        },
-                    ),
-                    bg: Some(
-                        Rgb {
-                            r: 32,
-                            g: 36,
-                            b: 37,
-                        },
-                    ),
-                },
-                x: '─',
-                y: '│',
-                a: '╭',
-                b: '╮',
-                c: '╰',
-                d: '╯',
-                open: '⦗',
-                close: '⦘',
-            },
-        ),
-        margin: Style {
-            underline: false,
-            bold: false,
-            fg: Some(
-                Rgb {
-                    r: 196,
-                    g: 192,
-                    b: 160,
-                },
-            ),
-            bg: Some(
-                Rgb {
-                    r: 32,
-                    g: 36,
-                    b: 37,
-                },
-            ),
-        },
-        banner: Style {
-            underline: false,
-            bold: false,
-            fg: Some(
-                Rgb {
-                    r: 128,
-                    g: 136,
-                    b: 136,
-                },
-            ),
-            bg: None,
-        },
-        footer: Style {
-            underline: false,
-            bold: false,
-            fg: Some(
-                Rgb {
-                    r: 128,
-                    g: 136,
-                    b: 136,
-                },
-            ),
-            bg: None,
-        },
+corn
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
     },
-    screen: Rect {
-        x: 0,
-        y: 0,
-        w: 64,
-        h: 38,
+    y: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 0,
     },
-    border_rect: Rect {
-        x: 1,
-        y: 1,
-        w: 62,
-        h: 36,
+}
+3
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
     },
-    outer_rect: Rect {
-        x: 2,
-        y: 2,
-        w: 60,
-        h: 34,
+    y: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 0,
     },
-    inner_rect: Rect {
-        x: 3,
-        y: 3,
-        w: 58,
-        h: 32,
+}
+3
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
     },
-} 
- max: Rect {
-    x: 0,
-    y: 0,
-    w: 64,
-    h: 38,
-} 
-frame: Frame {
-    style: FrameParams {
-        text_margin: Margins {
-            north: 1,
-            south: 1,
-            east: 4,
-            west: 4,
-        },
-        screen_margin: Margins {
-            north: 1,
-            south: 1,
-            east: 4,
-            west: 4,
-        },
-        border: Some(
-            BorderStyle {
-                style: Style {
-                    underline: false,
-                    bold: false,
-                    fg: Some(
-                        Rgb {
-                            r: 80,
-                            g: 88,
-                            b: 88,
-                        },
-                    ),
-                    bg: Some(
-                        Rgb {
-                            r: 32,
-                            g: 36,
-                            b: 37,
-                        },
-                    ),
-                },
-                x: '─',
-                y: '│',
-                a: '╭',
-                b: '╮',
-                c: '╰',
-                d: '╯',
-                open: '⦗',
-                close: '⦘',
-            },
-        ),
-        margin: Style {
-            underline: false,
-            bold: false,
-            fg: Some(
-                Rgb {
-                    r: 196,
-                    g: 192,
-                    b: 160,
-                },
-            ),
-            bg: Some(
-                Rgb {
-                    r: 32,
-                    g: 36,
-                    b: 37,
-                },
-            ),
-        },
-        banner: Style {
-            underline: false,
-            bold: false,
-            fg: Some(
-                Rgb {
-                    r: 128,
-                    g: 136,
-                    b: 136,
-                },
-            ),
-            bg: None,
-        },
-        footer: Style {
-            underline: false,
-            bold: false,
-            fg: Some(
-                Rgb {
-                    r: 128,
-                    g: 136,
-                    b: 136,
-                },
-            ),
-            bg: None,
-        },
+    y: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 0,
     },
-    screen: Rect {
-        x: 0,
-        y: 0,
-        w: 64,
-        h: 38,
+}
+3
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
     },
-    border_rect: Rect {
-        x: 1,
-        y: 1,
-        w: 62,
-        h: 36,
+    y: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 0,
     },
-    outer_rect: Rect {
-        x: 2,
-        y: 2,
-        w: 60,
-        h: 34,
+}
+3
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
     },
-    inner_rect: Rect {
-        x: 3,
-        y: 3,
-        w: 58,
-        h: 32,
+    y: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 0,
     },
-} 
- max: Rect {
-    x: 0,
-    y: 0,
-    w: 64,
-    h: 38,
-} 
-frame: Frame {
-    style: FrameParams {
-        text_margin: Margins {
-            north: 1,
-            south: 1,
-            east: 4,
-            west: 4,
-        },
-        screen_margin: Margins {
-            north: 1,
-            south: 1,
-            east: 4,
-            west: 4,
-        },
-        border: Some(
-            BorderStyle {
-                style: Style {
-                    underline: false,
-                    bold: false,
-                    fg: Some(
-                        Rgb {
-                            r: 80,
-                            g: 88,
-                            b: 88,
-                        },
-                    ),
-                    bg: Some(
-                        Rgb {
-                            r: 32,
-                            g: 36,
-                            b: 37,
-                        },
-                    ),
-                },
-                x: '─',
-                y: '│',
-                a: '╭',
-                b: '╮',
-                c: '╰',
-                d: '╯',
-                open: '⦗',
-                close: '⦘',
-            },
-        ),
-        margin: Style {
-            underline: false,
-            bold: false,
-            fg: Some(
-                Rgb {
-                    r: 196,
-                    g: 192,
-                    b: 160,
-                },
-            ),
-            bg: Some(
-                Rgb {
-                    r: 32,
-                    g: 36,
-                    b: 37,
-                },
-            ),
-        },
-        banner: Style {
-            underline: false,
-            bold: false,
-            fg: Some(
-                Rgb {
-                    r: 128,
-                    g: 136,
-                    b: 136,
-                },
-            ),
-            bg: None,
-        },
-        footer: Style {
-            underline: false,
-            bold: false,
-            fg: Some(
-                Rgb {
-                    r: 128,
-                    g: 136,
-                    b: 136,
-                },
-            ),
-            bg: None,
-        },
+}
+3
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
     },
-    screen: Rect {
-        x: 0,
-        y: 0,
-        w: 64,
-        h: 38,
+    y: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 0,
     },
-    border_rect: Rect {
-        x: 1,
-        y: 1,
-        w: 62,
-        h: 36,
+}
+3
+PointView {
+    pos: Pos(
+        3,
+        3,
+    ),
+    x: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 83,
     },
-    outer_rect: Rect {
-        x: 2,
-        y: 2,
-        w: 60,
-        h: 34,
+    y: CursorView {
+        head: 0,
+        scroll: 0,
+        cursor: 0,
+        size: 0,
     },
-    inner_rect: Rect {
-        x: 3,
-        y: 3,
-        w: 58,
-        h: 32,
-    },
-} 
- max: Rect {
-    x: 0,
-    y: 0,
-    w: 64,
-    h: 38,
-} 
-frame: Frame {
-    style: FrameParams {
-        text_margin: Margins {
-            north: 1,
-            south: 1,
-            east: 4,
-            west: 4,
-        },
-        screen_margin: Margins {
-            north: 1,
-            south: 1,
-            east: 4,
-            west: 4,
-        },
-        border: Some(
-            BorderStyle {
-                style: Style {
-                    underline: false,
-                    bold: false,
-                    fg: Some(
-                        Rgb {
-                            r: 80,
-                            g: 88,
-                            b: 88,
-                        },
-                    ),
-                    bg: Some(
-                        Rgb {
-                            r: 32,
-                            g: 36,
-                            b: 37,
-                        },
-                    ),
-                },
-                x: '─',
-                y: '│',
-                a: '╭',
-                b: '╮',
-                c: '╰',
-                d: '╯',
-                open: '⦗',
-                close: '⦘',
-            },
-        ),
-        margin: Style {
-            underline: false,
-            bold: false,
-            fg: Some(
-                Rgb {
-                    r: 196,
-                    g: 192,
-                    b: 160,
-                },
-            ),
-            bg: Some(
-                Rgb {
-                    r: 32,
-                    g: 36,
-                    b: 37,
-                },
-            ),
-        },
-        banner: Style {
-            underline: false,
-            bold: false,
-            fg: Some(
-                Rgb {
-                    r: 128,
-                    g: 136,
-                    b: 136,
-                },
-            ),
-            bg: None,
-        },
-        footer: Style {
-            underline: false,
-            bold: false,
-            fg: Some(
-                Rgb {
-                    r: 128,
-                    g: 136,
-                    b: 136,
-                },
-            ),
-            bg: None,
-        },
-    },
-    screen: Rect {
-        x: 0,
-        y: 0,
-        w: 64,
-        h: 38,
-    },
-    border_rect: Rect {
-        x: 1,
-        y: 1,
-        w: 62,
-        h: 36,
-    },
-    outer_rect: Rect {
-        x: 2,
-        y: 2,
-        w: 60,
-        h: 34,
-    },
-    inner_rect: Rect {
-        x: 3,
-        y: 3,
-        w: 58,
-        h: 32,
-    },
-} 
- max: Rect {
-    x: 0,
-    y: 0,
-    w: 64,
-    h: 38,
-} 
-frame: Frame {
-    style: FrameParams {
-        text_margin: Margins {
-            north: 1,
-            south: 1,
-            east: 4,
-            west: 4,
-        },
-        screen_margin: Margins {
-            north: 1,
-            south: 1,
-            east: 4,
-            west: 4,
-        },
-        border: Some(
-            BorderStyle {
-                style: Style {
-                    underline: false,
-                    bold: false,
-                    fg: Some(
-                        Rgb {
-                            r: 80,
-                            g: 88,
-                            b: 88,
-                        },
-                    ),
-                    bg: Some(
-                        Rgb {
-                            r: 32,
-                            g: 36,
-                            b: 37,
-                        },
-                    ),
-                },
-                x: '─',
-                y: '│',
-                a: '╭',
-                b: '╮',
-                c: '╰',
-                d: '╯',
-                open: '⦗',
-                close: '⦘',
-            },
-        ),
-        margin: Style {
-            underline: false,
-            bold: false,
-            fg: Some(
-                Rgb {
-                    r: 196,
-                    g: 192,
-                    b: 160,
-                },
-            ),
-            bg: Some(
-                Rgb {
-                    r: 32,
-                    g: 36,
-                    b: 37,
-                },
-            ),
-        },
-        banner: Style {
-            underline: false,
-            bold: false,
-            fg: Some(
-                Rgb {
-                    r: 128,
-                    g: 136,
-                    b: 136,
-                },
-            ),
-            bg: None,
-        },
-        footer: Style {
-            underline: false,
-            bold: false,
-            fg: Some(
-                Rgb {
-                    r: 128,
-                    g: 136,
-                    b: 136,
-                },
-            ),
-            bg: None,
-        },
-    },
-    screen: Rect {
-        x: 0,
-        y: 0,
-        w: 64,
-        h: 38,
-    },
-    border_rect: Rect {
-        x: 1,
-        y: 1,
-        w: 62,
-        h: 36,
-    },
-    outer_rect: Rect {
-        x: 2,
-        y: 2,
-        w: 60,
-        h: 34,
-    },
-    inner_rect: Rect {
-        x: 3,
-        y: 3,
-        w: 58,
-        h: 32,
-    },
-} 
- max: Rect {
-    x: 0,
-    y: 0,
-    w: 64,
-    h: 38,
-} 
-frame: Frame {
-    style: FrameParams {
-        text_margin: Margins {
-            north: 1,
-            south: 1,
-            east: 4,
-            west: 4,
-        },
-        screen_margin: Margins {
-            north: 1,
-            south: 1,
-            east: 4,
-            west: 4,
-        },
-        border: Some(
-            BorderStyle {
-                style: Style {
-                    underline: false,
-                    bold: false,
-                    fg: Some(
-                        Rgb {
-                            r: 80,
-                            g: 88,
-                            b: 88,
-                        },
-                    ),
-                    bg: Some(
-                        Rgb {
-                            r: 32,
-                            g: 36,
-                            b: 37,
-                        },
-                    ),
-                },
-                x: '─',
-                y: '│',
-                a: '╭',
-                b: '╮',
-                c: '╰',
-                d: '╯',
-                open: '⦗',
-                close: '⦘',
-            },
-        ),
-        margin: Style {
-            underline: false,
-            bold: false,
-            fg: Some(
-                Rgb {
-                    r: 196,
-                    g: 192,
-                    b: 160,
-                },
-            ),
-            bg: Some(
-                Rgb {
-                    r: 32,
-                    g: 36,
-                    b: 37,
-                },
-            ),
-        },
-        banner: Style {
-            underline: false,
-            bold: false,
-            fg: Some(
-                Rgb {
-                    r: 128,
-                    g: 136,
-                    b: 136,
-                },
-            ),
-            bg: None,
-        },
-        footer: Style {
-            underline: false,
-            bold: false,
-            fg: Some(
-                Rgb {
-                    r: 128,
-                    g: 136,
-                    b: 136,
-                },
-            ),
-            bg: None,
-        },
-    },
-    screen: Rect {
-        x: 0,
-        y: 0,
-        w: 64,
-        h: 38,
-    },
-    border_rect: Rect {
-        x: 1,
-        y: 1,
-        w: 62,
-        h: 36,
-    },
-    outer_rect: Rect {
-        x: 2,
-        y: 2,
-        w: 60,
-        h: 34,
-    },
-    inner_rect: Rect {
-        x: 3,
-        y: 3,
-        w: 58,
-        h: 32,
-    },
-} 
- max: Rect {
-    x: 0,
-    y: 0,
-    w: 64,
-    h: 38,
-} 
-frame: Frame {
-    style: FrameParams {
-        text_margin: Margins {
-            north: 1,
-            south: 1,
-            east: 4,
-            west: 4,
-        },
-        screen_margin: Margins {
-            north: 1,
-            south: 1,
-            east: 4,
-            west: 4,
-        },
-        border: Some(
-            BorderStyle {
-                style: Style {
-                    underline: false,
-                    bold: false,
-                    fg: Some(
-                        Rgb {
-                            r: 80,
-                            g: 88,
-                            b: 88,
-                        },
-                    ),
-                    bg: Some(
-                        Rgb {
-                            r: 32,
-                            g: 36,
-                            b: 37,
-                        },
-                    ),
-                },
-                x: '─',
-                y: '│',
-                a: '╭',
-                b: '╮',
-                c: '╰',
-                d: '╯',
-                open: '⦗',
-                close: '⦘',
-            },
-        ),
-        margin: Style {
-            underline: false,
-            bold: false,
-            fg: Some(
-                Rgb {
-                    r: 196,
-                    g: 192,
-                    b: 160,
-                },
-            ),
-            bg: Some(
-                Rgb {
-                    r: 32,
-                    g: 36,
-                    b: 37,
-                },
-            ),
-        },
-        banner: Style {
-            underline: false,
-            bold: false,
-            fg: Some(
-                Rgb {
-                    r: 128,
-                    g: 136,
-                    b: 136,
-                },
-            ),
-            bg: None,
-        },
-        footer: Style {
-            underline: false,
-            bold: false,
-            fg: Some(
-                Rgb {
-                    r: 128,
-                    g: 136,
-                    b: 136,
-                },
-            ),
-            bg: None,
-        },
-    },
-    screen: Rect {
-        x: 0,
-        y: 0,
-        w: 64,
-        h: 38,
-    },
-    border_rect: Rect {
-        x: 1,
-        y: 1,
-        w: 62,
-        h: 36,
-    },
-    outer_rect: Rect {
-        x: 2,
-        y: 2,
-        w: 60,
-        h: 34,
-    },
-    inner_rect: Rect {
-        x: 3,
-        y: 3,
-        w: 58,
-        h: 32,
-    },
-} 
- max: Rect {
-    x: 0,
-    y: 0,
-    w: 64,
-    h: 38,
-} 
-frame: Frame {
-    style: FrameParams {
-        text_margin: Margins {
-            north: 1,
-            south: 1,
-            east: 4,
-            west: 4,
-        },
-        screen_margin: Margins {
-            north: 1,
-            south: 1,
-            east: 4,
-            west: 4,
-        },
-        border: Some(
-            BorderStyle {
-                style: Style {
-                    underline: false,
-                    bold: false,
-                    fg: Some(
-                        Rgb {
-                            r: 80,
-                            g: 88,
-                            b: 88,
-                        },
-                    ),
-                    bg: Some(
-                        Rgb {
-                            r: 32,
-                            g: 36,
-                            b: 37,
-                        },
-                    ),
-                },
-                x: '─',
-                y: '│',
-                a: '╭',
-                b: '╮',
-                c: '╰',
-                d: '╯',
-                open: '⦗',
-                close: '⦘',
-            },
-        ),
-        margin: Style {
-            underline: false,
-            bold: false,
-            fg: Some(
-                Rgb {
-                    r: 196,
-                    g: 192,
-                    b: 160,
-                },
-            ),
-            bg: Some(
-                Rgb {
-                    r: 32,
-                    g: 36,
-                    b: 37,
-                },
-            ),
-        },
-        banner: Style {
-            underline: false,
-            bold: false,
-            fg: Some(
-                Rgb {
-                    r: 128,
-                    g: 136,
-                    b: 136,
-                },
-            ),
-            bg: None,
-        },
-        footer: Style {
-            underline: false,
-            bold: false,
-            fg: Some(
-                Rgb {
-                    r: 128,
-                    g: 136,
-                    b: 136,
-                },
-            ),
-            bg: None,
-        },
-    },
-    screen: Rect {
-        x: 0,
-        y: 0,
-        w: 64,
-        h: 38,
-    },
-    border_rect: Rect {
-        x: 1,
-        y: 1,
-        w: 62,
-        h: 36,
-    },
-    outer_rect: Rect {
-        x: 2,
-        y: 2,
-        w: 60,
-        h: 34,
-    },
-    inner_rect: Rect {
-        x: 3,
-        y: 3,
-        w: 58,
-        h: 32,
-    },
-} 
- max: Rect {
-    x: 0,
-    y: 0,
-    w: 64,
-    h: 38,
-} 
+}

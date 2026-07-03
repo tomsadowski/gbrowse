@@ -87,9 +87,11 @@ pub struct Style {
   pub fg:        Option<Color>,
   pub bg:        Option<Color>,
 }
+
 impl From<crate::TextStyle> for Style {
   fn from(item: crate::TextStyle) -> Self {item.style}
 }
+
 impl crossterm::Command for Style {
   fn write_ansi(&self, f: &mut impl std::fmt::Write) -> std::fmt::Result {
     use crossterm::style;
