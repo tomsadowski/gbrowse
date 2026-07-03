@@ -22,11 +22,13 @@ impl Margins {
       west:  m,
     }
   }
+
   pub fn get_from_inner(&self, rect: &Rect) -> Rect {
     rect
       .shift_x(self.north as i16)
       .shift_y(self.south as i16)
   }
+
   pub fn get_from_outer(&self, rect: &Rect) -> Rect {
     rect
       .shift_x(self.north as i16 * -1)
@@ -46,6 +48,7 @@ pub struct BorderStyle {
   pub open:  char,
   pub close: char,
 }
+
 impl Default for BorderStyle {
   fn default() -> Self {
     use crate::constants::*;
@@ -62,10 +65,12 @@ impl Default for BorderStyle {
     }
   }
 }
+
 impl BorderStyle {
   pub fn get_from_inner(&self, rect: &Rect) -> Rect {
     rect.shift_x(1).shift_y(1)
   }
+
   pub fn get_from_outer(&self, rect: &Rect) -> Rect {
     rect.shift_x(-1).shift_y(-1)
   }
@@ -80,32 +85,40 @@ pub struct FrameParams {
   pub banner:        Style,
   pub footer:        Style,
 }
+
 impl FrameParams {
   pub fn init() -> Self { Self::default() }
+
   pub fn screen_margin(mut self, screen_margin: Margins) -> Self {
     self.screen_margin = screen_margin;
     self
   }
+
   pub fn text_margin(mut self, screen_margin: Margins) -> Self {
     self.text_margin = screen_margin;
     self
   }
+
   pub fn banner_style(mut self, style: impl Into<Style> + Copy) -> Self {
     self.banner = style.into();
     self
   }
+
   pub fn footer_style(mut self, style: impl Into<Style> + Copy) -> Self {
     self.footer = style.into();
     self
   }
+
   pub fn margin_style(mut self, style: impl Into<Style> + Copy) -> Self {
     self.margin = style.into();
     self
   }
+
   pub fn border_style(mut self, style: Option<BorderStyle>) -> Self {
     self.border = style;
     self
   }
+
   pub fn build_from_inner(&self, rect: &Rect) -> Frame {
     let inner_rect  = rect.clone();
     let outer_rect  = self.text_margin.get_from_inner(&inner_rect);
@@ -121,6 +134,7 @@ impl FrameParams {
       inner_rect,
     }
   }
+
   pub fn build_from_outer(&self, rect: &Rect) -> Frame {
     let border_rect = self.screen_margin.get_from_outer(rect);
     let outer_rect = 
@@ -145,14 +159,17 @@ pub struct Frame {
   pub outer_rect:    Rect,
   pub inner_rect:    Rect,
 }
+
 use crossterm::{
   QueueableCommand, 
   cursor::{self, MoveTo}, 
   style::{Print, SetAttribute, Attribute},
 };
+
 impl Frame {
   pub fn draw_footer(&self, text: &str, w: &mut impl std::io::Write) 
-  -> std::io::Result<()> {
+  -> std::io::Result<()> 
+  {
     if let Some(border) = self.style.border {
       let mut x = self.inner_rect.x_end().saturating_sub(1);
       let     y = self.border_rect.y_end().saturating_sub(1);
@@ -188,8 +205,10 @@ impl Frame {
     }
     Ok(())
   }
+
   pub fn draw_banner(&self, text: &str, w: &mut impl std::io::Write) 
-  -> std::io::Result<()> {
+  -> std::io::Result<()> 
+  {
     if let Some(border) = self.style.border {
       let mut x = self.inner_rect.x();
       let     y = self.border_rect.y();
@@ -219,6 +238,7 @@ impl Frame {
     }
     Ok(())
   }
+
   pub fn draw(&self, w: &mut impl std::io::Write) -> std::io::Result<()> {
     // border
     if let Some(border) = self.style.border {

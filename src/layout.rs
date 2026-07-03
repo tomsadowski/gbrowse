@@ -112,7 +112,7 @@ impl PageViewParams {
   }
 
   fn build_max_height(&self, rect: &Rect) -> u16 {
-    self.max_height.unwrap_or(u16::MIN).min(rect.height())
+    self.max_height.unwrap_or(u16::MAX).min(rect.height())
   }
 
   fn build_max_rect(&self, rect: &Rect) -> Rect {
@@ -189,6 +189,7 @@ impl PageView {
   pub fn draw(&self, writer: &mut impl std::io::Write) 
   -> std::io::Result<()> 
   {
+    //eprintln!("{:#?}", self.frame.get_height());
     self.view_params.draw(&self.page, &self.point_view, writer)?;
     Ok(())
   }
@@ -259,7 +260,6 @@ impl Layout {
     //self.for_each_sorted(|v| v.draw(writer));
     for k in self.get_sorted_keys().iter() {
       if let Some(v) = self.map.get(k) { 
-        eprintln!("{:#?}", k);
         v.draw(writer)?; 
       }
     }
