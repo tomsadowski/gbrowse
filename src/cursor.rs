@@ -538,11 +538,11 @@ impl PointView {
     self.pos = rect.pos();
     self.y.resize(*point.y, rect.height());
     self.x.resize(*point.x, rect.width());
-    eprintln!("{:#?}", self);
+    //eprintln!("{:#?}", self);
   }
 
   pub fn update(&mut self, point: &Point) -> bool {
-    eprintln!("{:#?}", self);
+    //eprintln!("{:#?}", self);
     let y = self.y.update(*point.y);
     let x = self.x.update(*point.x);
     x || y

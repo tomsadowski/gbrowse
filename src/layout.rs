@@ -340,6 +340,12 @@ impl Layout {
       view_list.resize(&rect);
       rect = rect.shift_north((view_list.get_height() as i16) * -1);
     });
+  //for k in self.get_sorted_keys().iter() {
+  //  if let Some(view_list) = self.map.get_mut(k) {
+  //    view_list.resize(&rect);
+  //    rect = rect.shift_north((view_list.get_height() as i16) * -1);
+  //  }
+  //}
   }
 
   pub fn push_rebuild(&mut self) {
@@ -412,6 +418,7 @@ impl Layout {
     } else {
       self.map.insert(key, view.into());
     }
+    self.push_resize();
   }
 
   pub fn insert(&mut self, key: u16, view_params: PageViewParams) {
@@ -422,13 +429,16 @@ impl Layout {
     } else {
       self.map.insert(key, view.into());
     }
+    self.push_resize();
   }
 
-  pub fn remove_list(&mut self, handle: u16) -> bool {
-    self.map.remove(&handle).is_some()
+  pub fn remove_list(&mut self, handle: u16) {
+    self.map.remove(&handle);
+    self.push_resize();
   }
 
-  pub fn remove(&mut self, handle: u16) -> bool {
-    self.map.remove(&handle).is_some()
+  pub fn remove(&mut self, handle: u16) {
+    self.map.remove(&handle);
+    self.push_resize();
   }
 }
