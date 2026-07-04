@@ -1,4 +1,4 @@
-// src/app.rs
+// src/dlg.rs
 
 use crate::{
   user,
