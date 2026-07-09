@@ -22,7 +22,7 @@ pub fn remove(layout: &mut Layout) {
 }
 
 pub struct Dlg<'a> {
-  params:   &'a User, 
+  params: &'a User, 
   header: PageViewParams,
   body:   PageViewParams,
 }

@@ -295,7 +295,6 @@ impl Layout {
   pub fn draw(&self, writer: &mut impl std::io::Write) 
   -> std::io::Result<()> 
   {
-    //self.for_each_sorted(|v| v.draw(writer));
     for k in self.get_sorted_keys().iter() {
       if let Some(v) = self.map.get(k) { 
         v.draw(writer)?; 
@@ -316,44 +315,24 @@ impl Layout {
     keys
   }
 
-  fn for_each_sorted<T>(
-    &self, 
-    mut func: impl FnMut(&CursorVec<PageView>) -> T
-  ) {
-    for k in self.get_sorted_keys().iter() {
-      if let Some(v) = self.map.get(k) { func(v); }
-    }
-  }
-
-  fn for_each_sorted_mut(
-    &mut self, 
-    mut func: impl FnMut(&mut CursorVec<PageView>)
-  ) {
-    for k in self.get_sorted_keys().iter() {
-      if let Some(v) = self.map.get_mut(k) { func(v); }
-    }
-  }
-
   fn push_resize(&mut self) {
     let mut rect = self.frame.inner_rect;
-    self.for_each_sorted_mut(|view_list| {
-      view_list.resize(&rect);
-      rect = rect.shift_north((view_list.get_height() as i16) * -1);
-    });
-  //for k in self.get_sorted_keys().iter() {
-  //  if let Some(view_list) = self.map.get_mut(k) {
-  //    view_list.resize(&rect);
-  //    rect = rect.shift_north((view_list.get_height() as i16) * -1);
-  //  }
-  //}
+    for k in self.get_sorted_keys().iter() {
+      if let Some(v) = self.map.get_mut(k) {
+        v.resize(&rect);
+        rect = rect.shift_north((v.get_height() as i16) * -1);
+      }
+    }
   }
 
   pub fn push_rebuild(&mut self) {
     let mut rect = self.frame.inner_rect;
-    self.for_each_sorted_mut(|view_list| {
-      view_list.rebuild(&rect);
-      rect = rect.shift_north((view_list.get_height() as i16) * -1);
-    });
+    for k in self.get_sorted_keys().iter() {
+      if let Some(v) = self.map.get_mut(k) {
+        v.rebuild(&rect);
+        rect = rect.shift_north((v.get_height() as i16) * -1);
+      }
+    }
   }
 
   fn get_rect_for_key(&self, key: u16) -> Rect {
@@ -407,7 +386,7 @@ impl Layout {
 
   pub fn apply_insert(
     &mut self, 
-    key: u16, 
+    key:         u16, 
     insert_cmd:  InsertCommand, 
     view_params: PageViewParams
   ) {
@@ -418,7 +397,6 @@ impl Layout {
     } else {
       self.map.insert(key, view.into());
     }
-    self.push_resize();
   }
 
   pub fn insert(&mut self, key: u16, view_params: PageViewParams) {
@@ -429,16 +407,13 @@ impl Layout {
     } else {
       self.map.insert(key, view.into());
     }
-    self.push_resize();
   }
 
   pub fn remove_list(&mut self, handle: u16) {
     self.map.remove(&handle);
-    self.push_resize();
   }
 
-  pub fn remove(&mut self, handle: u16) {
-    self.map.remove(&handle);
+  pub fn flush(&mut self) {
     self.push_resize();
   }
 }

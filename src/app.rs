@@ -60,7 +60,6 @@ pub struct App {
   pub request:     Option<Request>,
   pub guide:       String,
   pub clear:       bool,
-  pub tab_changed: bool,
   pub quit:        bool,
 } 
 
@@ -75,7 +74,6 @@ impl App {
       tabs:        CursorVec::default(),
       request:     None,
       focus:       Focus::Tab,
-      tab_changed: true,
       clear:       true,
       quit:        false,
       layout,
@@ -100,6 +98,7 @@ impl App {
     self.guide = format!("Press {} for menu", self.params.keys.menu);
     self.layout.remove_list(DLG_1);
     self.layout.remove_list(DLG_2);
+    self.layout.flush();
   }
 
   fn ack_dlg(&mut self, prompt: &str) {
@@ -107,6 +106,7 @@ impl App {
       self.params.dlg(&prompt).ack(&mut self.layout),
       Task::Default
     );
+    self.layout.flush();
   }
 
   fn ask_dlg(&mut self, task: Task, prompt: &str) {
@@ -114,6 +114,7 @@ impl App {
       self.params.dlg(&prompt).ask(&mut self.layout),
       task
     );
+    self.layout.flush();
   }
 
   fn edit_dlg(&mut self, task: Task, prompt: &str, text: &str) {
@@ -121,6 +122,7 @@ impl App {
       self.params.dlg(&prompt).edit(text, &mut self.layout),
       task
     );
+    self.layout.flush();
   }
 
   fn select_dlg(&mut self, task: Task, prompt: &str, options: Vec<String>) {
@@ -128,6 +130,7 @@ impl App {
       self.params.dlg(&prompt).select(options, &mut self.layout),
       task
     );
+    self.layout.flush();
   }
 
   fn join_gemdoc(&mut self, url: url::Url, response: String, content: String) {
@@ -157,9 +160,9 @@ impl App {
           &url, 
           gemini::parse_doc(&content), 
         );
-        self.tab_changed = true;
+        self.layout.flush();
       }
-    };
+    }
   }
 
   pub fn join_request(&mut self) -> bool {
@@ -207,6 +210,7 @@ impl App {
       self.params.style.general,
       |gem| self.params.style.get_style_from_gem_tag(gem)
     );
+    self.layout.flush();
   }
 
   pub fn select_link(&mut self, url_str: &str) {
@@ -227,7 +231,6 @@ impl App {
 
   pub fn update(&mut self, message: &Msg) {
     self.clear       = false;
-    self.tab_changed = false;
     if let Msg::Quit = message {
       self.quit = true;
     } else if let Msg::Resize(w, h) = message {
@@ -260,12 +263,12 @@ impl App {
         Action::CycleLeft => {
           let cmd = self.tabs.move_wrapped(-1);
           self.layout.apply_move(TAB, cmd);
-          self.tab_changed = true;
+          self.layout.flush();
         }
         Action::CycleRight => {
           let cmd = self.tabs.move_wrapped(1);
           self.layout.apply_move(TAB, cmd);
-          self.tab_changed = true;
+          self.layout.flush();
         }
         Action::LoadUrl => self.select_dlg(
           Task::NewTab, "Choose URL: ", self.params.urls.clone(),
@@ -368,7 +371,6 @@ impl App {
             ),
             Ok(url) => {
               self.focus_tabs();
-              self.tab_changed = true;
               self.spawn_request(&url);
             }
           }
@@ -398,7 +400,6 @@ impl App {
             }
             Ok(url) => {
               self.focus_tabs();
-              self.tab_changed = true;
               self.spawn_request(&url);
             }
           }
@@ -412,7 +413,6 @@ impl App {
             }
             Ok(url) => {
               self.focus_tabs();
-              self.tab_changed = true;
               self.spawn_request(&url);
             }
           }
@@ -426,16 +426,19 @@ impl App {
           self.spawn_request(&url);
         }
         (Task::DelTab, Action::Yes, _) => {
-          if self.tabs.cursor.remove(&mut self.tabs.vec).is_some() {
-            let url_str = self.params.init_url.clone();
-            self.edit_dlg(
-              Task::Init(url_str.clone()), 
-              &format!("Enter URL: "),
-              &url_str,
-            );
-          } else {
-            self.tab_changed = true;
-            self.focus_tabs();
+          match self.tabs.remove() {
+            Some(cmd) => {
+              self.layout.apply_remove(TAB, cmd);
+              let url_str = self.params.init_url.clone();
+              self.edit_dlg(
+                Task::Init(url_str.clone()), 
+                &format!("Enter URL: "),
+                &url_str,
+              );
+            }
+            _ => {
+              self.focus_tabs();
+            }
           }
         }
         (_,                _, DlgType::Ack) |

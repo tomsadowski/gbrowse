@@ -443,7 +443,7 @@ impl Point {
       .unwrap_or(0);
     if iremainder != 0 && self.y.move_head(vec, iremainder.signum()) == 0 {
       match vec.get(*self.y) {
-        None    => iremainder,
+        None => iremainder,
         Some(v) => {
           self.x.move_head(v, v.len() as isize * iremainder.signum() * -1);
           self.move_x(vec, 
