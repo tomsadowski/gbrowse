@@ -61,8 +61,8 @@ impl Action {
     match self {
       Action::PageDown  => {view.move_down(15);}
       Action::PageUp    => {view.move_up(15);}
-      Action::Bottom    => {view.move_down(view.page.matrix.len());}
-      Action::Top       => {view.move_up(view.page.matrix.len());}
+      Action::Bottom    => {view.move_down(view.page.matrix.matrix.len());}
+      Action::Top       => {view.move_up(view.page.matrix.matrix.len());}
       Action::MoveDown  => {view.move_down(1);}
       Action::MoveUp    => {view.move_up(1);}
       Action::MoveLeft  => {view.move_left(1);}

@@ -215,7 +215,8 @@ impl App {
 
   pub fn select_link(&mut self, url_str: &str) {
     match self.tabs
-      .get_url()
+      .get_current()
+      .and_then(|tab| tab.get_url())
       .map(|url| util::join_if_relative(&url, url_str)) 
     {
       None => {},
@@ -239,16 +240,27 @@ impl App {
     else if 
       let Msg::Action(action) = message &&
       let Focus::Tab = &mut self.focus &&
-      let Some(view) = self.layout.get_page_view_mut(TAB)
+      let Some(view) = self.layout.map
+        .get_mut(&TAB)
+        .and_then(|l| l.get_current_mut())
     {
       match action {
-        Action::SaveUrl => if let Some(url) = self.tabs.get_url() {
+        Action::SaveUrl => if let Some(url) = self.tabs
+          .get_current()
+          .and_then(|tab| tab.get_url())
+        {
           match self.params.save_url(url) {
             Err(e) => self.ack_dlg(&e),
             Ok(()) => self.ack_dlg(&format!("Saved URL: {url}")),
           }
         }
-        Action::Select => match self.tabs.get_gem_tag(&view.page) {
+        Action::Select => match self.tabs
+          .get_current().and_then(
+            |tab| tab.get_gem_tab().and_then(
+              |gemtab| gemtab.get_current_tag(&view.page)
+            )
+          )
+        {
           None => self.ack_dlg(
             &format!("You've selected nothing")
           ),
@@ -292,7 +304,9 @@ impl App {
     else if 
       let Msg::Action(action) = message &&
       let Focus::Dlg(dlg_type, task) = &mut self.focus &&
-      let Some(view) = self.layout.get_page_view_mut(DLG_2)
+      let Some(view) = self.layout.map
+        .get_mut(&DLG_2)
+        .and_then(|l| l.get_current_mut())
     {
       match (task, action, dlg_type) {
         (Task::NewTab, Action::Select, DlgType::Select) => {

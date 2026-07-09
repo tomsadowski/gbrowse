@@ -29,7 +29,7 @@ impl<T> GetHeight for Vec<T> {
 
 impl GetHeight for Page {
   fn get_height(&self) -> u16 {
-    self.matrix.get_height()
+    self.matrix.matrix.get_height()
   }
 }
 
@@ -97,19 +97,11 @@ impl PageViewParams {
   }
 
   pub fn with_max_height(mut self, max_height: Option<u16>) -> Self {
-    self.set_max_height(max_height); self 
-  }
-
-  pub fn set_max_height(&mut self, max_height: Option<u16>) {
-    self.max_height = max_height;
+    self.max_height = max_height; self 
   }
 
   pub fn with_frame_params(mut self, frame_params: FrameParams) -> Self {
-    self.set_frame_params(frame_params); self 
-  }
-
-  pub fn set_frame_params(&mut self, frame_params: FrameParams) {
-    self.frame_params = frame_params;
+    self.frame_params = frame_params; self 
   }
 
   fn build_max_height(&self, rect: &Rect) -> u16 {
@@ -139,7 +131,7 @@ impl PageViewParams {
         &frame.inner_rect.set_height(page.get_height())
       );
     }
-    point_view.resize(&page.point, &frame.inner_rect);
+    point_view.resize(&page.matrix.point, &frame.inner_rect);
   }
 
   pub fn rebuild(
@@ -155,7 +147,7 @@ impl PageViewParams {
         &frame.inner_rect.set_height(page.get_height())
       );
     }
-    point_view.resize(&page.point, &frame.inner_rect);
+    point_view.resize(&page.matrix.point, &frame.inner_rect);
   }
 
   pub fn build(self, rect: &Rect) -> PageView {
@@ -169,7 +161,7 @@ impl PageViewParams {
       );
     }
     let mut point_view = PointView::from(&frame.inner_rect);
-    point_view.update(&page.point);
+    point_view.update(&page.matrix.point);
     PageView {
       point_view,
       frame,
@@ -188,46 +180,45 @@ pub struct PageView {
 
 impl PageView {
   pub fn draw(&self, writer: &mut impl std::io::Write) 
-  -> std::io::Result<()> 
+    -> std::io::Result<()> 
   {
-    //eprintln!("{:#?}", self.frame.get_height());
     self.view_params.draw(&self.page, &self.point_view, writer)?;
     Ok(())
   }
 
   pub fn delete(&mut self) {
-    self.page.delete();
-    self.point_view.update(&self.page.point);
+    self.page.matrix.delete();
+    self.point_view.update(&self.page.matrix.point);
   }
 
   pub fn backspace(&mut self) {
-    self.page.backspace();
-    self.point_view.update(&self.page.point);
+    self.page.matrix.backspace();
+    self.point_view.update(&self.page.matrix.point);
   }
 
   pub fn insert(&mut self, ch: char) {
-    self.page.insert(ch);
-    self.point_view.update(&self.page.point);
+    self.page.matrix.insert(ch);
+    self.point_view.update(&self.page.matrix.point);
   }
 
   pub fn move_left(&mut self, delta: usize) {
-    self.page.move_left(delta);
-    self.point_view.update(&self.page.point);
+    self.page.matrix.move_left(delta);
+    self.point_view.update(&self.page.matrix.point);
   }
 
   pub fn move_right(&mut self, delta: usize) {
-    self.page.move_right(delta);
-    self.point_view.update(&self.page.point);
+    self.page.matrix.move_right(delta);
+    self.point_view.update(&self.page.matrix.point);
   }
 
   pub fn move_down(&mut self, delta: usize) {
-    self.page.move_down(delta);
-    self.point_view.update(&self.page.point);
+    self.page.matrix.move_down(delta);
+    self.point_view.update(&self.page.matrix.point);
   }
 
   pub fn move_up(&mut self, delta: usize) {
-    self.page.move_up(delta);
-    self.point_view.update(&self.page.point);
+    self.page.matrix.move_up(delta);
+    self.point_view.update(&self.page.matrix.point);
   }
 
   pub fn get_param_string(&self) -> &str {
@@ -250,7 +241,7 @@ impl PageView {
 
 impl CursorVec<PageView> {
   pub fn draw(&self, writer: &mut impl std::io::Write) 
-  -> std::io::Result<()> 
+    -> std::io::Result<()> 
   {
     if let Some(view) = self.get_current() {
       view.draw(writer)?;
@@ -293,7 +284,7 @@ impl From<Rect> for Layout {
 
 impl Layout {
   pub fn draw(&self, writer: &mut impl std::io::Write) 
-  -> std::io::Result<()> 
+    -> std::io::Result<()> 
   {
     for k in self.get_sorted_keys().iter() {
       if let Some(v) = self.map.get(k) { 
@@ -301,12 +292,6 @@ impl Layout {
       }
     }
     Ok(())
-  }
-
-  pub fn get_page_view_mut(&mut self, key: u16) -> Option<&mut PageView> {
-    self.map
-      .get_mut(&key)
-      .and_then(|v| v.get_current_mut())
   }
 
   fn get_sorted_keys(&self) -> Vec<u16> {

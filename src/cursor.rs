@@ -16,6 +16,15 @@ impl<T> Default for PointMatrix<T> {
   }
 }
 
+impl<T> From<Vec<Vec<T>>> for PointMatrix<T> {
+  fn from(matrix: Vec<Vec<T>>) -> Self {
+    Self {
+      point: Point::default(),
+      matrix,
+    }
+  }
+}
+
 impl<T> PointMatrix<T> {
   pub fn init() -> Self { Self::default() }
 
@@ -302,8 +311,8 @@ impl Cursor {
   }
 
   pub fn move_head<T>(&mut self, vec: &Vec<T>, mut idelta: isize) -> isize {
-    let ihead     = self.head as isize;
-    let imax      = self.get_max(vec) as isize;
+    let ihead = self.head as isize;
+    let imax = self.get_max(vec) as isize;
     let new_ihead = ihead + idelta;
     if new_ihead < 0 {
       self.head = 0;
@@ -322,7 +331,7 @@ impl Cursor {
     else {
       vec.remove(self.head);
       let head = self.head;
-      let mv   = self.move_wrapped(vec, -1);
+      self.move_wrapped(vec, -1);
       Some(RemoveCommand(head, MoveCommand::Set(self.head)))
     }
   }

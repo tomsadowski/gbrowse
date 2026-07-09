@@ -65,24 +65,12 @@ impl CursorVec<Tab> {
     }
   }
 
-  pub fn get_url(&self) -> Option<&url::Url> {
-    self.vec
-      .get(*self.cursor)
-      .and_then(|tab| tab.get_url())
-  }
-
-  pub fn get_gem_tag(&self, page: &Page) -> Option<&GemTag> {
-    self.vec
-      .get(*self.cursor)
-      .and_then(|tab| tab.get_gem_tag(page))
-  }
-
   pub fn get_banner_text(&self) -> String {
     match self.vec.get(*self.cursor).map(
       |tab| match tab {
-        Tab::Gem   (UrlTab {url, ..}) | 
+        Tab::Gem(UrlTab {url, ..}) | 
         Tab::Gopher(UrlTab {url, ..}) => url.to_string(),
-        Tab::Text  (heading, _)       => heading.to_string(),
+        Tab::Text(heading, _)         => heading.to_string(),
       }
     ) {
       None    => format!("Empty"),
@@ -92,8 +80,8 @@ impl CursorVec<Tab> {
 }
 
 pub enum Tab {
-  Text  (String, PageParams),
-  Gem   (UrlTab<GemTag>),
+  Text(String, PageParams),
+  Gem(UrlTab<GemTag>),
   Gopher(UrlTab<String>),
 }
 
@@ -106,7 +94,7 @@ impl Default for Tab {
 impl Tab {
   pub fn get_heading(&self) -> &str {
     match self {
-      Tab::Gem(   UrlTab {url, ..}) | 
+      Tab::Gem(UrlTab {url, ..}) | 
       Tab::Gopher(UrlTab {url, ..}) => url.as_str(),
       Tab::Text(heading, _)         => heading,
     }
@@ -114,30 +102,28 @@ impl Tab {
 
   pub fn get_url(&self) -> Option<&url::Url> {
     match self {
-      Tab::Gem(   UrlTab {url, ..}) | 
+      Tab::Gem(UrlTab {url, ..}) | 
       Tab::Gopher(UrlTab {url, ..}) => Some(url),
       _                             => None,
     }
   }
 
   pub fn get_gem_tab(&self) ->  Option<&UrlTab<GemTag>> {
-    if let Tab::Gem(tab) = self {Some(tab)} else {None}
+    if let Tab::Gem(tab) = self {
+      Some(tab)
+    } else {None}
   }
 
   pub fn get_gopher_tab(&self) ->  Option<&UrlTab<String>> {
-    if let Tab::Gopher(tab) = self {Some(tab)} else {None}
+    if let Tab::Gopher(tab) = self {
+      Some(tab)
+    } else {None}
   }
 
   pub fn get_text_tab(&self) ->  Option<(&str, &PageParams)> {
     if let Tab::Text(heading, params) = self {
       Some((heading, params))
     } else {None}
-  }
-
-  pub fn get_gem_tag(&self, page: &Page) -> Option<&GemTag> {
-    self
-      .get_gem_tab()
-      .and_then(|gem_tab| gem_tab.get_current_tag(page))
   }
 }
 

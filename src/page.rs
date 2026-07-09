@@ -6,6 +6,7 @@ use crate::{
   CursorView,
   Point, 
   PointView,
+  PointMatrix,
 };
 
 
@@ -59,12 +60,8 @@ pub struct PageParams {
 impl PageParams {
   pub fn init() -> Self { Self::default() }
 
-  pub fn set_edit(&mut self, b: bool) {
-    self.edit = b;
-  }
-
   pub fn edit(mut self, b: bool) -> Self {
-    self.set_edit(b); self 
+    self.edit = b; self 
   }
 
   pub fn set_style(&mut self, style: impl Into<Style> + Copy) {
@@ -133,13 +130,12 @@ impl PageParams {
           .into_iter()
           .map(move |text| (idx, text))
       ).unzip();
-    let point = if self.edit {
-      Point::init().editor(&matrix)
+    let matrix = if self.edit {
+      PointMatrix::from(matrix).editor()
     } else {
-      Point::init()
+      PointMatrix::from(matrix)
     };
     Page {
-      point, 
       indexes, 
       matrix,
     }
@@ -147,7 +143,7 @@ impl PageParams {
 
   pub fn get_string(&self, page: &Page) -> &str {
     self.string_vec
-      .get(*page.point.y)
+      .get(*page.matrix.point.y)
       .map(|s| s.as_str())
       .unwrap_or("empty")
   }
@@ -164,9 +160,8 @@ impl PageParams {
 
 #[derive(Default)]
 pub struct Page {
-  pub indexes:    Vec<usize>,
-  pub matrix:     Vec<Vec<char>>, 
-  pub point:      Point,
+  pub indexes: Vec<usize>,
+  pub matrix:  PointMatrix<char>, 
 }
 
 impl Page {
@@ -175,58 +170,30 @@ impl Page {
   }
 
   pub fn rebuild(&mut self, source: &PageParams, width: u16) {
-    let linear_head = self.point.get_linear_head(&self.matrix);
+    let linear_head = self.matrix.get_linear_head();
     let page = source.build(width);
     self.indexes = page.indexes;
     self.matrix  = page.matrix;
-    self.point.set_linear_head(&self.matrix, linear_head);
+    self.matrix.set_linear_head(linear_head);
   }
 
   pub fn get_index(&self) -> usize {
-    self.indexes.get(*self.point.y)
+    self.indexes.get(*self.matrix.point.y)
       .map(|u| u.clone())
       .unwrap_or(usize::MIN)
   }
 
   pub fn get_string(&self) -> Option<String> {
-    self.matrix.get(*self.point.y).map(|c| c.iter().collect())
+    self.matrix.matrix.get(*self.matrix.point.y).map(|c| c.iter().collect())
   }
 
   pub fn get_view(&self, axis: CursorView) -> Vec<(&usize, &Vec<char>)> {
     self.indexes
       .iter()
-      .zip(self.matrix.iter())
+      .zip(self.matrix.matrix.iter())
       .skip(axis.scroll)
       .take(usize::from(axis.size))
       .collect()
-  }
-
-  pub fn delete(&mut self) -> bool {
-    self.point.delete(&mut self.matrix)
-  }
-
-  pub fn backspace(&mut self) -> bool {
-    self.point.backspace(&mut self.matrix)
-  }
-
-  pub fn insert(&mut self, ch: char) -> bool {
-    self.point.insert(&mut self.matrix, ch)
-  }
-
-  pub fn move_left(&mut self, delta: usize) -> bool {
-    self.point.move_left(&self.matrix, delta)
-  }
-
-  pub fn move_right(&mut self, delta: usize) -> bool {
-    self.point.move_right(&self.matrix, delta)
-  }
-
-  pub fn move_down(&mut self, delta: usize) -> bool {
-    self.point.move_down(&self.matrix, delta)
-  }
-
-  pub fn move_up(&mut self, delta: usize) -> bool {
-    self.point.move_up(&self.matrix, delta)
   }
 
   pub fn draw(
@@ -243,10 +210,6 @@ impl Page {
       .queue(cursor::MoveTo(x, y))?
       .queue(style::SetAttribute(style::Attribute::Reset))?
       .queue(&style)?;
-  //let poop: Vec<char> = "this is poop".chars().collect();
-  //for (_, c) in point_view.get_x_view().get_weighted_view(&poop) {
-  //  writer.queue(style::Print(c))?;
-  //}
     for (index, line) in self.get_view(point_view.get_y_view()) {
       writer.queue(Style::from(
         *style_vec.get(*index).unwrap_or(&TextStyle::default())
