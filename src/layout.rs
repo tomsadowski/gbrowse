@@ -79,8 +79,7 @@ impl PageViewParams {
     page:   &Page, 
     view:   &PointView, 
     writer: &mut impl std::io::Write,
-  ) -> std::io::Result<()> 
-  {
+  ) -> std::io::Result<()> {
     self.page_params.draw(page, view, writer)?;
     if self.draw_point {
       view.draw(writer)?;

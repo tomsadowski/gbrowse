@@ -9,11 +9,13 @@ impl From<(u16, u16)> for Dim {
     Self(w.into(), h.into()) 
   }
 }
+
 impl From<Dim> for (u16, u16) {
   fn from(dim: Dim) -> Self { 
     (dim.w(), dim.h()) 
   }
 }
+
 impl Dim {
   pub fn w(&self) -> u16 { self.0 }
   pub fn h(&self) -> u16 { self.1 }
@@ -27,11 +29,13 @@ impl From<(u16, u16)> for Pos {
     Self(x, y) 
   }
 }
+
 impl From<Pos> for (u16, u16) {
   fn from(pos: Pos) -> Self { 
     (pos.x(), pos.y()) 
   }
 }
+
 impl Pos {
   pub fn x(&self) -> u16 { self.0 }
   pub fn y(&self) -> u16 { self.1 }
@@ -44,16 +48,19 @@ pub struct Rect {
   w: u16,
   h: u16,
 }
+
 impl From<Dim> for Rect {
   fn from(d: Dim) -> Self {
     Self { x: 0, y: 0, w: d.w(), h: d.h() }
   }
 }
+
 impl From<Pos> for Rect {
   fn from(p: Pos) -> Self {
     Self { x: p.x(), y: p.y(), w: 0, h: 0 }
   }
 }
+
 impl Rect {
   pub fn with_dim(mut self, dim: Dim) -> Self {
     self.set_dim(dim);

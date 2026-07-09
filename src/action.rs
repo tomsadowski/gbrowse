@@ -32,6 +32,7 @@ pub enum Action {
   No, 
   Cancel,
 }
+
 impl std::str::FromStr for Action {
   type Err = String;
   fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -56,6 +57,7 @@ impl std::str::FromStr for Action {
     }
   }
 }
+
 impl Action {
   pub fn update(&self, view: &mut crate::PageView) {
     match self {

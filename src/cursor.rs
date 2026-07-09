@@ -296,7 +296,7 @@ impl Cursor {
   pub fn move_wrapped<T>(&mut self, vec: &Vec<T>, mut idelta: isize) 
   -> MoveCommand 
   {
-    let     imax       = self.get_max(vec) as isize;
+    let imax = self.get_max(vec) as isize;
     let mut iremainder = self.move_head(vec, idelta);
     if iremainder == 0 {
       MoveCommand::Set(self.head)
@@ -547,11 +547,9 @@ impl PointView {
     self.pos = rect.pos();
     self.y.resize(*point.y, rect.height());
     self.x.resize(*point.x, rect.width());
-    //eprintln!("{:#?}", self);
   }
 
   pub fn update(&mut self, point: &Point) -> bool {
-    //eprintln!("{:#?}", self);
     let y = self.y.update(*point.y);
     let x = self.x.update(*point.x);
     x || y

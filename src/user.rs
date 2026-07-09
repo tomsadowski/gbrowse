@@ -179,6 +179,7 @@ pub enum UserField {
   Style, 
   Keys,
 }
+
 impl std::str::FromStr for UserField {
   type Err = String;
   fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -193,6 +194,7 @@ impl std::str::FromStr for UserField {
     }
   }
 }
+
 impl ToString for UserField {
   fn to_string(&self) -> String {
     match self {
@@ -204,6 +206,7 @@ impl ToString for UserField {
     }
   }
 }
+
 impl UserField {
   pub fn get_select(&self) -> Vec<(Self, String)> {
     vec![

@@ -18,6 +18,69 @@ use crate::{
 use url::Url;
 
 
+pub struct UrlTab<T> {
+  pub url:  Url,
+  pub tags: Vec<T>,
+} 
+
+impl<T> UrlTab<T> {
+  pub fn new(url: &Url, tags: Vec<T>) -> Self {
+    Self { url: url.clone(), tags }
+  }
+
+  pub fn get_current_tag(&self, page: &Page) -> Option<&T> {
+    self.tags.get(page.get_index())
+  }
+}
+
+pub enum Tab {
+  Text(String, PageParams),
+  Gem(UrlTab<GemTag>),
+  Gopher(UrlTab<String>),
+}
+
+impl Default for Tab {
+  fn default() -> Self {
+    Self::Text("".into(), PageParams::default())
+  }
+}
+
+impl Tab {
+  pub fn get_heading(&self) -> &str {
+    match self {
+      Tab::Gem(UrlTab {url, ..}) | 
+      Tab::Gopher(UrlTab {url, ..}) => url.as_str(),
+      Tab::Text(heading, _)         => heading,
+    }
+  }
+
+  pub fn get_url(&self) -> Option<&url::Url> {
+    match self {
+      Tab::Gem(UrlTab {url, ..}) | 
+      Tab::Gopher(UrlTab {url, ..}) => Some(url),
+      _                             => None,
+    }
+  }
+
+  pub fn get_gem_tab(&self) ->  Option<&UrlTab<GemTag>> {
+    if let Tab::Gem(tab) = self {
+      Some(tab)
+    } else {None}
+  }
+
+  pub fn get_gopher_tab(&self) ->  Option<&UrlTab<String>> {
+    if let Tab::Gopher(tab) = self {
+      Some(tab)
+    } else {None}
+  }
+
+  pub fn get_text_tab(&self) ->  Option<(&str, &PageParams)> {
+    if let Tab::Text(heading, params) = self {
+      Some((heading, params))
+    } else {None}
+  }
+}
+
 impl CursorVec<Tab> {
   pub fn add_gem_tab(
     &mut self, 
@@ -76,68 +139,5 @@ impl CursorVec<Tab> {
       None    => format!("Empty"),
       Some(s) => format!("{}/{} - {s}", *self.cursor + 1, self.vec.len()),
     }
-  }
-}
-
-pub enum Tab {
-  Text(String, PageParams),
-  Gem(UrlTab<GemTag>),
-  Gopher(UrlTab<String>),
-}
-
-impl Default for Tab {
-  fn default() -> Self {
-    Self::Text("".into(), PageParams::default())
-  }
-}
-
-impl Tab {
-  pub fn get_heading(&self) -> &str {
-    match self {
-      Tab::Gem(UrlTab {url, ..}) | 
-      Tab::Gopher(UrlTab {url, ..}) => url.as_str(),
-      Tab::Text(heading, _)         => heading,
-    }
-  }
-
-  pub fn get_url(&self) -> Option<&url::Url> {
-    match self {
-      Tab::Gem(UrlTab {url, ..}) | 
-      Tab::Gopher(UrlTab {url, ..}) => Some(url),
-      _                             => None,
-    }
-  }
-
-  pub fn get_gem_tab(&self) ->  Option<&UrlTab<GemTag>> {
-    if let Tab::Gem(tab) = self {
-      Some(tab)
-    } else {None}
-  }
-
-  pub fn get_gopher_tab(&self) ->  Option<&UrlTab<String>> {
-    if let Tab::Gopher(tab) = self {
-      Some(tab)
-    } else {None}
-  }
-
-  pub fn get_text_tab(&self) ->  Option<(&str, &PageParams)> {
-    if let Tab::Text(heading, params) = self {
-      Some((heading, params))
-    } else {None}
-  }
-}
-
-pub struct UrlTab<T> {
-  pub url:  Url,
-  pub tags: Vec<T>,
-} 
-
-impl<T> UrlTab<T> {
-  pub fn new(url: &Url, tags: Vec<T>) -> Self {
-    Self { url: url.clone(), tags }
-  }
-
-  pub fn get_current_tag(&self, page: &Page) -> Option<&T> {
-    self.tags.get(page.get_index())
   }
 }

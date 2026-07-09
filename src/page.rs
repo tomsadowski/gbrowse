@@ -74,7 +74,7 @@ impl PageParams {
   }
 
   pub fn set_text_styles(&mut self, styles: Vec<TextStyle>) 
-  -> Result<(), String> 
+    -> Result<(), String> 
   {
     if styles.len() < self.string_vec.len() {
       Err("styles vec shorter than string vec".into())
@@ -85,7 +85,7 @@ impl PageParams {
   }
 
   pub fn with_text_styles(mut self, styles: Vec<TextStyle>) 
-  -> Result<Self, String> 
+    -> Result<Self, String> 
   {
     self.set_text_styles(styles).map(|_| self)
   }
@@ -110,7 +110,7 @@ impl PageParams {
   }
 
   pub fn with_styled_text<T, F>(mut self, text: &[T], get_text_style: F) 
-  -> Self 
+    -> Self 
   where T: std::fmt::Display,
         F: Fn(&T) -> TextStyle,
   {

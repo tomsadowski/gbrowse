@@ -368,7 +368,7 @@ impl App {
             VIEW_SETTINGS => {
               let text = format!("{:#?}", self.params)
                 .lines()
-                .map(|s| s.into())
+                .map(|string| string.into())
                 .collect();
               self.select_dlg(Task::Default, "Current Settings", text);
             }
