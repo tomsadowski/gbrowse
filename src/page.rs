@@ -15,32 +15,21 @@ use crate::{
 pub struct TextView {
   pub params: TextParams,
   pub string: String,
-  pub size:   usize,
+  pub matrix: Vec<Vec<char>>,
 }
 
 impl TextView {
-  pub fn update(&mut self, params: TextParams, width: usize)
-    -> Option<Vec<Vec<char>>>
-  {
+  pub fn update(&mut self, params: TextParams, width: usize) {
     if self.params.wrap != params.wrap {
       self.params.style = params.style;
-      None
     } else {
       self.params = params;
-      let matrix = self.params.get_matrix(&self.string, width);
-      if self.size == matrix.len() {
-        None
-      } else {
-        self.size = matrix.len();
-        Some(matrix)
-      }
+      self.matrix = self.params.get_matrix(&self.string, width);
     }
   }
 
-  pub fn update_width(&mut self, width: usize) -> Vec<Vec<char>> {
-    let matrix = self.params.get_matrix(&self.string, width);
-    self.size = matrix.len();
-    matrix
+  pub fn update_width(&mut self, width: usize) {
+    self.matrix = self.params.get_matrix(&self.string, width);
   }
 }
 
@@ -74,18 +63,12 @@ impl std::ops::Deref for TextParams {
 }
 
 impl TextParams {
-  pub fn get_view(self, string: &str, width: usize) 
-    -> (TextView, Vec<Vec<char>>)
-  {
-    let matrix = self.get_matrix(string, width);
-    (
-      TextView {
-        size:   matrix.len(),
-        params: self,
-        string: string.into(),
-      },
-      matrix
-    )
+  pub fn get_view(self, string: &str, width: usize) -> TextView {
+    TextView {
+      matrix: self.get_matrix(string, width),
+      params: self,
+      string: string.into(),
+    }
   }
   // split at spaces within width and split at lines
   pub fn get_matrix(&self, string: &str, width: usize) -> Vec<Vec<char>> {
