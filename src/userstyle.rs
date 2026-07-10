@@ -6,7 +6,7 @@ use crate::{
   Rect, 
   Margins,
   BorderStyle,
-  TextStyle,
+  TextParams,
   GemTag,
   GemText,
   Frame,
@@ -22,18 +22,18 @@ pub struct UserStyle {
   pub text_margin:     Margins,
   pub screen_margin:   Margins,
   pub border:          Option<BorderStyle>,
-  pub general:         TextStyle,
-  pub banner:          TextStyle,
-  pub info:            TextStyle,
-  pub text:            TextStyle,
-  pub heading3:        TextStyle,
-  pub heading2:        TextStyle,
-  pub heading1:        TextStyle,
-  pub preformat:       TextStyle,
-  pub link:            TextStyle,
-  pub error:           TextStyle,
-  pub quote:           TextStyle,
-  pub list:            TextStyle,
+  pub general:         TextParams,
+  pub banner:          TextParams,
+  pub info:            TextParams,
+  pub text:            TextParams,
+  pub heading3:        TextParams,
+  pub heading2:        TextParams,
+  pub heading1:        TextParams,
+  pub preformat:       TextParams,
+  pub link:            TextParams,
+  pub error:           TextParams,
+  pub quote:           TextParams,
+  pub list:            TextParams,
 } 
 
 impl UserStyle {
@@ -55,11 +55,11 @@ impl UserStyle {
       .border_style(self.border)
   }
 
-  pub fn get_style_from_gem_text(&self, text: &GemText) -> TextStyle {
+  pub fn get_style_from_gem_text(&self, text: &GemText) -> TextParams {
     self.get_style_from_gem_tag(&text.tag)
   }
 
-  pub fn get_style_from_gem_tag(&self, tag: &GemTag) -> TextStyle {
+  pub fn get_style_from_gem_tag(&self, tag: &GemTag) -> TextParams {
     match tag {
       GemTag::HeadingOne   => self.heading1.into(),
       GemTag::HeadingTwo   => self.heading2.into(),
@@ -82,7 +82,7 @@ impl Assign for UserStyle {
         self.border = Some(BorderStyle::default().read_table(v)?);
       }
       (StyleTableField::Text(f), Value::Table(v)) => {
-        let v = TextStyle::default().read_table(v)?;
+        let v = TextParams::default().read_table(v)?;
         match f {
           StyleTextField::General   => self.general   = v,
           StyleTextField::Banner    => self.banner    = v,
@@ -223,7 +223,7 @@ impl Assign for BorderStyle {
   }
 }
 
-impl Assign for TextStyle {
+impl Assign for TextParams {
   type Field = TextField;
   fn assign(&mut self, f: Self::Field, v: toml::Value) -> Result<(), String> {
     use toml::Value;

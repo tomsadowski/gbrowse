@@ -3,7 +3,7 @@
 use crate::{
   user,
   User, 
-  TextStyle,
+  TextParams,
   Layout,
   PageViewParams,
   PageParams,
@@ -49,7 +49,8 @@ impl<'a> Dlg<'a> {
       PageParams::init()
         .with_text(&vec![format!("Press any key to acknowledge")])
         .with_style(self.params.style.info)
-    ).with_frame_params(self.params.style.get_dialog_frame_params());
+    )
+    .with_frame_params(self.params.style.get_dialog_frame_params());
     layout.insert(DLG_1, self.header);
     layout.insert(DLG_2, self.body);
     DlgType::Ack
@@ -63,7 +64,8 @@ impl<'a> Dlg<'a> {
       PageParams::init()
         .with_text(&vec![guide])
         .with_style(self.params.style.info)
-    ).with_frame_params(self.params.style.get_dialog_frame_params());
+    )
+    .with_frame_params(self.params.style.get_dialog_frame_params());
     layout.insert(DLG_1, self.header);
     layout.insert(DLG_2, self.body);
     DlgType::Ask
@@ -85,7 +87,8 @@ impl<'a> Dlg<'a> {
   }
 
   pub fn select(mut self, options: Vec<String>, layout: &mut Layout) 
-  -> DlgType {
+    -> DlgType 
+  {
     self.body = PageViewParams::from(
       PageParams::init()
         .with_text(&options)

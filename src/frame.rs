@@ -168,7 +168,7 @@ use crossterm::{
 
 impl Frame {
   pub fn draw_footer(&self, text: &str, w: &mut impl std::io::Write) 
-  -> std::io::Result<()> 
+    -> std::io::Result<()> 
   {
     if let Some(border) = self.style.border {
       let mut x = self.inner_rect.x_end().saturating_sub(1);

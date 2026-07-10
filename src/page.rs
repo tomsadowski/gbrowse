@@ -1,6 +1,7 @@
 // src/page.rs
 
 use crate::{
+  cursor::get_weighted_length,
   Rect,
   Style, 
   CursorView,
@@ -10,13 +11,55 @@ use crate::{
 };
 
 
+#[derive(Clone, Debug)]
+pub struct TextView {
+  pub params: TextParams,
+  pub string: String,
+  pub size:   usize,
+}
+
+impl TextView {
+  pub fn update(&mut self, params: TextParams, width: usize)
+    -> Option<Vec<Vec<char>>>
+  {
+    if self.params.wrap != params.wrap {
+      self.params.style = params.style;
+      None
+    } else {
+      self.params = params;
+      let matrix = self.params.get_matrix(&self.string, width);
+      if self.size == matrix.len() {
+        None
+      } else {
+        self.size = matrix.len();
+        Some(matrix)
+      }
+    }
+  }
+
+  pub fn update_width(&mut self, width: usize) -> Vec<Vec<char>> {
+    let matrix = self.params.get_matrix(&self.string, width);
+    self.size = matrix.len();
+    matrix
+  }
+}
+
 #[derive(Copy, Clone, Debug)]
-pub struct TextStyle {
+pub struct TextParams {
   pub style: Style,
   pub wrap:  bool,
 }
 
-impl Default for TextStyle {
+impl From<&TextView> for TextParams {
+  fn from(view: &TextView) -> Self {
+    Self {
+      style: view.params.style,
+      wrap:  view.params.wrap,
+    }
+  }
+}
+
+impl Default for TextParams {
   fn default() -> Self {
     Self {
       style: Style::default(),
@@ -25,23 +68,36 @@ impl Default for TextStyle {
   }
 }
 
-impl std::ops::Deref for TextStyle {
+impl std::ops::Deref for TextParams {
   type Target = Style;
   fn deref(&self) -> &Self::Target {&self.style}
 }
 
-impl TextStyle {
+impl TextParams {
+  pub fn get_view(self, string: &str, width: usize) 
+    -> (TextView, Vec<Vec<char>>)
+  {
+    let matrix = self.get_matrix(string, width);
+    (
+      TextView {
+        size:   matrix.len(),
+        params: self,
+        string: string.into(),
+      },
+      matrix
+    )
+  }
   // split at spaces within width and split at lines
-  pub fn print(&self, width: usize, text: &str) -> Vec<Vec<char>> {
-    if text.len() == 0 {
+  pub fn get_matrix(&self, string: &str, width: usize) -> Vec<Vec<char>> {
+    if string.len() == 0 {
       vec![vec![]]
     } else if self.wrap {
-      text
+      string
         .lines()
         .flat_map(|line| crate::util::get_wrapped_text(line, width))
         .collect()
     } else {
-      text
+      string
         .lines()
         .map(|line| line.chars().collect())
         .collect()
@@ -53,7 +109,7 @@ impl TextStyle {
 pub struct PageParams {
   pub edit:       bool,
   pub style:      Style,
-  pub style_vec:  Vec<TextStyle>,
+  pub style_vec:  Vec<TextParams>,
   pub string_vec: Vec<String>,
 }
 
@@ -73,7 +129,7 @@ impl PageParams {
     self
   }
 
-  pub fn set_text_styles(&mut self, styles: Vec<TextStyle>) 
+  pub fn set_text_styles(&mut self, styles: Vec<TextParams>) 
     -> Result<(), String> 
   {
     if styles.len() < self.string_vec.len() {
@@ -84,7 +140,7 @@ impl PageParams {
     }
   }
 
-  pub fn with_text_styles(mut self, styles: Vec<TextStyle>) 
+  pub fn with_text_styles(mut self, styles: Vec<TextParams>) 
     -> Result<Self, String> 
   {
     self.set_text_styles(styles).map(|_| self)
@@ -93,7 +149,7 @@ impl PageParams {
   pub fn set_text(&mut self, text: &[impl std::fmt::Display]) {
     self.string_vec = text.iter().map(|t| t.to_string()).collect();
     self.style_vec  = self.string_vec.iter()
-      .map(|t| TextStyle::default()).collect();
+      .map(|t| TextParams::default()).collect();
   }
 
   pub fn with_text(mut self, text: &[impl std::fmt::Display]) -> Self {
@@ -103,7 +159,7 @@ impl PageParams {
 
   pub fn set_styled_text<T, F>(&mut self, text: &[T], get_text_style: F)
   where T: std::fmt::Display,
-        F: Fn(&T) -> TextStyle,
+        F: Fn(&T) -> TextParams,
   {
     self.string_vec = text.iter().map(|t| t.to_string()).collect();
     self.style_vec  = text.iter().map(|t| get_text_style(t)).collect();
@@ -112,7 +168,7 @@ impl PageParams {
   pub fn with_styled_text<T, F>(mut self, text: &[T], get_text_style: F) 
     -> Self 
   where T: std::fmt::Display,
-        F: Fn(&T) -> TextStyle,
+        F: Fn(&T) -> TextParams,
   {
     self.set_styled_text(text, get_text_style);
     self
@@ -126,7 +182,7 @@ impl PageParams {
       .enumerate()
       .flat_map(|(idx, (style, string))| 
         style
-          .print(width, string)
+          .get_matrix(string, width)
           .into_iter()
           .map(move |text| (idx, text))
       ).unzip();
@@ -135,10 +191,15 @@ impl PageParams {
     } else {
       PointMatrix::from(matrix)
     };
-    Page {
-      indexes, 
-      matrix,
-    }
+    Page { indexes, matrix }
+  }
+
+  pub fn rebuild(&self, page: &mut Page, width: u16) {
+    let linear_head = page.matrix.get_linear_head();
+    page.matrix = PointMatrix::default();
+    let new_page = self.build(width);
+    page.matrix = new_page.matrix;
+    page.matrix.set_linear_head(linear_head);
   }
 
   pub fn get_string(&self, page: &Page) -> &str {
@@ -158,6 +219,70 @@ impl PageParams {
   }
 }
 
+impl PointMatrix<char> {
+  pub fn get_string(&self) -> Option<String> {
+    self.matrix.get(*self.point.y).map(|c| c.iter().collect())
+  }
+
+  pub fn get_view(&self, axis: CursorView) -> Vec<&Vec<char>> {
+    self.matrix.iter()
+      .skip(axis.scroll)
+      .take(usize::from(axis.size))
+      .collect()
+  }
+
+  pub fn get_yoop(&self, point_view: &PointView) -> Vec<Vec<(u16, &char)>> {
+    let x_view = point_view.get_x_view();
+    let y_view = point_view.get_y_view();
+    self.matrix
+      .iter()
+      .skip(y_view.scroll)
+      .take(usize::from(y_view.size))
+      .map(|line| x_view.get_weighted_view(line))
+      .collect()
+  }
+
+
+  pub fn draw(
+    &self, 
+    point_view: &PointView, 
+    writer:     &mut impl std::io::Write,
+  ) -> std::io::Result<()> {
+    use crossterm::{QueueableCommand, cursor, style};
+    use unicode_width::UnicodeWidthChar;
+    let (mut x, mut y) = point_view.pos().into();
+    for line in self.get_yoop(point_view) {
+      writer.queue(cursor::MoveTo(x, y))?;
+      for (w, c) in line {
+        writer.queue(style::Print(c))?;
+        x += w;
+      }
+      for _ in x..point_view.get_rect().x_end() {
+        writer.queue(style::Print(' '))?;
+      }
+      x = point_view.pos().x(); 
+      y += 1; 
+    }
+    Ok(())
+  }
+
+  pub fn get_poop(
+    &self, 
+    point_view: &PointView, 
+  ) {
+    use unicode_width::UnicodeWidthChar;
+    let (mut x, mut y) = point_view.pos().into();
+    for line in self.get_view(point_view.get_y_view()) {
+      for (w, c) in point_view.get_x_view().get_weighted_view(line) {
+        x += w;
+      }
+      for _ in x..point_view.get_rect().x_end() {
+      }
+      x = point_view.pos().x(); 
+    }
+  }
+}
+
 #[derive(Default)]
 pub struct Page {
   pub indexes: Vec<usize>,
@@ -165,10 +290,6 @@ pub struct Page {
 }
 
 impl Page {
-  pub fn build(source: &PageParams, width: u16) -> Self {
-    source.build(width)
-  }
-
   pub fn rebuild(&mut self, source: &PageParams, width: u16) {
     let linear_head = self.matrix.get_linear_head();
     let page = source.build(width);
@@ -199,7 +320,7 @@ impl Page {
   pub fn draw(
     &self, 
     style:      &Style,
-    style_vec:  &[TextStyle],
+    style_vec:  &[TextParams],
     point_view: &PointView, 
     writer:     &mut impl std::io::Write,
   ) -> std::io::Result<()> {
@@ -212,7 +333,7 @@ impl Page {
       .queue(&style)?;
     for (index, line) in self.get_view(point_view.get_y_view()) {
       writer.queue(Style::from(
-        *style_vec.get(*index).unwrap_or(&TextStyle::default())
+        *style_vec.get(*index).unwrap_or(&TextParams::default())
       ))?;
       for (w, c) in point_view.get_x_view().get_weighted_view(line) {
         writer.queue(style::Print(c))?;

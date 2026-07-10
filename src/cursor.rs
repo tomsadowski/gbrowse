@@ -88,6 +88,13 @@ pub struct CursorVec<T> {
   pub vec:    Vec<T>,
 }
 
+impl<'a, T> From<&'a CursorVec<T>> for &'a Vec<T> {
+  fn from(cv: &'a CursorVec<T>) -> Self {
+    &cv.vec
+  }
+
+}
+
 impl<T> From<T> for CursorVec<T> {
   fn from(t: T) -> Self {
     Self {
@@ -148,50 +155,12 @@ impl<T> CursorVec<T> {
     self.cursor.insert(&mut self.vec, t)
   }
 
-  pub fn apply_command(&mut self, cmd: CursorCommand<T>) {
-    cmd.apply_to_vec(self)
-  }
-
   pub fn insert_unique_with(
     &mut self, 
     is_equal: impl Fn(&T) -> bool, 
     unit:     T
   ) -> Option<InsertCommand> {
     self.cursor.insert_unique_with(&mut self.vec, is_equal, unit)
-  }
-}
-
-pub enum CursorCommand<T> {
-  Move(MoveCommand),
-  Remove(RemoveCommand),
-  Insert(InsertCommand, T),
-}
-
-impl<T> From<MoveCommand> for CursorCommand<T> {
-  fn from(cmd: MoveCommand) -> Self {
-    Self::Move(cmd)
-  }
-}
-
-impl<T> From<RemoveCommand> for CursorCommand<T> {
-  fn from(cmd: RemoveCommand) -> Self {
-    Self::Remove(cmd)
-  }
-}
-
-impl<T> From<(InsertCommand, T)> for CursorCommand<T> {
-  fn from((cmd, t): (InsertCommand, T)) -> Self {
-    Self::Insert(cmd, t)
-  }
-}
-
-impl<T> CursorCommand<T> {
-  pub fn apply_to_vec(self, vec: &mut CursorVec<T>) {
-    match self {
-      Self::Move(move_cmd)        => { move_cmd.apply_to_vec(vec); }
-      Self::Remove(remove_cmd)    => { remove_cmd.apply_to_vec(vec); }
-      Self::Insert(insert_cmd, t) => { insert_cmd.apply_to_vec(vec, t); }
-    }
   }
 }
 
@@ -294,7 +263,7 @@ impl Cursor {
   }
 
   pub fn move_wrapped<T>(&mut self, vec: &Vec<T>, mut idelta: isize) 
-  -> MoveCommand 
+    -> MoveCommand 
   {
     let imax = self.get_max(vec) as isize;
     let mut iremainder = self.move_head(vec, idelta);
@@ -590,16 +559,31 @@ impl CursorView {
       .collect() 
   }
 
-  pub fn get_weighted_view(self, vec: &[char]) -> Vec<(u16, &char)> {
+  pub fn get_weighted_piew(self, vec: &[char]) -> Vec<&char> {
     use unicode_width::UnicodeWidthChar;
-    let size         = usize::from(self.size);  
-    let mut text     = vec.iter().skip(self.scroll);
+    let size = usize::from(self.size);  
+    let mut text = vec.iter().skip(self.scroll);
     let mut acc_size = 0;
-    let mut result   = vec![];
+    let mut result = vec![];
     while let Some(c) = text.next() && acc_size < size {
       let width = c.width().unwrap_or(0);
       acc_size += width;
-      result.push((u16::try_from(width).unwrap_or(u16::MIN), c));
+      result.push(c);
+    }
+    result
+  }
+
+
+  pub fn get_weighted_view(self, vec: &[char]) -> Vec<(u16, &char)> {
+    use unicode_width::UnicodeWidthChar;
+    let size = self.size;  
+    let mut text = vec.iter().skip(self.scroll);
+    let mut acc_size: u16 = 0;
+    let mut result = vec![];
+    while let Some(c) = text.next() && acc_size < size {
+      let width = c.width().and_then(|w| u16::try_from(w).ok()).unwrap_or(0);
+      acc_size += width;
+      result.push((width, c));
     }
     result
   }
@@ -634,19 +618,19 @@ impl CursorView {
     // move forward
     } else if self.head < new_head {
       let delta_size = new_head - self.head;
-      let max_delta  = self.size
+      let max_delta = self.size
         .saturating_sub(1)
         .saturating_sub(self.cursor);
       // no scroll
       if delta_size < usize::from(max_delta) { 
-        self.cursor  += u16::try_from(delta_size).unwrap();
-        self.head     = new_head;
+        self.cursor += u16::try_from(delta_size).unwrap();
+        self.head = new_head;
         false
       // scroll forward
       } else {
         self.scroll += delta_size - usize::from(max_delta);
         self.cursor += max_delta;
-        self.head    = new_head;
+        self.head = new_head;
         true
       }
     // move backward
@@ -655,7 +639,7 @@ impl CursorView {
       // no scroll
       if delta_size <= usize::from(self.cursor) {
         self.cursor -= u16::try_from(delta_size).unwrap();
-        self.head    = new_head;
+        self.head = new_head;
         false
       // scroll backward
       } else { 

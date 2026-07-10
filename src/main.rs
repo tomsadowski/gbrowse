@@ -44,7 +44,7 @@ pub use crate::color::{
   Style, 
 };
 pub use crate::page::{
-  TextStyle, 
+  TextParams, 
   PageParams,
   Page,
 };
@@ -69,7 +69,6 @@ pub use crate::cursor::{
   Cursor, 
   PointMatrix,
   CursorVec,
-  CursorCommand,
   MoveCommand,
   RemoveCommand,
   InsertCommand,

@@ -7,7 +7,7 @@ use crate::{
   FrameParams,
   GemTag, 
   GemText,
-  TextStyle,
+  TextParams,
   Rect,
   Dlg,
   constants::*,

@@ -2,7 +2,7 @@
 
 use crate::{
   User,
-  TextStyle, 
+  TextParams, 
   Cursor, 
   Style, 
   PageParams, 
@@ -114,7 +114,7 @@ impl CursorVec<Tab> {
     &mut self, 
     layout: &mut Layout,
     style:  impl Into<Style> + Copy,
-    func:   impl Fn(&GemTag) -> TextStyle,
+    func:   impl Fn(&GemTag) -> TextParams,
   ) {
     if let Some(views) = layout.map.get_mut(&TAB) {
       for (tab, view) in self.vec.iter_mut().zip(views.iter_mut()) {

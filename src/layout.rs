@@ -9,7 +9,6 @@ use crate::{
   Page,
   PageParams,
   CursorVec,
-  CursorCommand,
   InsertCommand, 
   RemoveCommand, 
   MoveCommand,

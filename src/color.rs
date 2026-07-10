@@ -88,8 +88,8 @@ pub struct Style {
   pub bg:        Option<Color>,
 }
 
-impl From<crate::TextStyle> for Style {
-  fn from(item: crate::TextStyle) -> Self {item.style}
+impl From<crate::TextParams> for Style {
+  fn from(item: crate::TextParams) -> Self {item.style}
 }
 
 impl crossterm::Command for Style {

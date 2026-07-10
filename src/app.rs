@@ -8,7 +8,7 @@ use crate::{
   User, 
   CursorVec,
   Tab,
-  TextStyle,
+  TextParams,
   Dlg,
   DlgType,
   UserTable,
@@ -259,7 +259,7 @@ impl App {
             |tab| tab.get_gem_tab().and_then(
               |gemtab| gemtab.get_current_tag(&view.page)
             )
-          )
+          ) 
         {
           None => self.ack_dlg(
             &format!("You've selected nothing")
