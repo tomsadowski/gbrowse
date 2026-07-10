@@ -1,7 +1,7 @@
 // src/user.rs
 
 use crate::{
-  UserKeys,
+  SystemControlParams,
   UserStyle,
   Frame, 
   FrameParams,
@@ -9,22 +9,26 @@ use crate::{
   GemText,
   TextParams,
   Rect,
-  Dlg,
+  DialogParams,
   constants::*,
 };
 
 
 pub trait Assign {
   type Field;
-  fn assign(&mut self, field: Self::Field, value: toml::Value) 
-    -> Result<(), String>;
+
+  fn assign(&mut self, _: Self::Field, _: toml::Value) -> Result<(), String>;
 }
 
+
 pub trait UserTable: Sized {
-  fn read_table(self, table: toml::Table) -> Result<Self, String>;
-  fn update_from_table(&mut self, table: toml::Table) -> Result<(), String>;
-  fn update_from_str(&mut self, s: &str) -> Result<(), String>;
+  fn read_table(self, _: toml::Table) -> Result<Self, String>;
+
+  fn update_from_table(&mut self, _: toml::Table) -> Result<(), String>;
+
+  fn update_from_str(&mut self, _: &str) -> Result<(), String>;
 }
+
 
 impl<T, F> UserTable for T
 where T: Assign<Field = F>,
@@ -38,6 +42,7 @@ where T: Assign<Field = F>,
     Ok(self)
   }
 
+
   fn update_from_table(&mut self, table: toml::Table) -> Result<(), String> {
     for (key, value) in table.into_iter() {
       let field = F::from_str(&key)?;
@@ -46,6 +51,7 @@ where T: Assign<Field = F>,
     Ok(())
   }
 
+
   fn update_from_str(&mut self, s: &str) -> Result<(), String> {  
     let table = s.parse::<toml::Table>().map_err(|e| e.to_string())?;
     self.update_from_table(table)?;
@@ -53,34 +59,39 @@ where T: Assign<Field = F>,
   }
 }
 
+
 pub fn user_from_str<T: UserTable + Default>(s: &str) -> Result<T, String> {
   let table = s.parse::<toml::Table>().map_err(|e| e.to_string())?;
   T::default().read_table(table)
 }
 
+
 pub fn get_init_file(name: &str) -> String {
   format!("{DATA_PATH}/{name}")
 }
 
+
 pub fn get_keys_file(name: &str) -> String {
   format!("{KEYS_PATH}/{name}")
 }
+
 
 pub fn get_styles_file(name: &str) -> String {
   format!("{STYLES_PATH}/{name}")
 }
 
 #[derive(Debug)]
-pub struct User {
+pub struct SystemParams {
   pub timeout:        u64,
   pub save_file:      String,
   pub init_url:       String,
   pub style:          UserStyle,
-  pub keys:           UserKeys,
+  pub keys:           SystemControlParams,
   pub urls:           Vec<String>,
 } 
 
-impl Default for User {
+
+impl Default for SystemParams {
   fn default() -> Self {
     let urls: Vec<String> = match std::fs::read_to_string(&SAVE_FILE) {
       Ok(s)  => s.lines().map(|s| String::from(s)).collect(),
@@ -91,14 +102,16 @@ impl Default for User {
       init_url:       "gemini://geminiprotocol.net/".into(),
       save_file:      SAVE_FILE.into(),
       style:          UserStyle::default(),
-      keys:           UserKeys::default(),
+      keys:           SystemControlParams::default(),
       urls,
     }
   }
 }
 
-impl Assign for User {
+
+impl Assign for SystemParams {
   type Field = UserField;
+
   fn assign(&mut self, f: Self::Field, v: toml::Value) -> Result<(), String> {
     use toml::Value;
     match (f, v) {
@@ -139,10 +152,12 @@ impl Assign for User {
   }
 }
 
-impl User {
-  pub fn dlg<'a>(&'a self, prompt: &str) -> Dlg<'a> {
-    Dlg::from(self).prompt(prompt)
+
+impl SystemParams {
+  pub fn dlg<'a>(&'a self, prompt: &str) -> DialogParams<'a> {
+    DialogParams::from(self).prompt(prompt)
   }
+
 
   pub fn save_url(&mut self, url: &url::Url) -> Result<(), String> {
     let url_str = url.to_string();
@@ -150,7 +165,6 @@ impl User {
       Err(format!("URL {url_str} already saved"))
     } else {
       self.urls.push(url_str.clone());
-      // write to save file
       match std::fs::OpenOptions::new()
         .write(true)
         .truncate(true)
@@ -171,6 +185,7 @@ impl User {
   }
 }
 
+
 #[derive(Debug)]
 pub enum UserField {
   InitUrl, 
@@ -180,8 +195,10 @@ pub enum UserField {
   Keys,
 }
 
+
 impl std::str::FromStr for UserField {
   type Err = String;
+
   fn from_str(s: &str) -> Result<Self, Self::Err> {
     match s {
       "init_url"  => Ok(Self::InitUrl),
@@ -195,6 +212,7 @@ impl std::str::FromStr for UserField {
   }
 }
 
+
 impl ToString for UserField {
   fn to_string(&self) -> String {
     match self {
@@ -206,6 +224,7 @@ impl ToString for UserField {
     }
   }
 }
+
 
 impl UserField {
   pub fn get_select(&self) -> Vec<(Self, String)> {

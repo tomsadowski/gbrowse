@@ -5,11 +5,11 @@ use crate::{
   util,
   Dim,
   user,
-  User, 
+  SystemParams, 
   CursorVec,
   Tab,
   TextParams,
-  Dlg,
+  DialogParams,
   DlgType,
   UserTable,
   user_from_str,
@@ -53,7 +53,7 @@ pub enum Focus {
 }
 
 pub struct App {
-  pub params:      User,
+  pub params:      SystemParams,
   pub tabs:        CursorVec<Tab>,
   pub layout:      Layout,
   pub focus:       Focus,
@@ -63,12 +63,14 @@ pub struct App {
   pub quit:        bool,
 } 
 
+
 impl App {
   pub fn init(path: &str, w: u16, h: u16) -> Self {
     let user_text = std::fs::read_to_string(path).unwrap_or_default();
-    let user: User = user_from_str(&user_text).unwrap_or_default();
+    let user: SystemParams = user_from_str(&user_text).unwrap_or_default();
     let layout = Layout::from(Rect::from(Dim(w, h)))
       .with_frame_params(user.style.get_frame_params());
+
     let mut app = Self {
       guide:       "".into(),
       tabs:        CursorVec::default(),
@@ -79,6 +81,7 @@ impl App {
       layout,
       params: user,
     };
+
     match url::Url::parse(&app.params.init_url) {
       Err(e) => app.edit_dlg(
         Task::Init(app.params.init_url.clone()), 
@@ -93,6 +96,7 @@ impl App {
     app
   }
 
+
   pub fn focus_tabs(&mut self) {
     self.focus = Focus::Tab;
     self.guide = format!("Press {} for menu", self.params.keys.menu);
@@ -100,6 +104,7 @@ impl App {
     self.layout.remove_list(DLG_2);
     self.layout.flush();
   }
+
 
   fn ack_dlg(&mut self, prompt: &str) {
     self.focus = Focus::Dlg(
@@ -109,6 +114,7 @@ impl App {
     self.layout.flush();
   }
 
+
   fn ask_dlg(&mut self, task: Task, prompt: &str) {
     self.focus = Focus::Dlg(
       self.params.dlg(&prompt).ask(&mut self.layout),
@@ -116,6 +122,7 @@ impl App {
     );
     self.layout.flush();
   }
+
 
   fn edit_dlg(&mut self, task: Task, prompt: &str, text: &str) {
     self.focus = Focus::Dlg(
@@ -125,6 +132,7 @@ impl App {
     self.layout.flush();
   }
 
+
   fn select_dlg(&mut self, task: Task, prompt: &str, options: Vec<String>) {
     self.focus = Focus::Dlg(
       self.params.dlg(&prompt).select(options, &mut self.layout),
@@ -132,6 +140,7 @@ impl App {
     );
     self.layout.flush();
   }
+
 
   fn join_gemdoc(&mut self, url: url::Url, response: String, content: String) {
     let Ok(status) = StatusText::try_from(response.as_str()) else {
@@ -164,6 +173,7 @@ impl App {
       }
     }
   }
+
 
   pub fn join_request(&mut self) -> bool {
     let Some(request) = &mut self.request else {
@@ -204,19 +214,21 @@ impl App {
     }
   }
 
+
   pub fn push_style(&mut self) {
     self.tabs.push_gem_style(
       &mut self.layout,
-      self.params.style.general,
+      &self.params.style.general,
       |gem| self.params.style.get_style_from_gem_tag(gem)
     );
     self.layout.flush();
   }
 
+
   pub fn select_link(&mut self, url_str: &str) {
     match self.tabs
       .get_current()
-      .and_then(|tab| tab.get_url())
+      .map(|tab| tab.get_url())
       .map(|url| util::join_if_relative(&url, url_str)) 
     {
       None => {},
@@ -230,8 +242,9 @@ impl App {
     }
   }
 
+
   pub fn update(&mut self, message: &Msg) {
-    self.clear       = false;
+    self.clear = false;
     if let Msg::Quit = message {
       self.quit = true;
     } else if let Msg::Resize(w, h) = message {
@@ -247,7 +260,7 @@ impl App {
       match action {
         Action::SaveUrl => if let Some(url) = self.tabs
           .get_current()
-          .and_then(|tab| tab.get_url())
+          .map(|tab| tab.get_url())
         {
           match self.params.save_url(url) {
             Err(e) => self.ack_dlg(&e),
@@ -255,10 +268,10 @@ impl App {
           }
         }
         Action::Select => match self.tabs
-          .get_current().and_then(
-            |tab| tab.get_gem_tab().and_then(
-              |gemtab| gemtab.get_current_tag(&view.page)
-            )
+          .get_current()
+          .and_then(|tab| tab
+            .get_gem_tab()
+            .and_then(|gemtab| gemtab.get_current_tag(&view.page))
           ) 
         {
           None => self.ack_dlg(
@@ -471,6 +484,7 @@ impl App {
     } 
   }
 
+
   pub fn get_update(&self, event: crossterm::event::Event) -> Option<Msg> {
     use crossterm::event::{
       Event, KeyEvent, KeyEventKind, KeyModifiers, KeyCode,
@@ -504,10 +518,9 @@ impl App {
     }
   }
 
+
   pub fn draw(&self, w: &mut impl std::io::Write) -> std::io::Result<()> {
     use crossterm::{QueueableCommand, cursor, terminal};
-  //eprintln!("frame: {:#?} \n max: {:#?} ", 
-  //  self.layout.frame, self.layout.max_rect);
     w.queue(cursor::Hide)?;
     if self.clear {
       w.queue(terminal::Clear(terminal::ClearType::All))?;
@@ -518,21 +531,5 @@ impl App {
     self.layout.frame.draw_footer(&self.guide, w)?;
     self.layout.draw(w)?;
     w.flush()
- // if let Focus::Dialog(_) = &self.focus {
- //   //dialog.draw(w)?;
- // } else {
- //   if let Some(request) = &self.request {
- // //  let tb: TextBox = TextBox::from(
- // //      self.frame.get_view_port().top_row()
- // //    ).reference(
- // //      &vec![format!("requesting {}", request.url)],
- // //      |s| StyledText::from(s.clone())
- // //    );
- // //  tb.draw(writer)?;
- //     self.tabs.draw(w)?;
- //   } else {
- //     self.tabs.draw(w)?;
- //   }
- // }
   }
 }

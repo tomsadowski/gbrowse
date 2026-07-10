@@ -2,7 +2,7 @@
 
 use crate::{
   user,
-  User, 
+  SystemParams, 
   TextParams,
   Layout,
   PageViewParams,
@@ -11,50 +11,58 @@ use crate::{
   constants::*,
 };
 
+
 #[derive(Debug)]
 pub enum DlgType {
   Ack, Ask, Edit, Select,
 }
+
 
 pub fn remove(layout: &mut Layout) {
   layout.remove_list(DLG_1);
   layout.remove_list(DLG_2);
 }
 
-pub struct Dlg<'a> {
-  params: &'a User, 
+
+pub struct DialogParams<'a> {
+  params: &'a SystemParams, 
   header: PageViewParams,
-  body:   PageViewParams,
+  body: PageViewParams,
 }
-impl<'a> From<&'a User> for Dlg<'a> {
-  fn from(user: &'a User) -> Self {
+
+
+impl<'a> From<&'a SystemParams> for DialogParams<'a> {
+  fn from(user: &'a SystemParams) -> Self {
     Self {
       header: PageViewParams::default(),
-      body:   PageViewParams::default(),
+      body: PageViewParams::default(),
       params: user
     }
   }
 }
-impl<'a> Dlg<'a> { 
+
+impl<'a> DialogParams<'a> { 
   pub fn prompt(mut self, prompt: &str) -> Self {
     self.header = PageParams::init()
       .with_text(&vec![prompt.to_string()])
-      .with_style(self.params.style.info)
+      .with_style(&self.params.style.info)
       .into();
     self
   }
+
 
   pub fn ack(mut self, layout: &mut Layout) -> DlgType {
     self.body = PageViewParams::from(
       PageParams::init()
         .with_text(&vec![format!("Press any key to acknowledge")])
-        .with_style(self.params.style.info)
+        .with_style(&self.params.style.info)
     )
     .with_frame_params(self.params.style.get_dialog_frame_params());
     layout.insert(DLG_1, self.header);
     layout.insert(DLG_2, self.body);
     DlgType::Ack
   }
+
 
   pub fn ask(mut self, layout: &mut Layout) -> DlgType {
     let guide = format!(
@@ -63,7 +71,7 @@ impl<'a> Dlg<'a> {
     self.body = PageViewParams::from(
       PageParams::init()
         .with_text(&vec![guide])
-        .with_style(self.params.style.info)
+        .with_style(&self.params.style.info)
     )
     .with_frame_params(self.params.style.get_dialog_frame_params());
     layout.insert(DLG_1, self.header);
@@ -71,12 +79,13 @@ impl<'a> Dlg<'a> {
     DlgType::Ask
   }
 
+
   pub fn edit(mut self, text: &str, layout: &mut Layout) -> DlgType {
     self.body = 
       PageViewParams::from(
         PageParams::init()
           .with_text(&vec![text])
-          .with_style(self.params.style.info)
+          .with_style(&self.params.style.info)
           .edit(true)
       )
       .with_frame_params(self.params.style.get_dialog_frame_params())
@@ -86,13 +95,14 @@ impl<'a> Dlg<'a> {
     DlgType::Edit
   }
 
+
   pub fn select(mut self, options: Vec<String>, layout: &mut Layout) 
     -> DlgType 
   {
     self.body = PageViewParams::from(
       PageParams::init()
         .with_text(&options)
-        .with_style(self.params.style.info)
+        .with_style(&self.params.style.info)
       )
       .with_frame_params(self.params.style.get_dialog_frame_params())
       .with_draw_point(true);

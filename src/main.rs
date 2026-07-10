@@ -25,11 +25,11 @@ mod util;
 mod constants;
 
 pub use crate::dlg::{
-  Dlg,
+  DialogParams,
   DlgType,
 };
 pub use crate::userkeys::{
-  UserKeys,
+  SystemControlParams,
 };
 pub use crate::userstyle::{
   UserStyle,
@@ -60,7 +60,7 @@ pub use crate::layout::{
   PageViewParams,
 };
 pub use crate::user::{
-  User,
+  SystemParams,
   Assign,
   UserTable,
   user_from_str,
@@ -78,7 +78,7 @@ pub use crate::cursor::{
 };
 pub use crate::tab::{
   Tab, 
-  UrlTab, 
+  TaggedTab, 
 };
 pub use crate::rect::{
   Pos, 

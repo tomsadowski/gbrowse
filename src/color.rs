@@ -15,6 +15,7 @@ pub fn parse_color(v: &toml::Value) -> Result<Color, String> {
   }
 }
 
+
 pub fn parse_color_name(s: &str) -> Result<Color, String> {
   match s {
     "Red"         | "red"         => Ok(Color::Red),
@@ -39,7 +40,9 @@ pub fn parse_color_name(s: &str) -> Result<Color, String> {
   }
 }
 
+
 pub fn parse_hex_color(s: &str) -> Result<Color, String> {
+
   fn try_hex(c: char) -> Result<u8, String> {
     match c {
       '0' => Ok(0),  '1' => Ok(1),  '2' => Ok(2),  '3' => Ok(3),
@@ -49,6 +52,7 @@ pub fn parse_hex_color(s: &str) -> Result<Color, String> {
       _   => Err(format!("{c} is not a hex character")),
     }
   }
+
   let mut c = s.chars();
   let r1 = c
     .next()
@@ -74,11 +78,14 @@ pub fn parse_hex_color(s: &str) -> Result<Color, String> {
     .next()
     .ok_or("missing second blue".into())
     .and_then(|c| try_hex(c))?;
+
   let r = 16 * r1 + r2;
   let g = 16 * g1 + g2;
   let b = 16 * b1 + b2;
+
   Ok(Color::Rgb {r, g, b})
 }
+
 
 #[derive(Copy, Clone, Debug, Default)]
 pub struct Style {
@@ -88,9 +95,13 @@ pub struct Style {
   pub bg:        Option<Color>,
 }
 
-impl From<crate::TextParams> for Style {
-  fn from(item: crate::TextParams) -> Self {item.style}
+
+impl From<&crate::TextParams> for Style {
+  fn from(item: &crate::TextParams) -> Self {
+    item.style
+  }
 }
+
 
 impl crossterm::Command for Style {
   fn write_ansi(&self, f: &mut impl std::fmt::Write) -> std::fmt::Result {

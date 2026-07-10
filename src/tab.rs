@@ -1,7 +1,7 @@
 // src/tab.rs
 
 use crate::{
-  User,
+  SystemParams,
   TextParams, 
   Cursor, 
   Style, 
@@ -18,76 +18,61 @@ use crate::{
 use url::Url;
 
 
-pub struct UrlTab<T> {
+pub struct TaggedTab<T> {
   pub url:  Url,
   pub tags: Vec<T>,
 } 
 
-impl<T> UrlTab<T> {
+
+impl<T> TaggedTab<T> {
   pub fn new(url: &Url, tags: Vec<T>) -> Self {
     Self { url: url.clone(), tags }
   }
+
 
   pub fn get_current_tag(&self, page: &Page) -> Option<&T> {
     self.tags.get(page.get_index())
   }
 }
 
+
 pub enum Tab {
-  Text(String, PageParams),
-  Gem(UrlTab<GemTag>),
-  Gopher(UrlTab<String>),
+  Gem(TaggedTab<GemTag>),
+  Gopher(TaggedTab<String>),
 }
 
-impl Default for Tab {
-  fn default() -> Self {
-    Self::Text("".into(), PageParams::default())
-  }
-}
 
 impl Tab {
-  pub fn get_heading(&self) -> &str {
+  pub fn get_url(&self) -> &Url {
     match self {
-      Tab::Gem(UrlTab {url, ..}) | 
-      Tab::Gopher(UrlTab {url, ..}) => url.as_str(),
-      Tab::Text(heading, _)         => heading,
+      Tab::Gem(TaggedTab {url, ..}) | 
+      Tab::Gopher(TaggedTab {url, ..}) => url
     }
   }
 
-  pub fn get_url(&self) -> Option<&url::Url> {
-    match self {
-      Tab::Gem(UrlTab {url, ..}) | 
-      Tab::Gopher(UrlTab {url, ..}) => Some(url),
-      _                             => None,
-    }
-  }
 
-  pub fn get_gem_tab(&self) ->  Option<&UrlTab<GemTag>> {
+  pub fn get_gem_tab(&self) ->  Option<&TaggedTab<GemTag>> {
     if let Tab::Gem(tab) = self {
       Some(tab)
     } else {None}
   }
 
-  pub fn get_gopher_tab(&self) ->  Option<&UrlTab<String>> {
+
+  pub fn get_gopher_tab(&self) ->  Option<&TaggedTab<String>> {
     if let Tab::Gopher(tab) = self {
       Some(tab)
     } else {None}
   }
-
-  pub fn get_text_tab(&self) ->  Option<(&str, &PageParams)> {
-    if let Tab::Text(heading, params) = self {
-      Some((heading, params))
-    } else {None}
-  }
 }
+
 
 impl CursorVec<Tab> {
   pub fn add_gem_tab(
     &mut self, 
-    params:         &User,
-    layout:         &mut Layout,
-    url:            &url::Url, 
-    source:         Vec<GemText>, 
+    params: &SystemParams,
+    layout: &mut Layout,
+    url:    &Url, 
+    source: Vec<GemText>, 
   ) {
     let params = PageViewParams::from(
       PageParams::init()
@@ -95,7 +80,7 @@ impl CursorVec<Tab> {
           &source, 
           |g| params.style.get_style_from_gem_text(g),
         )
-        .with_style(params.style.general)
+        .with_style(&params.style.general)
       )
       .with_draw_point(true);
     let (tags, text): (Vec<GemTag>, Vec<String>) = source
@@ -103,12 +88,13 @@ impl CursorVec<Tab> {
       .map(|gemtext| (gemtext.tag, gemtext.text))
       .unzip();
     if let Some(insert_command) = self.insert_unique_with(
-      |tab| tab.get_url() == Some(url), 
-      Tab::Gem(UrlTab::new(url, tags)),
+      |tab| tab.get_url() == url, 
+      Tab::Gem(TaggedTab::new(url, tags)),
     ) {
       layout.apply_insert(TAB, insert_command, params);
     }
   }
+
 
   pub fn push_gem_style(
     &mut self, 
@@ -128,14 +114,9 @@ impl CursorVec<Tab> {
     }
   }
 
+
   pub fn get_banner_text(&self) -> String {
-    match self.vec.get(*self.cursor).map(
-      |tab| match tab {
-        Tab::Gem(UrlTab {url, ..}) | 
-        Tab::Gopher(UrlTab {url, ..}) => url.to_string(),
-        Tab::Text(heading, _)         => heading.to_string(),
-      }
-    ) {
+    match self.get_current().map(|tab| tab.get_url().to_string()) {
       None    => format!("Empty"),
       Some(s) => format!("{}/{} - {s}", *self.cursor + 1, self.vec.len()),
     }

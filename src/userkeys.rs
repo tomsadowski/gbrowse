@@ -9,7 +9,7 @@ use crossterm::event::KeyCode;
 
 
 #[derive(Copy, Clone, Debug)]
-pub struct UserKeys {
+pub struct SystemControlParams {
   pub up:          KeyCode,
   pub down:        KeyCode,
   pub left:        KeyCode,
@@ -31,7 +31,8 @@ pub struct UserKeys {
   pub cancel:      KeyCode,
 } 
 
-impl Default for UserKeys {
+
+impl Default for SystemControlParams {
   fn default() -> Self {
     Self {
       load_url:    KeyCode::Char('u'),
@@ -57,8 +58,10 @@ impl Default for UserKeys {
   }
 }
 
-impl Assign for UserKeys {
+
+impl Assign for SystemControlParams {
   type Field = Action;
+
   fn assign(&mut self, f: Self::Field, v: toml::Value) -> Result<(), String> {
     let get_keycode = || -> Result<KeyCode, String> {
       if let toml::Value::String(s) = v {
@@ -111,7 +114,7 @@ impl Assign for UserKeys {
   }
 }
 
-impl UserKeys {
+impl SystemControlParams {
   pub fn get_tab_action(&self, kc: &KeyCode) -> Option<Action> {
     if        &self.load_url    == kc {Some(Action::LoadUrl)
     } else if &self.save_url    == kc {Some(Action::SaveUrl)
@@ -122,6 +125,7 @@ impl UserKeys {
     } else if &self.menu        == kc {Some(Action::Menu)
     } else                            {self.get_text_box_action(kc)}
   }
+
 
   pub fn get_text_box_action(&self, kc: &KeyCode) -> Option<Action> {
     if        &self.up          == kc {Some(Action::MoveUp)
@@ -136,6 +140,7 @@ impl UserKeys {
     } else {None}
   }
 
+
   pub fn get_edit_box_action(&self, kc: &KeyCode) -> Option<Action> {
     match kc {
       KeyCode::Left      => Some(Action::MoveLeft),
@@ -148,35 +153,49 @@ impl UserKeys {
     }
   }
 
+
   pub fn get_dlg_action(&self, dlg_type: &DlgType, kc: &KeyCode) 
     -> Option<Action> 
   {
     match dlg_type {
-      DlgType::Ack    => self.get_ack_dialog_action(kc),
-      DlgType::Ask    => self.get_ask_dialog_action(kc),
-      DlgType::Edit   => self.get_edit_dialog_action(kc),
-      DlgType::Select => self.get_select_dialog_action(kc),
+      DlgType::Ack    => self.get_ack_dlg_action(kc),
+      DlgType::Ask    => self.get_ask_dlg_action(kc),
+      DlgType::Edit   => self.get_edit_dlg_action(kc),
+      DlgType::Select => self.get_select_dlg_action(kc),
     }
   }
 
-  pub fn get_ack_dialog_action(&self, kc: &KeyCode) -> Option<Action> {
+
+  pub fn get_ack_dlg_action(&self, kc: &KeyCode) -> Option<Action> {
     Some(Action::Ack)
   }
 
-  pub fn get_ask_dialog_action(&self, kc: &KeyCode) -> Option<Action> {
-    if        &self.cancel == kc {Some(Action::Cancel)
-    } else if &self.yes    == kc {Some(Action::Yes)
-    } else if &self.no     == kc {Some(Action::No)
-    } else                       {None}
+
+  pub fn get_ask_dlg_action(&self, kc: &KeyCode) -> Option<Action> {
+    if &self.cancel == kc {
+      Some(Action::Cancel)
+    } else if &self.yes == kc {
+      Some(Action::Yes)
+    } else if &self.no == kc {
+      Some(Action::No)
+    } else {None}
   }
 
-  pub fn get_select_dialog_action(&self, kc: &KeyCode) -> Option<Action> {
-    if &self.cancel == kc {Some(Action::Cancel)
-    } else                {self.get_text_box_action(kc)}
+
+  pub fn get_select_dlg_action(&self, kc: &KeyCode) -> Option<Action> {
+    if &self.cancel == kc {
+      Some(Action::Cancel)
+    } else {
+      self.get_text_box_action(kc)
+    }
   }
 
-  pub fn get_edit_dialog_action(&self, kc: &KeyCode) -> Option<Action> {
-    if &self.cancel == kc {Some(Action::Cancel)
-    } else                {self.get_edit_box_action(kc)}
+
+  pub fn get_edit_dlg_action(&self, kc: &KeyCode) -> Option<Action> {
+    if &self.cancel == kc {
+      Some(Action::Cancel)
+    } else {
+      self.get_edit_box_action(kc)
+    }
   }
 }
