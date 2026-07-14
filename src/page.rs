@@ -13,14 +13,14 @@ use crate::{
 
 #[derive(Clone, Debug)]
 pub struct TextView {
-  pub params: TextParams,
+  pub params: TextStyleParams,
   pub string: String,
   pub matrix: Vec<Vec<char>>,
 }
 
 
 impl TextView {
-  pub fn update(&mut self, params: TextParams, width: usize) {
+  pub fn update(&mut self, params: TextStyleParams, width: usize) {
     if self.params.wrap != params.wrap {
       self.params.style = params.style;
     } else {
@@ -36,13 +36,13 @@ impl TextView {
 
 
 #[derive(Copy, Clone, Debug)]
-pub struct TextParams {
+pub struct TextStyleParams {
   pub style: Style,
   pub wrap:  bool,
 }
 
 
-impl From<&TextView> for TextParams {
+impl From<&TextView> for TextStyleParams {
   fn from(view: &TextView) -> Self {
     Self {
       style: view.params.style,
@@ -52,7 +52,7 @@ impl From<&TextView> for TextParams {
 }
 
 
-impl Default for TextParams {
+impl Default for TextStyleParams {
   fn default() -> Self {
     Self {
       style: Style::default(),
@@ -62,7 +62,7 @@ impl Default for TextParams {
 }
 
 
-impl std::ops::Deref for TextParams {
+impl std::ops::Deref for TextStyleParams {
   type Target = Style;
   fn deref(&self) -> &Self::Target {
     &self.style
@@ -70,7 +70,7 @@ impl std::ops::Deref for TextParams {
 }
 
 
-impl TextParams {
+impl TextStyleParams {
   pub fn get_view(self, string: &str, width: usize) -> TextView {
     TextView {
       matrix: self.get_matrix(string, width),
@@ -103,7 +103,7 @@ impl TextParams {
 pub struct PageParams {
   pub edit:       bool,
   pub style:      Style,
-  pub style_vec:  Vec<TextParams>,
+  pub style_vec:  Vec<TextStyleParams>,
   pub string_vec: Vec<String>,
 }
 
@@ -130,7 +130,7 @@ impl PageParams {
   }
 
 
-  pub fn set_text_styles(&mut self, styles: Vec<TextParams>) 
+  pub fn set_text_styles(&mut self, styles: Vec<TextStyleParams>) 
     -> Result<(), String> 
   {
     if styles.len() < self.string_vec.len() {
@@ -142,7 +142,7 @@ impl PageParams {
   }
 
 
-  pub fn with_text_styles(mut self, styles: Vec<TextParams>) 
+  pub fn with_text_styles(mut self, styles: Vec<TextStyleParams>) 
     -> Result<Self, String> 
   {
     self.set_text_styles(styles).map(|_| self)
@@ -152,7 +152,7 @@ impl PageParams {
   pub fn set_text(&mut self, text: &[impl std::fmt::Display]) {
     self.string_vec = text.iter().map(|t| t.to_string()).collect();
     self.style_vec  = self.string_vec.iter()
-      .map(|t| TextParams::default()).collect();
+      .map(|t| TextStyleParams::default()).collect();
   }
 
 
@@ -164,7 +164,7 @@ impl PageParams {
 
   pub fn set_styled_text<T, F>(&mut self, text: &[T], get_text_style: F)
   where T: std::fmt::Display,
-        F: Fn(&T) -> TextParams,
+        F: Fn(&T) -> TextStyleParams,
   {
     self.string_vec = text.iter().map(|t| t.to_string()).collect();
     self.style_vec  = text.iter().map(|t| get_text_style(t)).collect();
@@ -174,7 +174,7 @@ impl PageParams {
   pub fn with_styled_text<T, F>(mut self, text: &[T], get_text_style: F) 
     -> Self 
   where T: std::fmt::Display,
-        F: Fn(&T) -> TextParams,
+        F: Fn(&T) -> TextStyleParams,
   {
     self.set_styled_text(text, get_text_style);
     self
@@ -276,7 +276,7 @@ impl Page {
   pub fn draw(
     &self, 
     style:      &Style,
-    style_vec:  &[TextParams],
+    style_vec:  &[TextStyleParams],
     point_view: &PointView, 
     writer:     &mut impl std::io::Write,
   ) 
@@ -294,7 +294,7 @@ impl Page {
 
     for (index, line) in self.get_view(point_view.get_y_view()) {
       writer.queue(Style::from(
-        style_vec.get(*index).unwrap_or(&TextParams::default())
+        style_vec.get(*index).unwrap_or(&TextStyleParams::default())
       ))?;
 
       for (w, c) in point_view.get_x_view().get_weighted_view(line) {

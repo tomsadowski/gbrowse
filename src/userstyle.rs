@@ -4,9 +4,9 @@ use crate::{
   Assign, 
   UserTable,
   Rect, 
-  Margins,
-  BorderStyle,
-  TextParams,
+  MarginParams,
+  BorderParams,
+  TextStyleParams,
   GemTag,
   GemText,
   Frame,
@@ -19,26 +19,26 @@ use toml::Value;
 
 
 #[derive(Copy, Clone, Default, Debug)]
-pub struct UserStyle {
-  pub text_margin:     Margins,
-  pub screen_margin:   Margins,
-  pub border:          Option<BorderStyle>,
-  pub general:         TextParams,
-  pub banner:          TextParams,
-  pub info:            TextParams,
-  pub text:            TextParams,
-  pub heading3:        TextParams,
-  pub heading2:        TextParams,
-  pub heading1:        TextParams,
-  pub preformat:       TextParams,
-  pub link:            TextParams,
-  pub error:           TextParams,
-  pub quote:           TextParams,
-  pub list:            TextParams,
+pub struct SystemStyleParams {
+  pub text_margin:     MarginParams,
+  pub screen_margin:   MarginParams,
+  pub border:          Option<BorderParams>,
+  pub general:         TextStyleParams,
+  pub banner:          TextStyleParams,
+  pub info:            TextStyleParams,
+  pub text:            TextStyleParams,
+  pub heading3:        TextStyleParams,
+  pub heading2:        TextStyleParams,
+  pub heading1:        TextStyleParams,
+  pub preformat:       TextStyleParams,
+  pub link:            TextStyleParams,
+  pub error:           TextStyleParams,
+  pub quote:           TextStyleParams,
+  pub list:            TextStyleParams,
 } 
 
 
-impl UserStyle {
+impl SystemStyleParams {
   pub fn get_frame_params(&self) -> FrameParams {
     FrameParams::init()
       .screen_margin(self.screen_margin)
@@ -59,12 +59,12 @@ impl UserStyle {
   }
 
 
-  pub fn get_style_from_gem_text(&self, text: &GemText) -> TextParams {
+  pub fn get_style_from_gem_text(&self, text: &GemText) -> TextStyleParams {
     self.get_style_from_gem_tag(&text.tag)
   }
 
 
-  pub fn get_style_from_gem_tag(&self, tag: &GemTag) -> TextParams {
+  pub fn get_style_from_gem_tag(&self, tag: &GemTag) -> TextStyleParams {
     match tag {
       GemTag::HeadingOne   => self.heading1.into(),
       GemTag::HeadingTwo   => self.heading2.into(),
@@ -79,16 +79,16 @@ impl UserStyle {
 }
 
 
-impl Assign for UserStyle {
+impl Assign for SystemStyleParams {
   type Field = StyleTableField;
 
   fn assign(&mut self, f: Self::Field, v: Value) -> Result<(), String> {
     match (f, v) {
       (StyleTableField::Border, Value::Table(v)) => {
-        self.border = Some(BorderStyle::default().read_table(v)?);
+        self.border = Some(BorderParams::default().read_table(v)?);
       }
       (StyleTableField::Text(f), Value::Table(v)) => {
-        let v = TextParams::default().read_table(v)?;
+        let v = TextStyleParams::default().read_table(v)?;
         match f {
           StyleTextField::General   => self.general   = v,
           StyleTextField::Banner    => self.banner    = v,
@@ -105,7 +105,7 @@ impl Assign for UserStyle {
         }
       }
       (StyleTableField::Margin(f), Value::Table(v)) => {
-        let v = Margins::default().read_table(v)?;
+        let v = MarginParams::default().read_table(v)?;
         match f {
           StyleMarginField::Text   => self.text_margin   = v,
           StyleMarginField::Screen => self.screen_margin = v,
@@ -147,18 +147,18 @@ impl Assign for Style {
 }
 
 
-impl Assign for Margins {
-  type Field = MarginField;
+impl Assign for MarginParams {
+  type Field = MarginParamsField;
 
   fn assign(&mut self, f: Self::Field, v: Value) -> Result<(), String> {
     match (f, v) {
       (f, Value::Integer(v)) => {
         let v = u16::try_from(v).map_err(|e| format!("{v:?} : {e}"))?;
         match f {
-          MarginField::North => self.north = v,
-          MarginField::South => self.south = v,
-          MarginField::East  => self.east  = v,
-          MarginField::West  => self.west  = v,
+          MarginParamsField::North => self.north = v,
+          MarginParamsField::South => self.south = v,
+          MarginParamsField::East  => self.east  = v,
+          MarginParamsField::West  => self.west  = v,
         }
       }
       (f, v) => return Err(
@@ -170,15 +170,15 @@ impl Assign for Margins {
 }
 
 
-impl Assign for BorderStyle {
-  type Field = BorderField;
+impl Assign for BorderParams {
+  type Field = BorderParamsField;
 
   fn assign(&mut self, f: Self::Field, v: Value) -> Result<(), String> {
     match (f, v) {
-      (BorderField::Style(f), v) => {
+      (BorderParamsField::Style(f), v) => {
         self.style.assign(f, v)?;
       }
-      (BorderField::Corner, Value::String(v)) => {
+      (BorderParamsField::Corner, Value::String(v)) => {
         match v.as_str() {
           "square" => {
             self.a = A_SQR;
@@ -197,7 +197,7 @@ impl Assign for BorderStyle {
           ),
         }
       }
-      (BorderField::Bracket, Value::String(v)) => {
+      (BorderParamsField::Bracket, Value::String(v)) => {
         match v.as_str() {
           "space" => {
             self.open  = ' ';
@@ -233,15 +233,15 @@ impl Assign for BorderStyle {
 }
 
 
-impl Assign for TextParams {
-  type Field = TextField;
+impl Assign for TextStyleParams {
+  type Field = TextStyleParamsField;
 
   fn assign(&mut self, f: Self::Field, v: Value) -> Result<(), String> {
     match (f, v) {
-      (TextField::Wrap, Value::Boolean(v)) => {
+      (TextStyleParamsField::Wrap, Value::Boolean(v)) => {
         self.wrap = v;
       }
-      (TextField::Style(f), v) => {
+      (TextStyleParamsField::Style(f), v) => {
         self.style.assign(f, v)?;
       }
       (f, v) => return Err(
@@ -323,12 +323,12 @@ impl std::str::FromStr for StyleTableField {
 
 
 #[derive(Debug)]
-pub enum MarginField {
+pub enum MarginParamsField {
   North, South, East, West
 }
 
 
-impl std::str::FromStr for MarginField {
+impl std::str::FromStr for MarginParamsField {
   type Err = String;
 
   fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -345,7 +345,8 @@ impl std::str::FromStr for MarginField {
 
 #[derive(Debug)]
 pub enum StyleField {
-  Color(ColorField), Attribute(AttributeField)
+  Color(ColorField), 
+  Attribute(AttributeField)
 }
 
 
@@ -363,13 +364,15 @@ impl std::str::FromStr for StyleField {
   }
 }
 
+
 #[derive(Debug)]
-pub enum TextField {
-  Wrap, Style(StyleField)
+pub enum TextStyleParamsField {
+  Wrap, 
+  Style(StyleField)
 }
 
 
-impl std::str::FromStr for TextField {
+impl std::str::FromStr for TextStyleParamsField {
   type Err = String;
 
   fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -381,12 +384,12 @@ impl std::str::FromStr for TextField {
 }
 
 #[derive(Debug)]
-pub enum BorderField {
+pub enum BorderParamsField {
   Style(StyleField), Corner, Bracket
 }
 
 
-impl std::str::FromStr for BorderField {
+impl std::str::FromStr for BorderParamsField {
   type Err = String;
 
   fn from_str(s: &str) -> Result<Self, Self::Err> {

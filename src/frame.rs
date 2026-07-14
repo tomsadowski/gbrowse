@@ -7,7 +7,7 @@ use crate::{
 
 
 #[derive(Copy, Debug, Clone, Default)]
-pub struct Margins {
+pub struct MarginParams {
   pub north: u16,
   pub south: u16,
   pub east:  u16,
@@ -15,7 +15,7 @@ pub struct Margins {
 }
 
 
-impl Margins {
+impl MarginParams {
   pub fn symmetric(m: u16) -> Self {
     Self {
       north: m, 
@@ -42,7 +42,7 @@ impl Margins {
 
 
 #[derive(Copy, Debug, Clone)]
-pub struct BorderStyle {
+pub struct BorderParams {
   pub style: Style,
   pub x:     char,
   pub y:     char,
@@ -55,7 +55,7 @@ pub struct BorderStyle {
 }
 
 
-impl Default for BorderStyle {
+impl Default for BorderParams {
   fn default() -> Self {
     use crate::constants::*;
     Self {
@@ -73,7 +73,7 @@ impl Default for BorderStyle {
 }
 
 
-impl BorderStyle {
+impl BorderParams {
   pub fn get_from_inner(&self, rect: &Rect) -> Rect {
     rect.shift_x(1).shift_y(1)
   }
@@ -86,9 +86,9 @@ impl BorderStyle {
 
 #[derive(Copy, Debug, Default, Clone)]
 pub struct FrameParams {
-  pub text_margin:   Margins,
-  pub screen_margin: Margins,
-  pub border:        Option<BorderStyle>,
+  pub text_margin:   MarginParams,
+  pub screen_margin: MarginParams,
+  pub border:        Option<BorderParams>,
   pub margin:        Style,
   pub banner:        Style,
   pub footer:        Style,
@@ -101,12 +101,12 @@ impl FrameParams {
   }
 
 
-  pub fn screen_margin(mut self, screen_margin: Margins) -> Self {
+  pub fn screen_margin(mut self, screen_margin: MarginParams) -> Self {
     self.screen_margin = screen_margin; self
   }
 
 
-  pub fn text_margin(mut self, screen_margin: Margins) -> Self {
+  pub fn text_margin(mut self, screen_margin: MarginParams) -> Self {
     self.text_margin = screen_margin; self
   }
 
@@ -126,7 +126,7 @@ impl FrameParams {
   }
 
 
-  pub fn border_style(mut self, style: Option<BorderStyle>) -> Self {
+  pub fn border_style(mut self, style: Option<BorderParams>) -> Self {
     self.border = style; self
   }
 

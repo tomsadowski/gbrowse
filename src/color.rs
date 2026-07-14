@@ -96,8 +96,8 @@ pub struct Style {
 }
 
 
-impl From<&crate::TextParams> for Style {
-  fn from(item: &crate::TextParams) -> Self {
+impl From<&crate::TextStyleParams> for Style {
+  fn from(item: &crate::TextStyleParams) -> Self {
     item.style
   }
 }

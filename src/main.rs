@@ -32,7 +32,7 @@ pub use crate::userkeys::{
   SystemControlParams,
 };
 pub use crate::userstyle::{
-  UserStyle,
+  SystemStyleParams,
 };
 pub use crate::network::{
   Request,
@@ -44,15 +44,15 @@ pub use crate::color::{
   Style, 
 };
 pub use crate::page::{
-  TextParams, 
+  TextStyleParams, 
   PageParams,
   Page,
 };
 pub use crate::frame::{
   Frame,
   FrameParams,
-  BorderStyle, 
-  Margins, 
+  BorderParams, 
+  MarginParams, 
 };
 pub use crate::layout::{
   Layout,

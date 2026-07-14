@@ -8,7 +8,7 @@ use crate::{
   SystemParams, 
   CursorVec,
   Tab,
-  TextParams,
+  TextStyleParams,
   DialogParams,
   DlgType,
   UserTable,

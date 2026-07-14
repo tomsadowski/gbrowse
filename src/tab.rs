@@ -2,7 +2,7 @@
 
 use crate::{
   SystemParams,
-  TextParams, 
+  TextStyleParams, 
   Cursor, 
   Style, 
   PageParams, 
@@ -99,9 +99,10 @@ impl CursorVec<Tab> {
   pub fn push_gem_style(
     &mut self, 
     layout: &mut Layout,
-    style:  impl Into<Style> + Copy,
-    func:   impl Fn(&GemTag) -> TextParams,
+    style:  impl Into<Style>,
+    func:   impl Fn(&GemTag) -> TextStyleParams,
   ) {
+    let style: Style = style.into();
     if let Some(views) = layout.map.get_mut(&TAB) {
       for (tab, view) in self.vec.iter_mut().zip(views.iter_mut()) {
         if let Tab::Gem(tab) = tab {

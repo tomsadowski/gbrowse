@@ -2,12 +2,12 @@
 
 use crate::{
   SystemControlParams,
-  UserStyle,
+  SystemStyleParams,
   Frame, 
   FrameParams,
   GemTag, 
   GemText,
-  TextParams,
+  TextStyleParams,
   Rect,
   DialogParams,
   constants::*,
@@ -80,12 +80,13 @@ pub fn get_styles_file(name: &str) -> String {
   format!("{STYLES_PATH}/{name}")
 }
 
+
 #[derive(Debug)]
 pub struct SystemParams {
   pub timeout:        u64,
   pub save_file:      String,
   pub init_url:       String,
-  pub style:          UserStyle,
+  pub style:          SystemStyleParams,
   pub keys:           SystemControlParams,
   pub urls:           Vec<String>,
 } 
@@ -101,7 +102,7 @@ impl Default for SystemParams {
       timeout:        10,
       init_url:       "gemini://geminiprotocol.net/".into(),
       save_file:      SAVE_FILE.into(),
-      style:          UserStyle::default(),
+      style:          SystemStyleParams::default(),
       keys:           SystemControlParams::default(),
       urls,
     }
@@ -205,9 +206,8 @@ impl std::str::FromStr for UserField {
       "timeout"   => Ok(Self::Timeout),
       "style"     => Ok(Self::Style),
       "keys"      => Ok(Self::Keys),
-      "gsave" | 
-      "save_file" => Ok(Self::SaveFile),
-      s           => Err(format!("No field {s} in User table")),
+      "gsave" | "save_file" => Ok(Self::SaveFile),
+      s => Err(format!("No field {s} in User table")),
     }
   }
 }

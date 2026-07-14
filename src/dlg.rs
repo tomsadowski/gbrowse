@@ -3,7 +3,7 @@
 use crate::{
   user,
   SystemParams, 
-  TextParams,
+  TextStyleParams,
   Layout,
   PageViewParams,
   PageParams,
