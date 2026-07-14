@@ -8,16 +8,14 @@ use crate::{
   SystemParams, 
   CursorVec,
   Tab,
-  TextStyleParams,
+  TextParams,
   DialogParams,
   DlgType,
   UserTable,
   user_from_str,
   Request,
-  Layout,
   Action,
   Rect, 
-  PageViewParams,
   PageParams,
   GemTag, 
   Status, 
@@ -55,7 +53,7 @@ pub enum Focus {
 pub struct App {
   pub params:      SystemParams,
   pub tabs:        CursorVec<Tab>,
-  pub layout:      Layout,
+  pub layout:      Llllayayayout,
   pub focus:       Focus,
   pub request:     Option<Request>,
   pub guide:       String,
@@ -68,7 +66,7 @@ impl App {
   pub fn init(path: &str, w: u16, h: u16) -> Self {
     let user_text = std::fs::read_to_string(path).unwrap_or_default();
     let user: SystemParams = user_from_str(&user_text).unwrap_or_default();
-    let layout = Layout::from(Rect::from(Dim(w, h)))
+    let layout = Llllayayayout::from(Rect::from(Dim(w, h)))
       .with_frame_params(user.style.get_frame_params());
 
     let mut app = Self {
@@ -287,12 +285,12 @@ impl App {
         }
         Action::CycleLeft => {
           let cmd = self.tabs.move_wrapped(-1);
-          self.layout.apply_move(TAB, cmd);
+          //self.layout.apply_move(TAB, cmd);
           self.layout.flush();
         }
         Action::CycleRight => {
           let cmd = self.tabs.move_wrapped(1);
-          self.layout.apply_move(TAB, cmd);
+          //self.layout.apply_move(TAB, cmd);
           self.layout.flush();
         }
         Action::LoadUrl => self.select_dlg(
@@ -454,8 +452,8 @@ impl App {
         }
         (Task::DelTab, Action::Yes, _) => {
           match self.tabs.remove() {
-            Some(cmd) => {
-              self.layout.apply_remove(TAB, cmd);
+            true => {
+             // self.layout.apply_remove(TAB, cmd);
               let url_str = self.params.init_url.clone();
               self.edit_dlg(
                 Task::Init(url_str.clone()), 
@@ -519,7 +517,8 @@ impl App {
   }
 
 
-  pub fn draw(&self, w: &mut impl std::io::Write) -> std::io::Result<()> {
+  pub fn draw(&self, w: &mut std::io::Stdout) -> std::io::Result<()> {
+    use std::io::Write;
     use crossterm::{QueueableCommand, cursor, terminal};
     w.queue(cursor::Hide)?;
     if self.clear {

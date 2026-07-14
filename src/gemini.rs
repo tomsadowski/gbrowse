@@ -97,8 +97,8 @@ pub enum GemTag {
 
 #[derive(Clone, PartialEq, Debug)]
 pub struct GemText {
-  pub tag:  GemTag,
-  pub text: String,
+  pub tag: GemTag,
+  pub string: String,
 }
 
 
@@ -106,21 +106,27 @@ impl std::fmt::Display for GemText {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) 
     -> Result<(), std::fmt::Error> 
   {
-    write!(f, "{}", self.text)
+    self.string.fmt(f)
   }
 }
 
 
 impl From<(GemTag, String)> for GemText {
   fn from(item: (GemTag, String)) -> Self {
-    Self {tag: item.0, text: item.1}
+    Self {
+      tag: item.0, 
+      string: item.1
+    }
   }
 }
 
 
 impl GemText {
-  pub fn preformat(s: String) -> Self {
-    Self {tag: GemTag::PreFormat, text: s}
+  pub fn preformat(string: String) -> Self {
+    Self {
+      tag: GemTag::PreFormat, 
+      string
+    }
   }
 
   pub fn parse_line(line: &str) -> (GemTag, String) {
@@ -154,13 +160,16 @@ impl GemText {
 
 
 pub fn parse_doc(text_str: &str) -> Vec<GemText> {
-  let mut vec       = vec![];
+  let mut vec = vec![];
   let mut preformat = false;
   for line in text_str.lines() {
     match (&mut preformat, GemText::parse_line(line)) {
-      (_, (GemTag::PreFormat, _)) => preformat = !preformat,
-      (true,  (_, s)) => vec.push(GemText::preformat(s)),
-      (false, tuple)  => vec.push(tuple.into()),
+      (_, (GemTag::PreFormat, _)) => 
+        preformat = !preformat,
+      (true,  (_, s)) => 
+        vec.push(GemText::preformat(s)),
+      (false, tuple) => 
+        vec.push(tuple.into()),
     }
   }
   vec

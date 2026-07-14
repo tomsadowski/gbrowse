@@ -7,52 +7,136 @@ use crate::{
   CursorView,
   Point, 
   PointView,
+  View,
   PointMatrix,
 };
 
 
-#[derive(Clone, Debug)]
-pub struct TextView {
-  pub params: TextStyleParams,
-  pub string: String,
-  pub matrix: Vec<Vec<char>>,
+
+#[derive(Debug)]
+pub struct PageParams<T> {
+  pub max: Option<u16>,
+  pub draw_point: bool,
+  pub edit: bool,
+  pub style: Style,
+  pub styles: Vec<TextParams>,
+  pub source: Vec<T>,
 }
 
-
-impl TextView {
-  pub fn update(&mut self, params: TextStyleParams, width: usize) {
-    if self.params.wrap != params.wrap {
-      self.params.style = params.style;
-    } else {
-      self.params = params;
-      self.matrix = self.params.get_matrix(&self.string, width);
+impl<T> Default for PageParams<T> {
+  fn default() -> Self {
+    Self {
+      max: None,
+      draw_point: false,
+      edit: false,
+      style: Style::default(),
+      styles: vec![],
+      source: vec![],
     }
   }
-
-  pub fn update_width(&mut self, width: usize) {
-    self.matrix = self.params.get_matrix(&self.string, width);
-  }
 }
 
 
+impl<T: std::fmt::Display> PageParams<T> {
+  pub fn init() -> Self {
+    Self::default()
+  }
+
+
+  pub fn edit(mut self, b: bool) -> Self {
+    self.edit = b; 
+    self 
+  }
+  
+
+  pub fn max(mut self, u: u16) -> Self {
+    self.max = Some(u); 
+    self
+  }
+
+
+  pub fn style(mut self, style: impl Into<Style>) -> Self {
+    self.style = style.into();
+    self
+  }
+
+
+  pub fn text(mut self, text: Vec<T>) -> Self {
+    self.source = text;
+    self.styles = self.source
+      .iter().map(|t| TextParams::default()).collect();
+    self
+  }
+
+
+  pub fn text_styles(
+    mut self, text: Vec<T>, get_style: impl Fn(&T) -> TextParams,
+  ) -> Self 
+  {
+    self.styles = text.iter().map(|t| get_style(t)).collect();
+    self.source = text;
+    self
+  }
+
+
+  pub fn draw_point(mut self, b: bool) -> Self {
+    self.draw_point = b;
+    self
+  }
+
+
+  pub fn build(self, rect: &Rect) -> Page<T> {
+    let width = usize::from(rect.width());
+
+    let (indexes, matrix): (Vec<usize>, Vec<Vec<char>>) = self.styles
+      .iter()
+      .zip(self.source.iter())
+      .enumerate()
+      .flat_map(|(idx, (style, source))| 
+        style
+          .get_matrix(&source.to_string(), width)
+          .into_iter()
+          .map(move |text| (idx, text))
+      ).unzip();
+
+    let matrix = if self.edit {
+      PointMatrix::from(matrix).editor()
+    } else {
+      PointMatrix::from(matrix)
+    };
+
+    let mut point_view = PointView::from(rect);
+    point_view.update(&matrix.point);
+
+    Page {
+      draw_point: self.draw_point,
+      style: self.style,
+      edit: self.edit,
+      styles: self.styles,
+      source: self.source,
+      max: self.max,
+      point_view,
+      indexes, 
+      matrix,
+    }
+  }
+}
+
 #[derive(Copy, Clone, Debug)]
-pub struct TextStyleParams {
+pub struct TextParams {
   pub style: Style,
   pub wrap:  bool,
 }
 
 
-impl From<&TextView> for TextStyleParams {
-  fn from(view: &TextView) -> Self {
-    Self {
-      style: view.params.style,
-      wrap:  view.params.wrap,
-    }
+impl From<&TextParams> for Style {
+  fn from(t: &TextParams) -> Self {
+    t.style
   }
 }
 
 
-impl Default for TextStyleParams {
+impl Default for TextParams {
   fn default() -> Self {
     Self {
       style: Style::default(),
@@ -62,24 +146,7 @@ impl Default for TextStyleParams {
 }
 
 
-impl std::ops::Deref for TextStyleParams {
-  type Target = Style;
-  fn deref(&self) -> &Self::Target {
-    &self.style
-  }
-}
-
-
-impl TextStyleParams {
-  pub fn get_view(self, string: &str, width: usize) -> TextView {
-    TextView {
-      matrix: self.get_matrix(string, width),
-      params: self,
-      string: string.into(),
-    }
-  }
-
-
+impl TextParams {
   // split at spaces within width and split at lines
   pub fn get_matrix(&self, string: &str, width: usize) -> Vec<Vec<char>> {
     if string.len() == 0 {
@@ -99,167 +166,77 @@ impl TextStyleParams {
 }
 
 
-#[derive(Default, Debug)]
-pub struct PageParams {
-  pub edit:       bool,
-  pub style:      Style,
-  pub style_vec:  Vec<TextStyleParams>,
-  pub string_vec: Vec<String>,
-}
-
-
-impl PageParams {
-  pub fn init() -> Self {
-    Self::default()
-  }
-
-
-  pub fn edit(mut self, b: bool) -> Self {
-    self.edit = b; self 
-  }
-
-
-  pub fn set_style(&mut self, style: impl Into<Style>) {
-    self.style = style.into();
-  }
-
-
-  pub fn with_style(mut self, style: impl Into<Style>) -> Self {
-    self.set_style(style);
-    self
-  }
-
-
-  pub fn set_text_styles(&mut self, styles: Vec<TextStyleParams>) 
-    -> Result<(), String> 
-  {
-    if styles.len() < self.string_vec.len() {
-      Err("styles vec shorter than string vec".into())
-    } else {
-      self.style_vec = styles;
-      Ok(())
-    }
-  }
-
-
-  pub fn with_text_styles(mut self, styles: Vec<TextStyleParams>) 
-    -> Result<Self, String> 
-  {
-    self.set_text_styles(styles).map(|_| self)
-  }
-
-
-  pub fn set_text(&mut self, text: &[impl std::fmt::Display]) {
-    self.string_vec = text.iter().map(|t| t.to_string()).collect();
-    self.style_vec  = self.string_vec.iter()
-      .map(|t| TextStyleParams::default()).collect();
-  }
-
-
-  pub fn with_text(mut self, text: &[impl std::fmt::Display]) -> Self {
-    self.set_text(text);
-    self
-  }
-
-
-  pub fn set_styled_text<T, F>(&mut self, text: &[T], get_text_style: F)
-  where T: std::fmt::Display,
-        F: Fn(&T) -> TextStyleParams,
-  {
-    self.string_vec = text.iter().map(|t| t.to_string()).collect();
-    self.style_vec  = text.iter().map(|t| get_text_style(t)).collect();
-  }
-
-
-  pub fn with_styled_text<T, F>(mut self, text: &[T], get_text_style: F) 
-    -> Self 
-  where T: std::fmt::Display,
-        F: Fn(&T) -> TextStyleParams,
-  {
-    self.set_styled_text(text, get_text_style);
-    self
-  }
-
-
-  pub fn build(&self, width: u16) -> Page {
-    let width = usize::from(width);
-    let (indexes, matrix): (Vec<usize>, Vec<Vec<char>>) = self.style_vec
-      .iter()
-      .zip(self.string_vec.iter())
-      .enumerate()
-      .flat_map(|(idx, (style, string))| 
-        style
-          .get_matrix(string, width)
-          .into_iter()
-          .map(move |text| (idx, text))
-      ).unzip();
-    let matrix = if self.edit {
-      PointMatrix::from(matrix).editor()
-    } else {
-      PointMatrix::from(matrix)
-    };
-    Page { indexes, matrix }
-  }
-
-
-  pub fn rebuild(&self, page: &mut Page, width: u16) {
-    let linear_head = page.matrix.get_linear_head();
-    page.matrix = PointMatrix::default();
-    let new_page = self.build(width);
-    page.matrix = new_page.matrix;
-    page.matrix.set_linear_head(linear_head);
-  }
-
-
-  pub fn get_string(&self, page: &Page) -> &str {
-    self.string_vec
-      .get(*page.matrix.point.y)
-      .map(|s| s.as_str())
-      .unwrap_or("empty")
-  }
-
-
-  pub fn draw(
-    &self, 
-    scroll:     &Page,
-    point_view: &PointView, 
-    writer:     &mut impl std::io::Write
-  ) -> std::io::Result<()> {
-    scroll.draw(&self.style, &self.style_vec, point_view, writer)
-  }
-}
-
-
-impl PointMatrix<char> {
-}
-
-
-#[derive(Default)]
-pub struct Page {
+pub struct Page<T> {
+  pub max: Option<u16>,
+  pub draw_point: bool,
+  pub style: Style,
+  pub edit: bool,
+  pub point_view: PointView,
+  pub styles: Vec<TextParams>,
+  pub source: Vec<T>,
+  pub matrix: PointMatrix<char>, 
   pub indexes: Vec<usize>,
-  pub matrix:  PointMatrix<char>, 
 }
 
 
-impl Page {
-  pub fn rebuild(&mut self, source: &PageParams, width: u16) {
-    let linear_head = self.matrix.get_linear_head();
-    let page = source.build(width);
-    self.indexes = page.indexes;
-    self.matrix  = page.matrix;
-    self.matrix.set_linear_head(linear_head);
-  }
-
-
+impl<T> Page<T> {
   pub fn get_index(&self) -> usize {
-    self.indexes.get(*self.matrix.point.y)
+    self.indexes.get(self.matrix.point.y.head)
       .map(|u| u.clone())
       .unwrap_or(usize::MIN)
   }
 
 
   pub fn get_string(&self) -> Option<String> {
-    self.matrix.matrix.get(*self.matrix.point.y).map(|c| c.iter().collect())
+    self.matrix.matrix.get(self.matrix.point.y.head)
+      .map(|c| c.iter().collect())
+  }
+
+
+  pub fn delete(&mut self) {
+    self.matrix.delete();
+    self.point_view.update(&self.matrix.point);
+  }
+
+
+  pub fn backspace(&mut self) {
+    self.matrix.backspace();
+    self.point_view.update(&self.matrix.point);
+  }
+
+
+  pub fn insert(&mut self, ch: char) {
+    self.matrix.insert(ch);
+    self.point_view.update(&self.matrix.point);
+  }
+
+
+  pub fn move_left(&mut self, delta: usize) {
+    self.matrix.move_left(delta);
+    self.point_view.update(&self.matrix.point);
+  }
+
+
+  pub fn move_right(&mut self, delta: usize) {
+    self.matrix.move_right(delta);
+    self.point_view.update(&self.matrix.point);
+  }
+
+
+  pub fn move_down(&mut self, delta: usize) {
+    self.matrix.move_down(delta);
+    self.point_view.update(&self.matrix.point);
+  }
+
+
+  pub fn move_up(&mut self, delta: usize) {
+    self.page.matrix.move_up(delta);
+    self.point_view.update(&self.matrix.point);
+  }
+
+
+  pub fn get_source(&self) -> Option<&T> {
+    self.source.get(self.matrix.point.y.head)
   }
 
 
@@ -271,52 +248,105 @@ impl Page {
       .take(usize::from(axis.size))
       .collect()
   }
+}
 
 
-  pub fn draw(
-    &self, 
-    style:      &Style,
-    style_vec:  &[TextStyleParams],
-    point_view: &PointView, 
-    writer:     &mut impl std::io::Write,
-  ) 
+impl<T: std::fmt::Display> Page<T> {
+  pub fn get_param_string(&self) -> &String {
+    self.source
+      .get(self.get_index())
+      .map(|s| &s.to_string())
+      .unwrap_or(&"".to_string())
+  }
+}
+
+
+impl<T: std::fmt::Display> View for Page<T> {
+  fn get_height(&self) -> u16 {
+    self.matrix.matrix.get_height().min(self.max.unwrap_or(u16::MAX))
+  }
+  
+
+  fn resize(&mut self, rect: &Rect) {
+    self.point_view.resize(&self.matrix.point, rect);
+  }
+
+
+  fn draw(&self, writer: &mut impl std::io::Write) 
     -> std::io::Result<()> 
   {
     use crossterm::{QueueableCommand, cursor, style};
     use unicode_width::UnicodeWidthChar;
 
-    let (mut x, mut y) = point_view.pos().into();
+    let (mut x, mut y) = self.point_view.pos().into();
 
     writer
       .queue(cursor::MoveTo(x, y))?
       .queue(style::SetAttribute(style::Attribute::Reset))?
-      .queue(&style)?;
+      .queue(&self.style)?;
 
-    for (index, line) in self.get_view(point_view.get_y_view()) {
-      writer.queue(Style::from(
-        style_vec.get(*index).unwrap_or(&TextStyleParams::default())
-      ))?;
+    for (index, line) in self.get_view(self.point_view.get_y_view()) {
+      writer.queue(
+        self.styles
+          .get(*index)
+          .map(|t| Style::from(t))
+          .unwrap_or_default()
+      )?;
 
-      for (w, c) in point_view.get_x_view().get_weighted_view(line) {
+      for (w, c) in self.point_view
+        .get_x_view()
+        .get_weighted_view(line) 
+      {
         writer.queue(style::Print(c))?;
         x += w;
       }
 
       writer
         .queue(style::SetAttribute(style::Attribute::Reset))?
-        .queue(&style)?;
+        .queue(&self.style)?;
 
-      for _ in x..point_view.get_rect().x_end() {
+      for _ in x..self.point_view.get_rect().x_end() {
         writer.queue(style::Print(' '))?;
       }
 
-      x = point_view.pos().x(); 
+      x = self.point_view.pos().x(); 
       y += 1; 
       writer.queue(cursor::MoveTo(x, y))?;
     }
 
     writer.queue(style::SetAttribute(style::Attribute::Reset))?;
 
+    if self.draw_point {
+      self.point_view.draw(writer)?;
+    }
+
     Ok(())
+  }
+
+
+  fn rebuild(&mut self, width: u16) {
+    let linear_head = self.matrix.get_linear_head();
+    let width = usize::from(width);
+
+    let (indexes, matrix): (Vec<usize>, Vec<Vec<char>>) = self.styles
+      .iter()
+      .zip(self.source.iter())
+      .enumerate()
+      .flat_map(|(idx, (style, source))| 
+        style
+          .get_matrix(&source.to_string(), width)
+          .into_iter()
+          .map(move |text| (idx, text))
+      ).unzip();
+
+    let matrix = if self.edit {
+      PointMatrix::from(matrix).editor()
+    } else {
+      PointMatrix::from(matrix)
+    };
+
+    self.indexes = indexes;
+    self.matrix = matrix;
+    self.matrix.set_linear_head(linear_head);
   }
 }

@@ -7,7 +7,7 @@ use crate::{
   FrameParams,
   GemTag, 
   GemText,
-  TextStyleParams,
+  TextParams,
   Rect,
   DialogParams,
   constants::*,
@@ -83,12 +83,12 @@ pub fn get_styles_file(name: &str) -> String {
 
 #[derive(Debug)]
 pub struct SystemParams {
-  pub timeout:        u64,
-  pub save_file:      String,
-  pub init_url:       String,
-  pub style:          SystemStyleParams,
-  pub keys:           SystemControlParams,
-  pub urls:           Vec<String>,
+  pub timeout: u64,
+  pub save_file: String,
+  pub init_url: String,
+  pub style: SystemStyleParams,
+  pub keys: SystemControlParams,
+  pub urls: Vec<String>,
 } 
 
 

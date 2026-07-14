@@ -61,10 +61,10 @@ impl std::str::FromStr for Action {
 
 
 impl Action {
-  pub fn update(&self, view: &mut crate::PageView) {
+  pub fn update(&self, view: &mut crate::Page) {
     match self {
-      Action::PageDown  => {view.move_down(15);}
-      Action::PageUp    => {view.move_up(15);}
+      Action::PageDown  => {view.move_down(view.point_view.height());}
+      Action::PageUp    => {view.move_up(view.point_view.height());}
       Action::Bottom    => {view.move_down(view.page.matrix.matrix.len());}
       Action::Top       => {view.move_up(view.page.matrix.matrix.len());}
       Action::MoveDown  => {view.move_down(1);}
@@ -76,7 +76,7 @@ impl Action {
   }
 
 
-  pub fn update_edit(&self, textbox: &mut crate::PageView) {
+  pub fn update_edit(&self, textbox: &mut crate::Page) {
     match self {
       Action::PageDown  => {textbox.move_left(15);}
       Action::PageUp    => {textbox.move_right(15);}

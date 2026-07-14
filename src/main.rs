@@ -27,6 +27,7 @@ mod constants;
 pub use crate::dlg::{
   DialogParams,
   DlgType,
+  Dialog,
 };
 pub use crate::userkeys::{
   SystemControlParams,
@@ -44,20 +45,15 @@ pub use crate::color::{
   Style, 
 };
 pub use crate::page::{
-  TextStyleParams, 
-  PageParams,
+  TextParams, 
   Page,
+  PageParams,
 };
 pub use crate::frame::{
   Frame,
   FrameParams,
   BorderParams, 
   MarginParams, 
-};
-pub use crate::layout::{
-  Layout,
-  PageView,
-  PageViewParams,
 };
 pub use crate::user::{
   SystemParams,
@@ -69,16 +65,13 @@ pub use crate::cursor::{
   Cursor, 
   PointMatrix,
   CursorVec,
-  MoveCommand,
-  RemoveCommand,
-  InsertCommand,
   Point,
   PointView,
   CursorView,
 };
 pub use crate::tab::{
   Tab, 
-  TaggedTab, 
+  View,
 };
 pub use crate::rect::{
   Pos, 
@@ -96,25 +89,30 @@ pub use crate::gemini::{
 fn main() -> std::io::Result<()> {
   use crossterm::{QueueableCommand, terminal, event, cursor};
   use std::io::Write;
+
   // initialize app
   let mut app = {
     let args = std::env::args().collect::<Vec<String>>();
     let init = match args.get(1) {
-      None       => constants::INIT_FILE.into(),
+      None => constants::INIT_FILE.into(),
       Some(init) => user::get_init_file(init),
     };
     let (w, h) = terminal::size()?;
     app::App::init(&init, w, h)
   };
   let mut stdout = std::io::stdout();
+
   // register all keystrokes 
   terminal::enable_raw_mode()?;
+
   // handle line wrapping manually
   stdout
     .queue(terminal::EnterAlternateScreen)?
     .queue(terminal::DisableLineWrap)?;
+
   // initial display
   app.draw(&mut stdout)?;
+
   // break on control-c
   while !app.quit {
     if app.join_request() {
@@ -127,6 +125,7 @@ fn main() -> std::io::Result<()> {
       } 
     } 
   }
+
   // return terminal to normal state
   stdout
     .queue(terminal::LeaveAlternateScreen)?

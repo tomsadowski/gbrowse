@@ -6,7 +6,7 @@ use crate::{
   Rect, 
   MarginParams,
   BorderParams,
-  TextStyleParams,
+  TextParams,
   GemTag,
   GemText,
   Frame,
@@ -23,18 +23,18 @@ pub struct SystemStyleParams {
   pub text_margin:     MarginParams,
   pub screen_margin:   MarginParams,
   pub border:          Option<BorderParams>,
-  pub general:         TextStyleParams,
-  pub banner:          TextStyleParams,
-  pub info:            TextStyleParams,
-  pub text:            TextStyleParams,
-  pub heading3:        TextStyleParams,
-  pub heading2:        TextStyleParams,
-  pub heading1:        TextStyleParams,
-  pub preformat:       TextStyleParams,
-  pub link:            TextStyleParams,
-  pub error:           TextStyleParams,
-  pub quote:           TextStyleParams,
-  pub list:            TextStyleParams,
+  pub general:         TextParams,
+  pub banner:          TextParams,
+  pub info:            TextParams,
+  pub text:            TextParams,
+  pub heading3:        TextParams,
+  pub heading2:        TextParams,
+  pub heading1:        TextParams,
+  pub preformat:       TextParams,
+  pub link:            TextParams,
+  pub error:           TextParams,
+  pub quote:           TextParams,
+  pub list:            TextParams,
 } 
 
 
@@ -59,12 +59,12 @@ impl SystemStyleParams {
   }
 
 
-  pub fn get_style_from_gem_text(&self, text: &GemText) -> TextStyleParams {
+  pub fn get_style_from_gem_text(&self, text: &GemText) -> TextParams {
     self.get_style_from_gem_tag(&text.tag)
   }
 
 
-  pub fn get_style_from_gem_tag(&self, tag: &GemTag) -> TextStyleParams {
+  pub fn get_style_from_gem_tag(&self, tag: &GemTag) -> TextParams {
     match tag {
       GemTag::HeadingOne   => self.heading1.into(),
       GemTag::HeadingTwo   => self.heading2.into(),
@@ -88,7 +88,7 @@ impl Assign for SystemStyleParams {
         self.border = Some(BorderParams::default().read_table(v)?);
       }
       (StyleTableField::Text(f), Value::Table(v)) => {
-        let v = TextStyleParams::default().read_table(v)?;
+        let v = TextParams::default().read_table(v)?;
         match f {
           StyleTextField::General   => self.general   = v,
           StyleTextField::Banner    => self.banner    = v,
@@ -134,7 +134,7 @@ impl Assign for Style {
       }
       (StyleField::Attribute(f), Value::Boolean(v)) => {
         match f {
-          AttributeField::Bold      => self.bold      = v,
+          AttributeField::Bold => self.bold = v,
           AttributeField::Underline => self.underline = v,
         }
       }
@@ -157,8 +157,8 @@ impl Assign for MarginParams {
         match f {
           MarginParamsField::North => self.north = v,
           MarginParamsField::South => self.south = v,
-          MarginParamsField::East  => self.east  = v,
-          MarginParamsField::West  => self.west  = v,
+          MarginParamsField::East => self.east = v,
+          MarginParamsField::West => self.west = v,
         }
       }
       (f, v) => return Err(
@@ -200,23 +200,23 @@ impl Assign for BorderParams {
       (BorderParamsField::Bracket, Value::String(v)) => {
         match v.as_str() {
           "space" => {
-            self.open  = ' ';
+            self.open = ' ';
             self.close = ' ';
           }
           "tortoise" | "tort" | "t" => {
-            self.open  = OPEN_TORT;
+            self.open = OPEN_TORT;
             self.close = CLOSE_TORT;
           }
           "integral" | "int"  | "i" | "j" | "J" => {
-            self.open  = OPEN_INT;
+            self.open = OPEN_INT;
             self.close = CLOSE_INT;
           }
           "square" | "sqr" => {
-            self.open  = OPEN_SQR;
+            self.open = OPEN_SQR;
             self.close = CLOSE_SQR;
           }
           "E" | "e" => {
-            self.open  = OPEN_E;
+            self.open = OPEN_E;
             self.close = CLOSE_E;
           }
           s => return Err(
@@ -233,7 +233,7 @@ impl Assign for BorderParams {
 }
 
 
-impl Assign for TextStyleParams {
+impl Assign for TextParams {
   type Field = TextStyleParamsField;
 
   fn assign(&mut self, f: Self::Field, v: Value) -> Result<(), String> {
@@ -335,8 +335,8 @@ impl std::str::FromStr for MarginParamsField {
     match s {
       "north" | "n" => Ok(Self::North),
       "south" | "s" => Ok(Self::South),
-      "east"  | "e" => Ok(Self::East),
-      "west"  | "w" => Ok(Self::West),
+      "east" | "e" => Ok(Self::East),
+      "west" | "w" => Ok(Self::West),
       s => Err(format!("Margin table does not contain field {s}")),
     }
   }
@@ -355,9 +355,9 @@ impl std::str::FromStr for StyleField {
 
   fn from_str(s: &str) -> Result<Self, Self::Err> {
     match s {
-      "fg"        => Ok(Self::Color(ColorField::Fg)),
-      "bg"        => Ok(Self::Color(ColorField::Bg)),
-      "bold"      => Ok(Self::Attribute(AttributeField::Bold)),
+      "fg" => Ok(Self::Color(ColorField::Fg)),
+      "bg" => Ok(Self::Color(ColorField::Bg)),
+      "bold" => Ok(Self::Attribute(AttributeField::Bold)),
       "underline" => Ok(Self::Attribute(AttributeField::Underline)),
       s => Err(format!("Style table does not contain field {s}")),
     }
@@ -378,7 +378,7 @@ impl std::str::FromStr for TextStyleParamsField {
   fn from_str(s: &str) -> Result<Self, Self::Err> {
     match s {
       "wrap" => Ok(Self::Wrap),
-      s      => StyleField::from_str(s).map(|s| Self::Style(s))
+      s => StyleField::from_str(s).map(|s| Self::Style(s))
     }
   }
 }
@@ -394,9 +394,9 @@ impl std::str::FromStr for BorderParamsField {
 
   fn from_str(s: &str) -> Result<Self, Self::Err> {
     match s {
-      "corner"  => Ok(Self::Corner),
+      "corner" => Ok(Self::Corner),
       "bracket" => Ok(Self::Bracket),
-      s         => StyleField::from_str(s).map(|s| Self::Style(s))
+      s => StyleField::from_str(s).map(|s| Self::Style(s))
     }
   }
 }

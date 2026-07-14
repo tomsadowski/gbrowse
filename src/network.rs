@@ -1,18 +1,17 @@
 // src/network.rs
 
-use std::{sync, thread};
+use std::{sync::mpsc, thread};
 
 
 pub struct Request {
-  pub url:    url::Url,
-  pub rx:     sync::mpsc::Receiver<Result<(String, String), String>>,
+  pub url: url::Url,
+  pub rx: mpsc::Receiver<Result<(String, String), String>>,
   pub handle: thread::JoinHandle<()>,
 }
 
 
 impl Request {
   pub fn new(url: &url::Url, timeout: u64) -> Self {
-    use sync::mpsc;
     let (tx, rx)  = mpsc::channel::<Result<(String, String), String>>();
     let url_clone = url.clone();
     let handle = thread::spawn(

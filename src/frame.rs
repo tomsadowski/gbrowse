@@ -3,6 +3,7 @@
 use crate::{
   Rect, 
   Style,
+  constants::*,
 };
 
 
@@ -57,7 +58,6 @@ pub struct BorderParams {
 
 impl Default for BorderParams {
   fn default() -> Self {
-    use crate::constants::*;
     Self {
       style: Style::default(),
       x:     X_LINE,
@@ -132,11 +132,14 @@ impl FrameParams {
 
 
   pub fn build_from_inner(&self, rect: &Rect) -> Frame {
-    let inner_rect  = rect.clone();
-    let outer_rect  = self.text_margin.get_from_inner(&inner_rect);
+    let inner_rect = rect.clone();
+    let outer_rect = self.text_margin.get_from_inner(&inner_rect);
     let border_rect = 
-      if let None = self.border { outer_rect } 
-      else { outer_rect.shift_x(1).shift_y(1) };
+      if let None = self.border { 
+        outer_rect 
+      } else { 
+        outer_rect.shift_x(1).shift_y(1)
+      };
     let screen = self.screen_margin.get_from_inner(&border_rect);
     Frame {
       style: self.clone(),
@@ -151,9 +154,12 @@ impl FrameParams {
   pub fn build_from_outer(&self, rect: &Rect) -> Frame {
     let border_rect = self.screen_margin.get_from_outer(rect);
     let outer_rect = 
-      if let None = self.border { border_rect } 
-      else { border_rect.shift_x(-1).shift_y(-1) };
-    let inner_rect  = self.text_margin.get_from_outer(&outer_rect);
+      if let None = self.border {
+        border_rect
+      } else {
+        border_rect.shift_x(-1).shift_y(-1)
+      };
+    let inner_rect = self.text_margin.get_from_outer(&outer_rect);
     Frame {
       style: self.clone(),
       screen: rect.clone(),

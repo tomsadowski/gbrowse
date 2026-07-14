@@ -3,11 +3,13 @@
 use crate::{
   user,
   SystemParams, 
-  TextStyleParams,
-  Layout,
-  PageViewParams,
+  TextParams,
   PageParams,
+  FrameParams,
+  Page,
+  Rect,
   Frame,
+  View,
   constants::*,
 };
 
@@ -18,96 +20,111 @@ pub enum DlgType {
 }
 
 
-pub fn remove(layout: &mut Layout) {
-  layout.remove_list(DLG_1);
-  layout.remove_list(DLG_2);
-}
-
-
 pub struct DialogParams<'a> {
   params: &'a SystemParams, 
-  header: PageViewParams,
-  body: PageViewParams,
+  frame: FrameParams,
+  dlg_type: DlgType,
+  header: PageParams,
+  body: PageParams,
 }
 
 
 impl<'a> From<&'a SystemParams> for DialogParams<'a> {
   fn from(user: &'a SystemParams) -> Self {
     Self {
-      header: PageViewParams::default(),
-      body: PageViewParams::default(),
+      frame: FrameParams::default(),
+      header: PageParams::default(),
+      body: PageParams::default(),
+      dlg_type: DlgType::Ack,
       params: user
     }
   }
 }
 
+
 impl<'a> DialogParams<'a> { 
   pub fn prompt(mut self, prompt: &str) -> Self {
     self.header = PageParams::init()
-      .with_text(&vec![prompt.to_string()])
-      .with_style(&self.params.style.info)
-      .into();
+      .text(vec![prompt.to_string()])
+      .style(&self.params.style.info)
+      .max(2);
     self
   }
 
 
-  pub fn ack(mut self, layout: &mut Layout) -> DlgType {
-    self.body = PageViewParams::from(
-      PageParams::init()
-        .with_text(&vec![format!("Press any key to acknowledge")])
-        .with_style(&self.params.style.info)
-    )
-    .with_frame_params(self.params.style.get_dialog_frame_params());
-    layout.insert(DLG_1, self.header);
-    layout.insert(DLG_2, self.body);
-    DlgType::Ack
+  pub fn ack(mut self) -> Self {
+    self.body = PageParams::init()
+      .text(vec![format!("Press any key to acknowledge")])
+      .style(&self.params.style.info);
+    self.dlg_type = DlgType::Ack;
+    self
   }
 
 
-  pub fn ask(mut self, layout: &mut Layout) -> DlgType {
+  pub fn ask(mut self) -> Self {
     let guide = format!(
       "{} yes {} no", self.params.keys.yes, self.params.keys.no
     );
-    self.body = PageViewParams::from(
-      PageParams::init()
-        .with_text(&vec![guide])
-        .with_style(&self.params.style.info)
-    )
-    .with_frame_params(self.params.style.get_dialog_frame_params());
-    layout.insert(DLG_1, self.header);
-    layout.insert(DLG_2, self.body);
-    DlgType::Ask
+    self.body = PageParams::init()
+      .text(vec![guide])
+      .style(&self.params.style.info);
+    self.dlg_type = DlgType::Ask;
+    self
   }
 
 
-  pub fn edit(mut self, text: &str, layout: &mut Layout) -> DlgType {
-    self.body = 
-      PageViewParams::from(
-        PageParams::init()
-          .with_text(&vec![text])
-          .with_style(&self.params.style.info)
-          .edit(true)
-      )
-      .with_frame_params(self.params.style.get_dialog_frame_params())
-      .with_draw_point(true);
-    layout.insert(DLG_1, self.header);
-    layout.insert(DLG_2, self.body);
-    DlgType::Edit
+  pub fn edit(mut self, text: &str) -> Self {
+    self.body = PageParams::init()
+      .text(vec![text])
+      .style(&self.params.style.info)
+      .edit(true)
+      .draw_point(true);
+    self.dlg_type = DlgType::Edit;
+    self
   }
 
 
-  pub fn select(mut self, options: Vec<String>, layout: &mut Layout) 
-    -> DlgType 
-  {
-    self.body = PageViewParams::from(
-      PageParams::init()
-        .with_text(&options)
-        .with_style(&self.params.style.info)
-      )
-      .with_frame_params(self.params.style.get_dialog_frame_params())
-      .with_draw_point(true);
-    layout.insert(DLG_1, self.header);
-    layout.insert(DLG_2, self.body);
-    DlgType::Select
+  pub fn select(mut self, options: Vec<String>) -> Self {
+    self.body = PageParams::init()
+      .text(options)
+      .style(&self.params.style.info)
+      .draw_point(true);
+    self.dlg_type = DlgType::Select;
+    self
+  }
+}
+
+impl BuildView<Dialog> for DialogParams {
+  fn build(self, rect: &Rect) -> Dialog {
+
+  }
+}
+
+
+pub struct Dialog {
+  pub frame: Frame,
+  pub dlg_type: DlgType,
+  pub header: Page<String>,
+  pub body: Page<String>,
+}
+
+
+impl View for Dialog {
+  fn get_height(&self) -> u16 {
+    0
+  }
+
+
+  fn resize(&mut self, rect: &Rect) {
+  }
+
+
+
+  fn rebuild(&mut self, rect: &Rect) {
+  }
+
+
+  fn draw(&self, w: &mut std::io::Stdout) -> std::io::Result<()> {
+    Ok(())
   }
 }
