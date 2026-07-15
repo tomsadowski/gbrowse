@@ -12,7 +12,8 @@ use crate::{
   get_heights,
   resize_views,
   build_views,
-  View,
+  Draw,
+  Resize,
   BuildView,
   GetHeight,
   constants::*,
@@ -136,7 +137,17 @@ impl GetHeight for Dialog {
 }
 
 
-impl View for Dialog {
+impl Draw for Dialog {
+  fn draw(&self, w: &mut impl std::io::Write) -> std::io::Result<()> {
+    self.frame.draw(w)?;
+    self.header.draw(w)?;
+    self.body.draw(w)?;
+    Ok(())
+  }
+}
+
+
+impl Resize for Dialog {
   fn resize(&mut self, rect: &Rect) {
     let frame = self.frame.params.build_from_outer(rect);
     resize_views(&frame.inner_rect, vec![&mut self.header, &mut self.body]);
@@ -144,10 +155,5 @@ impl View for Dialog {
     let mut inner = frame.inner_rect.clone();
     inner.h = self.header.get_height() + self.body.get_height();
     self.frame = self.frame.params.build_from_inner(&inner);
-  }
-
-
-  fn draw(&self, w: &mut impl std::io::Write) -> std::io::Result<()> {
-    Ok(())
   }
 }

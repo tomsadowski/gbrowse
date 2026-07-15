@@ -7,6 +7,7 @@ use crate::{
   user,
   SystemParams, 
   CursorVec,
+  AppView,
   Tab,
   TextParams,
   BuildView,
@@ -54,7 +55,7 @@ pub enum Focus {
 pub struct App {
   pub params:      SystemParams,
   pub tabs:        CursorVec<Tab>,
-  pub layout:      Llllayayayout,
+  pub view:        AppView,
   pub focus:       Focus,
   pub request:     Option<Request>,
   pub guide:       String,
@@ -66,10 +67,8 @@ pub struct App {
 impl App {
   pub fn init(path: &str, w: u16, h: u16) -> Self {
     let user_text = std::fs::read_to_string(path).unwrap_or_default();
-    let user: SystemParams = user_from_str(&user_text).unwrap_or_default();
-    let layout = Llllayayayout::from(Rect::from(Dim(w, h)))
-      .with_frame_params(user.style.get_frame_params());
-
+    let params: SystemParams = user_from_str(&user_text).unwrap_or_default();
+    let view = AppView::new(&Rect::from(Dim(w, h)), &params);
     let mut app = Self {
       guide:       "".into(),
       tabs:        CursorVec::default(),
@@ -77,8 +76,8 @@ impl App {
       focus:       Focus::Tab,
       clear:       true,
       quit:        false,
-      layout,
-      params: user,
+      view,
+      params,
     };
 
     match url::Url::parse(&app.params.init_url) {
@@ -99,9 +98,9 @@ impl App {
   pub fn focus_tabs(&mut self) {
     self.focus = Focus::Tab;
     self.guide = format!("Press {} for menu", self.params.keys.menu);
-    self.layout.remove_list(DLG_1);
-    self.layout.remove_list(DLG_2);
-    self.layout.flush();
+    self.view.remove_list(DLG_1);
+    self.view.remove_list(DLG_2);
+    self.view.flush();
   }
 
 
@@ -110,34 +109,34 @@ impl App {
       self.params.dlg(&prompt).ack().build(&Rect::from(Dim(1, 1))).dlg_type,
       Task::Default
     );
-    self.layout.flush();
+    self.view.flush();
   }
 
 
   fn ask_dlg(&mut self, task: Task, prompt: &str) {
     self.focus = Focus::Dlg(
-      self.params.dlg(&prompt).ask(&mut self.layout),
+      self.params.dlg(&prompt).ask(&mut self.view),
       task
     );
-    self.layout.flush();
+    self.view.flush();
   }
 
 
   fn edit_dlg(&mut self, task: Task, prompt: &str, text: &str) {
     self.focus = Focus::Dlg(
-      self.params.dlg(&prompt).edit(text, &mut self.layout),
+      self.params.dlg(&prompt).edit(text, &mut self.view),
       task
     );
-    self.layout.flush();
+    self.view.flush();
   }
 
 
   fn select_dlg(&mut self, task: Task, prompt: &str, options: Vec<String>) {
     self.focus = Focus::Dlg(
-      self.params.dlg(&prompt).select(options, &mut self.layout),
+      self.params.dlg(&prompt).select(options, &mut self.view),
       task
     );
-    self.layout.flush();
+    self.view.flush();
   }
 
 
@@ -164,11 +163,11 @@ impl App {
       _ => {
         self.tabs.add_gem_tab(
           &self.params,
-          &mut self.layout,
+          &mut self.view,
           &url, 
           gemini::parse_doc(&content), 
         );
-        self.layout.flush();
+        self.view.flush();
       }
     }
   }
@@ -216,11 +215,11 @@ impl App {
 
   pub fn push_style(&mut self) {
     self.tabs.push_gem_style(
-      &mut self.layout,
+      &mut self.view,
       &self.params.style.general,
-      |gem| self.params.style.get_style_from_gem_tag(gem)
+      |gem| self.params.style.get_gem_tag_params(gem)
     );
-    self.layout.flush();
+    self.view.flush();
   }
 
 
@@ -247,12 +246,12 @@ impl App {
     if let Msg::Quit = message {
       self.quit = true;
     } else if let Msg::Resize(w, h) = message {
-      self.layout.resize(Rect::from(Dim(*w, *h)));
+      self.view.resize(Rect::from(Dim(*w, *h)));
     } 
     else if 
       let Msg::Action(action) = message &&
       let Focus::Tab = &mut self.focus &&
-      let Some(view) = self.layout.map
+      let Some(view) = self.view.map
         .get_mut(&TAB)
         .and_then(|l| l.get_current_mut())
     {
@@ -287,12 +286,12 @@ impl App {
         Action::CycleLeft => {
           let cmd = self.tabs.move_wrapped(-1);
           //self.layout.apply_move(TAB, cmd);
-          self.layout.flush();
+          self.view.flush();
         }
         Action::CycleRight => {
           let cmd = self.tabs.move_wrapped(1);
           //self.layout.apply_move(TAB, cmd);
-          self.layout.flush();
+          self.view.flush();
         }
         Action::LoadUrl => self.select_dlg(
           Task::NewTab, "Choose URL: ", self.params.urls.clone(),
@@ -316,7 +315,7 @@ impl App {
     else if 
       let Msg::Action(action) = message &&
       let Focus::Dlg(dlg_type, task) = &mut self.focus &&
-      let Some(view) = self.layout.map
+      let Some(view) = self.view.map
         .get_mut(&DLG_2)
         .and_then(|l| l.get_current_mut())
     {
@@ -524,12 +523,12 @@ impl App {
     w.queue(cursor::Hide)?;
     if self.clear {
       w.queue(terminal::Clear(terminal::ClearType::All))?;
-      self.layout.frame.draw(w)?;
+      self.view.frame.draw(w)?;
     }
     let banner_text = self.tabs.get_banner_text();
-    self.layout.frame.draw_banner(&banner_text, w)?;
-    self.layout.frame.draw_footer(&self.guide, w)?;
-    self.layout.draw(w)?;
+    self.view.frame.draw_banner(&banner_text, w)?;
+    self.view.frame.draw_footer(&self.guide, w)?;
+    self.view.draw(w)?;
     w.flush()
   }
 }

@@ -11,6 +11,7 @@ mod userkeys;
 mod userstyle;
 mod cursor;
 mod tab;
+mod view;
 mod dlg;
 mod color;
 mod rect;
@@ -41,6 +42,9 @@ pub use crate::network::{
 pub use crate::action::{
   Action,
 };
+pub use crate::view::{
+  AppView,
+};
 pub use crate::color::{
   Style, 
 };
@@ -70,7 +74,8 @@ pub use crate::cursor::{
   CursorView,
 };
 pub use crate::layout::{
-  View,
+  Resize,
+  Draw,
   BuildView,
   GetHeight,
   get_heights,
@@ -79,6 +84,7 @@ pub use crate::layout::{
 };
 pub use crate::tab::{
   Tab, 
+  TabText,
 };
 pub use crate::rect::{
   Pos, 

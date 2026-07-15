@@ -16,13 +16,23 @@ use crate::{
 
 
 
-pub trait BuildView<T> where T: View {
+pub trait BuildView<T> where T: Resize {
   fn build(self, _: &Rect) -> T;
 }
 
 
 pub trait GetHeight {
   fn get_height(&self) -> u16;
+}
+
+
+pub trait Draw {
+  fn draw(&self, _: &mut impl std::io::Write) -> std::io::Result<()>;
+}
+
+
+pub trait Resize {
+  fn resize(&mut self, rect: &Rect);
 }
 
 
@@ -33,20 +43,14 @@ impl<T> GetHeight for Vec<T> {
 }
 
 
-pub trait View: GetHeight {
-  fn draw(&self, writer: &mut impl std::io::Write) -> std::io::Result<()>;
-
-
-  fn resize(&mut self, rect: &Rect);
-}
-
-
 pub fn get_heights(vec: &[impl GetHeight]) -> u16 {
   vec.iter().map(|v| v.get_height()).sum()
 }
 
 
-pub fn resize_views(rect: &Rect, views: Vec<&mut impl View>) {
+pub fn resize_views<T: Resize + GetHeight>(
+  rect: &Rect, views: Vec<&mut T>
+) {
   let mut rect = rect.clone();
   for v in views {
     v.resize(&rect);
@@ -55,8 +59,9 @@ pub fn resize_views(rect: &Rect, views: Vec<&mut impl View>) {
 }
 
 
-pub fn build_views<T: View>(rect: &Rect, params: Vec<impl BuildView<T>>) 
-  -> Vec<T>
+pub fn build_views<T: Resize + GetHeight>(
+  rect: &Rect, params: Vec<impl BuildView<T>>
+) -> Vec<T>
 {
   let mut rect = rect.clone();
   let mut views: Vec<T> = vec![];

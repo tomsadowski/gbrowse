@@ -7,14 +7,16 @@ use crate::{
   Frame,
   Cursor, 
   Style, 
+  Draw,
   Dialog,
   CursorVec,
-  View,
+  Resize,
   GetHeight,
   BuildView,
   GemText,
   GemTag,
   Page,
+  PageParams,
   constants::*,
 };
 use url::Url;
@@ -38,7 +40,15 @@ impl std::fmt::Display for TabText {
 }
 
 
-impl Page<TabText> {
+impl PageParams<TabText> {
+  pub fn gem(params: &SystemParams, text: Vec<GemText>) -> Self {
+    let text: Vec<_> = text.into_iter().map(TabText::Gemini).collect();
+    PageParams::init()
+      .style(&params.style.general)
+      .text_styles(
+        text, |t| params.style.get_tab_text_params(t)
+      )
+  }
 }
 
 
@@ -59,105 +69,20 @@ impl GetHeight for CursorVec<Tab> {
 }
 
 
-impl View for CursorVec<Tab> {
+impl Draw for CursorVec<Tab> {
   fn draw(&self, writer: &mut impl std::io::Write) -> std::io::Result<()> {
     if let Some(view) = self.get_current() {
       view.page.draw(writer)?;
     }
     Ok(())
   }
+}
 
 
+impl Resize for CursorVec<Tab> {
   fn resize(&mut self, rect: &Rect) {
     for tab in self.vec.iter_mut() {
       tab.page.resize(rect);
-    }
-  }
-}
-
-
-pub enum Focus {
-  Flash, Dialog, Tabs,
-}
-
-
-pub struct AppView {
-  pub frame: Frame,
-  pub flash: Option<Page<String>>,
-  pub dlg: Option<Dialog>,
-  pub tabs: CursorVec<Tab>,
-}
-
-
-impl AppView {
-  pub fn get_view_list(&mut self) -> Vec<ViewType> {
-    let mut vec: Vec<ViewType> = vec![];
-    if let Some(flash) = &mut self.flash {
-      vec.push(ViewType::Flash(flash));
-    }
-    if let Some(dlg) = &mut self.dlg {
-      vec.push(ViewType::Dialog(dlg));
-    }
-    if let Some(tab) = self.tabs.get_current_mut() {
-      vec.push(ViewType::Tab(&mut tab.page));
-    }
-    vec
-  }
-}
-
-
-pub enum ViewType<'a> {
-  Flash(&'a mut Page<String>),
-  Dialog(&'a mut Dialog),
-  Tab(&'a mut Page<TabText>),
-}
-
-
-impl<'a> GetHeight for ViewType<'a> {
-  fn get_height(&self) -> u16 {
-    match self {
-      Self::Flash(flash) => {
-        flash.get_height()
-      }
-      Self::Dialog(dialog) => {
-        dialog.get_height()
-      }
-      Self::Tab(page) => {
-        page.get_height()
-      }
-    }
-  }
-}
-
-
-impl<'a> View for ViewType<'a> {
-  fn draw(&self, w: &mut impl std::io::Write) -> std::io::Result<()> {
-    match self {
-      Self::Flash(flash) => {
-        flash.draw(w)?;
-      }
-      Self::Dialog(dialog) => {
-        dialog.draw(w)?;
-      }
-      Self::Tab(page) => {
-        page.draw(w)?;
-      }
-    }
-    Ok(())
-  }
-
-
-  fn resize(&mut self, rect: &Rect) {
-    match self {
-      Self::Flash(flash) => {
-        flash.resize(rect)
-      }
-      Self::Dialog(dialog) => {
-        dialog.resize(rect)
-      }
-      Self::Tab(page) => {
-        page.resize(rect)
-      }
     }
   }
 }

@@ -9,8 +9,9 @@ use crate::{
   PointView,
   GetHeight,
   BuildView,
-  View,
+  Resize,
   PointMatrix,
+  Draw,
 };
 
 
@@ -270,7 +271,7 @@ impl<T: std::fmt::Display> GetHeight for Page<T> {
   }
 }
 
-impl<T: std::fmt::Display> View for Page<T> {
+impl<T: std::fmt::Display> Draw for Page<T> {
   fn draw(&self, writer: &mut impl std::io::Write) 
     -> std::io::Result<()> 
   {
@@ -321,8 +322,10 @@ impl<T: std::fmt::Display> View for Page<T> {
 
     Ok(())
   }
+}
 
 
+impl<T: std::fmt::Display> Resize for Page<T> {
   fn resize(&mut self, rect: &Rect) {
     // width has not changed, just resize point_view
     if self.point_view.get_width() == rect.width() {

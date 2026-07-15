@@ -7,6 +7,7 @@ use crate::{
   MarginParams,
   BorderParams,
   TextParams,
+  TabText,
   GemTag,
   GemText,
   Frame,
@@ -59,12 +60,20 @@ impl SystemStyleParams {
   }
 
 
-  pub fn get_style_from_gem_text(&self, text: &GemText) -> TextParams {
-    self.get_style_from_gem_tag(&text.tag)
+  pub fn get_tab_text_params(&self, text: &TabText) -> TextParams {
+    match text {
+      TabText::Gemini(gemtext) => self.get_gem_text_params(gemtext),
+      _ => TextParams::default(),
+    }
   }
 
 
-  pub fn get_style_from_gem_tag(&self, tag: &GemTag) -> TextParams {
+  pub fn get_gem_text_params(&self, text: &GemText) -> TextParams {
+    self.get_gem_tag_params(&text.tag)
+  }
+
+
+  pub fn get_gem_tag_params(&self, tag: &GemTag) -> TextParams {
     match tag {
       GemTag::HeadingOne   => self.heading1.into(),
       GemTag::HeadingTwo   => self.heading2.into(),

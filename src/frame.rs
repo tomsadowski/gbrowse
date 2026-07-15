@@ -3,6 +3,7 @@
 use crate::{
   Rect, 
   Style,
+  Draw,
   constants::*,
 };
 
@@ -261,9 +262,11 @@ impl Frame {
     }
     Ok(())
   }
+}
 
 
-  pub fn draw(&self, w: &mut impl std::io::Write) -> std::io::Result<()> {
+impl Draw for Frame {
+  fn draw(&self, w: &mut impl std::io::Write) -> std::io::Result<()> {
     // border
     if let Some(border) = self.params.border {
       let (ax, ay) = self.border_rect.a().into();

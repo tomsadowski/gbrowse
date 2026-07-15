@@ -1,0 +1,176 @@
+// src/view.rs
+
+use crate::{
+  SystemParams,
+  TextParams, 
+  Rect,
+  Draw,
+  Frame,
+  Cursor, 
+  resize_views,
+  Tab,
+  TabText,
+  Style, 
+  Dialog,
+  CursorVec,
+  Resize,
+  GetHeight,
+  BuildView,
+  GemText,
+  GemTag,
+  Page,
+  constants::*,
+};
+use url::Url;
+
+
+
+pub enum Focus {
+  Flash, Dialog, Tabs,
+}
+
+
+pub struct AppView {
+  pub frame: Frame,
+  pub flash: Option<Page<String>>,
+  pub dlg: Option<Dialog>,
+  pub tabs: CursorVec<Tab>,
+}
+
+
+impl Draw for AppView {
+  fn draw(&self, w: &mut impl std::io::Write) -> std::io::Result<()> {
+    self.frame.draw(w)?;
+    for view in self.get_view_list() {
+      view.draw(w)?;
+    }
+    Ok(())
+  }
+}
+
+
+impl Resize for AppView {
+  fn resize(&mut self, rect: &Rect) {
+    let frame = self.frame.params.build_from_outer(rect);
+    resize_views(
+      &frame.inner_rect, 
+      self.get_view_list_mut().iter_mut().collect()
+    );
+    let mut inner = frame.inner_rect.clone();
+    inner.h = self.get_view_list_mut().iter().map(|v| v.get_height()).sum();
+    self.frame = self.frame.params.build_from_inner(&inner);
+  }
+}
+
+
+impl AppView {
+  pub fn new(rect: &Rect, params: &SystemParams) -> Self {
+    Self {
+      frame: params.style.get_frame_params().build_from_outer(rect),
+      flash: None,
+      dlg: None,
+      tabs: CursorVec::default(),
+    }
+  }
+
+
+  pub fn get_view_list(&self) -> Vec<ViewType> {
+    let mut vec: Vec<ViewType> = vec![];
+    if let Some(flash) = &self.flash {
+      vec.push(ViewType::Flash(flash));
+    }
+    if let Some(dlg) = &self.dlg {
+      vec.push(ViewType::Dialog(dlg));
+    }
+    if let Some(tab) = self.tabs.get_current() {
+      vec.push(ViewType::Tab(&tab.page));
+    }
+    vec
+  }
+
+
+  pub fn get_view_list_mut(&mut self) -> Vec<ViewTypeMut> {
+    let mut vec: Vec<ViewTypeMut> = vec![];
+    if let Some(flash) = &mut self.flash {
+      vec.push(ViewTypeMut::Flash(flash));
+    }
+    if let Some(dlg) = &mut self.dlg {
+      vec.push(ViewTypeMut::Dialog(dlg));
+    }
+    if let Some(tab) = self.tabs.get_current_mut() {
+      vec.push(ViewTypeMut::Tab(&mut tab.page));
+    }
+    vec
+  }
+}
+
+
+pub enum ViewType<'a> {
+  Flash(&'a Page<String>),
+  Dialog(&'a Dialog),
+  Tab(&'a Page<TabText>),
+}
+
+
+impl<'a> GetHeight for ViewType<'a> {
+  fn get_height(&self) -> u16 {
+    match self {
+      Self::Flash(flash) => flash.get_height(),
+      Self::Dialog(dialog) => dialog.get_height(),
+      Self::Tab(page) => page.get_height(),
+    }
+  }
+}
+
+
+impl<'a> Draw for ViewType<'a> {
+  fn draw(&self, w: &mut impl std::io::Write) -> std::io::Result<()> {
+    match self {
+      Self::Flash(flash) => {flash.draw(w)?;}
+      Self::Dialog(dialog) => {dialog.draw(w)?;}
+      Self::Tab(page) => {page.draw(w)?;}
+    }
+    Ok(())
+  }
+}
+
+
+pub enum ViewTypeMut<'a> {
+  Flash(&'a mut Page<String>),
+  Dialog(&'a mut Dialog),
+  Tab(&'a mut Page<TabText>),
+}
+
+
+impl<'a> GetHeight for ViewTypeMut<'a> {
+  fn get_height(&self) -> u16 {
+    match self {
+      Self::Flash(flash) => flash.get_height(),
+      Self::Dialog(dialog) => dialog.get_height(),
+      Self::Tab(page) => page.get_height(),
+    }
+  }
+}
+
+
+impl<'a> Draw for ViewTypeMut<'a> {
+  fn draw(&self, w: &mut impl std::io::Write) -> std::io::Result<()> {
+    match self {
+      Self::Flash(flash) => {flash.draw(w)?;}
+      Self::Dialog(dialog) => {dialog.draw(w)?;}
+      Self::Tab(page) => {page.draw(w)?;}
+    }
+    Ok(())
+  }
+}
+
+
+impl<'a> Resize for ViewTypeMut<'a> {
+  fn resize(&mut self, rect: &Rect) {
+    match self {
+      Self::Flash(flash) => flash.resize(rect),
+      Self::Dialog(dialog) => dialog.resize(rect),
+      Self::Tab(page) => page.resize(rect),
+    }
+  }
+}
