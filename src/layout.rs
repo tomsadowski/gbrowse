@@ -37,9 +37,6 @@ pub trait View: GetHeight {
   fn draw(&self, writer: &mut impl std::io::Write) -> std::io::Result<()>;
 
 
-  fn rebuild(&mut self, rect: &Rect);
-
-  // dont rewrap, only point_view changes
   fn resize(&mut self, rect: &Rect);
 }
 

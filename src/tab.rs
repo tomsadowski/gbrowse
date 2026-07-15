@@ -68,14 +68,6 @@ impl View for CursorVec<Tab> {
   }
 
 
-
-  fn rebuild(&mut self, rect: &Rect) {
-    for tab in self.vec.iter_mut() {
-      tab.page.rebuild(rect);
-    }
-  }
-
-
   fn resize(&mut self, rect: &Rect) {
     for tab in self.vec.iter_mut() {
       tab.page.resize(rect);
@@ -152,21 +144,6 @@ impl<'a> View for ViewType<'a> {
       }
     }
     Ok(())
-  }
-
-
-  fn rebuild(&mut self, rect: &Rect) {
-    match self {
-      Self::Flash(flash) => {
-        flash.rebuild(rect)
-      }
-      Self::Dialog(dialog) => {
-        dialog.rebuild(rect)
-      }
-      Self::Tab(page) => {
-        page.rebuild(rect)
-      }
-    }
   }
 
 

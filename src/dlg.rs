@@ -138,11 +138,6 @@ impl GetHeight for Dialog {
 
 impl View for Dialog {
   fn resize(&mut self, rect: &Rect) {
-  }
-
-
-
-  fn rebuild(&mut self, rect: &Rect) {
     let frame = self.frame.params.build_from_outer(rect);
     resize_views(&frame.inner_rect, vec![&mut self.header, &mut self.body]);
 

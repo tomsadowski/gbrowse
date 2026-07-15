@@ -234,7 +234,7 @@ impl<T> Page<T> {
 
 
   pub fn move_up(&mut self, delta: usize) {
-    self.page.matrix.move_up(delta);
+    self.matrix.move_up(delta);
     self.point_view.update(&self.matrix.point);
   }
 
@@ -256,11 +256,11 @@ impl<T> Page<T> {
 
 
 impl<T: std::fmt::Display> Page<T> {
-  pub fn get_param_string(&self) -> &String {
+  pub fn get_param_string(&self) -> String {
     self.source
       .get(self.get_index())
-      .map(|s| &s.to_string())
-      .unwrap_or(&"".to_string())
+      .map(|s| s.to_string())
+      .unwrap_or("".to_string())
   }
 }
 
@@ -271,11 +271,6 @@ impl<T: std::fmt::Display> GetHeight for Page<T> {
 }
 
 impl<T: std::fmt::Display> View for Page<T> {
-  fn resize(&mut self, rect: &Rect) {
-    self.point_view.resize(&self.matrix.point, rect);
-  }
-
-
   fn draw(&self, writer: &mut impl std::io::Write) 
     -> std::io::Result<()> 
   {
@@ -328,29 +323,37 @@ impl<T: std::fmt::Display> View for Page<T> {
   }
 
 
-  fn rebuild(&mut self, width: u16) {
-    let linear_head = self.matrix.get_linear_head();
-    let width = usize::from(width);
+  fn resize(&mut self, rect: &Rect) {
+    // width has not changed, just resize point_view
+    if self.point_view.get_width() == rect.width() {
+      self.point_view.resize(&self.matrix.point, rect);
 
-    let (indexes, matrix): (Vec<usize>, Vec<Vec<char>>) = self.styles
-      .iter()
-      .zip(self.source.iter())
-      .enumerate()
-      .flat_map(|(idx, (style, source))| 
-        style
-          .get_matrix(&source.to_string(), width)
-          .into_iter()
-          .map(move |text| (idx, text))
-      ).unzip();
-
-    let matrix = if self.edit {
-      PointMatrix::from(matrix).editor()
+    // width changes, rewrap
     } else {
-      PointMatrix::from(matrix)
-    };
+      let linear_head = self.matrix.get_linear_head();
+      let width = usize::from(rect.width());
 
-    self.indexes = indexes;
-    self.matrix = matrix;
-    self.matrix.set_linear_head(linear_head);
+      let (indexes, matrix): (Vec<usize>, Vec<Vec<char>>) = self.styles
+        .iter()
+        .zip(self.source.iter())
+        .enumerate()
+        .flat_map(|(idx, (style, source))| 
+          style
+            .get_matrix(&source.to_string(), width)
+            .into_iter()
+            .map(move |text| (idx, text))
+        ).unzip();
+
+      let matrix = if self.edit {
+        PointMatrix::from(matrix).editor()
+      } else {
+        PointMatrix::from(matrix)
+      };
+
+      self.indexes = indexes;
+      self.matrix = matrix;
+      self.matrix.set_linear_head(linear_head);
+      self.point_view.resize(&self.matrix.point, rect);
+    }
   }
 }
