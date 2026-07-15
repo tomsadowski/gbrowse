@@ -49,7 +49,7 @@ pub enum Msg {
 }
 
 pub enum Focus {
-  Tab, Dlg(DlgType, Task),
+  Tab, Dlg(Task),
 }
 
 pub struct App {
@@ -98,45 +98,32 @@ impl App {
   pub fn focus_tabs(&mut self) {
     self.focus = Focus::Tab;
     self.guide = format!("Press {} for menu", self.params.keys.menu);
-    self.view.remove_list(DLG_1);
-    self.view.remove_list(DLG_2);
+    self.view.dialog = None;
     self.view.flush();
   }
 
 
   fn ack_dlg(&mut self, prompt: &str) {
-    self.focus = Focus::Dlg(
-      self.params.dlg(&prompt).ack().build(&Rect::from(Dim(1, 1))).dlg_type,
-      Task::Default
-    );
-    self.view.flush();
+    self.focus = Focus::Dlg(Task::Default);
+    self.view.dialog(self.params.dlg(&prompt).ack());
   }
 
 
   fn ask_dlg(&mut self, task: Task, prompt: &str) {
-    self.focus = Focus::Dlg(
-      self.params.dlg(&prompt).ask(&mut self.view),
-      task
-    );
-    self.view.flush();
+    self.focus = Focus::Dlg(task);
+    self.view.dialog(self.params.dlg(&prompt).ask());
   }
 
 
   fn edit_dlg(&mut self, task: Task, prompt: &str, text: &str) {
-    self.focus = Focus::Dlg(
-      self.params.dlg(&prompt).edit(text, &mut self.view),
-      task
-    );
-    self.view.flush();
+    self.focus = Focus::Dlg(task);
+    self.view.dialog(self.params.dlg(&prompt).edit(text));
   }
 
 
   fn select_dlg(&mut self, task: Task, prompt: &str, options: Vec<String>) {
-    self.focus = Focus::Dlg(
-      self.params.dlg(&prompt).select(options, &mut self.view),
-      task
-    );
-    self.view.flush();
+    self.focus = Focus::Dlg(task);
+    self.view.dialog(self.params.dlg(&prompt).select(options));
   }
 
 

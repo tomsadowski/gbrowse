@@ -12,6 +12,7 @@ use crate::{
   TabText,
   Style, 
   Dialog,
+  DialogParams,
   CursorVec,
   Resize,
   GetHeight,
@@ -33,7 +34,7 @@ pub enum Focus {
 pub struct AppView {
   pub frame: Frame,
   pub flash: Option<Page<String>>,
-  pub dlg: Option<Dialog>,
+  pub dialog: Option<Dialog>,
   pub tabs: CursorVec<Tab>,
 }
 
@@ -51,24 +52,39 @@ impl Draw for AppView {
 
 impl Resize for AppView {
   fn resize(&mut self, rect: &Rect) {
-    let frame = self.frame.params.build_from_outer(rect);
-    resize_views(
-      &frame.inner_rect, 
-      self.get_view_list_mut().iter_mut().collect()
-    );
-    let mut inner = frame.inner_rect.clone();
-    inner.h = self.get_view_list_mut().iter().map(|v| v.get_height()).sum();
-    self.frame = self.frame.params.build_from_inner(&inner);
+    self.frame = self.frame.params.build_from_outer(rect);
+    self.flush();
   }
 }
 
 
 impl AppView {
+  pub fn flush(&mut self) {
+    let mut inner_rect = self.frame.inner_rect;
+    resize_views(
+      &inner_rect, 
+      self.get_view_list_mut().iter_mut().collect()
+    );
+    inner_rect.h = self
+      .get_view_list_mut()
+      .iter()
+      .map(|v| v.get_height())
+      .sum();
+    self.frame = self.frame.params.build_from_inner(&inner_rect);
+  }
+
+
+  pub fn dialog(&mut self, params: DialogParams) {
+    self.dialog = Some(params.build(&self.frame.inner_rect));
+    self.flush();
+  }
+
+
   pub fn new(rect: &Rect, params: &SystemParams) -> Self {
     Self {
       frame: params.style.get_frame_params().build_from_outer(rect),
       flash: None,
-      dlg: None,
+      dialog: None,
       tabs: CursorVec::default(),
     }
   }
@@ -79,7 +95,7 @@ impl AppView {
     if let Some(flash) = &self.flash {
       vec.push(ViewType::Flash(flash));
     }
-    if let Some(dlg) = &self.dlg {
+    if let Some(dlg) = &self.dialog {
       vec.push(ViewType::Dialog(dlg));
     }
     if let Some(tab) = self.tabs.get_current() {
@@ -94,7 +110,7 @@ impl AppView {
     if let Some(flash) = &mut self.flash {
       vec.push(ViewTypeMut::Flash(flash));
     }
-    if let Some(dlg) = &mut self.dlg {
+    if let Some(dlg) = &mut self.dialog {
       vec.push(ViewTypeMut::Dialog(dlg));
     }
     if let Some(tab) = self.tabs.get_current_mut() {
