@@ -9,6 +9,7 @@ use crate::{
   CursorVec,
   Tab,
   TextParams,
+  BuildView,
   DialogParams,
   DlgType,
   UserTable,
@@ -106,7 +107,7 @@ impl App {
 
   fn ack_dlg(&mut self, prompt: &str) {
     self.focus = Focus::Dlg(
-      self.params.dlg(&prompt).ack(&mut self.layout),
+      self.params.dlg(&prompt).ack().build(&Rect::from(Dim(1, 1))).dlg_type,
       Task::Default
     );
     self.layout.flush();

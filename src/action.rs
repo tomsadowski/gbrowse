@@ -61,32 +61,40 @@ impl std::str::FromStr for Action {
 
 
 impl Action {
-  pub fn update(&self, view: &mut crate::Page) {
+  pub fn update<T>(&self, page: &mut crate::Page<T>) {
     match self {
-      Action::PageDown  => {view.move_down(view.point_view.height());}
-      Action::PageUp    => {view.move_up(view.point_view.height());}
-      Action::Bottom    => {view.move_down(view.page.matrix.matrix.len());}
-      Action::Top       => {view.move_up(view.page.matrix.matrix.len());}
-      Action::MoveDown  => {view.move_down(1);}
-      Action::MoveUp    => {view.move_up(1);}
-      Action::MoveLeft  => {view.move_left(1);}
-      Action::MoveRight => {view.move_right(1);}
+      Action::PageDown => {
+        page.move_down(page.point_view.get_height() as usize);
+      }
+      Action::PageUp => {
+        page.move_up(page.point_view.get_height() as usize);
+      }
+      Action::Bottom => {
+        page.move_down(page.matrix.matrix.len());
+      }
+      Action::Top => {
+        page.move_up(page.matrix.matrix.len());
+      }
+      Action::MoveDown  => {page.move_down(1);}
+      Action::MoveUp    => {page.move_up(1);}
+      Action::MoveLeft  => {page.move_left(1);}
+      Action::MoveRight => {page.move_right(1);}
       _ => {}
     }
   }
 
 
-  pub fn update_edit(&self, textbox: &mut crate::Page) {
+  pub fn update_edit<T>(&self, page: &mut crate::Page<T>) {
     match self {
-      Action::PageDown  => {textbox.move_left(15);}
-      Action::PageUp    => {textbox.move_right(15);}
-      Action::Backspace => {textbox.backspace();}
-      Action::Delete    => {textbox.delete();}
-      Action::Insert(c) => {textbox.insert(*c);}
-      Action::MoveLeft  => {textbox.move_left(1);}
-      Action::MoveRight => {textbox.move_right(1);}
-      Action::MoveDown  => {textbox.move_down(1);}
-      Action::MoveUp    => {textbox.move_up(1);}
+      Action::PageDown  => {page.move_left(15);}
+      Action::PageUp    => {page.move_right(15);}
+      Action::Backspace => {page.backspace();}
+      Action::Delete    => {page.delete();}
+      Action::Insert(c) => {page.insert(*c);}
+      Action::MoveLeft  => {page.move_left(1);}
+      Action::MoveRight => {page.move_right(1);}
+      Action::MoveDown  => {page.move_down(1);}
+      Action::MoveUp    => {page.move_up(1);}
       _ => {}
     }
   }

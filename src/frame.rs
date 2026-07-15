@@ -142,7 +142,7 @@ impl FrameParams {
       };
     let screen = self.screen_margin.get_from_inner(&border_rect);
     Frame {
-      style: self.clone(),
+      params: self.clone(),
       screen,
       border_rect,
       outer_rect,
@@ -161,7 +161,7 @@ impl FrameParams {
       };
     let inner_rect = self.text_margin.get_from_outer(&outer_rect);
     Frame {
-      style: self.clone(),
+      params: self.clone(),
       screen: rect.clone(),
       border_rect,
       outer_rect,
@@ -173,7 +173,7 @@ impl FrameParams {
 
 #[derive(Copy, Debug, Default, Clone)]
 pub struct Frame {
-  pub style:         FrameParams,
+  pub params:        FrameParams,
   pub screen:        Rect,
   pub border_rect:   Rect,
   pub outer_rect:    Rect,
@@ -192,7 +192,7 @@ impl Frame {
   pub fn draw_footer(&self, text: &str, w: &mut impl std::io::Write) 
     -> std::io::Result<()> 
   {
-    if let Some(border) = self.style.border {
+    if let Some(border) = self.params.border {
       let mut x = self.inner_rect.x_end().saturating_sub(1);
       let y = self.border_rect.y_end().saturating_sub(1);
       w
@@ -201,7 +201,7 @@ impl Frame {
         .queue(Print(border.close))?
         .queue(cursor::MoveLeft(2))?
         .queue(Print(' '))?
-        .queue(&self.style.footer)?;
+        .queue(&self.params.footer)?;
       x -= 2;
       for c in text
         .chars()
@@ -232,7 +232,7 @@ impl Frame {
   pub fn draw_banner(&self, text: &str, w: &mut impl std::io::Write) 
     -> std::io::Result<()> 
   {
-    if let Some(border) = self.style.border {
+    if let Some(border) = self.params.border {
       let mut x = self.inner_rect.x();
       let     y = self.border_rect.y();
       w
@@ -240,7 +240,7 @@ impl Frame {
         .queue(&border.style)?
         .queue(Print(border.open))?
         .queue(Print(' '))?
-        .queue(&self.style.banner)?;
+        .queue(&self.params.banner)?;
       x += 2;
       for c in text
         .chars()
@@ -265,7 +265,7 @@ impl Frame {
 
   pub fn draw(&self, w: &mut impl std::io::Write) -> std::io::Result<()> {
     // border
-    if let Some(border) = self.style.border {
+    if let Some(border) = self.params.border {
       let (ax, ay) = self.border_rect.a().into();
       let (bx, by) = self.border_rect.b().into();
       let (cx, cy) = self.border_rect.c().into();
@@ -291,7 +291,7 @@ impl Frame {
     // margin
     w
       .queue(SetAttribute(Attribute::Reset))?
-      .queue(&self.style.margin)?;
+      .queue(&self.params.margin)?;
     for x in self.outer_rect.x_range() {
       for y in self.outer_rect.y()..self.inner_rect.y() {
         w.queue(MoveTo(x, y))?.queue(Print(' '))?;

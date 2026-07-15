@@ -1,11 +1,18 @@
 // src/cursor.rs
 
-use crate::{Rect, Pos, Dim};
+use crate::{Rect, Pos, Dim, GetHeight};
 
 
 pub struct PointMatrix<T> {
   pub point:  Point,
   pub matrix: Vec<Vec<T>>,
+}
+
+
+impl<T> GetHeight for PointMatrix<T> {
+  fn get_height(&self) -> u16 {
+    self.matrix.get_height()
+  }
 }
 
 

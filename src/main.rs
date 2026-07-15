@@ -69,9 +69,16 @@ pub use crate::cursor::{
   PointView,
   CursorView,
 };
+pub use crate::layout::{
+  View,
+  BuildView,
+  GetHeight,
+  get_heights,
+  resize_views,
+  build_views,
+};
 pub use crate::tab::{
   Tab, 
-  View,
 };
 pub use crate::rect::{
   Pos, 

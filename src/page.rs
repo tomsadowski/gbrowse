@@ -7,6 +7,8 @@ use crate::{
   CursorView,
   Point, 
   PointView,
+  GetHeight,
+  BuildView,
   View,
   PointMatrix,
 };
@@ -83,9 +85,11 @@ impl<T: std::fmt::Display> PageParams<T> {
     self.draw_point = b;
     self
   }
+}
 
 
-  pub fn build(self, rect: &Rect) -> Page<T> {
+impl<T: std::fmt::Display> BuildView<Page<T>> for PageParams<T> {
+  fn build(self, rect: &Rect) -> Page<T> {
     let width = usize::from(rect.width());
 
     let (indexes, matrix): (Vec<usize>, Vec<Vec<char>>) = self.styles
@@ -260,13 +264,13 @@ impl<T: std::fmt::Display> Page<T> {
   }
 }
 
-
-impl<T: std::fmt::Display> View for Page<T> {
+impl<T: std::fmt::Display> GetHeight for Page<T> {
   fn get_height(&self) -> u16 {
     self.matrix.matrix.get_height().min(self.max.unwrap_or(u16::MAX))
   }
-  
+}
 
+impl<T: std::fmt::Display> View for Page<T> {
   fn resize(&mut self, rect: &Rect) {
     self.point_view.resize(&self.matrix.point, rect);
   }

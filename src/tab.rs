@@ -4,11 +4,14 @@ use crate::{
   SystemParams,
   TextParams, 
   Rect,
+  Frame,
   Cursor, 
   Style, 
   Dialog,
   CursorVec,
   View,
+  GetHeight,
+  BuildView,
   GemText,
   GemTag,
   Page,
@@ -45,22 +48,23 @@ pub struct Tab {
 } 
 
 
-impl View for CursorVec<Tab> {
-  fn draw(&self, writer: &mut std::io::Stdout) -> std::io::Result<()> {
-    if let Some(view) = self.get_current() {
-      view.page.draw(writer)?;
-    }
-    Ok(())
-  }
-
-
-
-  fn get_height(&mut self, rect: &Rect) -> u16 {
+impl GetHeight for CursorVec<Tab> {
+  fn get_height(&self) -> u16 {
     if let Some(view) = self.get_current() {
       view.page.get_height()
     } else {
       u16::MAX
     }
+  }
+}
+
+
+impl View for CursorVec<Tab> {
+  fn draw(&self, writer: &mut impl std::io::Write) -> std::io::Result<()> {
+    if let Some(view) = self.get_current() {
+      view.page.draw(writer)?;
+    }
+    Ok(())
   }
 
 
@@ -86,6 +90,7 @@ pub enum Focus {
 
 
 pub struct AppView {
+  pub frame: Frame,
   pub flash: Option<Page<String>>,
   pub dlg: Option<Dialog>,
   pub tabs: CursorVec<Tab>,
@@ -116,7 +121,7 @@ pub enum ViewType<'a> {
 }
 
 
-impl<'a> View for ViewType<'a> {
+impl<'a> GetHeight for ViewType<'a> {
   fn get_height(&self) -> u16 {
     match self {
       Self::Flash(flash) => {
@@ -130,9 +135,11 @@ impl<'a> View for ViewType<'a> {
       }
     }
   }
+}
 
 
-  fn draw(&self, w: &mut std::io::Stdout) -> std::io::Result<()> {
+impl<'a> View for ViewType<'a> {
+  fn draw(&self, w: &mut impl std::io::Write) -> std::io::Result<()> {
     match self {
       Self::Flash(flash) => {
         flash.draw(w)?;
@@ -188,12 +195,6 @@ impl CursorVec<Tab> {
       ),
     }
   }
-}
-
-
-pub struct TabLayout {
-  pub rect: Rect,
-  pub tabs: CursorVec<Tab>,
 }
 
 
