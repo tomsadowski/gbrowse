@@ -1,31 +1,23 @@
 // src/view.rs
 
 use crate::{
-  SystemParams,
-  TextParams, 
   PageParams,
   FrameParams,
   Rect,
   Draw,
   Frame,
   fill,
-  Cursor, 
   resize_views,
   Tab,
   TabText,
-  Style, 
   Dialog,
   DialogParams,
   CursorVec,
   Resize,
   GetHeight,
   BuildView,
-  GemText,
-  GemTag,
   Page,
-  constants::*,
 };
-use url::Url;
 
 
 

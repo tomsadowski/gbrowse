@@ -1,17 +1,7 @@
 // src/layout.rs
 
 use crate::{
-  SystemParams,
-  TextParams, 
   Rect,
-  Cursor, 
-  Style, 
-  Dialog,
-  CursorVec,
-  GemText,
-  GemTag,
-  Page,
-  constants::*,
 };
 
 
@@ -86,11 +76,6 @@ pub fn get_heights(rect: &Rect, views: &[impl GetHeight]) -> Vec<u16> {
     vec.push(rect.h);
   }
   vec
-}
-
-
-pub fn get_hhheights(vec: &[impl GetHeight]) -> u16 {
-  vec.iter().map(|v| v.get_height()).sum()
 }
 
 

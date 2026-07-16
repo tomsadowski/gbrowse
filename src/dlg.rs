@@ -1,9 +1,7 @@
 // src/dlg.rs
 
 use crate::{
-  user,
   SystemParams, 
-  TextParams,
   FrameParams,
   Frame,
   PageParams,
@@ -16,7 +14,6 @@ use crate::{
   Resize,
   BuildView,
   GetHeight,
-  constants::*,
 };
 
 

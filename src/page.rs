@@ -1,11 +1,9 @@
 // src/page.rs
 
 use crate::{
-  cursor::get_weighted_length,
   Rect,
   Style, 
   CursorView,
-  Point, 
   PointView,
   GetHeight,
   BuildView,
@@ -334,7 +332,6 @@ impl<T: std::fmt::Display> Draw for Page<T> {
     -> std::io::Result<()> 
   {
     use crossterm::{QueueableCommand, cursor, style};
-    use unicode_width::UnicodeWidthChar;
 
     let (mut x, mut y) = self.point_view.pos().into();
 

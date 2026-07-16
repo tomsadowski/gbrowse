@@ -1,23 +1,15 @@
 // src/tab.rs
 
 use crate::{
-  SystemParams,
   TextParams, 
   Rect,
-  Frame,
-  Cursor, 
-  Style, 
   Draw,
-  Dialog,
   CursorVec,
   Resize,
   GetHeight,
-  BuildView,
   GemText,
-  GemTag,
   Page,
   PageParams,
-  constants::*,
 };
 use url::Url;
 

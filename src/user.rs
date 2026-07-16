@@ -3,12 +3,6 @@
 use crate::{
   SystemControlParams,
   SystemStyleParams,
-  Frame, 
-  FrameParams,
-  GemTag, 
-  GemText,
-  TextParams,
-  Rect,
   DialogParams,
   constants::*,
 };

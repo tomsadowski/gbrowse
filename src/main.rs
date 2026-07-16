@@ -1,6 +1,6 @@
 // src/main.rs
 
-#![allow(unused_imports)]
+//#![allow(unused_imports)]
 #![allow(dead_code)]
 #![allow(unused_mut)]
 #![allow(unused_variables)]
@@ -78,7 +78,6 @@ pub use crate::layout::{
   Draw,
   BuildView,
   GetHeight,
-  get_hhheights,
   get_heights,
   resize_views,
   fill,
