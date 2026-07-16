@@ -157,9 +157,7 @@ impl App {
           PageParams::init().gem_styles(
             gemini::parse_doc(&content),
             |g| self.params.style.get_gem_tag_params(&g.tag)
-          )
-          .style(&self.params.style.general)
-          .draw_point(true)
+          ).style(&self.params.style.general)
         );
       }
     }
@@ -245,10 +243,10 @@ impl App {
       self.clear = true;
     } 
 
-    else if 
-      let Msg::Action(action) = message &&
-      let Focus::Tab = &mut self.focus &&
-      let Some(view) = self.view.tabs.get_current_mut()
+    else 
+      if let Msg::Action(action) = message
+      && let Focus::Tab = &mut self.focus
+      && let Some(view) = self.view.tabs.get_current_mut()
     {
       match action {
         Action::SaveUrl => 
@@ -317,10 +315,10 @@ impl App {
       }
     }
 
-    else if 
-      let Msg::Action(action) = message &&
-      let Focus::Dlg(task) = &mut self.focus &&
-      let Some(dlg) = &mut self.view.dialog
+    else 
+      if let Msg::Action(action) = message
+      && let Focus::Dlg(task) = &mut self.focus
+      && let Some(dlg) = &mut self.view.dialog
     {
       match (task, action, &dlg.dlg_type) {
         (Task::NewTab, Action::Select, DlgType::Select) => {
@@ -341,9 +339,10 @@ impl App {
             Err(e) => {
               self.ack_dlg(&format!("Problem: {e}"))
             }
-            Ok(s) => if let Err(e) = self.params.keys.update_from_str(&s) {
+            Ok(s) if let Err(e) = self.params.keys.update_from_str(&s) => {
               self.ack_dlg(&format!("Problem: {e}"));
-            } else {
+            }
+            _ => {
               self.focus_tabs();
             }
           }
@@ -353,11 +352,14 @@ impl App {
           match std::fs::read_to_string(
             user::get_styles_file(&dlg.body.get_param_string())
           ) {
-            Err(e) => self.ack_dlg(&e.to_string()),
-            Ok(s)  => if let Err(e) = self.params.style.update_from_str(&s) {
+            Err(e) => {
+              self.ack_dlg(&e.to_string());
+            }
+            Ok(s) if let Err(e) = self.params.style.update_from_str(&s) => {
               self.ack_dlg(&e.to_string());
               self.push_style();
-            } else {
+            }
+            _ => {
               self.focus_tabs();
               self.push_style();
             }
@@ -523,46 +525,47 @@ impl App {
           code: kc, 
           ..
         }
-      ) => match &self.focus {
-        Focus::Dlg(_) => 
-          if let Some(dlg) = &self.view.dialog {
-            self.params.keys
-              .get_dlg_action(&dlg.dlg_type, &kc)
-              .map(Msg::Action)
-          } else {None},
-        Focus::Tab => 
-          self.params.keys.get_tab_action(&kc).map(Msg::Action),
-      }
+      ) => 
+        if let Focus::Tab = &self.focus {
+          self.params.keys.get_tab_action(&kc).map(Msg::Action)
+        } else if let Some(dlg) = &self.view.dialog {
+          self.params.keys
+            .get_dlg_action(&dlg.dlg_type, &kc)
+            .map(Msg::Action)
+        }
+        else {None}
       _ => None,
     }
   }
 
 
-  pub fn draw(&self, w: &mut std::io::Stdout) -> std::io::Result<()> {
-    use std::io::Write;
+  pub fn draw(&self, w: &mut impl std::io::Write) -> std::io::Result<()> {
     use crossterm::{QueueableCommand, cursor, terminal};
+
     w.queue(cursor::Hide)?;
     if self.clear {
       w.queue(terminal::Clear(terminal::ClearType::All))?;
     }
+
     self.view.draw(w)?;
     let banner_text = self.view.tabs.get_banner_text();
     self.view.frame.draw_banner(&banner_text, w)?;
     self.view.frame.draw_footer(&self.guide, w)?;
-    match self.focus {
-      Focus::Tab => 
-        if let Some(point_view) = self.view.tabs
-          .get_current()
-          .map(|t| t.page.point_view) 
-        {
-          point_view.draw(w)?;
-        }
-      Focus::Dlg(_) => 
-        if let Some(dlg) = &self.view.dialog {
-          dlg.body.point_view.draw(w)?;
-        }
+
+    if let Focus::Tab = self.focus
+    && let Some(point_view) = self.view.tabs
+      .get_current()
+      .map(|t| t.page.point_view) 
+    {
+      point_view.draw(w)?;
+    } 
+    else 
+    if let Some(dlg) = &self.view.dialog 
+    && let DlgType::Select | DlgType::Edit = dlg.dlg_type 
+    {
+      dlg.body.point_view.draw(w)?;
     }
-    w.queue(cursor::Show)?;
+
     w.flush()
   }
 }

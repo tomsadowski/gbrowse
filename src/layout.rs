@@ -67,9 +67,11 @@ pub fn fill(
   rect: &Rect, 
   view: &impl GetHeight, 
   w: &mut impl std::io::Write,
-) -> std::io::Result<()> {
+) -> std::io::Result<()> 
+{
+  let vheight = view.get_height().min(rect.height());
   rect
-    .shift_north((view.get_height().saturating_sub(1) as i16) * -1)
+    .shift_north((vheight.saturating_sub(1) as i16) * -1)
     .draw(w)?;
   Ok(())
 }
@@ -86,7 +88,8 @@ pub fn resize_views<T: Resize + GetHeight>(
   let mut rect = rect.clone();
   for v in views {
     v.resize(&rect);
-    rect = rect.shift_north((v.get_height() as i16) * -1);
+    let vheight = v.get_height().min(rect.height());
+    rect = rect.shift_north((vheight as i16) * -1);
   }
 }
 
@@ -97,9 +100,10 @@ pub fn build_views<T: Resize + GetHeight>(
   let mut rect = rect.clone();
   let mut views: Vec<T> = vec![];
   for param in params {
-    let view = param.build(&rect);
-    rect = rect.shift_north((view.get_height() as i16) * -1);
-    views.push(view);
+    let v = param.build(&rect);
+    let vheight = v.get_height().min(rect.height());
+    rect = rect.shift_north((vheight as i16) * -1);
+    views.push(v);
   }
   views
 }
