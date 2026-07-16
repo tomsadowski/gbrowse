@@ -6,7 +6,7 @@ use crate::{
   Draw,
   CursorVec,
   Resize,
-  GetHeight,
+  GetMaxHeight,
   GemText,
   Page,
   PageParams,
@@ -73,10 +73,10 @@ pub struct Tab {
 } 
 
 
-impl GetHeight for CursorVec<Tab> {
-  fn get_height(&self) -> u16 {
+impl GetMaxHeight for CursorVec<Tab> {
+  fn get_max_height(&self) -> u16 {
     if let Some(view) = self.get_current() {
-      view.page.get_height()
+      view.page.get_max_height()
     } else {
       u16::MAX
     }

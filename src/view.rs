@@ -10,11 +10,12 @@ use crate::{
   resize_views,
   Tab,
   TabText,
+  get_display_heights,
   Dialog,
   DialogParams,
   CursorVec,
   Resize,
-  GetHeight,
+  GetMaxHeight,
   BuildView,
   Page,
 };
@@ -70,10 +71,12 @@ impl AppView {
       &inner_rect, 
       self.get_view_list_mut().iter_mut().collect()
     );
+   // let mut inner = frame.inner_rect.clone();
+   // inner.h = get_heights(&inner, &views).iter().sum();
     inner_rect.h = self
       .get_view_list()
       .iter()
-      .map(|v| v.get_height())
+      .map(|v| v.get_max_height())
       .sum();
     self.frame = self.frame.params.build_from_inner(&inner_rect);
   }
@@ -134,12 +137,12 @@ pub enum ViewType<'a> {
 }
 
 
-impl<'a> GetHeight for ViewType<'a> {
-  fn get_height(&self) -> u16 {
+impl<'a> GetMaxHeight for ViewType<'a> {
+  fn get_max_height(&self) -> u16 {
     match self {
-      Self::Flash(flash) => flash.get_height(),
-      Self::Dialog(dialog) => dialog.get_height(),
-      Self::Tab(page) => page.get_height(),
+      Self::Flash(flash) => flash.get_max_height(),
+      Self::Dialog(dialog) => dialog.get_max_height(),
+      Self::Tab(page) => page.get_max_height(),
     }
   }
 }
@@ -164,12 +167,12 @@ pub enum ViewTypeMut<'a> {
 }
 
 
-impl<'a> GetHeight for ViewTypeMut<'a> {
-  fn get_height(&self) -> u16 {
+impl<'a> GetMaxHeight for ViewTypeMut<'a> {
+  fn get_max_height(&self) -> u16 {
     match self {
-      Self::Flash(flash) => flash.get_height(),
-      Self::Dialog(dialog) => dialog.get_height(),
-      Self::Tab(page) => page.get_height(),
+      Self::Flash(flash) => flash.get_max_height(),
+      Self::Dialog(dialog) => dialog.get_max_height(),
+      Self::Tab(page) => page.get_max_height(),
     }
   }
 }

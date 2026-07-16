@@ -7,13 +7,13 @@ use crate::{
   PageParams,
   Page,
   Rect,
-  get_heights,
+  get_display_heights,
   resize_views,
   build_views,
   Draw,
   Resize,
   BuildView,
-  GetHeight,
+  GetMaxHeight,
 };
 
 
@@ -104,7 +104,7 @@ impl<'a> BuildView<Dialog> for DialogParams<'a> {
     );
 
     let mut inner = frame.inner_rect.clone();
-    inner.h = get_heights(&inner, &views).iter().sum();
+    inner.h = get_display_heights(&inner, &views).iter().sum();
     let frame = self.frame.build_from_inner(&inner);
 
     Dialog {
@@ -125,8 +125,8 @@ pub struct Dialog {
 }
 
 
-impl GetHeight for Dialog {
-  fn get_height(&self) -> u16 {
+impl GetMaxHeight for Dialog {
+  fn get_max_height(&self) -> u16 {
     self.frame.screen.h
   }
 }
@@ -148,7 +148,7 @@ impl Resize for Dialog {
     resize_views(&frame.inner_rect, vec![&mut self.header, &mut self.body]);
 
     let mut inner = frame.inner_rect.clone();
-    inner.h = self.header.get_height() + self.body.get_height();
+    inner.h = self.header.get_max_height() + self.body.get_max_height();
     self.frame = self.frame.params.build_from_inner(&inner);
   }
 }

@@ -1,6 +1,6 @@
 // src/cursor.rs
 
-use crate::{Rect, Pos, Dim, GetHeight};
+use crate::{Rect, Pos, Dim, GetMaxHeight};
 
 
 pub struct PointMatrix<T> {
@@ -9,9 +9,9 @@ pub struct PointMatrix<T> {
 }
 
 
-impl<T> GetHeight for PointMatrix<T> {
-  fn get_height(&self) -> u16 {
-    self.matrix.get_height()
+impl<T> GetMaxHeight for PointMatrix<T> {
+  fn get_max_height(&self) -> u16 {
+    self.matrix.get_max_height()
   }
 }
 

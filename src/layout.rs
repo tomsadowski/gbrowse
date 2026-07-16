@@ -11,8 +11,8 @@ pub trait BuildView<T> where T: Resize {
 }
 
 
-pub trait GetHeight {
-  fn get_height(&self) -> u16;
+pub trait GetMaxHeight {
+  fn get_max_height(&self) -> u16;
 }
 
 
@@ -26,8 +26,8 @@ pub trait Resize {
 }
 
 
-impl<T> GetHeight for Vec<T> {
-  fn get_height(&self) -> u16 {
+impl<T> GetMaxHeight for Vec<T> {
+  fn get_max_height(&self) -> u16 {
     u16::try_from(self.len()).unwrap_or(u16::MAX)
   }
 }
@@ -55,11 +55,11 @@ impl Draw for Rect {
 
 pub fn fill(
   rect: &Rect, 
-  view: &impl GetHeight, 
+  view: &impl GetMaxHeight, 
   w: &mut impl std::io::Write,
 ) -> std::io::Result<()> 
 {
-  let vheight = view.get_height().min(rect.height());
+  let vheight = view.get_max_height().min(rect.height());
   rect
     .shift_north((vheight.saturating_sub(1) as i16) * -1)
     .draw(w)?;
@@ -67,38 +67,64 @@ pub fn fill(
 }
 
 
-pub fn get_heights(rect: &Rect, views: &[impl GetHeight]) -> Vec<u16> {
-  let mut vec: Vec<u16> = vec![];
-  let mut rect = rect.clone();
-  for v in views {
-    let vheight = v.get_height().min(rect.height());
-    rect = rect.shift_north((vheight as i16) * -1);
-    vec.push(rect.h);
-  }
-  vec
+pub fn get_display_bounds(rect: &Rect, views: &[impl GetMaxHeight]) 
+  -> Vec<Rect> 
+{
+    let mut remaining = rect.clone();
+    let mut vec: Vec<Rect> = vec![];
+    let mut views = views.iter();
+    while let Some(view) = views.next() && remaining.h > 0 {
+      let view_height = view.get_max_height().min(remaining.h);
+      let mut current = remaining.clone();
+      current.h = view_height;
+      vec.push(current);
+      remaining = remaining.shift_north((view_height as i16) * -1);
+    }
+    while let Some(v) = views.next() {
+      vec.push(remaining);
+    }
+    vec
 }
 
 
-pub fn resize_views<T: Resize + GetHeight>(
+pub fn get_display_heights(rect: &Rect, views: &[impl GetMaxHeight]) 
+  -> Vec<u16> 
+{
+    let mut remaining = rect.h;
+    let mut vec: Vec<u16> = vec![];
+    let mut views = views.iter();
+    while let Some(v) = views.next() && remaining > 0 {
+      let vheight = v.get_max_height().min(remaining);
+      remaining -= vheight;
+      vec.push(vheight);
+    }
+    while let Some(v) = views.next() {
+      vec.push(0);
+    }
+    vec
+}
+
+
+pub fn resize_views<T: Resize + GetMaxHeight>(
   rect: &Rect, views: Vec<&mut T>
 ) {
   let mut rect = rect.clone();
   for v in views {
     v.resize(&rect);
-    let vheight = v.get_height().min(rect.height());
+    let vheight = v.get_max_height().min(rect.height());
     rect = rect.shift_north((vheight as i16) * -1);
   }
 }
 
 
-pub fn build_views<T: Resize + GetHeight>(
+pub fn build_views<T: Resize + GetMaxHeight>(
   rect: &Rect, params: Vec<impl BuildView<T>>
 ) -> Vec<T> {
   let mut rect = rect.clone();
   let mut views: Vec<T> = vec![];
   for param in params {
     let v = param.build(&rect);
-    let vheight = v.get_height().min(rect.height());
+    let vheight = v.get_max_height().min(rect.height());
     rect = rect.shift_north((vheight as i16) * -1);
     views.push(v);
   }

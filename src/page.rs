@@ -5,7 +5,7 @@ use crate::{
   Style, 
   CursorView,
   PointView,
-  GetHeight,
+  GetMaxHeight,
   BuildView,
   Resize,
   PointMatrix,
@@ -320,9 +320,9 @@ impl<T: std::fmt::Display> Resize for Page<T> {
 }
 
 
-impl<T: std::fmt::Display> GetHeight for Page<T> {
-  fn get_height(&self) -> u16 {
-    self.matrix.matrix.get_height().min(self.max.unwrap_or(u16::MAX))
+impl<T: std::fmt::Display> GetMaxHeight for Page<T> {
+  fn get_max_height(&self) -> u16 {
+    self.matrix.matrix.get_max_height().min(self.max.unwrap_or(u16::MAX))
   }
 }
 
