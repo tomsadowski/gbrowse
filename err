@@ -1,32 +1,3 @@
-warning: hiding a lifetime that's elided elsewhere is confusing
-   --> src/view.rs:104:24
-    |
-104 |   pub fn get_view_list(&self) -> Vec<ViewType> {
-    |                        ^^^^^         ^^^^^^^^ the same lifetime is hidden here
-    |                        |
-    |                        the lifetime is elided here
-    |
-    = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
-    = note: `#[warn(mismatched_lifetime_syntaxes)]` on by default
-help: use `'_` for type paths
-    |
-104 |   pub fn get_view_list(&self) -> Vec<ViewType<'_>> {
-    |                                              ++++
-
-warning: hiding a lifetime that's elided elsewhere is confusing
-   --> src/view.rs:119:28
-    |
-119 |   pub fn get_view_list_mut(&mut self) -> Vec<ViewTypeMut> {
-    |                            ^^^^^^^^^         ^^^^^^^^^^^ the same lifetime is hidden here
-    |                            |
-    |                            the lifetime is elided here
-    |
-    = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
-help: use `'_` for type paths
-    |
-119 |   pub fn get_view_list_mut(&mut self) -> Vec<ViewTypeMut<'_>> {
-    |                                                         ++++
-
-warning: `gbrowse` (bin "gbrowse") generated 2 warnings (run `cargo fix --bin "gbrowse" -p gbrowse` to apply 2 suggestions)
-    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.04s
+   Compiling gbrowse v0.1.0 (/home/tom/.local/source/gbrowse)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.42s
      Running `target/debug/gbrowse`

@@ -29,6 +29,7 @@ use url::Url;
 
 
 pub struct AppView {
+  pub rect: Rect,
   pub frame: Frame,
   pub flash: Option<Page<String>>,
   pub dialog: Option<Dialog>,
@@ -57,12 +58,15 @@ impl Resize for AppView {
 
 impl AppView {
   pub fn new(rect: &Rect, params: &FrameParams) -> Self {
-    Self {
+    let mut appview = Self {
       frame: params.build_from_outer(rect),
       flash: None,
       dialog: None,
       tabs: CursorVec::default(),
-    }
+      rect: rect.clone(),
+    };
+    appview.push_frame();
+    appview
   }
 
 
@@ -82,12 +86,14 @@ impl AppView {
 
 
   pub fn dialog(&mut self, params: DialogParams) {
+    self.frame = self.frame.params.build_from_outer(&self.rect);
     self.dialog = Some(params.build(&self.frame.inner_rect));
     self.push_frame();
   }
 
 
   pub fn tab(&mut self, url: &url::Url, params: PageParams<TabText>) {
+    self.frame = self.frame.params.build_from_outer(&self.rect);
     self.tabs.insert(Tab {
       url: url.clone(), 
       page: params.build(&self.frame.inner_rect) 

@@ -57,7 +57,6 @@ pub enum Focus {
 
 pub struct App {
   pub params:      SystemParams,
-  pub tabs:        CursorVec<Tab>,
   pub view:        AppView,
   pub focus:       Focus,
   pub request:     Option<Request>,
@@ -77,7 +76,6 @@ impl App {
     );
     let mut app = Self {
       guide:       "".into(),
-      tabs:        CursorVec::default(),
       request:     None,
       focus:       Focus::Tab,
       clear:       true,
@@ -236,17 +234,22 @@ impl App {
 
   pub fn update(&mut self, message: &Msg) {
     self.clear = false;
+
     if let Msg::Quit = message {
       self.quit = true;
+
     } else if let Msg::Resize(w, h) = message {
       self.view.resize(&Rect::from(Dim(*w, *h)));
+      self.clear = true;
     } 
+
     else if 
       let Msg::Action(action) = message &&
       let Focus::Tab = &mut self.focus &&
       let Some(view) = self.view.tabs.get_current_mut()
     {
       match action {
+
         Action::SaveUrl => if let Some(url) = self.view.tabs
           .get_current()
           .map(|tab| &tab.url)
@@ -256,6 +259,7 @@ impl App {
             Ok(()) => self.ack_dlg(&format!("Saved URL: {url}")),
           }
         }
+
         Action::Select => match self.view.tabs
           .get_current()
           .and_then(|tab| tab.page.get_source()) 
@@ -275,41 +279,48 @@ impl App {
             &format!("You've selected nothing")
           ),
         }
+
         Action::CycleLeft => {
-          let cmd = self.tabs.move_wrapped(-1);
-          //self.layout.apply_move(TAB, cmd);
+          let cmd = self.view.tabs.move_wrapped(-1);
           self.view.push_frame();
         }
+
         Action::CycleRight => {
-          let cmd = self.tabs.move_wrapped(1);
-          //self.layout.apply_move(TAB, cmd);
+          let cmd = self.view.tabs.move_wrapped(1);
           self.view.push_frame();
         }
+
         Action::LoadUrl => self.select_dlg(
           Task::NewTab, "Choose URL: ", self.params.urls.clone(),
         ),
+
         Action::Menu => self.select_dlg(
           Task::Menu, 
           "Choose: ",
           MENU.iter().map(|s| s.to_string()).collect(),
         ),
+
         Action::NewTab => self.edit_dlg(
           Task::NewTab, "enter path: ", "",
         ),
+
         Action::DelTab => self.ask_dlg(
           Task::DelTab, "Delete current tab?",
         ),
+
         action => {
           action.update(&mut view.page);
         }
       }
     }
+
     else if 
       let Msg::Action(action) = message &&
       let Focus::Dlg(task) = &mut self.focus &&
       let Some(dlg) = &mut self.view.dialog
     {
       match (task, action, &dlg.dlg_type) {
+
         (Task::NewTab, Action::Select, DlgType::Select) => {
           if let Some(link) = self.params.urls.get(
             dlg.body.get_index()
@@ -320,6 +331,7 @@ impl App {
             self.focus_tabs();
           }
         }
+
         (Task::ChangeKeys, Action::Select, DlgType::Select) => {
           match std::fs::read_to_string(
             user::get_keys_file(&dlg.body.get_param_string())
@@ -334,6 +346,7 @@ impl App {
             }
           }
         }
+
         (Task::ChangeStyle, Action::Select, DlgType::Select) => {
           match std::fs::read_to_string(
             user::get_styles_file(&dlg.body.get_param_string())
@@ -348,6 +361,7 @@ impl App {
             }
           }
         }
+
         (Task::Menu, Action::Select, DlgType::Select) => {
           match MENU[dlg.body.get_index()] {
             MANUAL => {
@@ -376,6 +390,7 @@ impl App {
             _ => self.focus_tabs(),
           }
         }
+
         (Task::Init(_), Action::Enter, _) => {
           let url_str = dlg.body.get_string().unwrap();
           match url::Url::parse(&url_str) {
@@ -390,10 +405,12 @@ impl App {
             }
           }
         }
+
         (Task::Init(url_str), Action::Cancel, DlgType::Edit) => {
           let url_str = url_str.clone();
           self.ask_dlg(Task::Init(url_str), "Exit application?");
         }
+
         (Task::Init(url_str), Action::Cancel, _) |
         (Task::Init(url_str), Action::No,     _) => {
           let url_str = url_str.clone();
@@ -403,6 +420,7 @@ impl App {
             &url_str,
           );
         }
+
         (Task::Reply(url), Action::Enter, _) => {
           let text = dlg.body
             .get_string()
@@ -419,6 +437,7 @@ impl App {
             }
           }
         }
+
         (Task::NewTab, Action::Enter, _) => {
           match url::Url::parse(
             &dlg.body.get_string().unwrap()
@@ -432,16 +451,19 @@ impl App {
             }
           }
         }
+
         (Task::Init(_), Action::Yes, _) => {
           self.quit = true;
         }
+
         (Task::Go(url), Action::Yes, _) => {
           let url = url.clone();
           self.focus_tabs();
           self.spawn_request(&url);
         }
+
         (Task::DelTab, Action::Yes, _) => {
-          match self.tabs.remove() {
+          match self.view.tabs.remove() {
             true => {
              // self.layout.apply_remove(TAB, cmd);
               let url_str = self.params.init_url.clone();
@@ -456,15 +478,18 @@ impl App {
             }
           }
         }
+
         (_,                _, DlgType::Ack) |
         (_,   Action::Select,            _) |
         (_,       Action::No,            _) |
         (_,   Action::Cancel,            _) => {
           self.focus_tabs();
         }
+
         (_, action, DlgType::Edit) => {
           action.update_edit(&mut dlg.body);
         }
+
         (_, action, _) => {
           action.update(&mut dlg.body);
         }
@@ -517,12 +542,12 @@ impl App {
     w.queue(cursor::Hide)?;
     if self.clear {
       w.queue(terminal::Clear(terminal::ClearType::All))?;
-      self.view.frame.draw(w)?;
     }
-    let banner_text = self.tabs.get_banner_text();
+    self.view.draw(w)?;
+    let banner_text = self.view.tabs.get_banner_text();
     self.view.frame.draw_banner(&banner_text, w)?;
     self.view.frame.draw_footer(&self.guide, w)?;
-    self.view.draw(w)?;
+    w.queue(cursor::Show)?;
     w.flush()
   }
 }
