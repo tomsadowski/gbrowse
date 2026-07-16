@@ -77,7 +77,7 @@ impl AppView {
       self.get_view_list_mut().iter_mut().collect()
     );
     inner_rect.h = self
-      .get_view_list_mut()
+      .get_view_list()
       .iter()
       .map(|v| v.get_height())
       .sum();

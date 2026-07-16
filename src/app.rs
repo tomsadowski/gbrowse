@@ -157,7 +157,9 @@ impl App {
           PageParams::init().gem_styles(
             gemini::parse_doc(&content),
             |g| self.params.style.get_gem_tag_params(&g.tag)
-          ).draw_point(true)
+          )
+          .style(&self.params.style.general)
+          .draw_point(true)
         );
       }
     }
@@ -249,10 +251,10 @@ impl App {
       let Some(view) = self.view.tabs.get_current_mut()
     {
       match action {
-
-        Action::SaveUrl => if let Some(url) = self.view.tabs
-          .get_current()
-          .map(|tab| &tab.url)
+        Action::SaveUrl => 
+          if let Some(url) = self.view.tabs
+            .get_current()
+            .map(|tab| &tab.url)
         {
           match self.params.save_url(url) {
             Err(e) => self.ack_dlg(&e),
@@ -260,9 +262,10 @@ impl App {
           }
         }
 
-        Action::Select => match self.view.tabs
-          .get_current()
-          .and_then(|tab| tab.page.get_source()) 
+        Action::Select => 
+          match self.view.tabs
+            .get_current()
+            .and_then(|tab| tab.page.get_source()) 
         {
           Some(TabText::Gemini(gemtext)) => {
             match &gemtext.tag {
@@ -320,7 +323,6 @@ impl App {
       let Some(dlg) = &mut self.view.dialog
     {
       match (task, action, &dlg.dlg_type) {
-
         (Task::NewTab, Action::Select, DlgType::Select) => {
           if let Some(link) = self.params.urls.get(
             dlg.body.get_index()

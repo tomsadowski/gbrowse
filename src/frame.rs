@@ -30,15 +30,19 @@ impl MarginParams {
 
   pub fn get_from_inner(&self, rect: &Rect) -> Rect {
     rect
-      .shift_x(self.north as i16)
-      .shift_y(self.south as i16)
+      .shift_west(self.west as i16)
+      .shift_east(self.east as i16)
+      .shift_north(self.north as i16)
+      .shift_south(self.south as i16)
   }
 
 
   pub fn get_from_outer(&self, rect: &Rect) -> Rect {
     rect
-      .shift_x(self.north as i16 * -1)
-      .shift_y(self.south as i16 * -1)
+      .shift_west(self.west as i16 * -1)
+      .shift_east(self.east as i16 * -1)
+      .shift_north(self.north as i16 * -1)
+      .shift_south(self.south as i16 * -1)
   }
 }
 
@@ -135,12 +139,9 @@ impl FrameParams {
   pub fn build_from_inner(&self, rect: &Rect) -> Frame {
     let inner_rect = rect.clone();
     let outer_rect = self.text_margin.get_from_inner(&inner_rect);
-    let border_rect = 
-      if let None = self.border { 
-        outer_rect 
-      } else { 
-        outer_rect.shift_x(1).shift_y(1)
-      };
+    let border_rect = self.border
+      .map(|b| b.get_from_inner(&outer_rect))
+      .unwrap_or(outer_rect);
     let screen = self.screen_margin.get_from_inner(&border_rect);
     Frame {
       params: self.clone(),
@@ -154,12 +155,9 @@ impl FrameParams {
 
   pub fn build_from_outer(&self, rect: &Rect) -> Frame {
     let border_rect = self.screen_margin.get_from_outer(rect);
-    let outer_rect = 
-      if let None = self.border {
-        border_rect
-      } else {
-        border_rect.shift_x(-1).shift_y(-1)
-      };
+    let outer_rect = self.border
+      .map(|b| b.get_from_outer(&border_rect))
+      .unwrap_or(border_rect);
     let inner_rect = self.text_margin.get_from_outer(&outer_rect);
     Frame {
       params: self.clone(),

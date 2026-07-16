@@ -61,8 +61,7 @@ pub fn resize_views<T: Resize + GetHeight>(
 
 pub fn build_views<T: Resize + GetHeight>(
   rect: &Rect, params: Vec<impl BuildView<T>>
-) -> Vec<T>
-{
+) -> Vec<T> {
   let mut rect = rect.clone();
   let mut views: Vec<T> = vec![];
   for param in params {
