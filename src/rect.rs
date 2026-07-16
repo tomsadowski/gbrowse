@@ -209,20 +209,26 @@ impl Rect {
 
 
   pub fn b(&self) -> Pos {
-    (self.x_end().saturating_sub(1), 
-     self.y).into()
+    (
+      self.x_end().saturating_sub(1), 
+      self.y
+    ).into()
   }
 
 
   pub fn c(&self) -> Pos {
-    (self.x, 
-     self.y_end().saturating_sub(1)).into()
+    (
+      self.x, 
+      self.y_end().saturating_sub(1)
+    ).into()
   }
 
 
   pub fn d(&self) -> Pos {
-    (self.x_end().saturating_sub(1), 
-     self.y_end().saturating_sub(1)).into()
+    (
+      self.x_end().saturating_sub(1), 
+      self.y_end().saturating_sub(1)
+    ).into()
   }
 
 

@@ -43,6 +43,38 @@ impl<T> GetHeight for Vec<T> {
 }
 
 
+impl Draw for Rect {
+  fn draw(&self, w: &mut impl std::io::Write) -> std::io::Result<()> {
+    use crossterm::{QueueableCommand, cursor, style};
+
+    w
+      .queue(cursor::MoveTo(self.x, self.y))?
+      .queue(style::SetAttribute(style::Attribute::Reset))?;
+
+    for y in self.y_range() {
+      w.queue(cursor::MoveTo(self.x, y))?;
+      for x in self.x_range() {
+        w.queue(style::Print(' '))?;
+      }
+    }
+
+    Ok(())
+  }
+}
+
+
+pub fn fill(
+  rect: &Rect, 
+  view: &impl GetHeight, 
+  w: &mut impl std::io::Write,
+) -> std::io::Result<()> {
+  rect
+    .shift_north((view.get_height().saturating_sub(1) as i16) * -1)
+    .draw(w)?;
+  Ok(())
+}
+
+
 pub fn get_heights(vec: &[impl GetHeight]) -> u16 {
   vec.iter().map(|v| v.get_height()).sum()
 }

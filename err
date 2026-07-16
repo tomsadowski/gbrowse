@@ -1,3 +1,7 @@
    Compiling gbrowse v0.1.0 (/home/tom/.local/source/gbrowse)
-    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.42s
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.35s
      Running `target/debug/gbrowse`
+
+thread 'main' (21897) panicked at src/rect.rs:188:5:
+attempt to add with overflow
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

@@ -8,6 +8,7 @@ use crate::{
   Rect,
   Draw,
   Frame,
+  fill,
   Cursor, 
   resize_views,
   Tab,
@@ -43,6 +44,7 @@ impl Draw for AppView {
     for view in self.get_view_list() {
       view.draw(w)?;
     }
+    fill(&self.rect, &self.frame, w)?;
     Ok(())
   }
 }

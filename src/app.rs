@@ -549,6 +549,19 @@ impl App {
     let banner_text = self.view.tabs.get_banner_text();
     self.view.frame.draw_banner(&banner_text, w)?;
     self.view.frame.draw_footer(&self.guide, w)?;
+    match self.focus {
+      Focus::Tab => 
+        if let Some(point_view) = self.view.tabs
+          .get_current()
+          .map(|t| t.page.point_view) 
+        {
+          point_view.draw(w)?;
+        }
+      Focus::Dlg(_) => 
+        if let Some(dlg) = &self.view.dialog {
+          dlg.body.point_view.draw(w)?;
+        }
+    }
     w.queue(cursor::Show)?;
     w.flush()
   }

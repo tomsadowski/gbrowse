@@ -3,6 +3,7 @@
 use crate::{
   Rect, 
   Style,
+  GetHeight,
   Draw,
   constants::*,
 };
@@ -259,6 +260,13 @@ impl Frame {
       w.queue(SetAttribute(Attribute::Reset))?;
     }
     Ok(())
+  }
+}
+
+
+impl GetHeight for Frame {
+  fn get_height(&self) -> u16 {
+    self.screen.h
   }
 }
 

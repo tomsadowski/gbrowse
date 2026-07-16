@@ -374,9 +374,9 @@ impl<T: std::fmt::Display> Draw for Page<T> {
 
     writer.queue(style::SetAttribute(style::Attribute::Reset))?;
 
-    if self.draw_point {
-      self.point_view.draw(writer)?;
-    }
+//    if self.draw_point {
+//      self.point_view.draw(writer)?;
+//    }
 
     Ok(())
   }

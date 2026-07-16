@@ -80,6 +80,7 @@ pub use crate::layout::{
   GetHeight,
   get_heights,
   resize_views,
+  fill,
   build_views,
 };
 pub use crate::tab::{

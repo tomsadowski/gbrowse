@@ -132,7 +132,7 @@ pub struct Dialog {
 
 impl GetHeight for Dialog {
   fn get_height(&self) -> u16 {
-    self.frame.outer_rect.h
+    self.frame.screen.h
   }
 }
 
