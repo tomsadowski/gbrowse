@@ -107,7 +107,7 @@ impl<'a> BuildView<Dialog> for DialogParams<'a> {
     );
 
     let mut inner = frame.inner_rect.clone();
-    inner.h = get_heights(&views);
+    inner.h = get_heights(&inner, &views).iter().sum();
     let frame = self.frame.build_from_inner(&inner);
 
     Dialog {

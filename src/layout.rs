@@ -77,7 +77,7 @@ pub fn fill(
 }
 
 
-pub fn get_beights(rect: &Rect, views: &[impl GetHeight]) -> Vec<u16> {
+pub fn get_heights(rect: &Rect, views: &[impl GetHeight]) -> Vec<u16> {
   let mut vec: Vec<u16> = vec![];
   let mut rect = rect.clone();
   for v in views {
@@ -89,7 +89,7 @@ pub fn get_beights(rect: &Rect, views: &[impl GetHeight]) -> Vec<u16> {
 }
 
 
-pub fn get_heights(vec: &[impl GetHeight]) -> u16 {
+pub fn get_hhheights(vec: &[impl GetHeight]) -> u16 {
   vec.iter().map(|v| v.get_height()).sum()
 }
 
