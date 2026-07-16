@@ -16,6 +16,68 @@ use crate::{
 
 
 
+#[derive(Copy, Clone, Debug)]
+pub struct TextParams {
+  pub style: Style,
+  pub wrap:  bool,
+}
+
+
+impl From<&TextParams> for Style {
+  fn from(t: &TextParams) -> Self {
+    t.style
+  }
+}
+
+
+impl Default for TextParams {
+  fn default() -> Self {
+    Self {
+      style: Style::default(),
+      wrap:  true,
+    }
+  }
+}
+
+
+impl TextParams {
+  // split at spaces within width and split at lines
+  pub fn get_matrix(&self, string: &str, width: usize) -> Vec<Vec<char>> {
+    if string.len() == 0 {
+      vec![vec![]]
+    } else if self.wrap {
+      string
+        .lines()
+        .flat_map(|line| crate::util::get_wrapped_text(line, width))
+        .collect()
+    } else {
+      string
+        .lines()
+        .map(|line| line.chars().collect())
+        .collect()
+    }
+  }
+}
+
+
+pub fn print(
+  width: usize, 
+  styles: &Vec<TextParams>, 
+  source: &Vec<impl std::fmt::Display>
+) -> (Vec<usize>, Vec<Vec<char>>) {
+  styles
+    .iter()
+    .zip(source.iter())
+    .enumerate()
+    .flat_map(|(idx, (style, source))| 
+      style
+        .get_matrix(&source.to_string(), width)
+        .into_iter()
+        .map(move |text| (idx, text))
+    ).unzip()
+}
+
+
 #[derive(Debug)]
 pub struct PageParams<T> {
   pub max: Option<u16>,
@@ -25,6 +87,7 @@ pub struct PageParams<T> {
   pub styles: Vec<TextParams>,
   pub source: Vec<T>,
 }
+
 
 impl<T> Default for PageParams<T> {
   fn default() -> Self {
@@ -91,19 +154,11 @@ impl<T: std::fmt::Display> PageParams<T> {
 
 impl<T: std::fmt::Display> BuildView<Page<T>> for PageParams<T> {
   fn build(self, rect: &Rect) -> Page<T> {
-    let width = usize::from(rect.width());
-
-    let (indexes, matrix): (Vec<usize>, Vec<Vec<char>>) = self.styles
-      .iter()
-      .zip(self.source.iter())
-      .enumerate()
-      .flat_map(|(idx, (style, source))| 
-        style
-          .get_matrix(&source.to_string(), width)
-          .into_iter()
-          .map(move |text| (idx, text))
-      ).unzip();
-
+    let (indexes, matrix) = print(
+      rect.width().into(), 
+      &self.styles, 
+      &self.source
+    );
     let matrix = if self.edit {
       PointMatrix::from(matrix).editor()
     } else {
@@ -123,49 +178,6 @@ impl<T: std::fmt::Display> BuildView<Page<T>> for PageParams<T> {
       point_view,
       indexes, 
       matrix,
-    }
-  }
-}
-
-#[derive(Copy, Clone, Debug)]
-pub struct TextParams {
-  pub style: Style,
-  pub wrap:  bool,
-}
-
-
-impl From<&TextParams> for Style {
-  fn from(t: &TextParams) -> Self {
-    t.style
-  }
-}
-
-
-impl Default for TextParams {
-  fn default() -> Self {
-    Self {
-      style: Style::default(),
-      wrap:  true,
-    }
-  }
-}
-
-
-impl TextParams {
-  // split at spaces within width and split at lines
-  pub fn get_matrix(&self, string: &str, width: usize) -> Vec<Vec<char>> {
-    if string.len() == 0 {
-      vec![vec![]]
-    } else if self.wrap {
-      string
-        .lines()
-        .flat_map(|line| crate::util::get_wrapped_text(line, width))
-        .collect()
-    } else {
-      string
-        .lines()
-        .map(|line| line.chars().collect())
-        .collect()
     }
   }
 }
@@ -263,13 +275,59 @@ impl<T: std::fmt::Display> Page<T> {
       .map(|s| s.to_string())
       .unwrap_or("".to_string())
   }
+
+
+  pub fn rebuild(
+    &mut self,
+    rect: &Rect,
+  ) {
+    let linear_head = self.matrix.get_linear_head();
+    let (indexes, matrix) = print(
+      rect.width().into(), 
+      &self.styles, 
+      &self.source
+    );
+
+    let matrix = if self.edit {
+      PointMatrix::from(matrix).editor()
+    } else {
+      PointMatrix::from(matrix)
+    };
+
+    self.indexes = indexes;
+    self.matrix = matrix;
+    self.matrix.set_linear_head(linear_head);
+    self.point_view.resize(&self.matrix.point, &rect);
+  }
+
+
+  pub fn restyle(
+    &mut self,
+    get_style: impl Fn(&T) -> TextParams,
+  ) {
+    self.styles = self.source.iter().map(|s| get_style(s)).collect();
+    self.rebuild(&Rect::from(&self.point_view));
+  }
 }
+
+
+impl<T: std::fmt::Display> Resize for Page<T> {
+  fn resize(&mut self, rect: &Rect) {
+    if self.point_view.get_width() == rect.width() {
+      self.point_view.resize(&self.matrix.point, rect);
+    } else {
+      self.rebuild(rect);
+    }
+  }
+}
+
 
 impl<T: std::fmt::Display> GetHeight for Page<T> {
   fn get_height(&self) -> u16 {
     self.matrix.matrix.get_height().min(self.max.unwrap_or(u16::MAX))
   }
 }
+
 
 impl<T: std::fmt::Display> Draw for Page<T> {
   fn draw(&self, writer: &mut impl std::io::Write) 
@@ -321,42 +379,5 @@ impl<T: std::fmt::Display> Draw for Page<T> {
     }
 
     Ok(())
-  }
-}
-
-
-impl<T: std::fmt::Display> Resize for Page<T> {
-  fn resize(&mut self, rect: &Rect) {
-    // width has not changed, just resize point_view
-    if self.point_view.get_width() == rect.width() {
-      self.point_view.resize(&self.matrix.point, rect);
-
-    // width changes, rewrap
-    } else {
-      let linear_head = self.matrix.get_linear_head();
-      let width = usize::from(rect.width());
-
-      let (indexes, matrix): (Vec<usize>, Vec<Vec<char>>) = self.styles
-        .iter()
-        .zip(self.source.iter())
-        .enumerate()
-        .flat_map(|(idx, (style, source))| 
-          style
-            .get_matrix(&source.to_string(), width)
-            .into_iter()
-            .map(move |text| (idx, text))
-        ).unzip();
-
-      let matrix = if self.edit {
-        PointMatrix::from(matrix).editor()
-      } else {
-        PointMatrix::from(matrix)
-      };
-
-      self.indexes = indexes;
-      self.matrix = matrix;
-      self.matrix.set_linear_head(linear_head);
-      self.point_view.resize(&self.matrix.point, rect);
-    }
   }
 }

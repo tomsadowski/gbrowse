@@ -495,6 +495,13 @@ pub struct PointView {
 }
 
 
+impl From<&PointView> for Rect {
+  fn from(pv: &PointView) -> Self {
+    Rect::from(pv.dim()).with_pos(pv.pos()) 
+  }
+}
+
+
 impl From<&Rect> for PointView {
   fn from(rect: &Rect) -> Self {
     let rect = rect.clone();

@@ -99,7 +99,7 @@ impl App {
     self.focus = Focus::Tab;
     self.guide = format!("Press {} for menu", self.params.keys.menu);
     self.view.dialog = None;
-    self.view.flush();
+    self.view.push_frame();
   }
 
 
@@ -148,13 +148,13 @@ impl App {
       Status::CertRequiredTransient |
       Status::CertRequiredAuthorized => self.ack_dlg(&status.text),
       _ => {
-        self.tabs.add_gem_tab(
-          &self.params,
-          &mut self.view,
+        self.view.tab(
           &url, 
-          gemini::parse_doc(&content), 
+          PageParams::init().gem_styles(
+            gemini::parse_doc(&content),
+            |g| self.params.style.get_gem_tag_params(&g.tag)
+          )
         );
-        self.view.flush();
       }
     }
   }
@@ -206,7 +206,7 @@ impl App {
       &self.params.style.general,
       |gem| self.params.style.get_gem_tag_params(gem)
     );
-    self.view.flush();
+    self.view.push_frame();
   }
 
 
@@ -273,12 +273,12 @@ impl App {
         Action::CycleLeft => {
           let cmd = self.tabs.move_wrapped(-1);
           //self.layout.apply_move(TAB, cmd);
-          self.view.flush();
+          self.view.push_frame();
         }
         Action::CycleRight => {
           let cmd = self.tabs.move_wrapped(1);
           //self.layout.apply_move(TAB, cmd);
-          self.view.flush();
+          self.view.push_frame();
         }
         Action::LoadUrl => self.select_dlg(
           Task::NewTab, "Choose URL: ", self.params.urls.clone(),

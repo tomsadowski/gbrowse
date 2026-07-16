@@ -3,6 +3,7 @@
 use crate::{
   SystemParams,
   TextParams, 
+  PageParams,
   Rect,
   Draw,
   Frame,
@@ -53,13 +54,23 @@ impl Draw for AppView {
 impl Resize for AppView {
   fn resize(&mut self, rect: &Rect) {
     self.frame = self.frame.params.build_from_outer(rect);
-    self.flush();
+    self.push_frame();
   }
 }
 
 
 impl AppView {
-  pub fn flush(&mut self) {
+  pub fn new(rect: &Rect, params: &SystemParams) -> Self {
+    Self {
+      frame: params.style.get_frame_params().build_from_outer(rect),
+      flash: None,
+      dialog: None,
+      tabs: CursorVec::default(),
+    }
+  }
+
+
+  pub fn push_frame(&mut self) {
     let mut inner_rect = self.frame.inner_rect;
     resize_views(
       &inner_rect, 
@@ -76,17 +87,16 @@ impl AppView {
 
   pub fn dialog(&mut self, params: DialogParams) {
     self.dialog = Some(params.build(&self.frame.inner_rect));
-    self.flush();
+    self.push_frame();
   }
 
 
-  pub fn new(rect: &Rect, params: &SystemParams) -> Self {
-    Self {
-      frame: params.style.get_frame_params().build_from_outer(rect),
-      flash: None,
-      dialog: None,
-      tabs: CursorVec::default(),
-    }
+  pub fn tab(&mut self, url: &url::Url, params: PageParams<TabText>) {
+    self.tabs.insert(Tab {
+      url: url.clone(), 
+      page: params.build(&self.frame.inner_rect) 
+    });
+    self.push_frame();
   }
 
 
