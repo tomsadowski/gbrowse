@@ -620,7 +620,7 @@ impl CursorView {
     self.size = new_size;
     self.head = new_head;
     // go to beginning of line
-    if new_head < usize::from(new_size) {
+    if new_head <= usize::from(new_size) {
       self.scroll = 0;
       self.cursor = u16::try_from(self.head).unwrap();
     // position must be lowered to fit within new bounds

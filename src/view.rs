@@ -28,11 +28,6 @@ use url::Url;
 
 
 
-pub enum Focus {
-  Flash, Dialog, Tabs,
-}
-
-
 pub struct AppView {
   pub frame: Frame,
   pub flash: Option<Page<String>>,
@@ -101,7 +96,7 @@ impl AppView {
   }
 
 
-  pub fn get_view_list(&self) -> Vec<ViewType> {
+  pub fn get_view_list<'a>(&'a self) -> Vec<ViewType<'a>> {
     let mut vec: Vec<ViewType> = vec![];
     if let Some(flash) = &self.flash {
       vec.push(ViewType::Flash(flash));
@@ -116,7 +111,7 @@ impl AppView {
   }
 
 
-  pub fn get_view_list_mut(&mut self) -> Vec<ViewTypeMut> {
+  pub fn get_view_list_mut<'a>(&'a mut self) -> Vec<ViewTypeMut<'a>> {
     let mut vec: Vec<ViewTypeMut> = vec![];
     if let Some(flash) = &mut self.flash {
       vec.push(ViewTypeMut::Flash(flash));
