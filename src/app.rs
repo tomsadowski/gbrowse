@@ -157,7 +157,7 @@ impl App {
           PageParams::init().gem_styles(
             gemini::parse_doc(&content),
             |g| self.params.style.get_gem_tag_params(&g.tag)
-          )
+          ).draw_point(true)
         );
       }
     }
