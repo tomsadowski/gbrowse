@@ -3,6 +3,7 @@
 use crate::{
   gemini, 
   util,
+  TabText,
   Dim,
   user,
   SystemParams, 
@@ -68,7 +69,10 @@ impl App {
   pub fn init(path: &str, w: u16, h: u16) -> Self {
     let user_text = std::fs::read_to_string(path).unwrap_or_default();
     let params: SystemParams = user_from_str(&user_text).unwrap_or_default();
-    let view = AppView::new(&Rect::from(Dim(w, h)), &params);
+    let view = AppView::new(
+      &Rect::from(Dim(w, h)), 
+      &params.style.get_frame_params()
+    );
     let mut app = Self {
       guide:       "".into(),
       tabs:        CursorVec::default(),
@@ -201,12 +205,12 @@ impl App {
 
 
   pub fn push_style(&mut self) {
-    self.tabs.push_gem_style(
-      &mut self.view,
-      &self.params.style.general,
-      |gem| self.params.style.get_gem_tag_params(gem)
-    );
-    self.view.push_frame();
+  //self.tabs.push_gem_style(
+  //  &mut self.view,
+  //  &self.params.style.general,
+  //  |gem| self.params.style.get_gem_tag_params(gem)
+  //);
+  //self.view.push_frame();
   }
 
 
@@ -238,36 +242,35 @@ impl App {
     else if 
       let Msg::Action(action) = message &&
       let Focus::Tab = &mut self.focus &&
-      let Some(view) = self.view.map
-        .get_mut(&TAB)
-        .and_then(|l| l.get_current_mut())
+      let Some(view) = self.view.tabs.get_current_mut()
     {
       match action {
-        Action::SaveUrl => if let Some(url) = self.tabs
+        Action::SaveUrl => if let Some(url) = self.view.tabs
           .get_current()
-          .map(|tab| tab.get_url())
+          .map(|tab| tab.url)
         {
-          match self.params.save_url(url) {
+          match self.params.save_url(&url) {
             Err(e) => self.ack_dlg(&e),
             Ok(()) => self.ack_dlg(&format!("Saved URL: {url}")),
           }
         }
-        Action::Select => match self.tabs
+        Action::Select => match self.view.tabs
           .get_current()
-          .and_then(|tab| tab
-            .get_gem_tab()
-            .and_then(|gemtab| gemtab.get_current_tag(&view.page))
-          ) 
+          .and_then(|tab| tab.page.get_source()) 
         {
-          None => self.ack_dlg(
-            &format!("You've selected nothing")
-          ),
-          Some(GemTag::Link(link)) => {
-            let link = link.clone();
-            self.select_link(&link);
+          Some(TabText::Gemini(gemtext)) => {
+            match gemtext.tag {
+              GemTag::Link(link) => {
+                let link = link.clone();
+                self.select_link(&link);
+              }
+              gemtag => self.ack_dlg(
+                &format!("You've selected {gemtag:?}")
+              )
+            }
           }
-          Some(gemtag) => self.ack_dlg(
-            &format!("You've selected {gemtag:?}")
+          _ => self.ack_dlg(
+            &format!("You've selected nothing")
           ),
         }
         Action::CycleLeft => {
@@ -295,21 +298,19 @@ impl App {
           Task::DelTab, "Delete current tab?",
         ),
         action => {
-          action.update(view);
+          action.update(&mut view.page);
         }
       }
     }
     else if 
       let Msg::Action(action) = message &&
-      let Focus::Dlg(dlg_type, task) = &mut self.focus &&
-      let Some(view) = self.view.map
-        .get_mut(&DLG_2)
-        .and_then(|l| l.get_current_mut())
+      let Focus::Dlg(task) = &mut self.focus &&
+      let Some(dlg) = self.view.dialog
     {
-      match (task, action, dlg_type) {
+      match (task, action, dlg.dlg_type) {
         (Task::NewTab, Action::Select, DlgType::Select) => {
           if let Some(link) = self.params.urls.get(
-            view.page.get_index()
+            dlg.body.get_index()
           ) {
             let link = link.clone();
             self.select_link(&link);
@@ -319,7 +320,7 @@ impl App {
         }
         (Task::ChangeKeys, Action::Select, DlgType::Select) => {
           match std::fs::read_to_string(
-            user::get_keys_file(&view.get_param_string())
+            user::get_keys_file(&dlg.body.get_param_string())
           ) {
             Err(e) => {
               self.ack_dlg(&format!("Problem: {e}"))
@@ -333,7 +334,7 @@ impl App {
         }
         (Task::ChangeStyle, Action::Select, DlgType::Select) => {
           match std::fs::read_to_string(
-            user::get_styles_file(&view.get_param_string())
+            user::get_styles_file(&dlg.body.get_param_string())
           ) {
             Err(e) => self.ack_dlg(&e.to_string()),
             Ok(s)  => if let Err(e) = self.params.style.update_from_str(&s) {
@@ -346,7 +347,7 @@ impl App {
           }
         }
         (Task::Menu, Action::Select, DlgType::Select) => {
-          match MENU[view.page.get_index()] {
+          match MENU[dlg.body.get_index()] {
             MANUAL => {
               self.ack_dlg("View manual".into());
               // write the bloody manual!
@@ -374,7 +375,7 @@ impl App {
           }
         }
         (Task::Init(_), Action::Enter, _) => {
-          let url_str = view.get_page_string().unwrap();
+          let url_str = dlg.body.get_string().unwrap();
           match url::Url::parse(&url_str) {
             Err(e) => self.edit_dlg(
               Task::Init(url_str.clone()),
@@ -401,8 +402,8 @@ impl App {
           );
         }
         (Task::Reply(url), Action::Enter, _) => {
-          let text = view
-            .get_page_string()
+          let text = dlg.body
+            .get_string()
             .unwrap()
             .trim()
             .replace(" ", "%20");
@@ -418,7 +419,7 @@ impl App {
         }
         (Task::NewTab, Action::Enter, _) => {
           match url::Url::parse(
-            &view.get_page_string().unwrap()
+            &dlg.body.get_string().unwrap()
           ) {
             Err(e) => {
               self.ack_dlg(&format!("Invalid URL: {e}"));
@@ -460,10 +461,10 @@ impl App {
           self.focus_tabs();
         }
         (_, action, DlgType::Edit) => {
-          action.update_edit(view);
+          action.update_edit(&mut dlg.body);
         }
         (_, action, _) => {
-          action.update(view);
+          action.update(&mut dlg.body);
         }
       }
     } 
@@ -494,8 +495,12 @@ impl App {
           ..
         }
       ) => match &self.focus {
-        Focus::Dlg(dlg_type, _) => 
-          self.params.keys.get_dlg_action(dlg_type, &kc).map(Msg::Action),
+        Focus::Dlg(_) => 
+          if let Some(dlg) = &self.view.dialog {
+            self.params.keys
+              .get_dlg_action(&dlg.dlg_type, &kc)
+              .map(Msg::Action)
+          } else {None},
         Focus::Tab => 
           self.params.keys.get_tab_action(&kc).map(Msg::Action),
       }

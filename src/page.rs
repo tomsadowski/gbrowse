@@ -204,6 +204,11 @@ impl<T> Page<T> {
   }
 
 
+  pub fn get_source(&self) -> Option<&T> {
+    self.source.get(self.get_index())
+  }
+
+
   pub fn get_string(&self) -> Option<String> {
     self.matrix.matrix.get(self.matrix.point.y.head)
       .map(|c| c.iter().collect())
@@ -249,11 +254,6 @@ impl<T> Page<T> {
   pub fn move_up(&mut self, delta: usize) {
     self.matrix.move_up(delta);
     self.point_view.update(&self.matrix.point);
-  }
-
-
-  pub fn get_source(&self) -> Option<&T> {
-    self.source.get(self.matrix.point.y.head)
   }
 
 

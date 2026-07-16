@@ -4,6 +4,7 @@ use crate::{
   SystemParams,
   TextParams, 
   PageParams,
+  FrameParams,
   Rect,
   Draw,
   Frame,
@@ -60,9 +61,9 @@ impl Resize for AppView {
 
 
 impl AppView {
-  pub fn new(rect: &Rect, params: &SystemParams) -> Self {
+  pub fn new(rect: &Rect, params: &FrameParams) -> Self {
     Self {
-      frame: params.style.get_frame_params().build_from_outer(rect),
+      frame: params.build_from_outer(rect),
       flash: None,
       dialog: None,
       tabs: CursorVec::default(),
