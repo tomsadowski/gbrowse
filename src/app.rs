@@ -7,6 +7,7 @@ use crate::{
   Dim,
   user,
   SystemParams, 
+  Draw,
   CursorVec,
   AppView,
   Tab,
@@ -24,6 +25,7 @@ use crate::{
   Status, 
   StatusText,
   Frame,
+  Resize,
   constants::*,
 };
 
@@ -215,9 +217,9 @@ impl App {
 
 
   pub fn select_link(&mut self, url_str: &str) {
-    match self.tabs
+    match self.view.tabs
       .get_current()
-      .map(|tab| tab.get_url())
+      .map(|tab| &tab.url)
       .map(|url| util::join_if_relative(&url, url_str)) 
     {
       None => {},
@@ -237,7 +239,7 @@ impl App {
     if let Msg::Quit = message {
       self.quit = true;
     } else if let Msg::Resize(w, h) = message {
-      self.view.resize(Rect::from(Dim(*w, *h)));
+      self.view.resize(&Rect::from(Dim(*w, *h)));
     } 
     else if 
       let Msg::Action(action) = message &&
@@ -247,9 +249,9 @@ impl App {
       match action {
         Action::SaveUrl => if let Some(url) = self.view.tabs
           .get_current()
-          .map(|tab| tab.url)
+          .map(|tab| &tab.url)
         {
-          match self.params.save_url(&url) {
+          match self.params.save_url(url) {
             Err(e) => self.ack_dlg(&e),
             Ok(()) => self.ack_dlg(&format!("Saved URL: {url}")),
           }
@@ -259,7 +261,7 @@ impl App {
           .and_then(|tab| tab.page.get_source()) 
         {
           Some(TabText::Gemini(gemtext)) => {
-            match gemtext.tag {
+            match &gemtext.tag {
               GemTag::Link(link) => {
                 let link = link.clone();
                 self.select_link(&link);
@@ -305,9 +307,9 @@ impl App {
     else if 
       let Msg::Action(action) = message &&
       let Focus::Dlg(task) = &mut self.focus &&
-      let Some(dlg) = self.view.dialog
+      let Some(dlg) = &mut self.view.dialog
     {
-      match (task, action, dlg.dlg_type) {
+      match (task, action, &dlg.dlg_type) {
         (Task::NewTab, Action::Select, DlgType::Select) => {
           if let Some(link) = self.params.urls.get(
             dlg.body.get_index()
