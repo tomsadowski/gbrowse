@@ -154,10 +154,12 @@ impl App {
       _ => {
         self.view.tab(
           &url, 
-          PageParams::init().gem_styles(
-            gemini::parse_doc(&content),
-            |g| self.params.style.get_gem_tag_params(&g.tag)
-          ).style(&self.params.style.general)
+          PageParams::init()
+            .style(&self.params.style.general)
+            .gem_styles(
+              gemini::parse_doc(&content),
+              |g| self.params.style.get_gem_tag_params(&g.tag)
+            )
         );
       }
     }

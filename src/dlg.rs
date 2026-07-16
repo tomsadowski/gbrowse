@@ -83,8 +83,7 @@ impl<'a> DialogParams<'a> {
     self.body = PageParams::init()
       .text(vec![text.to_string()])
       .style(&self.params.style.info)
-      .edit(true)
-      .draw_point(true);
+      .edit(true);
     self.dlg_type = DlgType::Edit;
     self
   }
@@ -93,8 +92,7 @@ impl<'a> DialogParams<'a> {
   pub fn select(mut self, options: Vec<String>) -> Self {
     self.body = PageParams::init()
       .text(options)
-      .style(&self.params.style.info)
-      .draw_point(true);
+      .style(&self.params.style.info);
     self.dlg_type = DlgType::Select;
     self
   }
