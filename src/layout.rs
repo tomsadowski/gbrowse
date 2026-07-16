@@ -16,6 +16,11 @@ pub trait GetMaxHeight {
 }
 
 
+pub trait GetDisplayHeight {
+  fn get_display_height(&self) -> u16;
+}
+
+
 pub trait Draw {
   fn draw(&self, _: &mut impl std::io::Write) -> std::io::Result<()>;
 }
@@ -67,7 +72,7 @@ pub fn fill(
 }
 
 
-pub fn get_display_bounds(rect: &Rect, views: &[impl GetMaxHeight]) 
+pub fn get_display_bounds(rect: &Rect, views: &Vec<&impl GetMaxHeight>) 
   -> Vec<Rect> 
 {
     let mut remaining = rect.clone();
@@ -94,9 +99,9 @@ pub fn get_display_heights(rect: &Rect, views: &[impl GetMaxHeight])
     let mut vec: Vec<u16> = vec![];
     let mut views = views.iter();
     while let Some(v) = views.next() && remaining > 0 {
-      let vheight = v.get_max_height().min(remaining);
-      remaining -= vheight;
-      vec.push(vheight);
+      let display_height = v.get_max_height().min(remaining);
+      remaining -= display_height;
+      vec.push(display_height);
     }
     while let Some(v) = views.next() {
       vec.push(0);
@@ -106,13 +111,13 @@ pub fn get_display_heights(rect: &Rect, views: &[impl GetMaxHeight])
 
 
 pub fn resize_views<T: Resize + GetMaxHeight>(
-  rect: &Rect, views: Vec<&mut T>
+  rect: &Rect, views: &mut Vec<&mut T>
 ) {
-  let mut rect = rect.clone();
-  for v in views {
-    v.resize(&rect);
-    let vheight = v.get_max_height().min(rect.height());
-    rect = rect.shift_north((vheight as i16) * -1);
+  let bounds = get_display_bounds(&rect, 
+    &views.iter().map(|v| &**v).collect()
+  );
+  for (view, bound) in views.iter_mut().zip(bounds.iter()) {
+    view.resize(&bound);
   }
 }
 

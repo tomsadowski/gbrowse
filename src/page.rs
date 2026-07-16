@@ -6,6 +6,7 @@ use crate::{
   CursorView,
   PointView,
   GetMaxHeight,
+  GetDisplayHeight,
   BuildView,
   Resize,
   PointMatrix,
@@ -320,61 +321,56 @@ impl<T: std::fmt::Display> Resize for Page<T> {
 }
 
 
+impl<T> GetDisplayHeight for Page<T> {
+  fn get_display_height(&self) -> u16 {
+    self.point_view.get_height()
+  }
+}
+
+
 impl<T: std::fmt::Display> GetMaxHeight for Page<T> {
   fn get_max_height(&self) -> u16 {
-    self.matrix.matrix.get_max_height().min(self.max.unwrap_or(u16::MAX))
+    self.matrix.matrix
+      .get_max_height()
+      .min(self.max.unwrap_or(u16::MAX))
   }
 }
 
 
 impl<T: std::fmt::Display> Draw for Page<T> {
-  fn draw(&self, writer: &mut impl std::io::Write) 
-    -> std::io::Result<()> 
-  {
+  fn draw(&self, w: &mut impl std::io::Write) -> std::io::Result<()> {
     use crossterm::{QueueableCommand, cursor, style};
 
     let (mut x, mut y) = self.point_view.pos().into();
 
-    writer
+    w
       .queue(cursor::MoveTo(x, y))?
       .queue(style::SetAttribute(style::Attribute::Reset))?
       .queue(&self.style)?;
 
     for (index, line) in self.get_view(self.point_view.get_y_view()) {
-      writer.queue(
+      w.queue(
         self.styles
           .get(*index)
           .map(|t| Style::from(t))
           .unwrap_or_default()
       )?;
-
-      for (w, c) in self.point_view
-        .get_x_view()
-        .get_weighted_view(line) 
-      {
-        writer.queue(style::Print(c))?;
-        x += w;
+      for (u, c) in self.point_view.get_x_view().get_weighted_view(line) {
+        w.queue(style::Print(c))?;
+        x += u;
       }
-
-      writer
+      w
         .queue(style::SetAttribute(style::Attribute::Reset))?
         .queue(&self.style)?;
 
       for _ in x..self.point_view.get_rect().x_end() {
-        writer.queue(style::Print(' '))?;
+        w.queue(style::Print(' '))?;
       }
-
       x = self.point_view.pos().x(); 
       y += 1; 
-      writer.queue(cursor::MoveTo(x, y))?;
+      w.queue(cursor::MoveTo(x, y))?;
     }
-
-    writer.queue(style::SetAttribute(style::Attribute::Reset))?;
-
-//    if self.draw_point {
-//      self.point_view.draw(writer)?;
-//    }
-
+    w.queue(style::SetAttribute(style::Attribute::Reset))?;
     Ok(())
   }
 }

@@ -78,6 +78,7 @@ pub use crate::layout::{
   Draw,
   BuildView,
   GetMaxHeight,
+  GetDisplayHeight,
   get_display_heights,
   resize_views,
   fill,

@@ -10,7 +10,8 @@ use crate::{
   resize_views,
   Tab,
   TabText,
-  get_display_heights,
+//  get_display_heights,
+  GetDisplayHeight,
   Dialog,
   DialogParams,
   CursorVec,
@@ -69,14 +70,14 @@ impl AppView {
     let mut inner_rect = self.frame.inner_rect;
     resize_views(
       &inner_rect, 
-      self.get_view_list_mut().iter_mut().collect()
+      &mut self.get_view_list_mut().iter_mut().collect()
     );
    // let mut inner = frame.inner_rect.clone();
    // inner.h = get_heights(&inner, &views).iter().sum();
     inner_rect.h = self
       .get_view_list()
       .iter()
-      .map(|v| v.get_max_height())
+      .map(|v| v.get_display_height())
       .sum();
     self.frame = self.frame.params.build_from_inner(&inner_rect);
   }
@@ -148,6 +149,17 @@ impl<'a> GetMaxHeight for ViewType<'a> {
 }
 
 
+impl<'a> GetDisplayHeight for ViewType<'a> {
+  fn get_display_height(&self) -> u16 {
+    match self {
+      Self::Flash(flash) => flash.get_display_height(),
+      Self::Dialog(dialog) => dialog.get_display_height(),
+      Self::Tab(page) => page.get_display_height(),
+    }
+  }
+}
+
+
 impl<'a> Draw for ViewType<'a> {
   fn draw(&self, w: &mut impl std::io::Write) -> std::io::Result<()> {
     match self {
@@ -164,6 +176,17 @@ pub enum ViewTypeMut<'a> {
   Flash(&'a mut Page<String>),
   Dialog(&'a mut Dialog),
   Tab(&'a mut Page<TabText>),
+}
+
+
+impl<'a> GetDisplayHeight for ViewTypeMut<'a> {
+  fn get_display_height(&self) -> u16 {
+    match self {
+      Self::Flash(flash) => flash.get_display_height(),
+      Self::Dialog(dialog) => dialog.get_display_height(),
+      Self::Tab(page) => page.get_display_height(),
+    }
+  }
 }
 
 
