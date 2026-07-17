@@ -78,7 +78,7 @@ impl<T> PointMatrix<T> {
 
 
   pub fn move_x(&mut self, idelta: isize) -> isize {
-    self.point.move_x(&self.matrix, idelta)
+    self.point.move_x(&self.matrix, idelta); 0
   }
 
 
@@ -281,7 +281,6 @@ impl Cursor {
     } else if new_ihead > imax {
       self.head = self.get_max(vec);
       new_ihead - imax
-//      new_ihead - (self.get_max(vec).saturating_sub(1) as isize)
     } else {
       self.head = new_ihead as usize;
       0
@@ -400,7 +399,7 @@ impl Point {
   pub fn get_linear_head<T>(&self, vec: &Vec<Vec<T>>) -> usize {
     vec
       .iter()
-      .take(self.y.head.saturating_sub(1))
+      .take(self.y.head)
       .map(|v| v.len().max(1))
       .chain(std::iter::once(self.x.head))
       .sum()
@@ -424,29 +423,30 @@ impl Point {
   }
 
 
-  pub fn move_x<T>(&mut self, vec: &Vec<Vec<T>>, delta: isize) -> isize {
-    let remainder = vec
-      .get(self.y.head)
-      .map(|v| self.x.move_head(v, delta))
-      .unwrap_or(0);
+  pub fn move_x<T>(&mut self, vec: &Vec<Vec<T>>, delta: isize) {
+    let mut remainder = delta;
 
-    if 0 != remainder
-    && 0 == self.y.move_head(vec, remainder.signum())
+    while remainder != 0 
     && let Some(x_vec) = vec.get(self.y.head) 
     {
-      self.x.move_head(
-        x_vec, 
-        u32::MAX as isize * remainder.signum() * -1
-      );
-      return self.move_x(
-        vec, 
-        remainder
+      remainder = self.x.move_head(x_vec, remainder);
+
+      if 0 != remainder
+      && 0 == self.y.move_head(vec, remainder.signum()) 
+      && let Some(x_vec) = vec.get(self.y.head) 
+      {
+        self.x.move_head(
+          x_vec, u32::MAX as isize * remainder.signum() * -1
+        );
+        remainder = remainder
           .saturating_abs()
-          .saturating_sub(1) * remainder.signum()
-      )
-    } 
+          .saturating_sub(1) * remainder.signum();
+
+      } else {
+        remainder = 0;
+      }
+    }
     self.pref_x = self.x.head;
-    return remainder
   }
 
 
@@ -475,12 +475,12 @@ impl Point {
 
 
   pub fn move_left<T>(&mut self, vec: &Vec<Vec<T>>, delta: usize) -> bool {
-    self.move_x(vec, delta as isize * -1) == 0
+    self.move_x(vec, delta as isize * -1); true
   }
 
 
   pub fn move_right<T>(&mut self, vec: &Vec<Vec<T>>, delta: usize) -> bool {
-    self.move_x(vec, delta as isize) == 0
+    self.move_x(vec, delta as isize); true
   }
 
 
