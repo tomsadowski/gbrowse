@@ -10,7 +10,6 @@ use crate::{
   resize_views,
   Tab,
   TabText,
-//  get_display_heights,
   GetDisplayHeight,
   Dialog,
   DialogParams,
