@@ -281,6 +281,7 @@ impl Cursor {
     } else if new_ihead > imax {
       self.head = self.get_max(vec);
       new_ihead - imax
+//      new_ihead - (self.get_max(vec).saturating_sub(1) as isize)
     } else {
       self.head = new_ihead as usize;
       0
@@ -428,20 +429,24 @@ impl Point {
       .get(self.y.head)
       .map(|v| self.x.move_head(v, delta))
       .unwrap_or(0);
-    if remainder != 0 && self.y.move_head(vec, remainder.signum()) == 0 {
-      match vec.get(self.y.head) {
-        None => remainder,
-        Some(v) => {
-          self.x.move_head(v, v.len() as isize * remainder.signum() * -1);
-          self.move_x(vec, 
-            (remainder.saturating_abs() - 1) * remainder.signum()
-          )
-        }
-      }
-    } else {
-      self.pref_x = self.x.head;
-      remainder
-    }
+
+    if 0 != remainder
+    && 0 == self.y.move_head(vec, remainder.signum())
+    && let Some(x_vec) = vec.get(self.y.head) 
+    {
+      self.x.move_head(
+        x_vec, 
+        u32::MAX as isize * remainder.signum() * -1
+      );
+      return self.move_x(
+        vec, 
+        remainder
+          .saturating_abs()
+          .saturating_sub(1) * remainder.signum()
+      )
+    } 
+    self.pref_x = self.x.head;
+    return remainder
   }
 
 
