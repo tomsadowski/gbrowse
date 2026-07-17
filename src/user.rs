@@ -4,6 +4,7 @@ use crate::{
   SystemControlParams,
   SystemStyleParams,
   DialogParams,
+  TabText,
   constants::*,
 };
 

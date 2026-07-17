@@ -150,9 +150,12 @@ impl App {
           &url, 
           PageParams::init()
             .style(&self.params.style.general)
-            .gem_styles(
-              gemini::parse_doc(&content),
-              |g| self.params.style.get_gem_tag_params(&g.tag)
+            .text_styles(
+              gemini::parse_doc(&content)
+                .into_iter()
+                .map(TabText::Gemini)
+                .collect(),
+              |g| self.params.style.get_tab_text_params(g)
             )
         );
       }
@@ -208,12 +211,13 @@ impl App {
 
 
   pub fn push_style(&mut self) {
-  //self.tabs.push_gem_style(
-  //  &mut self.view,
-  //  &self.params.style.general,
-  //  |gem| self.params.style.get_gem_tag_params(gem)
-  //);
-  //self.view.push_frame();
+    for tab in self.view.tabs.vec.iter_mut() {
+      tab.page.restyle(
+        |text| self.params.style.get_tab_text_params(text)
+      );
+      tab.page.style = self.params.style.general.style;
+    }
+    self.view.push_frame();
   }
 
 
@@ -473,7 +477,6 @@ impl App {
         (Task::DelTab, Action::Yes, _) => {
           match self.view.tabs.remove() {
             true => {
-             // self.layout.apply_remove(TAB, cmd);
               let url_str = self.params.init_url.clone();
               self.edit_dlg(
                 Task::Init(url_str.clone()), 
