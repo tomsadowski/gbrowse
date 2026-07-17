@@ -97,6 +97,13 @@ impl AppView {
     self.frame = self.frame.params.build_from_inner(&inner_rect);
   }
 
+  
+  pub fn flash(&mut self, params: PageParams<String>) {
+    self.frame = self.frame.params.build_from_outer(&self.rect);
+    self.flash = Some(params.build(&self.frame.inner_rect));
+    self.push_frame();
+  }
+
 
   pub fn dialog(&mut self, params: DialogParams) {
     self.frame = self.frame.params.build_from_outer(&self.rect);

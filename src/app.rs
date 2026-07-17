@@ -171,12 +171,15 @@ impl App {
       Err(e) => {
         self.ack_dlg(&e);
         self.request = None;
+        self.view.flash = None;
+        self.view.reset_frame();
         true
       }
       Ok((r, c)) => {
         let url = request.url.clone();
-        self.join_gemdoc(url, r, c);
+        self.view.flash = None;
         self.request = None;
+        self.join_gemdoc(url, r, c);
         true
       }
     }
@@ -184,9 +187,13 @@ impl App {
 
   pub fn spawn_request(&mut self, url: &url::Url) {
     match (&mut self.request, url.scheme()) {
-      (None, "gemini") => self.request = Some(
-        Request::new(&url, self.params.timeout)
-      ),
+      (None, "gemini") => {
+        self.request = Some(Request::new(&url, self.params.timeout));
+        self.view.flash(
+          PageParams::init()
+            .text(vec![format!("pending request: {url}")])
+        );
+      }
       (None, scheme) => self.ack_dlg(
         &format!("Protocol {scheme} not yet supported")
       ),

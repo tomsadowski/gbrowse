@@ -165,7 +165,7 @@ impl<T: std::fmt::Display> BuildView<Page<T>> for PageParams<T> {
     };
 
     let mut point_view = PointView::from(rect);
-    point_view.update(&matrix.point);
+    point_view.update(&matrix);
 
     Page {
       draw_point: self.draw_point,
@@ -216,43 +216,43 @@ impl<T> Page<T> {
 
   pub fn delete(&mut self) {
     self.matrix.delete();
-    self.point_view.update(&self.matrix.point);
+    self.point_view.update(&self.matrix);
   }
 
 
   pub fn backspace(&mut self) {
     self.matrix.backspace();
-    self.point_view.update(&self.matrix.point);
+    self.point_view.update(&self.matrix);
   }
 
 
   pub fn insert(&mut self, ch: char) {
     self.matrix.insert(ch);
-    self.point_view.update(&self.matrix.point);
+    self.point_view.update(&self.matrix);
   }
 
 
   pub fn move_left(&mut self, delta: usize) {
     self.matrix.move_left(delta);
-    self.point_view.update(&self.matrix.point);
+    self.point_view.update(&self.matrix);
   }
 
 
   pub fn move_right(&mut self, delta: usize) {
     self.matrix.move_right(delta);
-    self.point_view.update(&self.matrix.point);
+    self.point_view.update(&self.matrix);
   }
 
 
   pub fn move_down(&mut self, delta: usize) {
     self.matrix.move_down(delta);
-    self.point_view.update(&self.matrix.point);
+    self.point_view.update(&self.matrix);
   }
 
 
   pub fn move_up(&mut self, delta: usize) {
     self.matrix.move_up(delta);
-    self.point_view.update(&self.matrix.point);
+    self.point_view.update(&self.matrix);
   }
 
 

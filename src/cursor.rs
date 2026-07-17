@@ -36,6 +36,15 @@ impl<T> From<Vec<Vec<T>>> for PointMatrix<T> {
 }
 
 
+impl PointMatrix<char> {
+  pub fn get_weighted_x(&self) -> usize {
+    if let Some(vec) = self.matrix.get(self.point.y.head) {
+      self.point.x.get_weighted_head(vec)
+    } else {0}
+  }
+}
+
+
 impl<T> PointMatrix<T> {
   pub fn init() -> Self {
     Self::default()
@@ -351,7 +360,7 @@ impl Cursor {
   }
 
 
-  pub fn get_weighted_head(&self, vec: Vec<char>) -> usize {
+  pub fn get_weighted_head(&self, vec: &[char]) -> usize {
     use unicode_width::UnicodeWidthChar;
     vec
       .iter()
@@ -538,9 +547,9 @@ impl PointView {
   }
 
 
-  pub fn update(&mut self, point: &Point) -> bool {
-    let y = self.y.update(point.y.head);
-    let x = self.x.update(point.x.head);
+  pub fn update(&mut self, matrix: &PointMatrix<char>) -> bool {
+    let y = self.y.update(matrix.point.y.head);
+    let x = self.x.update(matrix.get_weighted_x());
     x || y
   }
 
@@ -581,21 +590,6 @@ impl CursorView {
       .skip(self.scroll)
       .take(self.size.into())
       .collect() 
-  }
-
-
-  pub fn get_weighted_piew(self, vec: &[char]) -> Vec<&char> {
-    use unicode_width::UnicodeWidthChar;
-    let size = usize::from(self.size);  
-    let mut text = vec.iter().skip(self.scroll);
-    let mut acc_size = 0;
-    let mut result = vec![];
-    while let Some(c) = text.next() && acc_size < size {
-      let width = c.width().unwrap_or(0);
-      acc_size += width;
-      result.push(c);
-    }
-    result
   }
 
 
