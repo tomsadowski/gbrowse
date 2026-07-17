@@ -7,7 +7,6 @@ use crate::{
   PageParams,
   Page,
   Rect,
-  get_display_heights,
   GetDisplayHeight,
   resize_views,
   build_views,
@@ -105,7 +104,7 @@ impl<'a> BuildView<Dialog> for DialogParams<'a> {
     );
 
     let mut inner = frame.inner_rect.clone();
-    inner.h = get_display_heights(&inner, &views).iter().sum();
+    inner.h = views.iter().map(|v| v.get_display_height()).sum();
     let frame = self.frame.build_from_inner(&inner);
 
     Dialog {
@@ -137,7 +136,7 @@ impl GetMaxHeight for Dialog {
 
 impl GetDisplayHeight for Dialog {
   fn get_display_height(&self) -> u16 {
-    self.frame.screen.h
+    self.frame.get_display_height()
   }
 }
 

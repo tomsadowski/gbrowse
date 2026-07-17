@@ -46,6 +46,7 @@ impl Draw for AppView {
 
 impl Resize for AppView {
   fn resize(&mut self, rect: &Rect) {
+    self.rect = rect.clone();
     self.frame = self.frame.params.build_from_outer(rect);
     self.push_frame();
   }
@@ -66,14 +67,18 @@ impl AppView {
   }
 
 
+  pub fn reset_frame(&mut self) {
+    self.frame = self.frame.params.build_from_outer(&self.rect);
+    self.push_frame();
+  }
+
+
   pub fn push_frame(&mut self) {
     let mut inner_rect = self.frame.inner_rect;
     resize_views(
       &inner_rect, 
       &mut self.get_view_list_mut().iter_mut().collect()
     );
-   // let mut inner = frame.inner_rect.clone();
-   // inner.h = get_heights(&inner, &views).iter().sum();
     inner_rect.h = self
       .get_view_list()
       .iter()

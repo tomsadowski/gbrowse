@@ -97,7 +97,7 @@ impl App {
     self.focus = Focus::Tab;
     self.guide = format!("Press {} for menu", self.params.keys.menu);
     self.view.dialog = None;
-    self.view.push_frame();
+    self.view.reset_frame();
   }
 
 
@@ -279,12 +279,12 @@ impl App {
 
         Action::CycleLeft => {
           let cmd = self.view.tabs.move_wrapped(-1);
-          self.view.push_frame();
+          self.view.reset_frame();
         }
 
         Action::CycleRight => {
           let cmd = self.view.tabs.move_wrapped(1);
-          self.view.push_frame();
+          self.view.reset_frame();
         }
 
         Action::LoadUrl => self.select_dlg(
@@ -369,13 +369,13 @@ impl App {
               // write the bloody manual!
             }
             CHANGE_KEYS => match util::get_entries(KEYS_PATH) {
-              Err(e)    => self.ack_dlg(&e),
+              Err(e) => self.ack_dlg(&e),
               Ok(entry) => self.select_dlg(
                 Task::ChangeKeys, "Choose keys", entry
               ),
             }
             CHANGE_STYLE => match util::get_entries(STYLES_PATH) {
-              Err(e)    => self.ack_dlg(&e),
+              Err(e) => self.ack_dlg(&e),
               Ok(entry) => self.select_dlg(
                 Task::ChangeStyle, "Choose Style", entry
               ),

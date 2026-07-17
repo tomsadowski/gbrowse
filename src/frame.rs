@@ -3,7 +3,7 @@
 use crate::{
   Rect, 
   Style,
-  GetMaxHeight,
+  GetDisplayHeight,
   Draw,
   constants::*,
 };
@@ -264,8 +264,8 @@ impl Frame {
 }
 
 
-impl GetMaxHeight for Frame {
-  fn get_max_height(&self) -> u16 {
+impl GetDisplayHeight for Frame {
+  fn get_display_height(&self) -> u16 {
     self.screen.h
   }
 }
