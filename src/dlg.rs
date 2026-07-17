@@ -110,8 +110,8 @@ impl<'a> BuildView<Dialog> for DialogParams<'a> {
     Dialog {
       frame, 
       dlg_type: self.dlg_type, 
-      header: views.pop().unwrap(),
       body: views.pop().unwrap(),
+      header: views.pop().unwrap(),
     }
   }
 }

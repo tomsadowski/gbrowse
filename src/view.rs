@@ -24,6 +24,7 @@ use crate::{
 
 
 pub struct AppView {
+  pub draw_frame: bool,
   pub rect: Rect,
   pub frame: Frame,
   pub flash: Option<Page<String>>,
@@ -34,7 +35,9 @@ pub struct AppView {
 
 impl Draw for AppView {
   fn draw(&self, w: &mut impl std::io::Write) -> std::io::Result<()> {
-    self.frame.draw(w)?;
+    if self.draw_frame {
+      self.frame.draw(w)?;
+    }
     for view in self.get_view_list() {
       view.draw(w)?;
     }
@@ -56,6 +59,7 @@ impl Resize for AppView {
 impl AppView {
   pub fn new(rect: &Rect, params: &FrameParams) -> Self {
     let mut appview = Self {
+      draw_frame: true,
       frame: params.build_from_outer(rect),
       flash: None,
       dialog: None,
@@ -73,7 +77,13 @@ impl AppView {
   }
 
 
+  pub fn reset_draw_state(&mut self) {
+    self.draw_frame = false;
+  }
+
+
   pub fn push_frame(&mut self) {
+    self.draw_frame = true;
     let mut inner_rect = self.frame.inner_rect;
     resize_views(
       &inner_rect, 

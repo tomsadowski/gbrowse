@@ -624,9 +624,9 @@ impl CursorView {
       self.scroll = 0;
       self.cursor = u16::try_from(self.head).unwrap();
     // position must be lowered to fit within new bounds
-    } else if self.cursor > new_size - 1 {
-      self.cursor = self.size - 1;
-      self.scroll = self.head - usize::from(self.size - 1);
+    } else if self.cursor > new_size.saturating_sub(1) {
+      self.cursor = self.size.saturating_sub(1);
+      self.scroll = self.head - usize::from(self.size.saturating_sub(1));
     // position can be preserved
     } else {
       self.scroll = self.head.saturating_sub(self.cursor.into());

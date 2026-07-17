@@ -71,7 +71,8 @@ pub fn fill(
 }
 
 
-pub fn get_display_bounds(rect: &Rect, views: &Vec<&impl GetMaxHeight>) 
+
+pub fn met_display_bounds(rect: &Rect, views: &Vec<&impl GetMaxHeight>) 
   -> Vec<Rect> 
 {
     let mut remaining = rect.clone();
@@ -86,6 +87,26 @@ pub fn get_display_bounds(rect: &Rect, views: &Vec<&impl GetMaxHeight>)
     }
     while let Some(v) = views.next() {
       vec.push(remaining);
+    }
+    vec
+}
+
+pub fn get_display_bounds(rect: &Rect, views: &Vec<&impl GetMaxHeight>) 
+  -> Vec<Rect> 
+{
+    let mut remaining = rect.clone();
+    let mut vec: Vec<Rect> = vec![];
+    let mut views = views.iter();
+    while let Some(view) = views.next() {
+      if remaining.h > 0 {
+        let view_height = view.get_max_height().min(remaining.h);
+        let mut current = remaining.clone();
+        current.h = view_height;
+        vec.push(current);
+        remaining = remaining.shift_north((view_height as i16) * -1);
+      } else {
+        vec.push(remaining);
+      }
     }
     vec
 }

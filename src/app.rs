@@ -230,6 +230,7 @@ impl App {
 
   pub fn update(&mut self, message: &Msg) {
     self.clear = false;
+    self.view.reset_draw_state();
 
     if let Msg::Quit = message {
       self.quit = true;
