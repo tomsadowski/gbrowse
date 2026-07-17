@@ -82,6 +82,7 @@ pub use crate::layout::{
   resize_views,
   fill,
   build_views,
+  build_opt_views,
 };
 pub use crate::tab::{
   Tab, 

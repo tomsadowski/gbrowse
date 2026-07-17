@@ -31,6 +31,47 @@ pub trait Resize {
 }
 
 
+impl<T: Draw> Draw for Option<T> {
+  fn draw(&self, w: &mut impl std::io::Write) -> std::io::Result<()> {
+    if let Some(t) = self {
+      t.draw(w)?
+    } 
+    Ok(())
+  }
+}
+
+
+impl<T: GetMaxHeight> GetMaxHeight for Option<T> {
+  fn get_max_height(&self) -> u16 {
+    if let Some(t) = self {
+      t.get_max_height()
+    } else {
+      0
+    }
+  }
+}
+
+
+impl<T: GetDisplayHeight> GetDisplayHeight for Option<T> {
+  fn get_display_height(&self) -> u16 {
+    if let Some(t) = self {
+      t.get_display_height()
+    } else {
+      0
+    }
+  }
+}
+
+
+impl<T: Resize> Resize for Option<T> {
+  fn resize(&mut self, rect: &Rect) {
+    if let Some(t) = self {
+      t.resize(rect)
+    }
+  }
+}
+
+
 impl<T> GetMaxHeight for Vec<T> {
   fn get_max_height(&self) -> u16 {
     u16::try_from(self.len()).unwrap_or(u16::MAX)
@@ -103,6 +144,33 @@ pub fn resize_views<T: Resize + GetMaxHeight>(
   }
 }
 
+
+
+//impl<B, R> BuildView<R> for Option<B> 
+//where B: BuildView<R>,
+//      R: Resize,
+//{
+//  fn build(self, rect: &Rect) -> Box< {
+//    self.map(|b| b.build(rect))
+//  }
+
+//}
+
+
+pub fn build_opt_views<T: Resize + GetDisplayHeight>(
+  rect: &Rect, params: Vec<Option<impl BuildView<T>>>
+) -> Vec<Option<T>> 
+{
+  let mut rect = rect.clone();
+  let mut views: Vec<Option<T>> = vec![];
+  for param in params {
+    let v = param.map(|p| p.build(&rect));
+    let vheight = v.get_display_height().min(rect.height());
+    rect = rect.shift_north((vheight as i16) * -1);
+    views.push(v);
+  }
+  views
+}
 
 pub fn build_views<T: Resize + GetDisplayHeight>(
   rect: &Rect, params: Vec<impl BuildView<T>>

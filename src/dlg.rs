@@ -9,7 +9,7 @@ use crate::{
   Rect,
   GetDisplayHeight,
   resize_views,
-  build_views,
+  build_opt_views,
   Draw,
   Resize,
   BuildView,
@@ -19,7 +19,11 @@ use crate::{
 
 #[derive(Debug)]
 pub enum DlgType {
-  Ack, Ask, Edit, Select,
+  Ack, 
+  Ask, 
+  Edit, 
+  Select,
+  //Flash,
 }
 
 
@@ -27,8 +31,8 @@ pub struct DialogParams<'a> {
   params: &'a SystemParams, 
   frame: FrameParams,
   dlg_type: DlgType,
-  header: PageParams<String>,
-  body: PageParams<String>,
+  header: Option<PageParams<String>>,
+  body: Option<PageParams<String>>,
 }
 
 
@@ -36,8 +40,8 @@ impl<'a> From<&'a SystemParams> for DialogParams<'a> {
   fn from(params: &'a SystemParams) -> Self {
     Self {
       frame: params.style.get_dialog_frame_params(),
-      header: PageParams::default(),
-      body: PageParams::default(),
+      header: None,
+      body: None,
       dlg_type: DlgType::Ack,
       params
     }
@@ -47,18 +51,22 @@ impl<'a> From<&'a SystemParams> for DialogParams<'a> {
 
 impl<'a> DialogParams<'a> { 
   pub fn prompt(mut self, prompt: &str) -> Self {
-    self.header = PageParams::init()
-      .text(vec![prompt.to_string()])
-      .style(&self.params.style.info)
-      .max(2);
+    self.header = Some(
+      PageParams::init()
+        .text(vec![prompt.to_string()])
+        .style(&self.params.style.info)
+        .max(2)
+    );
     self
   }
 
 
   pub fn ack(mut self) -> Self {
-    self.body = PageParams::init()
-      .text(vec![format!("Press any key to acknowledge")])
-      .style(&self.params.style.info);
+    self.body = Some(
+      PageParams::init()
+        .text(vec![format!("Press any key to acknowledge")])
+        .style(&self.params.style.info)
+    );
     self.dlg_type = DlgType::Ack;
     self
   }
@@ -68,38 +76,45 @@ impl<'a> DialogParams<'a> {
     let guide = format!(
       "{} yes {} no", self.params.keys.yes, self.params.keys.no
     );
-    self.body = PageParams::init()
-      .text(vec![guide])
-      .style(&self.params.style.info);
+    self.body = Some(
+      PageParams::init()
+        .text(vec![guide])
+        .style(&self.params.style.info)
+    );
     self.dlg_type = DlgType::Ask;
     self
   }
 
 
   pub fn edit(mut self, text: &str) -> Self {
-    self.body = PageParams::init()
-      .text(vec![text.to_string()])
-      .style(&self.params.style.info)
-      .edit(true);
+    self.body = Some(
+      PageParams::init()
+        .text(vec![text.to_string()])
+        .style(&self.params.style.info)
+        .edit(true)
+    );
     self.dlg_type = DlgType::Edit;
     self
   }
 
 
   pub fn select(mut self, options: Vec<String>) -> Self {
-    self.body = PageParams::init()
-      .text(options)
-      .style(&self.params.style.info);
+    self.body = Some(
+      PageParams::init()
+        .text(options)
+        .style(&self.params.style.info)
+    );
     self.dlg_type = DlgType::Select;
     self
   }
 }
 
 
+
 impl<'a> BuildView<Dialog> for DialogParams<'a> {
   fn build(self, rect: &Rect) -> Dialog {
     let frame = self.frame.build_from_outer(rect);
-    let mut views = build_views(
+    let mut views = build_opt_views(
       &frame.inner_rect, vec![self.header, self.body]
     );
 
@@ -120,8 +135,8 @@ impl<'a> BuildView<Dialog> for DialogParams<'a> {
 pub struct Dialog {
   pub frame: Frame,
   pub dlg_type: DlgType,
-  pub header: Page<String>,
-  pub body: Page<String>,
+  pub header: Option<Page<String>>,
+  pub body: Option<Page<String>>,
 }
 
 

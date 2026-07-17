@@ -2,6 +2,7 @@
 
 use crate::{
   gemini, 
+  Dialog,
   util,
   TabText,
   Dim,
@@ -326,12 +327,14 @@ impl App {
     else 
       if let Msg::Action(action) = message
       && let Focus::Dlg(task) = &mut self.focus
-      && let Some(dlg) = &mut self.view.dialog
+      && let Some(Dialog {body, dlg_type, ..}) 
+        = &mut self.view.dialog
+      && let Some(body) = body
     {
-      match (task, action, &dlg.dlg_type) {
+      match (task, action, dlg_type) {
         (Task::NewTab, Action::Select, DlgType::Select) => {
           if let Some(link) = self.params.urls.get(
-            dlg.body.get_index()
+            body.get_index()
           ) {
             let link = link.clone();
             self.select_link(&link);
@@ -342,7 +345,7 @@ impl App {
 
         (Task::ChangeKeys, Action::Select, DlgType::Select) => {
           match std::fs::read_to_string(
-            user::get_keys_file(&dlg.body.get_param_string())
+            user::get_keys_file(&body.get_param_string())
           ) {
             Err(e) => {
               self.ack_dlg(&format!("Problem: {e}"))
@@ -358,7 +361,7 @@ impl App {
 
         (Task::ChangeStyle, Action::Select, DlgType::Select) => {
           match std::fs::read_to_string(
-            user::get_styles_file(&dlg.body.get_param_string())
+            user::get_styles_file(&body.get_param_string())
           ) {
             Err(e) => {
               self.ack_dlg(&e.to_string());
@@ -375,7 +378,7 @@ impl App {
         }
 
         (Task::Menu, Action::Select, DlgType::Select) => {
-          match MENU[dlg.body.get_index()] {
+          match MENU[body.get_index()] {
             MANUAL => {
               self.ack_dlg("View manual".into());
               // write the bloody manual!
@@ -404,7 +407,7 @@ impl App {
         }
 
         (Task::Init(_), Action::Enter, _) => {
-          let url_str = dlg.body.get_string().unwrap();
+          let url_str = body.get_string().unwrap();
           match url::Url::parse(&url_str) {
             Err(e) => self.edit_dlg(
               Task::Init(url_str.clone()),
@@ -434,7 +437,7 @@ impl App {
         }
 
         (Task::Reply(url), Action::Enter, _) => {
-          let text = dlg.body
+          let text = body
             .get_string()
             .unwrap()
             .trim()
@@ -452,7 +455,7 @@ impl App {
 
         (Task::NewTab, Action::Enter, _) => {
           match url::Url::parse(
-            &dlg.body.get_string().unwrap()
+            &body.get_string().unwrap()
           ) {
             Err(e) => {
               self.ack_dlg(&format!("Invalid URL: {e}"));
@@ -498,11 +501,11 @@ impl App {
         }
 
         (_, action, DlgType::Edit) => {
-          action.update_edit(&mut dlg.body);
+          action.update_edit(body);
         }
 
         (_, action, _) => {
-          action.update(&mut dlg.body);
+          action.update(body);
         }
       }
     } 
@@ -567,10 +570,12 @@ impl App {
       point_view.draw(w)?;
     } 
     else 
-    if let Some(dlg) = &self.view.dialog 
-    && let DlgType::Select | DlgType::Edit = dlg.dlg_type 
+    if let Some(Dialog { body, dlg_type, .. }) 
+      = &self.view.dialog 
+    && let DlgType::Select | DlgType::Edit = dlg_type
+    && let Some(body) = body
     {
-      dlg.body.point_view.draw(w)?;
+      body.point_view.draw(w)?;
     }
 
     w.flush()
