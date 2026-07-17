@@ -296,7 +296,7 @@ impl<T: std::fmt::Display> Page<T> {
     self.indexes = indexes;
     self.matrix = matrix;
     self.matrix.set_linear_head(linear_head);
-    self.point_view.resize(&self.matrix.point, &rect);
+    self.point_view.resize(&self.matrix, &rect);
   }
 
 
@@ -313,7 +313,7 @@ impl<T: std::fmt::Display> Page<T> {
 impl<T: std::fmt::Display> Resize for Page<T> {
   fn resize(&mut self, rect: &Rect) {
     if self.point_view.get_width() == rect.width() {
-      self.point_view.resize(&self.matrix.point, rect);
+      self.point_view.resize(&self.matrix, rect);
     } else {
       self.rebuild(rect);
     }

@@ -539,11 +539,11 @@ impl PointView {
   }
 
 
-  pub fn resize(&mut self, point: &Point, rect: &Rect) {
+  pub fn resize(&mut self, matrix: &PointMatrix<char>, rect: &Rect) {
     let rect = rect.clone();
     self.pos = rect.pos();
-    self.y.resize(point.y.head, rect.height());
-    self.x.resize(point.x.head, rect.width());
+    self.y.resize(matrix.point.y.head, rect.height());
+    self.x.resize(matrix.get_weighted_x(), rect.width());
   }
 
 
