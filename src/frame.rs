@@ -51,10 +51,10 @@ pub struct BorderParams {
   pub style: Style,
   pub x:     char,
   pub y:     char,
-  pub a:     char,
-  pub b:     char,
-  pub c:     char,
-  pub d:     char,
+  pub northwest:     char,
+  pub northeast:     char,
+  pub southwest:     char,
+  pub southeast:     char,
   pub open:  char,
   pub close: char,
 }
@@ -66,10 +66,10 @@ impl Default for BorderParams {
       style: Style::default(),
       x:     X_LINE,
       y:     Y_LINE,
-      a:     A_SQR,
-      b:     B_SQR,
-      c:     C_SQR,
-      d:     D_SQR,
+      northwest:     A_SQR,
+      northeast:     B_SQR,
+      southwest:     C_SQR,
+      southeast:     D_SQR,
       open:  ' ',
       close: ' ',
     }
@@ -191,11 +191,16 @@ impl Frame {
     -> std::io::Result<()> 
   {
     if let Some(border) = self.params.border {
-      let mut x = self.inner_rect.x_end().saturating_sub(1);
+      let mut x = self.outer_rect.x_end().saturating_sub(1);
       let y = self.border_rect.y_end().saturating_sub(1);
+
+      w.queue(MoveTo(x, y))?.queue(&border.style)?;
+
+      for _ in self.inner_rect.x_end()..x {
+        w.queue(Print(border.x))?.queue(cursor::MoveLeft(2))?;
+        x -= 1;
+      }
       w
-        .queue(MoveTo(x, y))?
-        .queue(&border.style)?
         .queue(Print(border.close))?
         .queue(cursor::MoveLeft(2))?
         .queue(Print(' '))?
@@ -216,7 +221,7 @@ impl Frame {
         .queue(cursor::MoveLeft(2))?
         .queue(Print(border.open))?;
       x -= 2;
-      for _ in self.inner_rect.x()..x {
+      for _ in self.outer_rect.x()..(x + 1) {
         w
           .queue(cursor::MoveLeft(2))?
           .queue(Print(border.x))?;
@@ -231,19 +236,21 @@ impl Frame {
     -> std::io::Result<()> 
   {
     if let Some(border) = self.params.border {
-      let mut x = self.inner_rect.x();
-      let     y = self.border_rect.y();
+      let mut x = self.outer_rect.x();
+      let y = self.border_rect.y();
+
+      w.queue(MoveTo(x, y))?.queue(&border.style)?;
+
+      for _ in x..self.inner_rect.x() {
+        w.queue(Print(border.x))?;
+        x += 1;
+      }
       w
-        .queue(MoveTo(x, y))?
-        .queue(&border.style)?
         .queue(Print(border.open))?
         .queue(Print(' '))?
         .queue(&self.params.banner)?;
       x += 2;
-      for c in text
-        .chars()
-        .take(self.inner_rect.shift_x(-2).w().into()) 
-      {
+      for c in text.chars().take(self.inner_rect.shift_x(-2).w().into()) {
         w.queue(Print(c))?;
         x += 1;
       }
@@ -252,11 +259,67 @@ impl Frame {
         .queue(Print(' '))?
         .queue(Print(border.close))?;
       x += 2;
-      for _ in x..self.inner_rect.x_end() {
+      for _ in x..self.outer_rect.x_end() {
         w.queue(Print(border.x))?;
       }
       w.queue(SetAttribute(Attribute::Reset))?;
     }
+    Ok(())
+  }
+
+
+  pub fn draw_east(&self, w: &mut impl std::io::Write) -> std::io::Result<()> {
+    // border
+    if let Some(border) = self.params.border {
+      let (nex, ney) = self.border_rect.northeast().into();
+      let (sex, sey) = self.border_rect.southeast().into();
+      w
+        .queue(SetAttribute(Attribute::Reset))?
+        .queue(&border.style)?
+        .queue(MoveTo(nex, ney))?.queue(Print(border.northeast))?
+        .queue(MoveTo(sex, sey))?.queue(Print(border.southeast))?;
+      for y in self.border_rect.shift_y(-1).y_range() {
+        w.queue(MoveTo(nex, y))?.queue(Print(border.y))?;
+      }
+    }
+    // margin
+    w
+      .queue(SetAttribute(Attribute::Reset))?
+      .queue(&self.params.margin)?;
+    for y in self.outer_rect.y_range() {
+      for x in self.inner_rect.x_end()..self.outer_rect.x_end() {
+        w.queue(MoveTo(x, y))?.queue(Print(' '))?;
+      }
+    }
+    w.queue(SetAttribute(Attribute::Reset))?;
+    Ok(())
+  }
+
+
+  pub fn draw_west(&self, w: &mut impl std::io::Write) -> std::io::Result<()> {
+    // border
+    if let Some(border) = self.params.border {
+      let (nwx, nwy) = self.border_rect.northwest().into();
+      let (swx, swy) = self.border_rect.southwest().into();
+      w
+        .queue(SetAttribute(Attribute::Reset))?
+        .queue(&border.style)?
+        .queue(MoveTo(nwx, nwy))?.queue(Print(border.northwest))?
+        .queue(MoveTo(swx, swy))?.queue(Print(border.southwest))?;
+      for y in self.border_rect.shift_y(-1).y_range() {
+        w.queue(MoveTo(nwx, y))?.queue(Print(border.y))?;
+      }
+    }
+    // margin
+    w
+      .queue(SetAttribute(Attribute::Reset))?
+      .queue(&self.params.margin)?;
+    for y in self.outer_rect.y_range() {
+      for x in self.outer_rect.x()..self.inner_rect.x() {
+        w.queue(MoveTo(x, y))?.queue(Print(' '))?;
+      }
+    }
+    w.queue(SetAttribute(Attribute::Reset))?;
     Ok(())
   }
 }
@@ -273,26 +336,26 @@ impl crate::Draw for Frame {
   fn draw(&self, w: &mut impl std::io::Write) -> std::io::Result<()> {
     // border
     if let Some(border) = self.params.border {
-      let (ax, ay) = self.border_rect.a().into();
-      let (bx, by) = self.border_rect.b().into();
-      let (cx, cy) = self.border_rect.c().into();
-      let (dx, dy) = self.border_rect.d().into();
+      let (nwx, nwy) = self.border_rect.northwest().into();
+      let (nex, ney) = self.border_rect.northeast().into();
+      let (swx, swy) = self.border_rect.southwest().into();
+      let (sex, sey) = self.border_rect.southeast().into();
       w
         .queue(SetAttribute(Attribute::Reset))?
         .queue(&border.style)?
-        .queue(MoveTo(ax, ay))?.queue(Print(border.a))?
-        .queue(MoveTo(bx, by))?.queue(Print(border.b))?
-        .queue(MoveTo(cx, cy))?.queue(Print(border.c))?
-        .queue(MoveTo(dx, dy))?.queue(Print(border.d))?;
+        .queue(MoveTo(nwx, nwy))?.queue(Print(border.northwest))?
+        .queue(MoveTo(nex, ney))?.queue(Print(border.northeast))?
+        .queue(MoveTo(swx, swy))?.queue(Print(border.southwest))?
+        .queue(MoveTo(sex, sey))?.queue(Print(border.southeast))?;
       for x in self.border_rect.shift_x(-1).x_range() {
         w
-          .queue(MoveTo(x, ay))?.queue(Print(border.x))?
-          .queue(MoveTo(x, cy))?.queue(Print(border.x))?;
+          .queue(MoveTo(x, nwy))?.queue(Print(border.x))?
+          .queue(MoveTo(x, swy))?.queue(Print(border.x))?;
       }
       for y in self.border_rect.shift_y(-1).y_range() {
         w
-          .queue(MoveTo(ax, y))?.queue(Print(border.y))?
-          .queue(MoveTo(bx, y))?.queue(Print(border.y))?;
+          .queue(MoveTo(nwx, y))?.queue(Print(border.y))?
+          .queue(MoveTo(nex, y))?.queue(Print(border.y))?;
       }
     }
     // margin

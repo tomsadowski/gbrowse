@@ -129,14 +129,14 @@ impl Rect {
   pub fn pos(&self) -> Pos { (self.x, self.y).into() }
   pub fn x_end(&self) -> u16 { self.x + self.w }
   pub fn y_end(&self) -> u16 { self.y + self.h }
-  pub fn a(&self) -> Pos { (self.x, self.y).into() }
-  pub fn b(&self) -> Pos {
+  pub fn northwest(&self) -> Pos { (self.x, self.y).into() }
+  pub fn northeast(&self) -> Pos {
     (self.x_end().saturating_sub(1), self.y).into()
   }
-  pub fn c(&self) -> Pos {
+  pub fn southwest(&self) -> Pos {
     (self.x, self.y_end().saturating_sub(1)).into()
   }
-  pub fn d(&self) -> Pos {
+  pub fn southeast(&self) -> Pos {
     (self.x_end().saturating_sub(1), self.y_end().saturating_sub(1)).into()
   }
   pub fn x_range(&self) -> std::ops::Range<u16> {

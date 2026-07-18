@@ -32,7 +32,8 @@ pub struct AppView {
 impl crate::Draw for AppView {
   fn draw(&self, w: &mut impl std::io::Write) -> std::io::Result<()> {
     if self.draw_frame {
-      self.frame.draw(w)?;
+      self.frame.draw_east(w)?;
+      self.frame.draw_west(w)?;
     }
     for view in self.get_view_list() {
       view.draw(w)?;
