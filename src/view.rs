@@ -26,7 +26,7 @@ pub struct AppView {
   pub draw_frame: bool,
   pub rect: Rect,
   pub frame: Frame,
-  pub flash: Option<Page<String>>,
+  pub flash: Option<Dialog>,
   pub dialog: Option<Dialog>,
   pub tabs: CursorVec<Tab>,
 }
@@ -97,7 +97,7 @@ impl AppView {
   }
 
   
-  pub fn flash(&mut self, params: PageParams<String>) {
+  pub fn flash(&mut self, params: DialogParams) {
     self.frame = self.frame.params.build_from_outer(&self.rect);
     self.flash = Some(params.build(&self.frame.inner_rect));
     self.push_frame();
@@ -153,7 +153,7 @@ impl AppView {
 
 
 pub enum ViewType<'a> {
-  Flash(&'a Page<String>),
+  Flash(&'a Dialog),
   Dialog(&'a Dialog),
   Tab(&'a Page<TabText>),
 }
@@ -194,7 +194,7 @@ impl<'a> Draw for ViewType<'a> {
 
 
 pub enum ViewTypeMut<'a> {
-  Flash(&'a mut Page<String>),
+  Flash(&'a mut Dialog),
   Dialog(&'a mut Dialog),
   Tab(&'a mut Page<TabText>),
 }

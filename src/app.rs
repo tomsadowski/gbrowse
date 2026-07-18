@@ -194,8 +194,7 @@ impl App {
       (None, "gemini") => {
         self.request = Some(Request::new(&url, self.params.timeout));
         self.view.flash(
-          PageParams::init()
-            .text(vec![format!("pending request: {url}")])
+          self.params.dlg(&format!("pending request: {url}"))
         );
       }
       (None, scheme) => self.ack_dlg(
