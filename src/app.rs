@@ -477,18 +477,16 @@ impl App {
         }
 
         (Task::DelTab, Action::Yes, _) => {
-          match self.view.tabs.remove() {
-            true => {
+          self.view.tabs.remove(); 
+          if self.view.tabs.vec.len() == 0 {
               let url_str = self.params.init_url.clone();
               self.edit_dlg(
                 Task::Init(url_str.clone()), 
                 &format!("Enter URL: "),
                 &url_str,
               );
-            }
-            _ => {
-              self.focus_tabs();
-            }
+          } else {
+            self.focus_tabs();
           }
         }
 
