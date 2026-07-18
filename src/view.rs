@@ -121,16 +121,11 @@ impl AppView {
   }
 
 
-  pub fn get_view_list<'a>(&'a self) 
-    -> Vec<Option<ViewType<'a, TabText>>> 
-  {
+  pub fn get_view_list<'a>(&'a self) -> Vec<Option<ViewType<'a, TabText>>> {
     vec![
       self.flash.as_ref().map(ViewType::Dialog),
       self.dialog.as_ref().map(ViewType::Dialog),
-      self.tabs
-        .get()
-        .map(|f| &f.page)
-        .map(ViewType::Page),
+      self.tabs.get().map(|f| &f.page).map(ViewType::Page),
     ]
   }
 
@@ -141,18 +136,14 @@ impl AppView {
     vec![
       self.flash.as_mut().map(ViewTypeMut::Dialog),
       self.dialog.as_mut().map(ViewTypeMut::Dialog),
-      self.tabs
-        .get_mut()
-        .map(|f| &mut f.page)
-        .map(ViewTypeMut::Page),
+      self.tabs.get_mut().map(|f| &mut f.page).map(ViewTypeMut::Page),
     ]
   }
 }
 
 
 pub enum ViewType<'a, T> {
-  Dialog(&'a Dialog),
-  Page(&'a Page<T>),
+  Dialog(&'a Dialog), Page(&'a Page<T>),
 }
 impl<'a, T> GetMaxHeight for ViewType<'a, T> {
   fn get_max_height(&self) -> u16 {
@@ -182,8 +173,7 @@ impl<'a, T: std::fmt::Display> Draw for ViewType<'a, T> {
 
 
 pub enum ViewTypeMut<'a, T> {
-  Dialog(&'a mut Dialog),
-  Page(&'a mut Page<T>),
+  Dialog(&'a mut Dialog), Page(&'a mut Page<T>),
 }
 impl<'a, T> GetDisplayHeight for ViewTypeMut<'a, T> {
   fn get_display_height(&self) -> u16 {
