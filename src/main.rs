@@ -81,7 +81,6 @@ pub use crate::layout::{
   GetDisplayHeight,
   resize_views,
   fill,
-  build_views,
   build_opt_views,
 };
 pub use crate::tab::{

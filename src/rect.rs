@@ -58,20 +58,14 @@ impl From<Pos> for Rect {
 
 impl Rect {
   pub fn with_dim(mut self, dim: Dim) -> Self {
-    self.set_dim(dim); self
-  }
-  pub fn set_dim(&mut self, dim: Dim) {
     self.w = dim.w(); 
-    self.h = dim.h();
+    self.h = dim.h(); self
   }
 
 
   pub fn with_pos(mut self, pos: Pos) -> Self {
-    self.set_pos(pos); self
-  }
-  pub fn set_pos(&mut self, pos: Pos) {
     self.x = pos.x(); 
-    self.y = pos.y();
+    self.y = pos.y(); self
   }
 
 
@@ -133,34 +127,10 @@ impl Rect {
   pub fn d(&self) -> Pos {
     (self.x_end().saturating_sub(1), self.y_end().saturating_sub(1)).into()
   }
-
-
-  pub fn set_width(&self, w: u16)  -> Self { 
-    let mut rect = self.clone();
-    rect.w = w; 
-    rect
-  }
-
-
-  pub fn set_height(&self, h: u16) -> Self { 
-    let mut rect = self.clone();
-    rect.h = h; 
-    rect
-  }
-
-
   pub fn x_range(&self) -> std::ops::Range<u16> {
-    std::ops::Range {
-      start: self.x, 
-      end:   self.x_end()
-    }
+    std::ops::Range { start: self.x, end: self.x_end() }
   }
-
-
   pub fn y_range(&self) -> std::ops::Range<u16> {
-    std::ops::Range {
-      start: self.y, 
-      end:   self.y_end()
-    }
+    std::ops::Range { start: self.y, end: self.y_end() }
   }
 }

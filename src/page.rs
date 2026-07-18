@@ -23,18 +23,13 @@ pub struct TextParams {
 
 
 impl From<&TextParams> for Style {
-  fn from(t: &TextParams) -> Self {
-    t.style
-  }
+  fn from(t: &TextParams) -> Self { t.style }
 }
 
 
 impl Default for TextParams {
   fn default() -> Self {
-    Self {
-      style: Style::default(),
-      wrap:  true,
-    }
+    Self { style: Style::default(), wrap: true, }
   }
 }
 
@@ -101,9 +96,7 @@ impl<T> Default for PageParams<T> {
 
 
 impl<T: std::fmt::Display> PageParams<T> {
-  pub fn init() -> Self {
-    Self::default()
-  }
+  pub fn init() -> Self { Self::default() }
 
 
   pub fn edit(mut self, b: bool) -> Self {
