@@ -299,7 +299,7 @@ impl<T> GetDisplayHeight for Page<T> {
 }
 
 
-impl<T: std::fmt::Display> GetMaxHeight for Page<T> {
+impl<T> GetMaxHeight for Page<T> {
   fn get_max_height(&self) -> u16 {
     self.matrix.data
       .get_max_height()
