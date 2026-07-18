@@ -121,70 +121,56 @@ impl AppView {
   }
 
 
-  pub fn get_view_list<'a>(&'a self) -> Vec<ViewType<'a>> {
-    let mut vec: Vec<ViewType> = vec![];
-    if let Some(flash) = &self.flash {
-      vec.push(ViewType::Flash(flash));
-    }
-    if let Some(dlg) = &self.dialog {
-      vec.push(ViewType::Dialog(dlg));
-    }
-    if let Some(tab) = self.tabs.get_current() {
-      vec.push(ViewType::Tab(&tab.page));
-    }
-    vec
+  pub fn get_view_list<'a>(&'a self) -> Vec<Option<ViewType<'a>>> {
+    vec![
+      self.flash.as_ref().map(ViewType::Dialog),
+      self.dialog.as_ref().map(ViewType::Dialog),
+      self.tabs
+        .get_current()
+        .map(|f| &f.page)
+        .map(ViewType::Tab),
+    ]
   }
 
 
-  pub fn get_view_list_mut<'a>(&'a mut self) -> Vec<ViewTypeMut<'a>> {
-    let mut vec: Vec<ViewTypeMut> = vec![];
-    if let Some(flash) = &mut self.flash {
-      vec.push(ViewTypeMut::Flash(flash));
-    }
-    if let Some(dlg) = &mut self.dialog {
-      vec.push(ViewTypeMut::Dialog(dlg));
-    }
-    if let Some(tab) = self.tabs.get_current_mut() {
-      vec.push(ViewTypeMut::Tab(&mut tab.page));
-    }
-    vec
+  pub fn get_view_list_mut<'a>(&'a mut self) 
+    -> Vec<Option<ViewTypeMut<'a>>> 
+  {
+    vec![
+      self.flash.as_mut().map(ViewTypeMut::Dialog),
+      self.dialog.as_mut().map(ViewTypeMut::Dialog),
+      self.tabs
+        .get_current_mut()
+        .map(|f| &mut f.page)
+        .map(ViewTypeMut::Tab),
+    ]
   }
 }
 
 
 pub enum ViewType<'a> {
-  Flash(&'a Dialog),
   Dialog(&'a Dialog),
   Tab(&'a Page<TabText>),
 }
-
-
 impl<'a> GetMaxHeight for ViewType<'a> {
   fn get_max_height(&self) -> u16 {
     match self {
-      Self::Flash(flash) => flash.get_max_height(),
       Self::Dialog(dialog) => dialog.get_max_height(),
       Self::Tab(page) => page.get_max_height(),
     }
   }
 }
-
-
 impl<'a> GetDisplayHeight for ViewType<'a> {
   fn get_display_height(&self) -> u16 {
     match self {
-      Self::Flash(flash) => flash.get_display_height(),
       Self::Dialog(dialog) => dialog.get_display_height(),
       Self::Tab(page) => page.get_display_height(),
     }
   }
 }
-
-
 impl<'a> Draw for ViewType<'a> {
   fn draw(&self, w: &mut impl std::io::Write) -> std::io::Result<()> {
     match self {
-      Self::Flash(flash) => {flash.draw(w)?;}
       Self::Dialog(dialog) => {dialog.draw(w)?;}
       Self::Tab(page) => {page.draw(w)?;}
     }
@@ -194,50 +180,37 @@ impl<'a> Draw for ViewType<'a> {
 
 
 pub enum ViewTypeMut<'a> {
-  Flash(&'a mut Dialog),
   Dialog(&'a mut Dialog),
   Tab(&'a mut Page<TabText>),
 }
-
-
 impl<'a> GetDisplayHeight for ViewTypeMut<'a> {
   fn get_display_height(&self) -> u16 {
     match self {
-      Self::Flash(flash) => flash.get_display_height(),
       Self::Dialog(dialog) => dialog.get_display_height(),
       Self::Tab(page) => page.get_display_height(),
     }
   }
 }
-
-
 impl<'a> GetMaxHeight for ViewTypeMut<'a> {
   fn get_max_height(&self) -> u16 {
     match self {
-      Self::Flash(flash) => flash.get_max_height(),
       Self::Dialog(dialog) => dialog.get_max_height(),
       Self::Tab(page) => page.get_max_height(),
     }
   }
 }
-
-
 impl<'a> Draw for ViewTypeMut<'a> {
   fn draw(&self, w: &mut impl std::io::Write) -> std::io::Result<()> {
     match self {
-      Self::Flash(flash) => {flash.draw(w)?;}
       Self::Dialog(dialog) => {dialog.draw(w)?;}
       Self::Tab(page) => {page.draw(w)?;}
     }
     Ok(())
   }
 }
-
-
 impl<'a> Resize for ViewTypeMut<'a> {
   fn resize(&mut self, rect: &Rect) {
     match self {
-      Self::Flash(flash) => flash.resize(rect),
       Self::Dialog(dialog) => dialog.resize(rect),
       Self::Tab(page) => page.resize(rect),
     }

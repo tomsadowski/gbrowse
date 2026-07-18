@@ -23,7 +23,6 @@ pub enum DlgType {
   Ask, 
   Edit, 
   Select,
-  //Flash,
 }
 
 
