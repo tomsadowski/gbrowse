@@ -205,16 +205,3 @@ impl ToString for UserField {
     }
   }
 }
-
-
-impl UserField {
-  pub fn get_select(&self) -> Vec<(Self, String)> {
-    vec![
-      (Self::InitUrl,  "init_url".into()),
-      (Self::Timeout,  "timeout".into()),
-      (Self::Style,    "style".into()),
-      (Self::Keys,     "keys".into()),
-      (Self::SaveFile, "save_file".into()),
-    ]
-  }
-}

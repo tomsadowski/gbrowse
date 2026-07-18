@@ -19,7 +19,7 @@ impl Request {
         let result = get_data(&url_clone, timeout);
         tx.send(result).unwrap();
       });
-    Self { url: url.clone(), rx, handle }
+    Self {url: url.clone(), rx, handle}
   }
 }
 

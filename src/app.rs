@@ -10,6 +10,7 @@ use crate::{
   SystemParams, 
   Draw,
   AppView,
+  GemText,
   DlgType,
   UserTable,
   user_from_str,
@@ -18,7 +19,6 @@ use crate::{
   Rect, 
   PageParams,
   GemTag, 
-  Status, 
   StatusText,
   Resize,
   constants::*,
@@ -126,35 +126,32 @@ impl App {
 
 
   fn join_gemdoc(&mut self, url: url::Url, response: String, content: String) {
-    let Ok(status) = StatusText::try_from(response.as_str()) else {
-      self.ack_dlg(
-        &format!("Response {response} is not valid for gemini protocol")
-      );
+    let Ok(StatusText {tag, text}) = StatusText::try_from(response.as_str()) 
+    else {
+      self.ack_dlg(&format!("Invalid Gemini response: {response}."));
       return
     };
-    match status.tag {
-      Status::InputExpected | 
-      Status::InputExpectedSensitive => {
-        self.edit_dlg(Task::Reply(url.clone()), &status.text, "");
+    use gemini::{Status::*, parse_doc};
+    match tag {
+      InputExpected | InputExpectedSensitive => {
+        self.edit_dlg(Task::Reply(url.clone()), &text, "");
       }
-      Status::RedirectTemporary | 
-      Status::RedirectPermanent => match url::Url::parse(&status.text) {
-        Err(e)  => self.ack_dlg(&format!("Redirects to invalid URL. {e}")),
-        Ok(url) => self.ask_dlg(Task::Go(url.clone()), &status.text),
+      RedirectTemporary | RedirectPermanent => {
+        match url::Url::parse(&text) {
+          Err(e) => self.ack_dlg(&format!("Redirects to invalid URL. {e}")),
+          Ok(url) => self.ask_dlg(Task::Go(url.clone()), &text),
+        }
       }
-      Status::CertRequiredClient |
-      Status::CertRequiredTransient |
-      Status::CertRequiredAuthorized => self.ack_dlg(&status.text),
+      CertRequiredClient | CertRequiredTransient | CertRequiredAuthorized => {
+        self.ack_dlg(&text);
+      }
       _ => {
         self.view.tab(
           &url, 
           PageParams::init()
             .style(&self.params.style.general)
             .text_styles(
-              gemini::parse_doc(&content)
-                .into_iter()
-                .map(TabText::Gemini)
-                .collect(),
+              parse_doc(&content).into_iter().map(TabText::Gemini).collect(),
               |g| self.params.style.get_tab_text_params(g)
             )
         );
@@ -201,9 +198,7 @@ impl App {
       ),
       (Some(request), _) => {
         let url = request.url.to_string();
-        self.ack_dlg(
-          &format!("still processing request for {url}")
-        );
+        self.ack_dlg(&format!("still processing request for {url}"));
       }
     }
   }
@@ -211,9 +206,7 @@ impl App {
 
   pub fn push_style(&mut self) {
     for tab in self.view.tabs.data.iter_mut() {
-      tab.page.restyle(
-        |text| self.params.style.get_tab_text_params(text)
-      );
+      tab.page.restyle(|text| self.params.style.get_tab_text_params(text));
       tab.page.style = self.params.style.general.style;
     }
     self.view.push_frame();
@@ -253,39 +246,29 @@ impl App {
     else 
       if let Msg::Action(action) = message
       && let Focus::Tab = &mut self.focus
-      && let Some(view) = self.view.tabs.get_mut()
+      && let Some(tab) = self.view.tabs.get_mut()
     {
       match action {
-        Action::SaveUrl => 
-          if let Some(url) = self.view.tabs
-            .get()
-            .map(|tab| &tab.url)
-        {
-          match self.params.save_url(url) {
+        Action::SaveUrl => {
+          let url = tab.url.clone();
+          match self.params.save_url(&url) {
             Err(e) => self.ack_dlg(&e),
             Ok(()) => self.ack_dlg(&format!("Saved URL: {url}")),
           }
         }
 
-        Action::Select => 
-          match self.view.tabs
-            .get()
-            .and_then(|tab| tab.page.get_source()) 
-        {
-          Some(TabText::Gemini(gemtext)) => {
-            match &gemtext.tag {
-              GemTag::Link(link) => {
-                let link = link.clone();
-                self.select_link(&link);
-              }
-              gemtag => self.ack_dlg(
-                &format!("You've selected {gemtag:?}")
-              )
+        Action::Select if let Some(source) = tab.page.get_source() => {
+          match source {
+            TabText::Gemini(GemText {tag: GemTag::Link(link), ..}) => {
+              let link = link.clone();
+              self.select_link(&link);
             }
+            TabText::Gemini(GemText {tag, ..}) => {
+              let msg = format!("You've selected {tag:?}");
+              self.ack_dlg(&msg);
+            }
+            _ => self.ack_dlg(&format!("You've selected nothing")),
           }
-          _ => self.ack_dlg(
-            &format!("You've selected nothing")
-          ),
         }
 
         Action::CycleLeft => {
@@ -317,7 +300,7 @@ impl App {
         ),
 
         action => {
-          action.update(&mut view.page);
+          action.update(&mut tab.page);
         }
       }
     }
@@ -325,15 +308,12 @@ impl App {
     else 
     if let Msg::Action(action) = message
     && let Focus::Dlg(task) = &mut self.focus
-    && let Some(
-      Dialog { body: Some(body), dlg_type, .. }
-    ) = &mut self.view.dialog {
-
+    && let Some(Dialog {body: Some(body), dlg_type, ..}) 
+      = &mut self.view.dialog 
+    {
       match (task, action, dlg_type) {
         (Task::NewTab, Action::Select, DlgType::Select) => {
-          if let Some(link) = self.params.urls.get(
-            body.get_index()
-          ) {
+          if let Some(link) = self.params.urls.get(body.get_index()) {
             let link = link.clone();
             self.select_link(&link);
           } else {
@@ -396,7 +376,7 @@ impl App {
             VIEW_SETTINGS => {
               let text = format!("{:#?}", self.params)
                 .lines()
-                .map(|string| string.into())
+                .map(|l| l.into())
                 .collect();
               self.select_dlg(Task::Default, "Current Settings", text);
             }
@@ -425,7 +405,7 @@ impl App {
         }
 
         (Task::Init(url_str), Action::Cancel, _) |
-        (Task::Init(url_str), Action::No,     _) => {
+        (Task::Init(url_str), Action::No, _) => {
           let url_str = url_str.clone();
           self.edit_dlg(
             Task::Init(url_str.clone()), 
@@ -435,11 +415,7 @@ impl App {
         }
 
         (Task::Reply(url), Action::Enter, _) => {
-          let text = body
-            .get_string()
-            .unwrap()
-            .trim()
-            .replace(" ", "%20");
+          let text = body.get_string().unwrap().trim().replace(" ", "%20");
           match url.clone().join(&format!("?{text}")) {
             Err(e) => {
               self.ack_dlg(&format!("Invalid URL. {e}"));
@@ -452,9 +428,7 @@ impl App {
         }
 
         (Task::NewTab, Action::Enter, _) => {
-          match url::Url::parse(
-            &body.get_string().unwrap()
-          ) {
+          match url::Url::parse(&body.get_string().unwrap()) {
             Err(e) => {
               self.ack_dlg(&format!("Invalid URL: {e}"));
             }
@@ -477,22 +451,22 @@ impl App {
 
         (Task::DelTab, Action::Yes, _) => {
           self.view.tabs.remove(); 
-          if self.view.tabs.data.len() == 0 {
-              let url_str = self.params.init_url.clone();
-              self.edit_dlg(
-                Task::Init(url_str.clone()), 
-                &format!("Enter URL: "),
-                &url_str,
-              );
+          if 0 == self.view.tabs.data.len() {
+            let url_str = self.params.init_url.clone();
+            self.edit_dlg(
+              Task::Init(url_str.clone()), 
+              &format!("Enter URL: "),
+              &url_str,
+            );
           } else {
             self.focus_tabs();
           }
         }
 
-        (_,                _, DlgType::Ack) |
-        (_,   Action::Select,            _) |
-        (_,       Action::No,            _) |
-        (_,   Action::Cancel,            _) => {
+        (_, _, DlgType::Ack) |
+        (_, Action::Select, _) |
+        (_, Action::No, _) |
+        (_, Action::Cancel, _) => {
           self.focus_tabs();
         }
 
@@ -516,20 +490,15 @@ impl App {
       Event::Resize(w, h) => {
         Some(Msg::Resize(w, h))
       }
-      Event::Key(
-        KeyEvent {
-          modifiers: KeyModifiers::CONTROL, 
-          code: KeyCode::Char('c'), ..
-        }
-      ) => {
+      Event::Key(KeyEvent {
+        modifiers: KeyModifiers::CONTROL, 
+        code: KeyCode::Char('c'), ..
+      }) => {
         Some(Msg::Quit)
       }
-      Event::Key(
-        KeyEvent {
-          kind: KeyEventKind::Press, 
-          code, ..
-        }
-      ) => 
+      Event::Key(KeyEvent {
+        code, kind: KeyEventKind::Press, ..
+      }) => 
         if let Focus::Tab = &self.focus {
           self.params.keys
             .get_tab_action(&code)
@@ -559,19 +528,16 @@ impl App {
     self.view.frame.draw_footer(&self.guide, w)?;
 
     if let Focus::Tab = self.focus
-    && let Some(point_view) = self.view.tabs
-      .get()
-      .map(|t| t.page.point_view) 
-    {
-      point_view.draw(w)?;
-    } else if let Some(Dialog { 
-      body: Some(body), 
-      dlg_type: DlgType::Select | DlgType::Edit, ..
-    }) = &self.view.dialog 
+    && let Some(page) = self.view.tabs.get().map(|t| &t.page) {
+      page.point_view.draw(w)?;
+    } 
+    else 
+    if let Some(Dialog {body: Some(body), dlg_type, ..}) 
+      = &self.view.dialog 
+    && let DlgType::Select | DlgType::Edit = dlg_type
     {
       body.point_view.draw(w)?;
     }
-
     w.flush()
   }
 }

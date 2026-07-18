@@ -21,8 +21,8 @@ impl MarginParams {
     Self {
       north: m, 
       south: m, 
-      east:  m, 
-      west:  m,
+      east: m, 
+      west: m,
     }
   }
 
@@ -49,12 +49,12 @@ impl MarginParams {
 #[derive(Copy, Debug, Clone)]
 pub struct BorderParams {
   pub style: Style,
-  pub x:     char,
-  pub y:     char,
-  pub northwest:     char,
-  pub northeast:     char,
-  pub southwest:     char,
-  pub southeast:     char,
+  pub x: char,
+  pub y: char,
+  pub northwest: char,
+  pub northeast: char,
+  pub southwest: char,
+  pub southeast: char,
   pub open:  char,
   pub close: char,
 }
@@ -64,13 +64,13 @@ impl Default for BorderParams {
   fn default() -> Self {
     Self {
       style: Style::default(),
-      x:     X_LINE,
-      y:     Y_LINE,
-      northwest:     A_SQR,
-      northeast:     B_SQR,
-      southwest:     C_SQR,
-      southeast:     D_SQR,
-      open:  ' ',
+      x: X_LINE,
+      y: Y_LINE,
+      northwest: NW_SQR,
+      northeast: NE_SQR,
+      southwest: SW_SQR,
+      southeast: SE_SQR,
+      open: ' ',
       close: ' ',
     }
   }
@@ -171,11 +171,11 @@ impl FrameParams {
 
 #[derive(Copy, Debug, Default, Clone)]
 pub struct Frame {
-  pub params:        FrameParams,
-  pub screen:        Rect,
-  pub border_rect:   Rect,
-  pub outer_rect:    Rect,
-  pub inner_rect:    Rect,
+  pub params: FrameParams,
+  pub screen: Rect,
+  pub border_rect: Rect,
+  pub outer_rect: Rect,
+  pub inner_rect: Rect,
 }
 
 

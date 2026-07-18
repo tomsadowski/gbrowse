@@ -90,9 +90,9 @@ pub fn parse_hex_color(s: &str) -> Result<Color, String> {
 #[derive(Copy, Clone, Debug, Default)]
 pub struct Style {
   pub underline: bool,
-  pub bold:      bool,
-  pub fg:        Option<Color>,
-  pub bg:        Option<Color>,
+  pub bold: bool,
+  pub fg: Option<Color>,
+  pub bg: Option<Color>,
 }
 
 

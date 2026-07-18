@@ -188,16 +188,16 @@ impl Assign for BorderParams {
       (BorderParamsField::Corner, Value::String(v)) => {
         match v.as_str() {
           "square" => {
-            self.northwest = A_SQR;
-            self.northeast = B_SQR;
-            self.southwest = C_SQR;
-            self.southeast = D_SQR;
+            self.northwest = NW_SQR;
+            self.northeast = NE_SQR;
+            self.southwest = SW_SQR;
+            self.southeast = SE_SQR;
           }
           "round" => {
-            self.northwest = A_RND;
-            self.northeast = B_RND;
-            self.southwest = C_RND;
-            self.southeast = D_RND;
+            self.northwest = NW_RND;
+            self.northeast = NE_RND;
+            self.southwest = SW_RND;
+            self.southeast = SE_RND;
           }
           s => return Err(
             format!("Corner field does not contain {s}")

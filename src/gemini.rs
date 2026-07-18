@@ -64,7 +64,7 @@ impl TryFrom<&str> for Status {
 
 #[derive(Debug, Clone)]
 pub struct StatusText {
-  pub tag:  Status, 
+  pub tag: Status, 
   pub text: String,
 }
 
@@ -113,20 +113,14 @@ impl std::fmt::Display for GemText {
 
 impl From<(GemTag, String)> for GemText {
   fn from(item: (GemTag, String)) -> Self {
-    Self {
-      tag: item.0, 
-      string: item.1
-    }
+    Self {tag: item.0, string: item.1}
   }
 }
 
 
 impl GemText {
   pub fn preformat(string: String) -> Self {
-    Self {
-      tag: GemTag::PreFormat, 
-      string
-    }
+    Self {tag: GemTag::PreFormat, string}
   }
 
   pub fn parse_line(line: &str) -> (GemTag, String) {
@@ -166,7 +160,7 @@ pub fn parse_doc(text_str: &str) -> Vec<GemText> {
     match (&mut preformat, GemText::parse_line(line)) {
       (_, (GemTag::PreFormat, _)) => 
         preformat = !preformat,
-      (true,  (_, s)) => 
+      (true, (_, s)) => 
         vec.push(GemText::preformat(s)),
       (false, tuple) => 
         vec.push(tuple.into()),
