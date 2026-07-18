@@ -79,6 +79,8 @@ pub use crate::layout::{
   BuildView,
   GetMaxHeight,
   GetDisplayHeight,
+  ViewType,
+  ViewTypeMut,
   resize_views,
   fill,
   build_opt_views,

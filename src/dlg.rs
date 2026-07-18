@@ -10,10 +10,6 @@ use crate::{
   GetDisplayHeight,
   resize_views,
   build_opt_views,
-  Draw,
-  Resize,
-  BuildView,
-  GetMaxHeight,
 };
 
 
@@ -110,7 +106,7 @@ impl<'a> DialogParams<'a> {
 
 
 
-impl<'a> BuildView<Dialog> for DialogParams<'a> {
+impl<'a> crate::BuildView<Dialog> for DialogParams<'a> {
   fn build(self, rect: &Rect) -> Dialog {
     let frame = self.frame.build_from_outer(rect);
     let mut views = build_opt_views(
@@ -139,7 +135,7 @@ pub struct Dialog {
 }
 
 
-impl GetMaxHeight for Dialog {
+impl crate::GetMaxHeight for Dialog {
   fn get_max_height(&self) -> u16 {
     self.header.get_max_height() 
       + self.body.get_max_height()
@@ -148,14 +144,14 @@ impl GetMaxHeight for Dialog {
 }
 
 
-impl GetDisplayHeight for Dialog {
+impl crate::GetDisplayHeight for Dialog {
   fn get_display_height(&self) -> u16 {
     self.frame.get_display_height()
   }
 }
 
 
-impl Draw for Dialog {
+impl crate::Draw for Dialog {
   fn draw(&self, w: &mut impl std::io::Write) -> std::io::Result<()> {
     self.frame.draw(w)?;
     self.header.draw(w)?;
@@ -165,7 +161,7 @@ impl Draw for Dialog {
 }
 
 
-impl Resize for Dialog {
+impl crate::Resize for Dialog {
   fn resize(&mut self, rect: &Rect) {
     let frame = self.frame.params.build_from_outer(rect);
     resize_views(

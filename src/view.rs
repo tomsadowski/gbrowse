@@ -4,7 +4,6 @@ use crate::{
   PageParams,
   FrameParams,
   Rect,
-  Draw,
   Frame,
   fill,
   resize_views,
@@ -14,10 +13,9 @@ use crate::{
   Dialog,
   DialogParams,
   CursorVec,
-  Resize,
-  GetMaxHeight,
+  ViewType,
+  ViewTypeMut,
   BuildView,
-  Page,
 };
 
 
@@ -32,7 +30,7 @@ pub struct AppView {
 }
 
 
-impl Draw for AppView {
+impl crate::Draw for AppView {
   fn draw(&self, w: &mut impl std::io::Write) -> std::io::Result<()> {
     if self.draw_frame {
       self.frame.draw(w)?;
@@ -46,7 +44,7 @@ impl Draw for AppView {
 }
 
 
-impl Resize for AppView {
+impl crate::Resize for AppView {
   fn resize(&mut self, rect: &Rect) {
     self.rect = rect.clone();
     self.frame = self.frame.params.build_from_outer(rect);
@@ -138,73 +136,5 @@ impl AppView {
       self.dialog.as_mut().map(ViewTypeMut::Dialog),
       self.tabs.get_mut().map(|f| &mut f.page).map(ViewTypeMut::Page),
     ]
-  }
-}
-
-
-pub enum ViewType<'a, T> {
-  Dialog(&'a Dialog), Page(&'a Page<T>),
-}
-impl<'a, T> GetMaxHeight for ViewType<'a, T> {
-  fn get_max_height(&self) -> u16 {
-    match self {
-      Self::Dialog(dialog) => dialog.get_max_height(),
-      Self::Page(page) => page.get_max_height(),
-    }
-  }
-}
-impl<'a, T> GetDisplayHeight for ViewType<'a, T> {
-  fn get_display_height(&self) -> u16 {
-    match self {
-      Self::Dialog(dialog) => dialog.get_display_height(),
-      Self::Page(page) => page.get_display_height(),
-    }
-  }
-}
-impl<'a, T: std::fmt::Display> Draw for ViewType<'a, T> {
-  fn draw(&self, w: &mut impl std::io::Write) -> std::io::Result<()> {
-    match self {
-      Self::Dialog(dialog) => {dialog.draw(w)?;}
-      Self::Page(page) => {page.draw(w)?;}
-    }
-    Ok(())
-  }
-}
-
-
-pub enum ViewTypeMut<'a, T> {
-  Dialog(&'a mut Dialog), Page(&'a mut Page<T>),
-}
-impl<'a, T> GetDisplayHeight for ViewTypeMut<'a, T> {
-  fn get_display_height(&self) -> u16 {
-    match self {
-      Self::Dialog(dialog) => dialog.get_display_height(),
-      Self::Page(page) => page.get_display_height(),
-    }
-  }
-}
-impl<'a, T> GetMaxHeight for ViewTypeMut<'a, T> {
-  fn get_max_height(&self) -> u16 {
-    match self {
-      Self::Dialog(dialog) => dialog.get_max_height(),
-      Self::Page(page) => page.get_max_height(),
-    }
-  }
-}
-impl<'a, T: std::fmt::Display> Draw for ViewTypeMut<'a, T> {
-  fn draw(&self, w: &mut impl std::io::Write) -> std::io::Result<()> {
-    match self {
-      Self::Dialog(dialog) => {dialog.draw(w)?;}
-      Self::Page(page) => {page.draw(w)?;}
-    }
-    Ok(())
-  }
-}
-impl<'a, T: std::fmt::Display> Resize for ViewTypeMut<'a, T> {
-  fn resize(&mut self, rect: &Rect) {
-    match self {
-      Self::Dialog(dialog) => dialog.resize(rect),
-      Self::Page(page) => page.resize(rect),
-    }
   }
 }

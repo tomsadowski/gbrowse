@@ -3,8 +3,6 @@
 use crate::{
   Rect, 
   Style,
-  GetDisplayHeight,
-  Draw,
   constants::*,
 };
 
@@ -264,14 +262,14 @@ impl Frame {
 }
 
 
-impl GetDisplayHeight for Frame {
+impl crate::GetDisplayHeight for Frame {
   fn get_display_height(&self) -> u16 {
     self.screen.h
   }
 }
 
 
-impl Draw for Frame {
+impl crate::Draw for Frame {
   fn draw(&self, w: &mut impl std::io::Write) -> std::io::Result<()> {
     // border
     if let Some(border) = self.params.border {

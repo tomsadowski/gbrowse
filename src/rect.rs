@@ -3,14 +3,20 @@
 
 #[derive(Clone, Copy, Debug, Default)]
 pub struct Dim(pub u16, pub u16);
+
+
 impl From<(u16, u16)> for Dim {
   fn from((w, h): (u16, u16)) -> Self { 
     Self(w.into(), h.into()) 
   }
 }
+
+
 impl From<Dim> for (u16, u16) {
   fn from(dim: Dim) -> Self { (dim.w(), dim.h()) }
 }
+
+
 impl Dim {
   pub fn w(&self) -> u16 { self.0 }
   pub fn h(&self) -> u16 { self.1 }
@@ -19,14 +25,20 @@ impl Dim {
 
 #[derive(Clone, Copy, Debug, Default)]
 pub struct Pos(pub u16, pub u16);
+
+
 impl From<(u16, u16)> for Pos {
   fn from((x, y): (u16, u16)) -> Self { 
     Self(x, y) 
   }
 }
+
+
 impl From<Pos> for (u16, u16) {
   fn from(pos: Pos) -> Self { (pos.x(), pos.y()) }
 }
+
+
 impl Pos {
   pub fn x(&self) -> u16 { self.0 }
   pub fn y(&self) -> u16 { self.1 }
@@ -132,5 +144,22 @@ impl Rect {
   }
   pub fn y_range(&self) -> std::ops::Range<u16> {
     std::ops::Range { start: self.y, end: self.y_end() }
+  }
+}
+
+
+impl crate::Draw for Rect {
+  fn draw(&self, w: &mut impl std::io::Write) -> std::io::Result<()> {
+    use crossterm::{QueueableCommand, cursor, style};
+    w
+      .queue(cursor::MoveTo(self.x, self.y))?
+      .queue(style::SetAttribute(style::Attribute::Reset))?;
+    for y in self.y_range() {
+      w.queue(cursor::MoveTo(self.x, y))?;
+      for x in self.x_range() {
+        w.queue(style::Print(' '))?;
+      }
+    }
+    Ok(())
   }
 }

@@ -5,12 +5,8 @@ use crate::{
   Style, 
   CursorView,
   PointView,
-  GetMaxHeight,
-  GetDisplayHeight,
   BuildView,
-  Resize,
   PointMatrix,
-  Draw,
 };
 
 
@@ -281,7 +277,7 @@ impl<T: std::fmt::Display> Page<T> {
 }
 
 
-impl<T: std::fmt::Display> Resize for Page<T> {
+impl<T: std::fmt::Display> crate::Resize for Page<T> {
   fn resize(&mut self, rect: &Rect) {
     if self.point_view.get_width() == rect.w() {
       self.point_view.resize(&self.matrix, rect);
@@ -292,14 +288,14 @@ impl<T: std::fmt::Display> Resize for Page<T> {
 }
 
 
-impl<T> GetDisplayHeight for Page<T> {
+impl<T> crate::GetDisplayHeight for Page<T> {
   fn get_display_height(&self) -> u16 {
     self.point_view.get_height()
   }
 }
 
 
-impl<T> GetMaxHeight for Page<T> {
+impl<T> crate::GetMaxHeight for Page<T> {
   fn get_max_height(&self) -> u16 {
     self.matrix.data
       .get_max_height()
@@ -308,7 +304,7 @@ impl<T> GetMaxHeight for Page<T> {
 }
 
 
-impl<T: std::fmt::Display> Draw for Page<T> {
+impl<T: std::fmt::Display> crate::Draw for Page<T> {
   fn draw(&self, w: &mut impl std::io::Write) -> std::io::Result<()> {
     use crossterm::{QueueableCommand, cursor, style};
 

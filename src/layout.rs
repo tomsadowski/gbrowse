@@ -1,6 +1,8 @@
 // src/layout.rs
 
-use crate::{Rect};
+use crate::{
+  Rect, Page, Dialog,
+};
 
 
 pub trait BuildView<T> where T: Resize {
@@ -28,22 +30,112 @@ pub trait Resize {
 }
 
 
+pub enum ViewType<'a, T> {
+  Dialog(&'a Dialog), 
+  Page(&'a Page<T>),
+}
+
+
+impl<'a, T> GetMaxHeight for ViewType<'a, T> {
+  fn get_max_height(&self) -> u16 {
+    match self {
+      Self::Dialog(dialog) => dialog.get_max_height(),
+      Self::Page(page) => page.get_max_height(),
+    }
+  }
+}
+
+
+impl<'a, T> GetDisplayHeight for ViewType<'a, T> {
+  fn get_display_height(&self) -> u16 {
+    match self {
+      Self::Dialog(dialog) => dialog.get_display_height(),
+      Self::Page(page) => page.get_display_height(),
+    }
+  }
+}
+
+
+impl<'a, T: std::fmt::Display> Draw for ViewType<'a, T> {
+  fn draw(&self, w: &mut impl std::io::Write) -> std::io::Result<()> {
+    match self {
+      Self::Dialog(dialog) => {dialog.draw(w)?;}
+      Self::Page(page) => {page.draw(w)?;}
+    }
+    Ok(())
+  }
+}
+
+
+pub enum ViewTypeMut<'a, T> {
+  Dialog(&'a mut Dialog), 
+  Page(&'a mut Page<T>),
+}
+
+
+impl<'a, T> GetDisplayHeight for ViewTypeMut<'a, T> {
+  fn get_display_height(&self) -> u16 {
+    match self {
+      Self::Dialog(dialog) => dialog.get_display_height(),
+      Self::Page(page) => page.get_display_height(),
+    }
+  }
+}
+
+
+impl<'a, T> GetMaxHeight for ViewTypeMut<'a, T> {
+  fn get_max_height(&self) -> u16 {
+    match self {
+      Self::Dialog(dialog) => dialog.get_max_height(),
+      Self::Page(page) => page.get_max_height(),
+    }
+  }
+}
+
+
+impl<'a, T: std::fmt::Display> Draw for ViewTypeMut<'a, T> {
+  fn draw(&self, w: &mut impl std::io::Write) -> std::io::Result<()> {
+    match self {
+      Self::Dialog(dialog) => {dialog.draw(w)?;}
+      Self::Page(page) => {page.draw(w)?;}
+    }
+    Ok(())
+  }
+}
+
+
+impl<'a, T: std::fmt::Display> Resize for ViewTypeMut<'a, T> {
+  fn resize(&mut self, rect: &Rect) {
+    match self {
+      Self::Dialog(dialog) => dialog.resize(rect),
+      Self::Page(page) => page.resize(rect),
+    }
+  }
+}
+
+
 impl<T: Draw> Draw for Option<T> {
   fn draw(&self, w: &mut impl std::io::Write) -> std::io::Result<()> {
     if let Some(t) = self { t.draw(w)? } 
     Ok(())
   }
 }
+
+
 impl<T: GetMaxHeight> GetMaxHeight for Option<T> {
   fn get_max_height(&self) -> u16 {
     if let Some(t) = self { t.get_max_height() } else { 0 }
   }
 }
+
+
 impl<T: GetDisplayHeight> GetDisplayHeight for Option<T> {
   fn get_display_height(&self) -> u16 {
     if let Some(t) = self { t.get_display_height() } else { 0 }
   }
 }
+
+
 impl<T: Resize> Resize for Option<T> {
   fn resize(&mut self, rect: &Rect) {
     if let Some(t) = self { t.resize(rect) }
@@ -58,29 +150,16 @@ impl<T> GetMaxHeight for Vec<T> {
 }
 
 
-impl Draw for Rect {
-  fn draw(&self, w: &mut impl std::io::Write) -> std::io::Result<()> {
-    use crossterm::{QueueableCommand, cursor, style};
-    w
-      .queue(cursor::MoveTo(self.x, self.y))?
-      .queue(style::SetAttribute(style::Attribute::Reset))?;
-    for y in self.y_range() {
-      w.queue(cursor::MoveTo(self.x, y))?;
-      for x in self.x_range() {
-        w.queue(style::Print(' '))?;
-      }
-    }
-    Ok(())
-  }
-}
-
-
 pub fn fill(
   rect: &Rect, view: &impl GetDisplayHeight, w: &mut impl std::io::Write,
 ) -> std::io::Result<()> {
-  let display_height = view.get_display_height().min(rect.h());
   rect
-    .shift_north((display_height.saturating_sub(1) as i16) * -1)
+    .shift_north(
+      view
+        .get_display_height()
+        .min(rect.h())
+        .saturating_sub(1) as i16 * -1
+    )
     .draw(w)?;
   Ok(())
 }

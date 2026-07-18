@@ -1,6 +1,6 @@
 // src/cursor.rs
 
-use crate::{Rect, Pos, Dim, GetMaxHeight};
+use crate::{Rect, Pos, Dim};
 
 
 #[derive(Clone, Copy, Debug, Default)]
@@ -439,16 +439,22 @@ pub struct CursorVec<T> {
   pub cursor: Cursor,
   pub data: Vec<T>,
 }
+
+
 impl<T> Default for CursorVec<T> {
   fn default() -> Self { 
     Self { cursor: Cursor::default(), data: vec![] } 
   }
 }
+
+
 impl<T> From<Vec<T>> for CursorVec<T> {
   fn from(vec: Vec<T>) -> Self { 
     Self { cursor: Cursor::default(), data: vec } 
   }
 }
+
+
 impl<T> CursorVec<T> {
   pub fn move_head(&mut self, mut idelta: isize) -> isize {
     self.cursor.move_head(&self.data, idelta)
@@ -486,19 +492,27 @@ pub struct PointMatrix<T> {
   pub point: Point,
   pub data: Vec<Vec<T>>,
 }
-impl<T> GetMaxHeight for PointMatrix<T> {
+
+
+impl<T> crate::GetMaxHeight for PointMatrix<T> {
   fn get_max_height(&self) -> u16 { self.data.get_max_height() }
 }
+
+
 impl<T> Default for PointMatrix<T> {
   fn default() -> Self { 
     Self { point: Point::default(), data: vec![] } 
   }
 }
+
+
 impl<T> From<Vec<Vec<T>>> for PointMatrix<T> {
   fn from(matrix: Vec<Vec<T>>) -> Self {
     Self { point: Point::default(), data: matrix }
   }
 }
+
+
 impl PointMatrix<char> {
   pub fn get_weighted_x(&self) -> usize {
     if let Some(vec) = self.data.get(self.point.y.head) {
@@ -506,6 +520,8 @@ impl PointMatrix<char> {
     } else {0}
   }
 }
+
+
 impl<T> PointMatrix<T> {
   pub fn editor(mut self) -> Self {
     self.point = self.point.editor(&self.data); self
