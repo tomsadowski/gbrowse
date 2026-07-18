@@ -3,61 +3,33 @@
 
 #[derive(Clone, Copy, Debug, Default)]
 pub struct Dim(pub u16, pub u16);
-
-
 impl From<(u16, u16)> for Dim {
   fn from((w, h): (u16, u16)) -> Self { 
     Self(w.into(), h.into()) 
   }
 }
-
-
 impl From<Dim> for (u16, u16) {
-  fn from(dim: Dim) -> Self { 
-    (dim.w(), dim.h()) 
-  }
+  fn from(dim: Dim) -> Self { (dim.w(), dim.h()) }
 }
-
-
 impl Dim {
-  pub fn w(&self) -> u16 {
-    self.0
-  }
-
-
-  pub fn h(&self) -> u16 {
-    self.1
-  }
+  pub fn w(&self) -> u16 { self.0 }
+  pub fn h(&self) -> u16 { self.1 }
 }
 
 
 #[derive(Clone, Copy, Debug, Default)]
 pub struct Pos(pub u16, pub u16);
-
-
 impl From<(u16, u16)> for Pos {
   fn from((x, y): (u16, u16)) -> Self { 
     Self(x, y) 
   }
 }
-
-
 impl From<Pos> for (u16, u16) {
-  fn from(pos: Pos) -> Self { 
-    (pos.x(), pos.y()) 
-  }
+  fn from(pos: Pos) -> Self { (pos.x(), pos.y()) }
 }
-
-
 impl Pos {
-  pub fn x(&self) -> u16 {
-    self.0
-  }
-
-
-  pub fn y(&self) -> u16 {
-    self.1
-  }
+  pub fn x(&self) -> u16 { self.0 }
+  pub fn y(&self) -> u16 { self.1 }
 }
 
 
@@ -86,11 +58,8 @@ impl From<Pos> for Rect {
 
 impl Rect {
   pub fn with_dim(mut self, dim: Dim) -> Self {
-    self.set_dim(dim);
-    self
+    self.set_dim(dim); self
   }
-
-
   pub fn set_dim(&mut self, dim: Dim) {
     self.w = dim.w(); 
     self.h = dim.h();
@@ -98,11 +67,8 @@ impl Rect {
 
 
   pub fn with_pos(mut self, pos: Pos) -> Self {
-    self.set_pos(pos);
-    self
+    self.set_pos(pos); self
   }
-
-
   pub fn set_pos(&mut self, pos: Pos) {
     self.x = pos.x(); 
     self.y = pos.y();
@@ -149,43 +115,23 @@ impl Rect {
   }
 
 
-  pub fn x(&self) -> u16 {
-    self.pos().x()
+  pub fn x(&self) -> u16 { self.pos().x() }
+  pub fn y(&self) -> u16 { self.pos().y() }
+  pub fn w(&self) -> u16 { self.dim().w() }
+  pub fn h(&self) -> u16 { self.dim().h() }
+  pub fn dim(&self) -> Dim { (self.w, self.h).into() }
+  pub fn pos(&self) -> Pos { (self.x, self.y).into() }
+  pub fn x_end(&self) -> u16 { self.x + self.w }
+  pub fn y_end(&self) -> u16 { self.y + self.h }
+  pub fn a(&self) -> Pos { (self.x, self.y).into() }
+  pub fn b(&self) -> Pos {
+    (self.x_end().saturating_sub(1), self.y).into()
   }
-
-
-  pub fn y(&self) -> u16 {
-    self.pos().y()
+  pub fn c(&self) -> Pos {
+    (self.x, self.y_end().saturating_sub(1)).into()
   }
-
-
-  pub fn width(&self) -> u16 {
-    self.dim().w()
-  }
-
-
-  pub fn height(&self) -> u16 {
-    self.dim().h()
-  }
-
-
-  pub fn dim(&self) -> Dim {
-    (self.w, self.h).into() 
-  }
-
-
-  pub fn pos(&self) -> Pos {
-    (self.x, self.y).into()
-  }
-
-
-  pub fn x_end(&self) -> u16 {
-    self.x + self.w
-  }
-
-
-  pub fn y_end(&self) -> u16 {
-    self.y + self.h
+  pub fn d(&self) -> Pos {
+    (self.x_end().saturating_sub(1), self.y_end().saturating_sub(1)).into()
   }
 
 
@@ -200,35 +146,6 @@ impl Rect {
     let mut rect = self.clone();
     rect.h = h; 
     rect
-  }
-
-
-  pub fn a(&self) -> Pos {
-    (self.x, self.y).into()
-  }
-
-
-  pub fn b(&self) -> Pos {
-    (
-      self.x_end().saturating_sub(1), 
-      self.y
-    ).into()
-  }
-
-
-  pub fn c(&self) -> Pos {
-    (
-      self.x, 
-      self.y_end().saturating_sub(1)
-    ).into()
-  }
-
-
-  pub fn d(&self) -> Pos {
-    (
-      self.x_end().saturating_sub(1), 
-      self.y_end().saturating_sub(1)
-    ).into()
   }
 
 

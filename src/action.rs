@@ -70,10 +70,10 @@ impl Action {
         page.move_up(page.point_view.get_height() as usize);
       }
       Action::Bottom => {
-        page.move_down(page.matrix.matrix.len());
+        page.move_down(page.matrix.data.len());
       }
       Action::Top => {
-        page.move_up(page.matrix.matrix.len());
+        page.move_up(page.matrix.data.len());
       }
       Action::MoveDown  => {page.move_down(1);}
       Action::MoveUp    => {page.move_up(1);}

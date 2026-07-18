@@ -126,7 +126,7 @@ impl AppView {
       self.flash.as_ref().map(ViewType::Dialog),
       self.dialog.as_ref().map(ViewType::Dialog),
       self.tabs
-        .get_current()
+        .get()
         .map(|f| &f.page)
         .map(ViewType::Tab),
     ]
@@ -140,7 +140,7 @@ impl AppView {
       self.flash.as_mut().map(ViewTypeMut::Dialog),
       self.dialog.as_mut().map(ViewTypeMut::Dialog),
       self.tabs
-        .get_current_mut()
+        .get_mut()
         .map(|f| &mut f.page)
         .map(ViewTypeMut::Tab),
     ]

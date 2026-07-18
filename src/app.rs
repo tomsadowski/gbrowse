@@ -211,7 +211,7 @@ impl App {
 
 
   pub fn push_style(&mut self) {
-    for tab in self.view.tabs.vec.iter_mut() {
+    for tab in self.view.tabs.data.iter_mut() {
       tab.page.restyle(
         |text| self.params.style.get_tab_text_params(text)
       );
@@ -223,7 +223,7 @@ impl App {
 
   pub fn select_link(&mut self, url_str: &str) {
     match self.view.tabs
-      .get_current()
+      .get()
       .map(|tab| &tab.url)
       .map(|url| util::join_if_relative(&url, url_str)) 
     {
@@ -254,12 +254,12 @@ impl App {
     else 
       if let Msg::Action(action) = message
       && let Focus::Tab = &mut self.focus
-      && let Some(view) = self.view.tabs.get_current_mut()
+      && let Some(view) = self.view.tabs.get_mut()
     {
       match action {
         Action::SaveUrl => 
           if let Some(url) = self.view.tabs
-            .get_current()
+            .get()
             .map(|tab| &tab.url)
         {
           match self.params.save_url(url) {
@@ -270,7 +270,7 @@ impl App {
 
         Action::Select => 
           match self.view.tabs
-            .get_current()
+            .get()
             .and_then(|tab| tab.page.get_source()) 
         {
           Some(TabText::Gemini(gemtext)) => {
@@ -324,12 +324,12 @@ impl App {
     }
 
     else 
-      if let Msg::Action(action) = message
-      && let Focus::Dlg(task) = &mut self.focus
-      && let Some(Dialog {body, dlg_type, ..}) 
-        = &mut self.view.dialog
-      && let Some(body) = body
-    {
+    if let Msg::Action(action) = message
+    && let Focus::Dlg(task) = &mut self.focus
+    && let Some(
+      Dialog { body: Some(body), dlg_type, .. }
+    ) = &mut self.view.dialog {
+
       match (task, action, dlg_type) {
         (Task::NewTab, Action::Select, DlgType::Select) => {
           if let Some(link) = self.params.urls.get(
@@ -478,7 +478,7 @@ impl App {
 
         (Task::DelTab, Action::Yes, _) => {
           self.view.tabs.remove(); 
-          if self.view.tabs.vec.len() == 0 {
+          if self.view.tabs.data.len() == 0 {
               let url_str = self.params.init_url.clone();
               self.edit_dlg(
                 Task::Init(url_str.clone()), 
@@ -520,8 +520,7 @@ impl App {
       Event::Key(
         KeyEvent {
           modifiers: KeyModifiers::CONTROL, 
-          code:      KeyCode::Char('c'), 
-          ..
+          code: KeyCode::Char('c'), ..
         }
       ) => {
         Some(Msg::Quit)
@@ -529,15 +528,16 @@ impl App {
       Event::Key(
         KeyEvent {
           kind: KeyEventKind::Press, 
-          code: kc, 
-          ..
+          code, ..
         }
       ) => 
         if let Focus::Tab = &self.focus {
-          self.params.keys.get_tab_action(&kc).map(Msg::Action)
+          self.params.keys
+            .get_tab_action(&code)
+            .map(Msg::Action)
         } else if let Some(dlg) = &self.view.dialog {
           self.params.keys
-            .get_dlg_action(&dlg.dlg_type, &kc)
+            .get_dlg_action(&dlg.dlg_type, &code)
             .map(Msg::Action)
         }
         else {None}
@@ -561,16 +561,14 @@ impl App {
 
     if let Focus::Tab = self.focus
     && let Some(point_view) = self.view.tabs
-      .get_current()
+      .get()
       .map(|t| t.page.point_view) 
     {
       point_view.draw(w)?;
-    } 
-    else 
-    if let Some(Dialog { body, dlg_type, .. }) 
-      = &self.view.dialog 
-    && let DlgType::Select | DlgType::Edit = dlg_type
-    && let Some(body) = body
+    } else if let Some(Dialog { 
+      body: Some(body), 
+      dlg_type: DlgType::Select | DlgType::Edit, ..
+    }) = &self.view.dialog 
     {
       body.point_view.draw(w)?;
     }

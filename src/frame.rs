@@ -206,7 +206,7 @@ impl Frame {
       for c in text
         .chars()
         .rev()
-        .take(self.inner_rect.shift_x(-2).width().into()) 
+        .take(self.inner_rect.shift_x(-2).w().into()) 
       {
         w.queue(cursor::MoveLeft(2))?.queue(Print(c))?;
         x -= 1;
@@ -244,7 +244,7 @@ impl Frame {
       x += 2;
       for c in text
         .chars()
-        .take(self.inner_rect.shift_x(-2).width().into()) 
+        .take(self.inner_rect.shift_x(-2).w().into()) 
       {
         w.queue(Print(c))?;
         x += 1;

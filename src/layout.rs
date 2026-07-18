@@ -104,7 +104,7 @@ pub fn fill(
   w: &mut impl std::io::Write,
 ) -> std::io::Result<()> 
 {
-  let display_height = view.get_display_height().min(rect.height());
+  let display_height = view.get_display_height().min(rect.h());
   rect
     .shift_north((display_height.saturating_sub(1) as i16) * -1)
     .draw(w)?;
@@ -165,7 +165,7 @@ pub fn build_opt_views<T: Resize + GetDisplayHeight>(
   let mut views: Vec<Option<T>> = vec![];
   for param in params {
     let v = param.map(|p| p.build(&rect));
-    let vheight = v.get_display_height().min(rect.height());
+    let vheight = v.get_display_height().min(rect.h());
     rect = rect.shift_north((vheight as i16) * -1);
     views.push(v);
   }
@@ -179,7 +179,7 @@ pub fn build_views<T: Resize + GetDisplayHeight>(
   let mut views: Vec<T> = vec![];
   for param in params {
     let v = param.build(&rect);
-    let vheight = v.get_display_height().min(rect.height());
+    let vheight = v.get_display_height().min(rect.h());
     rect = rect.shift_north((vheight as i16) * -1);
     views.push(v);
   }

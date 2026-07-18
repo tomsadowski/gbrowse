@@ -60,9 +60,7 @@ impl TextParams {
 
 
 pub fn print(
-  width: usize, 
-  styles: &Vec<TextParams>, 
-  source: &Vec<impl std::fmt::Display>
+  width: usize, styles: &[TextParams], source: &[impl std::fmt::Display]
 ) -> (Vec<usize>, Vec<Vec<char>>) {
   styles
     .iter()
@@ -109,20 +107,17 @@ impl<T: std::fmt::Display> PageParams<T> {
 
 
   pub fn edit(mut self, b: bool) -> Self {
-    self.edit = b; 
-    self 
+    self.edit = b; self 
   }
   
 
   pub fn max(mut self, u: u16) -> Self {
-    self.max = Some(u); 
-    self
+    self.max = Some(u); self
   }
 
 
   pub fn style(mut self, style: impl Into<Style>) -> Self {
-    self.style = style.into();
-    self
+    self.style = style.into(); self
   }
 
 
@@ -154,7 +149,7 @@ impl<T: std::fmt::Display> PageParams<T> {
 impl<T: std::fmt::Display> BuildView<Page<T>> for PageParams<T> {
   fn build(self, rect: &Rect) -> Page<T> {
     let (indexes, matrix) = print(
-      rect.width().into(), 
+      rect.w().into(), 
       &self.styles, 
       &self.source
     );
@@ -209,7 +204,7 @@ impl<T> Page<T> {
 
 
   pub fn get_string(&self) -> Option<String> {
-    self.matrix.matrix.get(self.matrix.point.y.head)
+    self.matrix.data.get(self.matrix.point.y.head)
       .map(|c| c.iter().collect())
   }
 
@@ -259,7 +254,7 @@ impl<T> Page<T> {
   pub fn get_view(&self, axis: CursorView) -> Vec<(&usize, &Vec<char>)> {
     self.indexes
       .iter()
-      .zip(self.matrix.matrix.iter())
+      .zip(self.matrix.data.iter())
       .skip(axis.scroll)
       .take(usize::from(axis.size))
       .collect()
@@ -276,13 +271,10 @@ impl<T: std::fmt::Display> Page<T> {
   }
 
 
-  pub fn rebuild(
-    &mut self,
-    rect: &Rect,
-  ) {
-    let linear_head = self.matrix.get_linear_head();
+  pub fn rebuild(&mut self, rect: &Rect) {
+    let linear_head = self.matrix.get_linear();
     let (indexes, matrix) = print(
-      rect.width().into(), 
+      rect.w().into(), 
       &self.styles, 
       &self.source
     );
@@ -295,14 +287,13 @@ impl<T: std::fmt::Display> Page<T> {
 
     self.indexes = indexes;
     self.matrix = matrix;
-    self.matrix.set_linear_head(linear_head);
+    self.matrix.set_linear(linear_head);
     self.point_view.resize(&self.matrix, &rect);
   }
 
 
   pub fn restyle(
-    &mut self,
-    get_style: impl Fn(&T) -> TextParams,
+    &mut self, get_style: impl Fn(&T) -> TextParams,
   ) {
     self.styles = self.source.iter().map(|s| get_style(s)).collect();
     self.rebuild(&Rect::from(&self.point_view));
@@ -312,7 +303,7 @@ impl<T: std::fmt::Display> Page<T> {
 
 impl<T: std::fmt::Display> Resize for Page<T> {
   fn resize(&mut self, rect: &Rect) {
-    if self.point_view.get_width() == rect.width() {
+    if self.point_view.get_width() == rect.w() {
       self.point_view.resize(&self.matrix, rect);
     } else {
       self.rebuild(rect);
@@ -330,7 +321,7 @@ impl<T> GetDisplayHeight for Page<T> {
 
 impl<T: std::fmt::Display> GetMaxHeight for Page<T> {
   fn get_max_height(&self) -> u16 {
-    self.matrix.matrix
+    self.matrix.data
       .get_max_height()
       .min(self.max.unwrap_or(u16::MAX))
   }
@@ -363,7 +354,7 @@ impl<T: std::fmt::Display> Draw for Page<T> {
         .queue(style::SetAttribute(style::Attribute::Reset))?
         .queue(&self.style)?;
 
-      for _ in x..self.point_view.get_rect().x_end() {
+      for _ in x..Rect::from(&self.point_view).x_end() {
         w.queue(style::Print(' '))?;
       }
       x = self.point_view.pos().x(); 
