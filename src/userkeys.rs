@@ -173,30 +173,21 @@ impl SystemControlParams {
 
 
   pub fn get_ask_dlg_action(&self, kc: &KeyCode) -> Option<Action> {
-    if &self.cancel == kc {
-      Some(Action::Cancel)
-    } else if &self.yes == kc {
-      Some(Action::Yes)
-    } else if &self.no == kc {
-      Some(Action::No)
-    } else {None}
+    if &self.cancel == kc { Some(Action::Cancel)
+    } else if &self.yes == kc { Some(Action::Yes)
+    } else if &self.no == kc { Some(Action::No)
+    } else { None }
   }
 
 
   pub fn get_select_dlg_action(&self, kc: &KeyCode) -> Option<Action> {
-    if &self.cancel == kc {
-      Some(Action::Cancel)
-    } else {
-      self.get_text_box_action(kc)
-    }
+    if &self.cancel == kc { Some(Action::Cancel)
+    } else { self.get_text_box_action(kc) }
   }
 
 
   pub fn get_edit_dlg_action(&self, kc: &KeyCode) -> Option<Action> {
-    if &self.cancel == kc {
-      Some(Action::Cancel)
-    } else {
-      self.get_edit_box_action(kc)
-    }
+    if &self.cancel == kc { Some(Action::Cancel)
+    } else { self.get_edit_box_action(kc) }
   }
 }

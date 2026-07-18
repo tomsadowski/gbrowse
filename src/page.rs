@@ -73,7 +73,6 @@ pub fn print(
 #[derive(Debug)]
 pub struct PageParams<T> {
   pub max: Option<u16>,
-  pub draw_point: bool,
   pub edit: bool,
   pub style: Style,
   pub styles: Vec<TextParams>,
@@ -85,7 +84,6 @@ impl<T> Default for PageParams<T> {
   fn default() -> Self {
     Self {
       max: None,
-      draw_point: false,
       edit: false,
       style: Style::default(),
       styles: vec![],
@@ -124,16 +122,9 @@ impl<T: std::fmt::Display> PageParams<T> {
 
   pub fn text_styles(
     mut self, text: Vec<T>, get_style: impl Fn(&T) -> TextParams,
-  ) -> Self 
-  {
+  ) -> Self {
     self.styles = text.iter().map(|t| get_style(t)).collect();
     self.source = text;
-    self
-  }
-
-
-  pub fn draw_point(mut self, b: bool) -> Self {
-    self.draw_point = b;
     self
   }
 }
@@ -156,7 +147,6 @@ impl<T: std::fmt::Display> BuildView<Page<T>> for PageParams<T> {
     point_view.update(&matrix);
 
     Page {
-      draw_point: self.draw_point,
       style: self.style,
       edit: self.edit,
       styles: self.styles,
@@ -172,7 +162,6 @@ impl<T: std::fmt::Display> BuildView<Page<T>> for PageParams<T> {
 
 pub struct Page<T> {
   pub max: Option<u16>,
-  pub draw_point: bool,
   pub style: Style,
   pub edit: bool,
   pub point_view: PointView,
@@ -285,9 +274,7 @@ impl<T: std::fmt::Display> Page<T> {
   }
 
 
-  pub fn restyle(
-    &mut self, get_style: impl Fn(&T) -> TextParams,
-  ) {
+  pub fn restyle(&mut self, get_style: impl Fn(&T) -> TextParams) {
     self.styles = self.source.iter().map(|s| get_style(s)).collect();
     self.rebuild(&Rect::from(&self.point_view));
   }

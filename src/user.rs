@@ -10,16 +10,13 @@ use crate::{
 
 pub trait Assign {
   type Field;
-
   fn assign(&mut self, _: Self::Field, _: toml::Value) -> Result<(), String>;
 }
 
 
 pub trait UserTable: Sized {
   fn read_table(self, _: toml::Table) -> Result<Self, String>;
-
   fn update_from_table(&mut self, _: toml::Table) -> Result<(), String>;
-
   fn update_from_str(&mut self, _: &str) -> Result<(), String>;
 }
 
@@ -60,19 +57,9 @@ pub fn user_from_str<T: UserTable + Default>(s: &str) -> Result<T, String> {
 }
 
 
-pub fn get_init_file(name: &str) -> String {
-  format!("{DATA_PATH}/{name}")
-}
-
-
-pub fn get_keys_file(name: &str) -> String {
-  format!("{KEYS_PATH}/{name}")
-}
-
-
-pub fn get_styles_file(name: &str) -> String {
-  format!("{STYLES_PATH}/{name}")
-}
+pub fn get_init_file(f: &str) -> String { format!("{DATA_PATH}/{f}") }
+pub fn get_keys_file(f: &str) -> String { format!("{KEYS_PATH}/{f}") }
+pub fn get_styles_file(f: &str) -> String { format!("{STYLES_PATH}/{f}") }
 
 
 #[derive(Debug)]
