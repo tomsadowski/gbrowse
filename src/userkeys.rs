@@ -167,7 +167,7 @@ impl SystemControlParams {
   }
 
 
-  pub fn get_ack_dlg_action(&self, kc: &KeyCode) -> Option<Action> {
+  pub fn get_ack_dlg_action(&self, _: &KeyCode) -> Option<Action> {
     Some(Action::Ack)
   }
 

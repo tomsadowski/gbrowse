@@ -30,7 +30,6 @@ pub enum Task {
   Default, 
   NewTab,
   DelTab,
-  LoadUrl,
   Menu,
   ChangeStyle,
   ChangeKeys,
@@ -290,12 +289,12 @@ impl App {
         }
 
         Action::CycleLeft => {
-          let cmd = self.view.tabs.move_wrapped(-1);
+          self.view.tabs.move_wrapped(-1);
           self.view.reset_frame();
         }
 
         Action::CycleRight => {
-          let cmd = self.view.tabs.move_wrapped(1);
+          self.view.tabs.move_wrapped(1);
           self.view.reset_frame();
         }
 

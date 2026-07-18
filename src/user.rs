@@ -77,7 +77,7 @@ impl Default for SystemParams {
   fn default() -> Self {
     let urls: Vec<String> = match std::fs::read_to_string(&SAVE_FILE) {
       Ok(s)  => s.lines().map(|s| String::from(s)).collect(),
-      Err(e) => vec![],
+      Err(_) => vec![],
     };
     Self {
       timeout:        10,
@@ -158,7 +158,7 @@ impl SystemParams {
         Ok(mut f) => {
           use std::io::Write;
           for url in self.urls.iter() {
-            f.write(&format!("{url}\n").as_bytes());
+            let _ = f.write(&format!("{url}\n").as_bytes());
           }
           Ok(())
         }

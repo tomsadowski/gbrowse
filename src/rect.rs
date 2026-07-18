@@ -156,7 +156,7 @@ impl crate::Draw for Rect {
       .queue(style::SetAttribute(style::Attribute::Reset))?;
     for y in self.y_range() {
       w.queue(cursor::MoveTo(self.x, y))?;
-      for x in self.x_range() {
+      for _ in self.x_range() {
         w.queue(style::Print(' '))?;
       }
     }

@@ -43,9 +43,8 @@ impl Cursor {
   }
 
 
-  pub fn move_wrapped<T>(&mut self, vec: &Vec<T>, mut delta: isize) {
-    let imax = self.get_max(vec) as isize;
-    let mut remainder = self.move_head(vec, delta);
+  pub fn move_wrapped<T>(&mut self, vec: &Vec<T>, delta: isize) {
+    let remainder = self.move_head(vec, delta);
     if remainder != 0 {
       self.move_head(vec, 
         vec.len() as isize * remainder.signum() * -1
@@ -57,7 +56,7 @@ impl Cursor {
   }
 
 
-  pub fn move_head<T>(&mut self, vec: &Vec<T>, mut idelta: isize) -> isize {
+  pub fn move_head<T>(&mut self, vec: &Vec<T>, idelta: isize) -> isize {
     let ihead = self.head as isize;
     let imax = self.get_max(vec) as isize;
     let new_ihead = ihead + idelta;
@@ -79,7 +78,6 @@ impl Cursor {
       false
     } else {
       vec.remove(self.head);
-      let head = self.head;
       self.move_wrapped(vec, -1);
       true
     }
@@ -137,7 +135,6 @@ impl Cursor {
       vec.push(c);
       self.move_head(vec, 1);
     } else {
-      let head = self.head;
       vec.insert(self.head, c);
       self.move_head(vec, 1);
     }
@@ -456,10 +453,10 @@ impl<T> From<Vec<T>> for CursorVec<T> {
 
 
 impl<T> CursorVec<T> {
-  pub fn move_head(&mut self, mut idelta: isize) -> isize {
+  pub fn move_head(&mut self, idelta: isize) -> isize {
     self.cursor.move_head(&self.data, idelta)
   }
-  pub fn move_wrapped(&mut self, mut idelta: isize) {
+  pub fn move_wrapped(&mut self, idelta: isize) {
     self.cursor.move_wrapped(&self.data, idelta)
   }
   pub fn get(&self) -> Option<&T> {

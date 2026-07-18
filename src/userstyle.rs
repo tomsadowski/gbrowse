@@ -168,7 +168,7 @@ impl Assign for MarginParams {
           MarginParamsField::West => self.west = v,
         }
       }
-      (f, v) => return Err(
+      (_, v) => return Err(
         format!("margin must be a number, not {v:?}")
       )
     }

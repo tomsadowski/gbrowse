@@ -111,7 +111,7 @@ impl<T: std::fmt::Display> PageParams<T> {
   pub fn text(mut self, text: Vec<T>) -> Self {
     self.source = text;
     self.styles = self.source
-      .iter().map(|t| TextParams::default()).collect();
+      .iter().map(|_| TextParams::default()).collect();
     self
   }
 
