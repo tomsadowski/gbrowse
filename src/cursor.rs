@@ -369,26 +369,67 @@ impl CursorView {
 
 
   // assure cursor position fits in the new bounds
-  pub fn resize(&mut self, new_head: usize, new_size: u16) {
-    self.size = new_size;
-    self.head = new_head;
-
+  pub fn besize(&mut self, new_head: usize, new_size: u16) {
     // no scroll, cursor will be head as u16
-    if self.head <= usize::from(self.size) {
+    if new_head <= new_size as usize {
       self.scroll = 0;
-      //self.cursor = u16::try_from(self.head).unwrap();
-      self.cursor = self.head as u16;
+      self.cursor = new_head as u16;
+      self.size = new_size;
+      self.head = new_head;
 
     // position must be lowered to fit within new bounds
-    } else if self.cursor > self.size.saturating_sub(1) {
-      //self.scroll = self.head - usize::from(self.size.saturating_sub(1));
-      self.scroll = self.head - (self.size.saturating_sub(1) as usize);
-      self.cursor = self.size.saturating_sub(1);
+    } else if self.cursor > new_size.saturating_sub(1) {
+      self.scroll = new_head - (new_size.saturating_sub(1) as usize);
+      self.cursor = new_size.saturating_sub(1);
+      self.size = new_size;
+      self.head = new_head;
 
-//    } else if self.scroll + self.size as usize > self.head {
-    // position can be preserved
+    // to fill screen, preserve distance between size and cursor
     } else {
+      self.size = new_size;
+      self.head = new_head;
       self.scroll = self.head.saturating_sub(self.cursor.into());
+    }
+  }
+
+
+  // assure cursor position fits in the new bounds
+  pub fn resize(&mut self, new_head: usize, new_size: u16) {
+    if new_size == self.size {
+      self.update(new_head);
+
+    } else if new_size < self.size {
+      self.size = new_size;
+      self.head = new_head;
+
+      // no scroll, cursor will be head as u16
+      if self.head <= self.size as usize {
+        self.scroll = 0;
+        self.cursor = self.head as u16;
+
+      // position must be lowered to fit within new bounds
+      } else if self.cursor > self.size.saturating_sub(1) {
+        self.scroll = self.head - (self.size.saturating_sub(1) as usize);
+        self.cursor = self.size.saturating_sub(1);
+
+      // cursor need not change
+      } else {
+        self.scroll = self.head.saturating_sub(self.cursor.into());
+      }
+    } else {
+      // no scroll, cursor will be head as u16
+      if new_head <= new_size as usize {
+        self.scroll = 0;
+        self.cursor = new_head as u16;
+        self.size = new_size;
+        self.head = new_head;
+
+      // scroll is nonzero
+      } else {
+        self.size = new_size;
+        self.head = new_head;
+        self.scroll = self.head.saturating_sub(self.cursor.into());
+      }
     }
   }
 
@@ -399,36 +440,36 @@ impl CursorView {
       false
     // move forward
     } else if self.head < new_head {
-      let delta_size = new_head - self.head;
+      let delta = new_head - self.head;
       let max_delta = self.size
         .saturating_sub(1)
         .saturating_sub(self.cursor);
       // no scroll
-      if delta_size < usize::from(max_delta) { 
-        self.cursor += u16::try_from(delta_size).unwrap();
+      if delta < max_delta as usize { 
+        self.cursor += delta as u16;
         self.head = new_head;
         false
       // scroll forward
       } else {
-        self.scroll += delta_size - usize::from(max_delta);
+        self.scroll += delta - max_delta as usize;
         self.cursor += max_delta;
         self.head = new_head;
         true
       }
     // move backward
     } else { 
-      let delta_size = self.head - new_head;
+      let delta = self.head - new_head;
       // no scroll
-      if delta_size <= usize::from(self.cursor) {
-        self.cursor -= u16::try_from(delta_size).unwrap();
+      if delta <= self.cursor as usize {
+        self.cursor -= delta as u16;
         self.head = new_head;
         false
       // scroll backward
       } else { 
         self.scroll = self.scroll.saturating_sub(
-          delta_size - usize::from(self.cursor)
+          delta - self.cursor as usize
         );
-        self.cursor = u16::try_from(new_head - self.scroll).unwrap();
+        self.cursor = (new_head - self.scroll) as u16;
         self.head = new_head;
         true
       }
