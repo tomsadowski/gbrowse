@@ -368,19 +368,24 @@ impl CursorView {
   }
 
 
-  // preserve cursor position if it still fits in the new bounds
+  // assure cursor position fits in the new bounds
   pub fn resize(&mut self, new_head: usize, new_size: u16) {
-    // position of cursor on screen
     self.size = new_size;
     self.head = new_head;
-    // go to beginning of line
-    if new_head <= usize::from(new_size) {
+
+    // no scroll, cursor will be head as u16
+    if self.head <= usize::from(self.size) {
       self.scroll = 0;
-      self.cursor = u16::try_from(self.head).unwrap();
+      //self.cursor = u16::try_from(self.head).unwrap();
+      self.cursor = self.head as u16;
+
     // position must be lowered to fit within new bounds
-    } else if self.cursor > new_size.saturating_sub(1) {
+    } else if self.cursor > self.size.saturating_sub(1) {
+      //self.scroll = self.head - usize::from(self.size.saturating_sub(1));
+      self.scroll = self.head - (self.size.saturating_sub(1) as usize);
       self.cursor = self.size.saturating_sub(1);
-      self.scroll = self.head - usize::from(self.size.saturating_sub(1));
+
+//    } else if self.scroll + self.size as usize > self.head {
     // position can be preserved
     } else {
       self.scroll = self.head.saturating_sub(self.cursor.into());

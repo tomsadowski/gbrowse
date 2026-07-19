@@ -23,7 +23,7 @@ west = 4
 # magenta  = "#f0a0c0"
 # red      = "#ff7a68"
 # yellow   = "#e0b068"
-# cyan     = "#70d0b8"
+# cyan     = "#70c0b0"
 # dcyan    = "#acacff"
 
 [border]
@@ -69,7 +69,7 @@ fg = "#acacff"
 
 [link]
 underline = true
-fg = "#70d0b8"
+fg = "#70c0b0"
 
 [h1]
 bold = true
