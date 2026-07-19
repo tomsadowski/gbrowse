@@ -163,6 +163,7 @@ impl SystemControlParams {
       DlgType::Ask    => self.get_ask_dlg_action(kc),
       DlgType::Edit   => self.get_edit_dlg_action(kc),
       DlgType::Select => self.get_select_dlg_action(kc),
+      _ => None,
     }
   }
 

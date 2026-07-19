@@ -287,14 +287,14 @@ impl From<&Rect> for PointView {
 
 
 impl PointView {
-  pub fn get_x_view(&self)   -> CursorView {self.x}
-  pub fn get_y_view(&self)   -> CursorView {self.y}
-  pub fn dim(&self)          -> Dim { Dim(self.x.size, self.y.size) }  
-  pub fn pos(&self)          -> Pos { self.pos }
-  pub fn get_x_cursor(&self) -> u16 { self.pos.x() + self.x.cursor }
-  pub fn get_y_cursor(&self) -> u16 { self.pos.y() + self.y.cursor }
-  pub fn get_width(&self)    -> u16   {self.x.size}
-  pub fn get_height(&self)   -> u16   {self.y.size}
+  pub fn get_x_view(&self) -> CursorView {self.x}
+  pub fn get_y_view(&self) -> CursorView {self.y}
+  pub fn dim(&self) -> Dim {Dim(self.x.size, self.y.size)}  
+  pub fn pos(&self) -> Pos {self.pos}
+  pub fn get_x_cursor(&self) -> u16 {self.pos.x() + self.x.cursor}
+  pub fn get_y_cursor(&self) -> u16 {self.pos.y() + self.y.cursor}
+  pub fn get_width(&self) -> u16 {self.x.size}
+  pub fn get_height(&self) -> u16 {self.y.size}
   pub fn get_x_scroll(&self) -> usize {self.x.scroll}
   pub fn get_y_scroll(&self) -> usize {self.y.scroll}
 
@@ -326,10 +326,10 @@ impl PointView {
 
 #[derive(Copy, Clone, Debug, Default)]
 pub struct CursorView {
-  pub head:   usize, // data head
+  pub head: usize, // data head
   pub scroll: usize, // start of displayable data
-  pub cursor: u16,   // on-screen cursor
-  pub size:   u16,   // width or height of rectangle
+  pub cursor: u16, // on-screen cursor
+  pub size: u16, // width or height of rectangle
 }
 
 
@@ -337,7 +337,7 @@ impl CursorView {
   pub fn from_size(size: u16) -> Self {
     Self {
       scroll: 0, 
-      head:   0, 
+      head: 0, 
       cursor: 0, 
       size,
     }

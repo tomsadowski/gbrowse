@@ -98,8 +98,8 @@ impl<T: std::fmt::Display> PageParams<T> {
   }
   
 
-  pub fn max(mut self, u: u16) -> Self {
-    self.max = Some(u); self
+  pub fn max(mut self, m: Option<u16>) -> Self {
+    self.max = m; self
   }
 
 
@@ -290,6 +290,7 @@ impl<T: std::fmt::Display> crate::Resize for Page<T> {
 
 impl<T> crate::GetDisplayHeight for Page<T> {
   fn get_display_height(&self) -> u16 {
+    //let self.point_view.get_y_scroll();
     self.point_view.get_height()
   }
 }

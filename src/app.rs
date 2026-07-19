@@ -228,7 +228,7 @@ impl App {
         self.ack_dlg(&format!("{url_str} -- Invalid URL. {e}"));
       }
       Some(Ok(url)) => {
-        let prompt = &format!("{url} -- Make request?");
+        let prompt = &format!("{url} --\nMake request?");
         self.ask_dlg(Task::Go(url.into()), prompt);
       } 
     }

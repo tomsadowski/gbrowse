@@ -11,8 +11,8 @@ use crate::{
 pub struct MarginParams {
   pub north: u16,
   pub south: u16,
-  pub east:  u16,
-  pub west:  u16,
+  pub east: u16,
+  pub west: u16,
 }
 
 
@@ -55,7 +55,7 @@ pub struct BorderParams {
   pub northeast: char,
   pub southwest: char,
   pub southeast: char,
-  pub open:  char,
+  pub open: char,
   pub close: char,
 }
 
@@ -90,12 +90,12 @@ impl BorderParams {
 
 #[derive(Copy, Debug, Default, Clone)]
 pub struct FrameParams {
-  pub text_margin:   MarginParams,
+  pub text_margin: MarginParams,
   pub screen_margin: MarginParams,
-  pub border:        Option<BorderParams>,
-  pub margin:        Style,
-  pub banner:        Style,
-  pub footer:        Style,
+  pub border: Option<BorderParams>,
+  pub margin: Style,
+  pub banner: Style,
+  pub footer: Style,
 }
 
 
@@ -228,6 +228,13 @@ impl Frame {
       }
       w.queue(SetAttribute(Attribute::Reset))?;
     }
+    w.queue(&self.params.margin)?;
+    for x in self.outer_rect.x_range() {
+      for y in self.inner_rect.y_end()..self.outer_rect.y_end() {
+        w.queue(MoveTo(x, y))?.queue(Print(' '))?;
+      }
+    }
+    w.queue(SetAttribute(Attribute::Reset))?;
     Ok(())
   }
 
@@ -264,6 +271,13 @@ impl Frame {
       }
       w.queue(SetAttribute(Attribute::Reset))?;
     }
+    w.queue(&self.params.margin)?;
+    for x in self.outer_rect.x_range() {
+      for y in self.outer_rect.y()..self.inner_rect.y() {
+        w.queue(MoveTo(x, y))?.queue(Print(' '))?;
+      }
+    }
+    w.queue(SetAttribute(Attribute::Reset))?;
     Ok(())
   }
 

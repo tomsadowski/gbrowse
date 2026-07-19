@@ -1,16 +1,84 @@
 # fire
 
-screen_margin = {n = 1, s = 1, e = 8, w = 8}
-text_margin   = {n = 1, s = 1, e = 4, w = 4}
+[screen_margin]
+north = 1 
+south = 1 
+east = 8 
+west = 8
 
-border    = {fg = "#585c60", bg = "#202326", corner = "round", bracket = "tort"}
-banner    = {fg = "#e088f0"}
-general   = {fg = "#e8e8e8", bg = "#202326"}
-list      = {fg = "#e8e8e8"}
-info      = {fg = "#e8e8e8"}
-quote     = {fg = "#e088f0"}
-preformat = {fg = "#e088f0", wrap = false}
-link      = {fg = "#80d0e0", underline = true}
-h1        = {fg = "#e0b040", bold = true, underline = true}
-h2        = {fg = "#ff6060", bold = true}
-h3        = {fg = "#ff6060"}
+[text_margin]
+north = 1 
+south = 1 
+east = 4 
+west = 4
+
+# black    = "#232528"
+# dgrey    = "#707478"
+# white    = "#d8d0cc"
+# 
+# dred     = "#402830"
+# dyellow  = "#444028"
+# dblue    = "#28403c"
+# 
+# magenta  = "#f0a0c0"
+# red      = "#ff7a68"
+# yellow   = "#e0b068"
+# cyan     = "#70d0b8"
+# dcyan    = "#acacff"
+
+[border]
+corner = "round"
+bracket = "space"
+fg = "#707478"
+bg = "#232528"
+
+[banner]
+fg = "#707478"
+#fg = "#e0b068"
+
+[general]
+fg = "#d8d0cc"
+bg = "#232528"
+
+[list]
+fg = "#f0a0c0"
+
+[quote]
+fg = "#e0b068"
+
+[dialog_border]
+corner = "round"
+bracket = "space"
+fg = "#707478"
+bg = "#232528"
+
+[dialog_body]
+fg = "#d8d0cc"
+bg = "#232528"
+
+[dialog_heading]
+fg = "#e0b068"
+bg = "#232528"
+
+[text]
+wrap = true
+
+[preformat]
+wrap = false
+fg = "#acacff"
+
+[link]
+underline = true
+fg = "#70d0b8"
+
+[h1]
+bold = true
+underline = true
+fg = "#ff7a68"
+
+[h2]
+bold = true
+fg = "#ff7a68"
+
+[h3]
+fg = "#ff7a68"

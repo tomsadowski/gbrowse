@@ -19,21 +19,24 @@ use toml::Value;
 
 #[derive(Copy, Clone, Default, Debug)]
 pub struct SystemStyleParams {
-  pub text_margin:     MarginParams,
-  pub screen_margin:   MarginParams,
-  pub border:          Option<BorderParams>,
-  pub general:         TextParams,
-  pub banner:          TextParams,
-  pub info:            TextParams,
-  pub text:            TextParams,
-  pub heading3:        TextParams,
-  pub heading2:        TextParams,
-  pub heading1:        TextParams,
-  pub preformat:       TextParams,
-  pub link:            TextParams,
-  pub error:           TextParams,
-  pub quote:           TextParams,
-  pub list:            TextParams,
+  pub text_margin: MarginParams,
+  pub screen_margin: MarginParams,
+  pub border: Option<BorderParams>,
+  pub general: TextParams,
+  pub banner: TextParams,
+  pub footer: TextParams,
+  pub dialog_body: TextParams,
+  pub dialog_prompt: TextParams,
+  pub dialog_border: BorderParams,
+  pub text: TextParams,
+  pub heading3: TextParams,
+  pub heading2: TextParams,
+  pub heading1: TextParams,
+  pub preformat: TextParams,
+  pub link: TextParams,
+  pub error: TextParams,
+  pub quote: TextParams,
+  pub list: TextParams,
 } 
 
 
@@ -43,7 +46,7 @@ impl SystemStyleParams {
       .screen_margin(self.screen_margin)
       .text_margin(self.text_margin)
       .banner_style(&self.banner)
-      .footer_style(&self.banner)
+      .footer_style(&self.footer)
       .margin_style(&self.general)
       .border_style(self.border)
   }
@@ -51,10 +54,8 @@ impl SystemStyleParams {
 
   pub fn get_dialog_frame_params(&self) -> FrameParams {
     FrameParams::init()
-      .banner_style(&self.banner)
-      .footer_style(&self.banner)
-      .margin_style(&self.general)
-      .border_style(self.border)
+      .margin_style(&self.dialog_body)
+      .border_style(Some(self.dialog_border))
   }
 
 
@@ -91,30 +92,36 @@ impl Assign for SystemStyleParams {
 
   fn assign(&mut self, f: Self::Field, v: Value) -> Result<(), String> {
     match (f, v) {
-      (StyleTableField::Border, Value::Table(v)) => {
-        self.border = Some(BorderParams::default().read_table(v)?);
+      (StyleTableField::Border(f), Value::Table(v)) => {
+        let v = BorderParams::default().read_table(v)?;
+        match f {
+          BorderField::App => self.border = Some(v),
+          BorderField::Dialog => self.dialog_border = v,
+        }
       }
       (StyleTableField::Text(f), Value::Table(v)) => {
         let v = TextParams::default().read_table(v)?;
         match f {
-          StyleTextField::General   => self.general   = v,
-          StyleTextField::Banner    => self.banner    = v,
-          StyleTextField::Info      => self.info      = v,
-          StyleTextField::Text      => self.text      = v,
-          StyleTextField::Heading3  => self.heading3  = v,
-          StyleTextField::Heading2  => self.heading2  = v,
-          StyleTextField::Heading1  => self.heading1  = v,
+          StyleTextField::General => self.general = v,
+          StyleTextField::Banner => self.banner = v,
+          StyleTextField::Footer => self.footer = v,
+          StyleTextField::DialogBody => self.dialog_body = v,
+          StyleTextField::DialogHeading => self.dialog_prompt = v,
+          StyleTextField::Text => self.text = v,
+          StyleTextField::Heading3 => self.heading3 = v,
+          StyleTextField::Heading2 => self.heading2 = v,
+          StyleTextField::Heading1 => self.heading1 = v,
           StyleTextField::Preformat => self.preformat = v,
-          StyleTextField::Link      => self.link      = v,
-          StyleTextField::Error     => self.error     = v,
-          StyleTextField::Quote     => self.quote     = v,
-          StyleTextField::List      => self.list      = v,
+          StyleTextField::Link => self.link = v,
+          StyleTextField::Error => self.error = v,
+          StyleTextField::Quote => self.quote = v,
+          StyleTextField::List => self.list = v,
         }
       }
       (StyleTableField::Margin(f), Value::Table(v)) => {
         let v = MarginParams::default().read_table(v)?;
         match f {
-          StyleMarginField::Text   => self.text_margin   = v,
+          StyleMarginField::Text => self.text_margin = v,
           StyleMarginField::Screen => self.screen_margin = v,
         }
       }
@@ -282,7 +289,9 @@ pub enum StyleMarginField {
 pub enum StyleTextField {
   General,
   Banner,
-  Info,
+  Footer,
+  DialogBody,
+  DialogHeading,
   Text,
   Heading3,
   Heading2,
@@ -295,9 +304,16 @@ pub enum StyleTextField {
 }
 
 
+
+#[derive(Debug)]
+pub enum BorderField {
+  App, Dialog
+}
+
+
 #[derive(Debug)]
 pub enum StyleTableField {
-  Border, 
+  Border(BorderField), 
   Margin(StyleMarginField), 
   Text(StyleTextField),
 }
@@ -308,12 +324,15 @@ impl std::str::FromStr for StyleTableField {
 
   fn from_str(s: &str) -> Result<Self, Self::Err> {
     match s {
-      "border"          => Ok(Self::Border),
+      "border"          => Ok(Self::Border(BorderField::App)),
+      "dialog_border"  => Ok(Self::Border(BorderField::Dialog)),
       "text_margin"     => Ok(Self::Margin(StyleMarginField::Text)),
       "screen_margin"   => Ok(Self::Margin(StyleMarginField::Screen)),
       "general"         => Ok(Self::Text(StyleTextField::General)),
       "banner"          => Ok(Self::Text(StyleTextField::Banner)),
-      "info"            => Ok(Self::Text(StyleTextField::Info)),
+      "footer"          => Ok(Self::Text(StyleTextField::Footer)),
+      "dialog_body"     => Ok(Self::Text(StyleTextField::DialogBody)),
+      "dialog_heading"  => Ok(Self::Text(StyleTextField::DialogHeading)),
       "text"            => Ok(Self::Text(StyleTextField::Text)),
       "heading3" | "h3" => Ok(Self::Text(StyleTextField::Heading3)),
       "heading2" | "h2" => Ok(Self::Text(StyleTextField::Heading2)),

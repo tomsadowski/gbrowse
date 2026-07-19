@@ -111,10 +111,13 @@ impl AppView {
 
   pub fn tab(&mut self, url: &url::Url, params: PageParams<TabText>) {
     self.frame = self.frame.params.build_from_outer(&self.rect);
-    self.tabs.insert(Tab {
-      url: url.clone(), 
-      page: params.build(&self.frame.inner_rect) 
-    });
+    self.tabs.insert_unique_with(
+      |tab| &tab.url == url,
+      Tab {
+        url: url.clone(), 
+        page: params.build(&self.frame.inner_rect)
+      },
+    );
     self.push_frame();
   }
 

@@ -1,0 +1,58 @@
+# fire
+
+[text_margin]
+north = 1 
+south = 1 
+east = 4 
+west = 4
+
+[border]
+corner = "round"
+bracket = "space"
+fg = "#585c60"
+bg = "#202326"
+
+[general]
+fg = "#e8e8e8"
+bg = "#202326"
+
+[list]
+fg = "#e8e8e8"
+
+[info]
+fg = "#e8e8e8"
+
+[quote]
+fg = "#e088f0"
+
+[screen_margin]
+north = 1 
+south = 1 
+east = 8 
+west = 8
+
+[banner]
+fg = "#e088f0"
+
+[text]
+wrap = true
+
+[preformat]
+wrap = false
+fg = "#e088f0"
+
+[link]
+underline = true
+fg = "#80d0e0"
+
+[h1]
+bold = true
+underline = true
+fg = "#e0b040"
+
+[h2]
+bold = true
+fg = "#ff6060"
+
+[h3]
+fg = "#ff6060"
