@@ -133,16 +133,20 @@ impl App {
     };
     use gemini::{Status::*, parse_doc};
     match tag {
-      InputExpected | InputExpectedSensitive => {
+      InputExpected | 
+      InputExpectedSensitive => {
         self.edit_dlg(Task::Reply(url.clone()), &text, "");
       }
-      RedirectTemporary | RedirectPermanent => {
+      RedirectTemporary | 
+      RedirectPermanent => {
         match url::Url::parse(&text) {
           Err(e) => self.ack_dlg(&format!("Redirects to invalid URL. {e}")),
           Ok(url) => self.ask_dlg(Task::Go(url.clone()), &text),
         }
       }
-      CertRequiredClient | CertRequiredTransient | CertRequiredAuthorized => {
+      CertRequiredClient | 
+      CertRequiredTransient | 
+      CertRequiredAuthorized => {
         self.ack_dlg(&text);
       }
       _ => {
