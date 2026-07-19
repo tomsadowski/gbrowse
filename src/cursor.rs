@@ -369,31 +369,6 @@ impl CursorView {
 
 
   // assure cursor position fits in the new bounds
-  pub fn besize(&mut self, new_head: usize, new_size: u16) {
-    // no scroll, cursor will be head as u16
-    if new_head <= new_size as usize {
-      self.scroll = 0;
-      self.cursor = new_head as u16;
-      self.size = new_size;
-      self.head = new_head;
-
-    // position must be lowered to fit within new bounds
-    } else if self.cursor > new_size.saturating_sub(1) {
-      self.scroll = new_head - (new_size.saturating_sub(1) as usize);
-      self.cursor = new_size.saturating_sub(1);
-      self.size = new_size;
-      self.head = new_head;
-
-    // to fill screen, preserve distance between size and cursor
-    } else {
-      self.size = new_size;
-      self.head = new_head;
-      self.scroll = self.head.saturating_sub(self.cursor.into());
-    }
-  }
-
-
-  // assure cursor position fits in the new bounds
   pub fn resize(&mut self, new_head: usize, new_size: u16) {
     if new_size == self.size {
       self.update(new_head);
@@ -401,17 +376,14 @@ impl CursorView {
     } else if new_size < self.size {
       self.size = new_size;
       self.head = new_head;
-
       // no scroll, cursor will be head as u16
       if self.head <= self.size as usize {
         self.scroll = 0;
         self.cursor = self.head as u16;
-
       // position must be lowered to fit within new bounds
       } else if self.cursor > self.size.saturating_sub(1) {
         self.scroll = self.head - (self.size.saturating_sub(1) as usize);
         self.cursor = self.size.saturating_sub(1);
-
       // cursor need not change
       } else {
         self.scroll = self.head.saturating_sub(self.cursor.into());
@@ -423,12 +395,13 @@ impl CursorView {
         self.cursor = new_head as u16;
         self.size = new_size;
         self.head = new_head;
-
-      // scroll is nonzero
+      // ensure the distance between cursor and size does not increase
       } else {
+        let delta = self.size - self.cursor;
+        self.cursor = new_size - delta;
+        self.scroll = new_head.saturating_sub(self.cursor.into());
         self.size = new_size;
         self.head = new_head;
-        self.scroll = self.head.saturating_sub(self.cursor.into());
       }
     }
   }
