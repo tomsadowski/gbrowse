@@ -7,6 +7,7 @@ use crate::{
   PointView,
   BuildView,
   PointMatrix,
+  util::get_wrapped_text,
 };
 
 
@@ -38,7 +39,7 @@ impl TextParams {
     } else if self.wrap {
       string
         .lines()
-        .flat_map(|line| crate::util::get_wrapped_text(line, width))
+        .flat_map(|line| get_wrapped_text(line, width))
         .collect()
     } else {
       string
@@ -234,7 +235,7 @@ impl<T> Page<T> {
       .iter()
       .zip(self.matrix.data.iter())
       .skip(axis.scroll)
-      .take(usize::from(axis.size))
+      .take(usize::from(axis.max_cursor))
       .collect()
   }
 }
@@ -290,7 +291,6 @@ impl<T: std::fmt::Display> crate::Resize for Page<T> {
 
 impl<T> crate::GetDisplayHeight for Page<T> {
   fn get_display_height(&self) -> u16 {
-    //let self.point_view.get_y_scroll();
     self.point_view.get_height()
   }
 }

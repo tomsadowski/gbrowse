@@ -289,12 +289,12 @@ impl From<&Rect> for PointView {
 impl PointView {
   pub fn get_x_view(&self) -> CursorView {self.x}
   pub fn get_y_view(&self) -> CursorView {self.y}
-  pub fn dim(&self) -> Dim {Dim(self.x.size, self.y.size)}  
+  pub fn dim(&self) -> Dim {Dim(self.x.max_cursor, self.y.max_cursor)}  
   pub fn pos(&self) -> Pos {self.pos}
   pub fn get_x_cursor(&self) -> u16 {self.pos.x() + self.x.cursor}
   pub fn get_y_cursor(&self) -> u16 {self.pos.y() + self.y.cursor}
-  pub fn get_width(&self) -> u16 {self.x.size}
-  pub fn get_height(&self) -> u16 {self.y.size}
+  pub fn get_width(&self) -> u16 {self.x.max_cursor}
+  pub fn get_height(&self) -> u16 {self.y.max_cursor}
   pub fn get_x_scroll(&self) -> usize {self.x.scroll}
   pub fn get_y_scroll(&self) -> usize {self.y.scroll}
 
@@ -329,7 +329,7 @@ pub struct CursorView {
   pub head: usize, // data head
   pub scroll: usize, // start of displayable data
   pub cursor: u16, // on-screen cursor
-  pub size: u16, // width or height of rectangle
+  pub max_cursor: u16, // width or height of rectangle
 }
 
 
@@ -339,7 +339,7 @@ impl CursorView {
       scroll: 0, 
       head: 0, 
       cursor: 0, 
-      size,
+      max_cursor: size,
     }
   }
 
@@ -348,14 +348,14 @@ impl CursorView {
     vec
       .iter()
       .skip(self.scroll)
-      .take(self.size.into())
+      .take(self.max_cursor.into())
       .collect() 
   }
 
 
   pub fn get_weighted_view(self, vec: &[char]) -> Vec<(u16, &char)> {
     use unicode_width::UnicodeWidthChar;
-    let size = self.size;  
+    let size = self.max_cursor;  
     let mut text = vec.iter().skip(self.scroll);
     let mut acc_size: u16 = 0;
     let mut result = vec![];
@@ -369,21 +369,138 @@ impl CursorView {
 
 
   // assure cursor position fits in the new bounds
-  pub fn resize(&mut self, new_head: usize, new_size: u16) {
-    if new_size == self.size {
+  pub fn lesize(&mut self, new_head: usize, new_size: u16) {
+
+    if        new_size < self.max_cursor && new_head < self.head {
+
+    } else if new_size < self.max_cursor && new_head > self.head {
+
+
+
+    } else if new_size < self.max_cursor && new_size < self.cursor {
+
+    } else if new_size < self.max_cursor {
+
+
+
+    } else if new_size > self.max_cursor && new_head > self.head {
+
+    } else if new_size > self.max_cursor && new_head < self.head {
+
+
+
+
+    } else if new_size > self.max_cursor && new_size > self.cursor {
+
+    } else if new_size > self.max_cursor {
+
+    } 
+
+    self.max_cursor = new_size;
+    self.head = new_head;
+  }
+
+
+  // assure cursor position fits in the new bounds
+  pub fn gesize(&mut self, new_head: usize, new_max_cursor: u16) {
+    let inverse_cursor = self.max_cursor - self.cursor;
+
+    // max_cursor unchanged, just update cursor
+    if new_max_cursor == self.max_cursor {
       self.update(new_head);
 
-    } else if new_size < self.size {
-      self.size = new_size;
+    // head is lower than max_cursor, only one representation
+    } else if new_head < new_max_cursor as usize {
+      self.scroll     = 0;
+      self.cursor     = new_head as u16;
+      self.head       = new_head;
+      self.max_cursor = new_max_cursor;
+
+    // max_cursor moved backward, head moved backward
+    } else if new_max_cursor < self.max_cursor && new_head < self.head {
+      let delta_max_cursor = self.max_cursor - new_max_cursor;
+      let delta_head       = self.head - new_head;
+      // head moved more than max_cursor
+      if (delta_max_cursor as usize) < delta_head {
+      // head moved less than max_cursor
+      } else if (delta_max_cursor as usize) > delta_head {
+      // head and max_cursor moved by the same amount
+      } else {
+      }
+      self.head       = new_head;
+      self.max_cursor = new_max_cursor;
+
+    // max_cursor moved forward, head moved forward
+    } else if new_max_cursor > self.max_cursor && new_head > self.head {
+      let delta_max_cursor = new_max_cursor - self.max_cursor;
+      let delta_head       = new_head - self.head;
+      // head moved more than max_cursor
+      if (delta_max_cursor as usize) < delta_head {
+      // head moved less than max_cursor
+      } else if (delta_max_cursor as usize) > delta_head {
+      // head and max_cursor moved by the same amount
+      } else {
+      }
+      self.head       = new_head;
+      self.max_cursor = new_max_cursor;
+
+    // max_cursor moved backward, head moved forward
+    } else if new_max_cursor < self.max_cursor && new_head > self.head {
+      let delta_max_cursor = self.max_cursor - new_max_cursor;
+      let delta_head       = new_head - self.head;
+      // head moved more than max_cursor
+      if (delta_max_cursor as usize) < delta_head {
+      // head moved less than max_cursor
+      } else if (delta_max_cursor as usize) > delta_head {
+      // head and max_cursor moved by the same amount
+      } else {
+      }
+      self.head       = new_head;
+      self.max_cursor = new_max_cursor;
+
+    // max_cursor moved forward, head moved backward
+    } else if new_max_cursor > self.max_cursor && new_head < self.head {
+      let delta_max_cursor = new_max_cursor - self.max_cursor;
+      let delta_head       = self.head - new_head;
+      // head moved more than max_cursor
+      if (delta_max_cursor as usize) < delta_head {
+      // head moved less than max_cursor
+      } else if (delta_max_cursor as usize) > delta_head {
+      // head and max_cursor moved by the same amount
+      } else {
+      }
+      self.head       = new_head;
+      self.max_cursor = new_max_cursor;
+
+    // max_cursor moved backward, head unchanged
+    } else if new_max_cursor < self.max_cursor {
+      let delta_max_cursor = self.max_cursor - new_max_cursor;
+      self.max_cursor = new_max_cursor;
+
+    // max_cursor moved forward, head unchanged
+    } else if new_max_cursor > self.max_cursor {
+      let delta_max_cursor = new_max_cursor - self.max_cursor;
+      self.max_cursor = new_max_cursor;
+    }
+  }
+
+
+  // assure cursor position fits in the new bounds
+  pub fn resize(&mut self, new_head: usize, new_size: u16) {
+    if new_size == self.max_cursor {
+      self.update(new_head);
+
+    } else if new_size < self.max_cursor {
+      self.max_cursor = new_size;
       self.head = new_head;
       // no scroll, cursor will be head as u16
-      if self.head <= self.size as usize {
+      if self.head <= self.max_cursor as usize {
         self.scroll = 0;
         self.cursor = self.head as u16;
       // position must be lowered to fit within new bounds
-      } else if self.cursor > self.size.saturating_sub(1) {
-        self.scroll = self.head - (self.size.saturating_sub(1) as usize);
-        self.cursor = self.size.saturating_sub(1);
+      } else if self.cursor > self.max_cursor.saturating_sub(1) {
+        self.scroll = self.head - (self.max_cursor.saturating_sub(1) as usize);
+        self.cursor = self.max_cursor.saturating_sub(1);
       // cursor need not change
       } else {
         self.scroll = self.head.saturating_sub(self.cursor.into());
@@ -393,14 +510,14 @@ impl CursorView {
       if new_head <= new_size as usize {
         self.scroll = 0;
         self.cursor = new_head as u16;
-        self.size = new_size;
+        self.max_cursor = new_size;
         self.head = new_head;
       // ensure the distance between cursor and size does not increase
       } else {
-        let delta = self.size - self.cursor;
+        let delta = self.max_cursor - self.cursor;
         self.cursor = new_size - delta;
         self.scroll = new_head.saturating_sub(self.cursor.into());
-        self.size = new_size;
+        self.max_cursor = new_size;
         self.head = new_head;
       }
     }
@@ -413,34 +530,34 @@ impl CursorView {
       false
     // move forward
     } else if self.head < new_head {
-      let delta = new_head - self.head;
-      let max_delta = self.size
+      let delta_head = new_head - self.head;
+      let max_delta = self.max_cursor
         .saturating_sub(1)
         .saturating_sub(self.cursor);
       // no scroll
-      if delta < max_delta as usize { 
-        self.cursor += delta as u16;
+      if delta_head < max_delta as usize { 
+        self.cursor += delta_head as u16;
         self.head = new_head;
         false
       // scroll forward
       } else {
-        self.scroll += delta - max_delta as usize;
+        self.scroll += delta_head - max_delta as usize;
         self.cursor += max_delta;
         self.head = new_head;
         true
       }
     // move backward
     } else { 
-      let delta = self.head - new_head;
+      let delta_head = self.head - new_head;
       // no scroll
-      if delta <= self.cursor as usize {
-        self.cursor -= delta as u16;
+      if delta_head <= self.cursor as usize {
+        self.cursor -= delta_head as u16;
         self.head = new_head;
         false
       // scroll backward
       } else { 
         self.scroll = self.scroll.saturating_sub(
-          delta - self.cursor as usize
+          delta_head - self.cursor as usize
         );
         self.cursor = (new_head - self.scroll) as u16;
         self.head = new_head;
