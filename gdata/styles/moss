@@ -38,7 +38,7 @@ bg = "#202225"
 fg = "#707880"
 
 [general]
-fg = "_white"
+#fg = "_white"
 bg = "#202225"
 
 [list]

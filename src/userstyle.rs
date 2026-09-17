@@ -19,6 +19,32 @@ use crate::{
 };
 use toml::{Value, map::Map};
 
+impl UserTable for SystemStyleParams {
+
+    fn read_table(mut self, table: toml::Table) -> Result<Self, String> {
+        for (key, value) in table.into_iter() {
+            let field = ::from_str(&key)?;
+            self.assign(field, value)?;
+        }
+        Ok(self)
+    }
+
+
+    fn update_from_table(&mut self, table: toml::Table) -> Result<(), String> {
+        for (key, value) in table.into_iter() {
+            let field = F::from_str(&key)?;
+            self.assign(field, value)?;
+        }
+        Ok(())
+    }
+
+
+    fn update_from_str(&mut self, s: &str) -> Result<(), String> {  
+        let table = s.parse::<toml::Table>().map_err(|e| e.to_string())?;
+        self.update_from_table(table)?;
+        Ok(())
+    }
+}
 
 #[derive(Clone, Default, Debug)]
 pub struct SystemStyleParams {
@@ -90,16 +116,10 @@ impl SystemStyleParams {
             GemTag::Quote        => self.quote.into(),
         }
     }
-}
 
-
-impl Assign for SystemStyleParams {
-    type Field = StyleTableField;
-
-    fn assign(&mut self, f: Self::Field, v: Value) -> Result<(), String> {
+    pub fn assign(&mut self, f: StyleTableField, v: Value) -> Result<(), String> {
         match (f, v) {
             (StyleTableField::Palette, Value::Table(v)) => {
-                eprintln!("palette found with table {v}");
                 self.palette = v;
             }
             (StyleTableField::Border(f), Value::Table(v)) => {

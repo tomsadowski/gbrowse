@@ -63,7 +63,13 @@ pub struct App {
 impl App {
     pub fn init(path: &str, w: u16, h: u16) -> Self {
         let user_text = std::fs::read_to_string(path).unwrap_or_default();
-        let params: SystemParams = user_from_str(&user_text).unwrap_or_default();
+        let params: SystemParams = match user_from_str(&user_text) {
+            Ok(u) => u,
+            Err(e) => {
+                eprint!("{e}");
+                SystemParams::default()
+            }
+        };
         let view = AppView::new(
             &Rect::from(Dim(w, h)), 
             &params.style.get_frame_params()

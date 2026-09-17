@@ -1,12 +1,4 @@
-    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.04s
+   Compiling gbrowse v0.1.0 (/home/tom/.local/source/gbrowse)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.36s
      Running `target/debug/gbrowse`
-border found bg = "#202225"
-bracket = "space"
-corner = "round"
-fg = "#707880"
-
-border found bg = "#202225"
-bracket = "space"
-corner = "round"
-fg = "#707478"
-
+String("_white") : could not parse color from value _white
