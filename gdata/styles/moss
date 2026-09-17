@@ -31,15 +31,15 @@ dblue = "#30343a"
 [border]
 corner = "round"
 bracket = "space"
-fg = "#707880"
-bg = "#202225"
+fg = "_dgrey"
+bg = "_black"
 
 [banner]
-fg = "#707880"
+fg = "_dgrey"
 
 [general]
-#fg = "_white"
-bg = "#202225"
+fg = "_white"
+bg = "_black"
 
 [list]
 fg = "#f0a0c0"

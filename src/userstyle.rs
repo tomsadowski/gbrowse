@@ -20,19 +20,28 @@ use crate::{
 use toml::{Value, map::Map};
 
 impl UserTable for SystemStyleParams {
-
-    fn read_table(mut self, table: toml::Table) -> Result<Self, String> {
+    fn read_table(mut self, mut table: toml::Table) -> Result<Self, String> {
+        use std::str::FromStr;
+        if let Some(Value::Table(p)) = table.remove("palette") {
+            self.palette = p;
+        }
         for (key, value) in table.into_iter() {
-            let field = ::from_str(&key)?;
+            let field = SystemStyleField::from_str(&key)?;
             self.assign(field, value)?;
         }
         Ok(self)
     }
 
 
-    fn update_from_table(&mut self, table: toml::Table) -> Result<(), String> {
+    fn update_from_table(&mut self, mut table: toml::Table) 
+        -> Result<(), String> 
+    {
+        use std::str::FromStr;
+        if let Some(Value::Table(p)) = table.remove("palette") {
+            self.palette = p;
+        }
         for (key, value) in table.into_iter() {
-            let field = F::from_str(&key)?;
+            let field = SystemStyleField::from_str(&key)?;
             self.assign(field, value)?;
         }
         Ok(())
@@ -91,10 +100,8 @@ impl SystemStyleParams {
 
     pub fn get_tab_text_params(&self, text: &TabText) -> TextParams {
         match text {
-            TabText::Gemini(gemtext) => 
-                self.get_gem_text_params(gemtext),
-            _ => 
-                TextParams::default(),
+            TabText::Gemini(gemtext) => self.get_gem_text_params(gemtext),
+            _ => TextParams::default(),
         }
     }
 
@@ -117,19 +124,16 @@ impl SystemStyleParams {
         }
     }
 
-    pub fn assign(&mut self, f: StyleTableField, v: Value) -> Result<(), String> {
+    pub fn assign(&mut self, f: SystemStyleField, v: Value) -> Result<(), String> {
         match (f, v) {
-            (StyleTableField::Palette, Value::Table(v)) => {
-                self.palette = v;
-            }
-            (StyleTableField::Border(f), Value::Table(v)) => {
+            (SystemStyleField::Border(f), Value::Table(v)) => {
                 let v = BorderParams::default().read_table(v, &self.palette)?;
                 match f {
                     BorderField::App => self.border = Some(v),
                     BorderField::Dialog => self.dialog_border = v,
                 }
             }
-            (StyleTableField::Text(f), Value::Table(v)) => {
+            (SystemStyleField::Text(f), Value::Table(v)) => {
                 let v = TextParams::default().read_table(v, &self.palette)?;
                 match f {
                     StyleTextField::General => self.general = v,
@@ -148,7 +152,7 @@ impl SystemStyleParams {
                     StyleTextField::List => self.list = v,
                 }
             }
-            (StyleTableField::Margin(f), Value::Table(v)) => {
+            (SystemStyleField::Margin(f), Value::Table(v)) => {
                 let v = MarginParams::default().read_table(v)?;
                 match f {
                     StyleMarginField::Text => self.text_margin = v,
@@ -356,7 +360,7 @@ pub enum BorderField {
 
 
 #[derive(Debug)]
-pub enum StyleTableField {
+pub enum SystemStyleField {
     Palette,
     Border(BorderField), 
     Margin(StyleMarginField), 
@@ -364,7 +368,7 @@ pub enum StyleTableField {
 }
 
 
-impl std::str::FromStr for StyleTableField {
+impl std::str::FromStr for SystemStyleField {
     type Err = String;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
