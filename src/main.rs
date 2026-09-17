@@ -26,127 +26,127 @@ mod util;
 mod constants;
 
 pub use crate::dlg::{
-  DialogParams,
-  DlgType,
-  Dialog,
+    DialogParams,
+    DlgType,
+    Dialog,
 };
 pub use crate::userkeys::{
-  SystemControlParams,
+    SystemControlParams,
 };
 pub use crate::userstyle::{
-  SystemStyleParams,
+    SystemStyleParams,
 };
 pub use crate::network::{
-  Request,
+    Request,
 };
 pub use crate::action::{
-  Action,
+    Action,
 };
 pub use crate::view::{
-  AppView,
+    AppView,
 };
 pub use crate::color::{
-  Style, 
+    Style, 
 };
 pub use crate::page::{
-  TextParams, 
-  Page,
-  PageParams,
+    TextParams, 
+    Page,
+    PageParams,
 };
 pub use crate::frame::{
-  Frame,
-  FrameParams,
-  BorderParams, 
-  MarginParams, 
+    Frame,
+    FrameParams,
+    BorderParams, 
+    MarginParams, 
 };
 pub use crate::user::{
-  SystemParams,
-  Assign,
-  UserTable,
-  user_from_str,
+    SystemParams,
+    Assign,
+    UserTable,
+    user_from_str,
 };
 pub use crate::cursor::{
-  Cursor, 
-  PointMatrix,
-  CursorVec,
-  Point,
-  PointView,
-  CursorView,
+    Cursor, 
+    PointMatrix,
+    CursorVec,
+    Point,
+    PointView,
+    CursorView,
 };
 pub use crate::layout::{
-  Resize,
-  Draw,
-  BuildView,
-  GetMaxHeight,
-  GetDisplayHeight,
-  ViewType,
-  ViewTypeMut,
-  resize_views,
-  fill,
-  build_opt_views,
+    Resize,
+    Draw,
+    BuildView,
+    GetMaxHeight,
+    GetDisplayHeight,
+    ViewType,
+    ViewTypeMut,
+    resize_views,
+    fill,
+    build_opt_views,
 };
 pub use crate::tab::{
-  Tab, 
-  TabText,
+    Tab, 
+    TabText,
 };
 pub use crate::rect::{
-  Pos, 
-  Dim,
-  Rect, 
+    Pos, 
+    Dim,
+    Rect, 
 };
 pub use crate::gemini::{
-  GemTag, 
-  GemText, 
-  Status, 
-  StatusText,
+    GemTag, 
+    GemText, 
+    Status, 
+    StatusText,
 };
 
 
 fn main() -> std::io::Result<()> {
-  use crossterm::{QueueableCommand, terminal, event, cursor};
-  use std::io::Write;
+    use crossterm::{QueueableCommand, terminal, event, cursor};
+    use std::io::Write;
 
-  // initialize app
-  let mut app = {
-    let args = std::env::args().collect::<Vec<String>>();
-    let init = match args.get(1) {
-      None => constants::INIT_FILE.into(),
-      Some(init) => user::get_init_file(init),
+    // initialize app
+    let mut app = {
+        let args = std::env::args().collect::<Vec<String>>();
+        let init = match args.get(1) {
+            None => constants::INIT_FILE.into(),
+            Some(init) => user::get_init_file(init),
+        };
+        let (w, h) = terminal::size()?;
+        app::App::init(&init, w, h)
     };
-    let (w, h) = terminal::size()?;
-    app::App::init(&init, w, h)
-  };
-  let mut stdout = std::io::stdout();
+    let mut stdout = std::io::stdout();
 
-  // register all keystrokes 
-  terminal::enable_raw_mode()?;
+    // register all keystrokes 
+    terminal::enable_raw_mode()?;
 
-  // handle line wrapping manually
-  stdout
-    .queue(terminal::EnterAlternateScreen)?
-    .queue(terminal::DisableLineWrap)?;
+    // handle line wrapping manually
+    stdout
+        .queue(terminal::EnterAlternateScreen)?
+        .queue(terminal::DisableLineWrap)?;
 
-  // initial display
-  app.draw(&mut stdout)?;
+    // initial display
+    app.draw(&mut stdout)?;
 
-  // break on control-c
-  while !app.quit {
-    if app.join_request() {
-      app.draw(&mut stdout)?;
-    } 
-    if event::poll(std::time::Duration::from_millis(16))? {
-      if let Some(message) = app.get_update(event::read()?) {
-        app.update(&message);
-        app.draw(&mut stdout)?;
-      } 
-    } 
-  }
+    // break on control-c
+    while !app.quit {
+        if app.join_request() {
+            app.draw(&mut stdout)?;
+        } 
+        if event::poll(std::time::Duration::from_millis(16))? {
+            if let Some(message) = app.get_update(event::read()?) {
+                app.update(&message);
+                app.draw(&mut stdout)?;
+            } 
+        } 
+    }
 
-  // return terminal to normal state
-  stdout
-    .queue(terminal::LeaveAlternateScreen)?
-    .queue(terminal::EnableLineWrap)?
-    .queue(cursor::SetCursorStyle::DefaultUserShape)?
-    .flush()?;
-  terminal::disable_raw_mode()
+    // return terminal to normal state
+    stdout
+        .queue(terminal::LeaveAlternateScreen)?
+        .queue(terminal::EnableLineWrap)?
+        .queue(cursor::SetCursorStyle::DefaultUserShape)?
+        .flush()?;
+    terminal::disable_raw_mode()
 }
