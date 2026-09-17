@@ -3,6 +3,8 @@
 
 use crate::{
     Assign, 
+    ContextAssign,
+    ContextUserTable,
     UserTable,
     MarginParams,
     BorderParams,
@@ -20,7 +22,7 @@ use toml::{Value, map::Map};
 
 #[derive(Clone, Default, Debug)]
 pub struct SystemStyleParams {
-    pub palette: Map<String, String>,
+    pub palette: Map<String, Value>,
     pub text_margin: MarginParams,
     pub screen_margin: MarginParams,
     pub border: Option<BorderParams>,
@@ -96,17 +98,18 @@ impl Assign for SystemStyleParams {
 
     fn assign(&mut self, f: Self::Field, v: Value) -> Result<(), String> {
         match (f, v) {
-            (StyleTableField::Palette, Value::Table(_)) => {
+            (StyleTableField::Palette, Value::Table(v)) => {
+                self.palette = v;
             }
             (StyleTableField::Border(f), Value::Table(v)) => {
-                let v = BorderParams::default().read_table(v)?;
+                let v = BorderParams::default().read_table(v, &self.palette)?;
                 match f {
                     BorderField::App => self.border = Some(v),
                     BorderField::Dialog => self.dialog_border = v,
                 }
             }
             (StyleTableField::Text(f), Value::Table(v)) => {
-                let v = TextParams::default().read_table(v)?;
+                let v = TextParams::default().read_table(v, &self.palette)?;
                 match f {
                     StyleTextField::General => self.general = v,
                     StyleTextField::Banner => self.banner = v,
@@ -140,12 +143,21 @@ impl Assign for SystemStyleParams {
 }
 
 
-impl Assign for Style {
+impl ContextAssign<Map<String, Value>> for Style {
     type Field = StyleField;
 
-    fn assign(&mut self, f: Self::Field, v: Value) -> Result<(), String> {
+    fn assign(&mut self, f: Self::Field, v: Value, ctx: &Map<String, Value>) 
+        -> Result<(), String> 
+    {
         match (f, v) {
             (StyleField::Color(f), v) => {
+                let v = 
+                    if let Value::String(s) = &v
+                    && let Some('_') = s.chars().next() 
+                    && let Some(v) = ctx.get(&s[1..])
+                    {
+                        v.clone()
+                    } else {v};
                 let v = color::parse_color(&v)
                     .map_err(|e| format!("{v:?} : {e}"))?;
                 match f {
@@ -169,101 +181,105 @@ impl Assign for Style {
 
 
 impl Assign for MarginParams {
-  type Field = MarginParamsField;
+    type Field = MarginParamsField;
 
-  fn assign(&mut self, f: Self::Field, v: Value) -> Result<(), String> {
-    match (f, v) {
-      (f, Value::Integer(v)) => {
-        let v = u16::try_from(v).map_err(|e| format!("{v:?} : {e}"))?;
-        match f {
-          MarginParamsField::North => self.north = v,
-          MarginParamsField::South => self.south = v,
-          MarginParamsField::East => self.east = v,
-          MarginParamsField::West => self.west = v,
+    fn assign(&mut self, f: Self::Field, v: Value) -> Result<(), String> {
+        match (f, v) {
+            (f, Value::Integer(v)) => {
+                let v = u16::try_from(v).map_err(|e| format!("{v:?} : {e}"))?;
+                match f {
+                    MarginParamsField::North => self.north = v,
+                    MarginParamsField::South => self.south = v,
+                    MarginParamsField::East => self.east = v,
+                    MarginParamsField::West => self.west = v,
+                }
+            }
+            (_, v) => return Err(
+                format!("margin must be a number, not {v:?}")
+            )
         }
-      }
-      (_, v) => return Err(
-        format!("margin must be a number, not {v:?}")
-      )
+        Ok(())
     }
-    Ok(())
-  }
 }
 
 
-impl Assign for BorderParams {
-  type Field = BorderParamsField;
+impl ContextAssign<Map<String, Value>> for BorderParams {
+    type Field = BorderParamsField;
 
-  fn assign(&mut self, f: Self::Field, v: Value) -> Result<(), String> {
-    match (f, v) {
-      (BorderParamsField::Style(f), v) => {
-        self.style.assign(f, v)?;
-      }
-      (BorderParamsField::Corner, Value::String(v)) => {
-        match v.as_str() {
-          "square" => {
-            self.northwest = NW_SQR;
-            self.northeast = NE_SQR;
-            self.southwest = SW_SQR;
-            self.southeast = SE_SQR;
-          }
-          "round" => {
-            self.northwest = NW_RND;
-            self.northeast = NE_RND;
-            self.southwest = SW_RND;
-            self.southeast = SE_RND;
-          }
-          s => return Err(
-            format!("Corner field does not contain {s}")
-          ),
+    fn assign(&mut self, f: Self::Field, v: Value, ctx: &Map<String, Value>) 
+        -> Result<(), String> 
+    {
+        match (f, v) {
+            (BorderParamsField::Style(f), v) => {
+                self.style.assign(f, v, ctx)?;
+            }
+            (BorderParamsField::Corner, Value::String(v)) => {
+                match v.as_str() {
+                    "square" => {
+                        self.northwest = NW_SQR;
+                        self.northeast = NE_SQR;
+                        self.southwest = SW_SQR;
+                        self.southeast = SE_SQR;
+                    }
+                    "round" => {
+                        self.northwest = NW_RND;
+                        self.northeast = NE_RND;
+                        self.southwest = SW_RND;
+                        self.southeast = SE_RND;
+                    }
+                    s => return Err(
+                        format!("Corner field does not contain {s}")
+                    ),
+                }
+            }
+            (BorderParamsField::Bracket, Value::String(v)) => {
+                match v.as_str() {
+                    "space" => {
+                        self.open = ' ';
+                        self.close = ' ';
+                    }
+                    "tortoise" | "tort" | "t" => {
+                        self.open = OPEN_TORT;
+                        self.close = CLOSE_TORT;
+                    }
+                    "integral" | "int"  | "i" | "j" | "J" => {
+                        self.open = OPEN_INT;
+                        self.close = CLOSE_INT;
+                    }
+                    "square" | "sqr" => {
+                        self.open = OPEN_SQR;
+                        self.close = CLOSE_SQR;
+                    }
+                    "E" | "e" => {
+                        self.open = OPEN_E;
+                        self.close = CLOSE_E;
+                    }
+                    s => return Err(
+                        format!("Bracket field does not contain {s}")
+                    ),
+                }
+            }
+            (f, v) => return Err(
+                format!("field {f:?} value {v:?} not valid here")
+            )
         }
-      }
-      (BorderParamsField::Bracket, Value::String(v)) => {
-        match v.as_str() {
-          "space" => {
-            self.open = ' ';
-            self.close = ' ';
-          }
-          "tortoise" | "tort" | "t" => {
-            self.open = OPEN_TORT;
-            self.close = CLOSE_TORT;
-          }
-          "integral" | "int"  | "i" | "j" | "J" => {
-            self.open = OPEN_INT;
-            self.close = CLOSE_INT;
-          }
-          "square" | "sqr" => {
-            self.open = OPEN_SQR;
-            self.close = CLOSE_SQR;
-          }
-          "E" | "e" => {
-            self.open = OPEN_E;
-            self.close = CLOSE_E;
-          }
-          s => return Err(
-            format!("Bracket field does not contain {s}")
-          ),
-        }
-      }
-      (f, v) => return Err(
-        format!("field {f:?} value {v:?} not valid here")
-      )
+        Ok(())
     }
-    Ok(())
-  }
 }
 
 
-impl Assign for TextParams {
+impl ContextAssign<Map<String, Value>> for TextParams {
   type Field = TextStyleParamsField;
 
-  fn assign(&mut self, f: Self::Field, v: Value) -> Result<(), String> {
+  fn assign(&mut self, f: Self::Field, v: Value, ctx: &Map<String, Value>) 
+      -> Result<(), String> 
+  {
     match (f, v) {
       (TextStyleParamsField::Wrap, Value::Boolean(v)) => {
         self.wrap = v;
       }
       (TextStyleParamsField::Style(f), v) => {
-        self.style.assign(f, v)?;
+        self.style.assign(f, v, ctx)?;
       }
       (f, v) => return Err(
         format!("field {f:?} value {v:?} not valid here")
@@ -276,45 +292,45 @@ impl Assign for TextParams {
 
 #[derive(Debug)]
 pub enum ColorField {
-  Fg, Bg
+    Fg, Bg
 }
 
 
 #[derive(Debug)]
 pub enum AttributeField {
-  Bold, Underline
+    Bold, Underline
 }
 
 
 #[derive(Debug)]
 pub enum StyleMarginField {
-  Text, Screen
+    Text, Screen
 }
 
 
 #[derive(Debug)]
 pub enum StyleTextField {
-  General,
-  Banner,
-  Footer,
-  DialogBody,
-  DialogHeading,
-  Text,
-  Heading3,
-  Heading2,
-  Heading1,
-  Preformat,
-  Link,
-  Error,
-  Quote,
-  List,
+    General,
+    Banner,
+    Footer,
+    DialogBody,
+    DialogHeading,
+    Text,
+    Heading3,
+    Heading2,
+    Heading1,
+    Preformat,
+    Link,
+    Error,
+    Quote,
+    List,
 }
 
 
 
 #[derive(Debug)]
 pub enum BorderField {
-  App, Dialog
+    App, Dialog
 }
 
 
@@ -328,32 +344,32 @@ pub enum StyleTableField {
 
 
 impl std::str::FromStr for StyleTableField {
-  type Err = String;
+    type Err = String;
 
-  fn from_str(s: &str) -> Result<Self, Self::Err> {
-    match s {
-        "palette"         => Ok(Self::Palette),
-        "border"          => Ok(Self::Border(BorderField::App)),
-        "dialog_border"   => Ok(Self::Border(BorderField::Dialog)),
-        "text_margin"     => Ok(Self::Margin(StyleMarginField::Text)),
-        "screen_margin"   => Ok(Self::Margin(StyleMarginField::Screen)),
-        "general"         => Ok(Self::Text(StyleTextField::General)),
-        "banner"          => Ok(Self::Text(StyleTextField::Banner)),
-        "footer"          => Ok(Self::Text(StyleTextField::Footer)),
-        "dialog_body"     => Ok(Self::Text(StyleTextField::DialogBody)),
-        "dialog_heading"  => Ok(Self::Text(StyleTextField::DialogHeading)),
-        "text"            => Ok(Self::Text(StyleTextField::Text)),
-        "heading3" | "h3" => Ok(Self::Text(StyleTextField::Heading3)),
-        "heading2" | "h2" => Ok(Self::Text(StyleTextField::Heading2)),
-        "heading1" | "h1" => Ok(Self::Text(StyleTextField::Heading1)),
-        "preformat"       => Ok(Self::Text(StyleTextField::Preformat)),
-        "link"            => Ok(Self::Text(StyleTextField::Link)),
-        "error"           => Ok(Self::Text(StyleTextField::Error)),
-        "quote"           => Ok(Self::Text(StyleTextField::Quote)),
-        "list"            => Ok(Self::Text(StyleTextField::List)),
-        s => Err(format!("Style table does not contain field {s}")),
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "palette"         => Ok(Self::Palette),
+            "border"          => Ok(Self::Border(BorderField::App)),
+            "dialog_border"   => Ok(Self::Border(BorderField::Dialog)),
+            "text_margin"     => Ok(Self::Margin(StyleMarginField::Text)),
+            "screen_margin"   => Ok(Self::Margin(StyleMarginField::Screen)),
+            "general"         => Ok(Self::Text(StyleTextField::General)),
+            "banner"          => Ok(Self::Text(StyleTextField::Banner)),
+            "footer"          => Ok(Self::Text(StyleTextField::Footer)),
+            "dialog_body"     => Ok(Self::Text(StyleTextField::DialogBody)),
+            "dialog_heading"  => Ok(Self::Text(StyleTextField::DialogHeading)),
+            "text"            => Ok(Self::Text(StyleTextField::Text)),
+            "heading3" | "h3" => Ok(Self::Text(StyleTextField::Heading3)),
+            "heading2" | "h2" => Ok(Self::Text(StyleTextField::Heading2)),
+            "heading1" | "h1" => Ok(Self::Text(StyleTextField::Heading1)),
+            "preformat"       => Ok(Self::Text(StyleTextField::Preformat)),
+            "link"            => Ok(Self::Text(StyleTextField::Link)),
+            "error"           => Ok(Self::Text(StyleTextField::Error)),
+            "quote"           => Ok(Self::Text(StyleTextField::Quote)),
+            "list"            => Ok(Self::Text(StyleTextField::List)),
+            s => Err(format!("Style table does not contain field {s}")),
+        }
     }
-  }
 }
 
 #[derive(Debug)]

@@ -131,22 +131,26 @@ impl App {
             self.ack_dlg(&format!("Invalid Gemini response: {response}."));
             return
         };
-        use gemini::{Status::*, parse_doc};
+        use gemini::Status;
         match tag {
-            InputExpected | 
-            InputExpectedSensitive => {
+            Status::InputExpected | 
+            Status::InputExpectedSensitive => {
                 self.edit_dlg(Task::Reply(url.clone()), &text, "");
             }
-            RedirectTemporary | 
-            RedirectPermanent => {
+            Status::RedirectTemporary | 
+            Status::RedirectPermanent => {
                 match url::Url::parse(&text) {
-                    Err(e) => self.ack_dlg(&format!("Redirects to invalid URL. {e}")),
-                    Ok(url) => self.ask_dlg(Task::Go(url.clone()), &text),
+                    Err(e) => 
+                        self.ack_dlg(
+                            &format!("Redirects to invalid URL. {e}")
+                        ),
+                    Ok(url) => 
+                        self.ask_dlg(Task::Go(url.clone()), &text),
                 }
             }
-            CertRequiredClient | 
-            CertRequiredTransient | 
-            CertRequiredAuthorized => {
+            Status::CertRequiredClient | 
+            Status::CertRequiredTransient | 
+            Status::CertRequiredAuthorized => {
                 self.ack_dlg(&text);
             }
             _ => {
@@ -155,7 +159,10 @@ impl App {
                     PageParams::init()
                         .style(&self.params.style.general)
                         .text_styles(
-                            parse_doc(&content).into_iter().map(TabText::Gemini).collect(),
+                            gemini::parse_doc(&content)
+                                .into_iter()
+                                .map(TabText::Gemini)
+                                .collect(),
                             |g| self.params.style.get_tab_text_params(g)
                         )
                 );
@@ -210,7 +217,9 @@ impl App {
 
     pub fn push_style(&mut self) {
         for tab in self.view.tabs.data.iter_mut() {
-            tab.page.restyle(|text| self.params.style.get_tab_text_params(text));
+            tab.page.restyle(
+                |text| self.params.style.get_tab_text_params(text)
+            );
             tab.page.style = self.params.style.general.style;
         }
         self.view.push_frame();
@@ -263,7 +272,9 @@ impl App {
 
                 Action::Select if let Some(source) = tab.page.get_source() => {
                     match source {
-                        TabText::Gemini(GemText {tag: GemTag::Link(link), ..}) => {
+                        TabText::Gemini(
+                            GemText {tag: GemTag::Link(link), ..}
+                        ) => {
                             let link = link.clone();
                             self.select_link(&link);
                         }
@@ -317,7 +328,9 @@ impl App {
         {
             match (task, action, dlg_type) {
                 (Task::NewTab, Action::Select, DlgType::Select) => {
-                    if let Some(link) = self.params.urls.get(body.get_index()) {
+                    if let Some(link) = self.params.urls
+                        .get(body.get_index()) 
+                    {
                         let link = link.clone();
                         self.select_link(&link);
                     } else {
@@ -332,10 +345,12 @@ impl App {
                         Err(e) => {
                             self.ack_dlg(&format!("Problem: {e}"))
                         }
-                        Ok(s) if let Err(e) = self.params.keys.update_from_str(&s) => {
+                        Ok(s) 
+                        if let Err(e) = self.params.keys.update_from_str(&s)
+                        => {
                             self.ack_dlg(&format!("Problem: {e}"));
                         }
-                        _ => {
+                        Ok(_) => {
                             self.focus_tabs();
                         }
                     }
@@ -348,7 +363,9 @@ impl App {
                         Err(e) => {
                             self.ack_dlg(&e.to_string());
                         }
-                        Ok(s) if let Err(e) = self.params.style.update_from_str(&s) => {
+                        Ok(s) if let Err(e) = self.params.style
+                            .update_from_str(&s) => 
+                        {
                             self.ack_dlg(&e.to_string());
                             self.push_style();
                         }
@@ -382,7 +399,9 @@ impl App {
                                 .lines()
                                 .map(|l| l.into())
                                 .collect();
-                            self.select_dlg(Task::Default, "Current Settings", text);
+                            self.select_dlg(
+                                Task::Default, "Current Settings", text
+                            );
                         }
                         _ => self.focus_tabs(),
                     }
@@ -419,7 +438,11 @@ impl App {
                 }
 
                 (Task::Reply(url), Action::Enter, _) => {
-                    let text = body.get_string().unwrap().trim().replace(" ", "%20");
+                    let text = body
+                        .get_string()
+                        .unwrap()
+                        .trim()
+                        .replace(" ", "%20");
                     match url.clone().join(&format!("?{text}")) {
                         Err(e) => {
                             self.ack_dlg(&format!("Invalid URL. {e}"));

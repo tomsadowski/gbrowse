@@ -13,6 +13,17 @@ pub trait Assign {
     fn assign(&mut self, _: Self::Field, _: toml::Value) -> Result<(), String>;
 }
 
+pub trait ContextAssign<C> {
+    type Field;
+    fn assign(
+        &mut self, 
+        _: Self::Field, 
+        _: toml::Value,
+        _: &C
+        ) -> Result<(), String>;
+}
+
+
 
 pub trait UserTable: Sized {
     fn read_table(self, _: toml::Table) -> Result<Self, String>;
@@ -22,8 +33,8 @@ pub trait UserTable: Sized {
 
 
 impl<T, F> UserTable for T
-where T: Assign<Field = F>,
-            F: std::str::FromStr<Err = String>
+where   T: Assign<Field = F>,
+        F: std::str::FromStr<Err = String>
 {
     fn read_table(mut self, table: toml::Table) -> Result<Self, String> {
         for (key, value) in table.into_iter() {
@@ -46,6 +57,52 @@ where T: Assign<Field = F>,
     fn update_from_str(&mut self, s: &str) -> Result<(), String> {  
         let table = s.parse::<toml::Table>().map_err(|e| e.to_string())?;
         self.update_from_table(table)?;
+        Ok(())
+    }
+}
+
+pub trait ContextUserTable<C>: Sized {
+    fn read_table(self, _: toml::Table, _: &C) 
+        -> Result<Self, String>;
+
+    fn update_from_table(&mut self, _: toml::Table, _: &C) 
+        -> Result<(), String>;
+
+    fn update_from_str(&mut self, _: &str, _: &C) 
+        -> Result<(), String>;
+}
+
+impl<T, F, C> ContextUserTable<C> for T
+where   T: ContextAssign<C, Field = F>,
+        F: std::str::FromStr<Err = String>
+{
+    fn read_table(mut self, table: toml::Table, context: &C) 
+        -> Result<Self, String> 
+    {
+        for (key, value) in table.into_iter() {
+            let field = F::from_str(&key)?;
+            self.assign(field, value, context)?;
+        }
+        Ok(self)
+    }
+
+
+    fn update_from_table(&mut self, table: toml::Table, context: &C) 
+        -> Result<(), String> 
+    {
+        for (key, value) in table.into_iter() {
+            let field = F::from_str(&key)?;
+            self.assign(field, value, context)?;
+        }
+        Ok(())
+    }
+
+
+    fn update_from_str(&mut self, s: &str, context: &C) 
+        -> Result<(), String> 
+    {  
+        let table = s.parse::<toml::Table>().map_err(|e| e.to_string())?;
+        self.update_from_table(table, context)?;
         Ok(())
     }
 }
@@ -109,7 +166,9 @@ impl Assign for SystemParams {
             // read style from another file
             (UserField::Style, Value::String(v)) => {
                 self.style.update_from_str(&std::fs::
-                    read_to_string(get_styles_file(&v)).map_err(|e| e.to_string())?
+                    read_to_string(
+                        get_styles_file(&v)).map_err(|e| e.to_string()
+                    )?
                 )?;
             }
             // read style from this file
@@ -119,7 +178,9 @@ impl Assign for SystemParams {
             // read keys from another file
             (UserField::Keys, Value::String(v)) => {
                 self.keys.update_from_str(&std::fs::
-                    read_to_string(get_keys_file(&v)).map_err(|e| e.to_string())?
+                    read_to_string(
+                        get_keys_file(&v)).map_err(|e| e.to_string()
+                    )?
                 )?;
             }
             // read keys from this file
