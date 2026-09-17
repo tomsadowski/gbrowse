@@ -99,6 +99,7 @@ impl Assign for SystemStyleParams {
     fn assign(&mut self, f: Self::Field, v: Value) -> Result<(), String> {
         match (f, v) {
             (StyleTableField::Palette, Value::Table(v)) => {
+                eprintln!("palette found with table {v}");
                 self.palette = v;
             }
             (StyleTableField::Border(f), Value::Table(v)) => {
@@ -269,24 +270,24 @@ impl ContextAssign<Map<String, Value>> for BorderParams {
 
 
 impl ContextAssign<Map<String, Value>> for TextParams {
-  type Field = TextStyleParamsField;
+    type Field = TextStyleParamsField;
 
-  fn assign(&mut self, f: Self::Field, v: Value, ctx: &Map<String, Value>) 
-      -> Result<(), String> 
-  {
-    match (f, v) {
-      (TextStyleParamsField::Wrap, Value::Boolean(v)) => {
-        self.wrap = v;
-      }
-      (TextStyleParamsField::Style(f), v) => {
-        self.style.assign(f, v, ctx)?;
-      }
-      (f, v) => return Err(
-        format!("field {f:?} value {v:?} not valid here")
-      )
+    fn assign(&mut self, f: Self::Field, v: Value, ctx: &Map<String, Value>) 
+        -> Result<(), String> 
+    {
+        match (f, v) {
+            (TextStyleParamsField::Wrap, Value::Boolean(v)) => {
+                self.wrap = v;
+            }
+            (TextStyleParamsField::Style(f), v) => {
+                self.style.assign(f, v, ctx)?;
+            }
+            (f, v) => return Err(
+                format!("field {f:?} value {v:?} not valid here")
+            )
+        }
+        Ok(())
     }
-    Ok(())
-  }
 }
 
 

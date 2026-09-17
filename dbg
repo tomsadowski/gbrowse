@@ -1,0 +1,12 @@
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.04s
+     Running `target/debug/gbrowse`
+border found bg = "#202225"
+bracket = "space"
+corner = "round"
+fg = "#707880"
+
+border found bg = "#202225"
+bracket = "space"
+corner = "round"
+fg = "#707478"
+

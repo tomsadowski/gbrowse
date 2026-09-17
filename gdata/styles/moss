@@ -13,19 +13,20 @@ south = 1
 east = 4 
 west = 4
 
-#black.g    = "#202225"
-#dgrey.g    = "#707880"
-#grey.g     = "#b8b9c0"
-#white.g    = "#b6a6a2"
+[palette]
+black = "#202225"
+dgrey = "#707880"
+grey  = "#b8b9c0"
+white = "#b6a6a2"
 
-#cyan.g     = "#608880"
-#red.g      = "#d28470"
-#green.g    = "#9cb070"
-#magenta.g  = "#c391a4"
+cyan = "#608880"
+red = "#d28470"
+green = "#9cb070"
+magenta = "#c391a4"
 
-#dmagenta.g = "#402c40"
-#dyellow.g  = "#4c4844"
-#dblue.g    = "#30343a"
+dmagenta = "#402c40"
+dyellow = "#4c4844"
+dblue = "#30343a"
 
 [border]
 corner = "round"
@@ -37,7 +38,7 @@ bg = "#202225"
 fg = "#707880"
 
 [general]
-fg = "_#b6a6a2"
+fg = "_white"
 bg = "#202225"
 
 [list]
