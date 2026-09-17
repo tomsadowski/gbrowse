@@ -1,0 +1,84 @@
+# moss
+
+
+[screen_margin]
+north = 1 
+south = 1 
+east = 8 
+west = 8
+
+[text_margin]
+north = 1 
+south = 1 
+east = 4 
+west = 4
+
+#black.g    = "#202225"
+#dgrey.g    = "#707880"
+#grey.g     = "#b8b9c0"
+#white.g    = "#b6a6a2"
+
+#cyan.g     = "#608880"
+#red.g      = "#d28470"
+#green.g    = "#9cb070"
+#magenta.g  = "#c391a4"
+
+#dmagenta.g = "#402c40"
+#dyellow.g  = "#4c4844"
+#dblue.g    = "#30343a"
+
+[border]
+corner = "round"
+bracket = "space"
+fg = "#707880"
+bg = "#202225"
+
+[banner]
+fg = "#707880"
+
+[general]
+fg = "#b6a6a2"
+bg = "#202225"
+
+[list]
+fg = "#f0a0c0"
+
+[quote]
+fg = "#e0b068"
+
+[dialog_border]
+corner = "round"
+bracket = "space"
+fg = "#707478"
+bg = "#202225"
+
+[dialog_body]
+fg = "#d8d0cc"
+bg = "#202225"
+
+[dialog_heading]
+fg = "#e0b068"
+bg = "#202225"
+
+[text]
+wrap = true
+
+[preformat]
+wrap = false
+fg = "#acacff"
+
+[link]
+underline = true
+fg = "#608880"
+
+[h1]
+bold = true
+underline = true
+fg = "#b8b9c0"
+
+[h2]
+bold = true
+fg = "#b8b9c0"
+
+[h3]
+fg = "#b8b9c0"
