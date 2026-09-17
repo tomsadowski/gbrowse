@@ -143,7 +143,9 @@ impl GemText {
             (GemTag::ListItem, t.into())
 
         } else if let Some(("=>", t)) = line.split_at_checked(2) {
-            let (u, t) = util::split_whitespace_once(t.trim()).unwrap_or((t, t));
+            let (u, t) = util::split_whitespace_once(
+                t.trim()).unwrap_or((t, t)
+            );
             (GemTag::Link(u.into()), t.trim().into())
 
         } else {

@@ -282,7 +282,9 @@ impl Frame {
     }
 
 
-    pub fn draw_east(&self, w: &mut impl std::io::Write) -> std::io::Result<()> {
+    pub fn draw_east(&self, w: &mut impl std::io::Write) 
+        -> std::io::Result<()> 
+    {
         // border
         if let Some(border) = self.params.border {
             let (nex, ney) = self.border_rect.northeast().into();
