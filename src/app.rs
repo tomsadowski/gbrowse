@@ -62,14 +62,14 @@ pub struct App {
 
 impl App {
     pub fn init(path: &str, w: u16, h: u16) -> Self {
-        let user_text = std::fs::read_to_string(path).unwrap_or_default();
-        let params: SystemParams = match user_from_str(&user_text) {
-            Ok(u) => u,
-            Err(e) => {
-                eprint!("{e}");
-                SystemParams::default()
-            }
-        };
+
+        let params = std::fs::read_to_string(path).unwrap_or_default();
+
+        let (params, params_result) = 
+            match user_from_str::<SystemParams>(&params) {
+                Ok(u)  => (u, Ok(())),
+                Err(e) => (SystemParams::default(), Err(format!("{e}"))),
+            };
         let view = AppView::new(
             &Rect::from(Dim(w, h)), 
             &params.style.get_frame_params()
@@ -84,13 +84,31 @@ impl App {
             params,
         };
 
-        match url::Url::parse(&app.params.init_url) {
-            Err(e) => app.edit_dlg(
-                Task::Init(app.params.init_url.clone()), 
-                &format!("Try again: {e}"), 
-                &app.params.init_url.clone(),
-            ),
-            Ok(url) => {
+        match (url::Url::parse(&app.params.init_url), params_result) {
+            (Err(e), Err(msg)) => {
+                app.edit_dlg(
+                    Task::Init(app.params.init_url.clone()), 
+                    &format!("
+                        Config issue: {msg},
+                        {e}, enter revised URL:
+                    "), 
+                    &app.params.init_url.clone(),
+                );
+            }
+            (Err(e), Ok(())) => {
+                app.edit_dlg(
+                    Task::Init(app.params.init_url.clone()), 
+                    &format!("
+                        {e}, enter revised URL:
+                    "), 
+                    &app.params.init_url.clone(),
+                );
+            }
+            (Ok(url), Err(msg)) => {
+                app.ack_dlg(&format!("Config issue: {msg}"));
+                app.spawn_request(&url);
+            }
+            (Ok(url), Ok(())) => {
                 app.focus_tabs();
                 app.spawn_request(&url);
             }

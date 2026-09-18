@@ -24,11 +24,27 @@ pub trait ContextAssign<C> {
 }
 
 
-
 pub trait UserTable: Sized {
-    fn read_table(self, _: toml::Table) -> Result<Self, String>;
-    fn update_from_table(&mut self, _: toml::Table) -> Result<(), String>;
-    fn update_from_str(&mut self, _: &str) -> Result<(), String>;
+    fn read_table(self, _: toml::Table) 
+        -> Result<Self, String>;
+
+    fn update_from_table(&mut self, _: toml::Table) 
+        -> Result<(), String>;
+
+    fn update_from_str(&mut self, _: &str) 
+        -> Result<(), String>;
+}
+
+
+pub trait ContextUserTable<C>: Sized {
+    fn read_table(self, _: toml::Table, _: &C) 
+        -> Result<Self, String>;
+
+    fn update_from_table(&mut self, _: toml::Table, _: &C) 
+        -> Result<(), String>;
+
+    fn update_from_str(&mut self, _: &str, _: &C) 
+        -> Result<(), String>;
 }
 
 
@@ -59,17 +75,6 @@ where   T: Assign<Field = F>,
         self.update_from_table(table)?;
         Ok(())
     }
-}
-
-pub trait ContextUserTable<C>: Sized {
-    fn read_table(self, _: toml::Table, _: &C) 
-        -> Result<Self, String>;
-
-    fn update_from_table(&mut self, _: toml::Table, _: &C) 
-        -> Result<(), String>;
-
-    fn update_from_str(&mut self, _: &str, _: &C) 
-        -> Result<(), String>;
 }
 
 impl<T, F, C> ContextUserTable<C> for T
@@ -197,6 +202,8 @@ impl Assign for SystemParams {
 
 
 impl SystemParams {
+
+    // convenience method
     pub fn dlg<'a>(&'a self, prompt: &str) -> DialogParams<'a> {
         DialogParams::from(self).prompt(prompt)
     }
