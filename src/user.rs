@@ -156,7 +156,6 @@ pub struct UserConfig {
 } 
 
 impl Default for UserConfig {
-    // todo: return Self and errors encountered during creation
     fn default() -> Self {
         let urls: Vec<String> = 
             match std::fs::read_to_string(&util::SAVE_FILE) 
@@ -177,50 +176,47 @@ impl Default for UserConfig {
 
 impl UserAssign<()> for UserConfig {
     type Field = UserConfigField;
-
-    fn assign(&mut self, f: Self::Field, v: toml::Value, ctx: &()) 
+    fn assign(&mut self, field: Self::Field, value: toml::Value, ctx: &()) 
         -> Result<(), String> 
     {
         use toml::Value;
-        match (f, v) {
-            (UserConfigField::InitUrl, Value::String(v)) => {
-                self.init_url = v.into();
+        match (field, value) {
+            (UserConfigField::InitUrl, Value::String(value)) => {
+                self.init_url = value.into();
             }
-            (UserConfigField::SaveFile, Value::String(v)) => {
-                self.save_file = format!("{}/{v}", util::DATA_PATH);
+            (UserConfigField::SaveFile, Value::String(value)) => {
+                self.save_file = format!("{}/{value}", util::DATA_PATH);
             }
-            (UserConfigField::Timeout, Value::Integer(v)) => {
-                self.timeout = u64::try_from(v).map_err(|e| e.to_string())?;
+            (UserConfigField::Timeout, Value::Integer(value)) => {
+                self.timeout = u64::try_from(value).map_err(|e| e.to_string())?;
             }
             // read style from another file
-            (UserConfigField::Style, Value::String(v)) => {
-                self.style.update_from_str(&std::fs::
-                    read_to_string(
-                        util::get_styles_file(&v)).map_err(|e| e.to_string()
+            (UserConfigField::Style, Value::String(value)) => {
+                self.style.update_from_str(&std::fs::read_to_string(
+                        util::get_styles_file(&value)).map_err(|e| e.to_string()
                     )?,
                     ctx
                 )?;
             }
             // read style from this file
-            (UserConfigField::Style, Value::Table(v)) => {
-                self.style.update_from_table(v, ctx)?;
+            (UserConfigField::Style, Value::Table(value)) => {
+                self.style.update_from_table(value, ctx)?;
             }
             // read keys from another file
-            (UserConfigField::Keys, Value::String(v)) => {
-                self.keys.update_from_str(&std::fs::
-                    read_to_string(
-                        util::get_keys_file(&v)).map_err(|e| e.to_string()
+            (UserConfigField::Keys, Value::String(value)) => {
+                self.keys.update_from_str(&std::fs::read_to_string(
+                        util::get_keys_file(&value)).map_err(|e| e.to_string()
                     )?,
                     ctx
                 )?;
             }
             // read keys from this file
-            (UserConfigField::Keys, Value::Table(v)) => {
-                self.keys.update_from_table(v, ctx)?;
+            (UserConfigField::Keys, Value::Table(value)) => {
+                self.keys.update_from_table(value, ctx)?;
             }
-            (f, v) => return Err(
-                format!("field {f:?} value {v:?} not valid here")
-            )
+            (field, value) => return Err(format!("
+                field {field:?} value {value:?} not valid here
+            "))
         }
         Ok(())
     }

@@ -13,6 +13,7 @@ use crate::{
 };
 
 
+
 #[derive(Debug)]
 pub enum DialogType {
     Ack, 
@@ -145,7 +146,6 @@ pub struct Dialog {
     pub body: Option<Page<String>>,
 }
 
-
 impl crate::GetMaxHeight for Dialog {
     fn get_max_height(&self) -> u16 {
         self.prompt.get_max_height() 
@@ -154,13 +154,11 @@ impl crate::GetMaxHeight for Dialog {
     }
 }
 
-
 impl crate::GetDisplayHeight for Dialog {
     fn get_display_height(&self) -> u16 {
         self.frame.get_display_height()
     }
 }
-
 
 impl crate::Draw for Dialog {
     fn draw(&self, w: &mut impl std::io::Write) -> std::io::Result<()> {
@@ -170,7 +168,6 @@ impl crate::Draw for Dialog {
         Ok(())
     }
 }
-
 
 impl crate::Resize for Dialog {
     fn resize(&mut self, rect: &Rect) {

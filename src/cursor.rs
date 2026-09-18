@@ -3,12 +3,12 @@
 use crate::{Rect, Pos, Dim};
 
 
+
 #[derive(Clone, Copy, Debug, Default)]
 pub struct Cursor {
     pub head: usize,
     pub buff: bool,
 }
-
 
 impl Cursor {
     pub fn editor<T>(mut self, vec: &Vec<T>) -> Self {
@@ -16,32 +16,26 @@ impl Cursor {
         self.move_to_end(vec); self
     }
 
-
     pub fn get_max<T>(&self, vec: &Vec<T>) -> usize {
         if self.buff { vec.len() } 
         else { vec.len().saturating_sub(1) }
     }
 
-
     pub fn peek_move<T>(&self, vec: &Vec<T>, delta: isize) -> isize {
         self.clone().move_head(vec, delta)
     }
-
 
     pub fn fit<T>(&mut self, vec: &Vec<T>, new_head: usize) {
         self.head = self.get_max(vec).min(new_head);
     }
 
-
     pub fn move_to_start(&mut self) {
         self.head = 0;
     }
 
-
     pub fn move_to_end<T>(&mut self, vec: &Vec<T>) {
         self.head = self.get_max(vec);
     }
-
 
     pub fn move_wrapped<T>(&mut self, vec: &Vec<T>, delta: isize) {
         let remainder = self.move_head(vec, delta);
@@ -54,7 +48,6 @@ impl Cursor {
             )
         }
     }
-
 
     pub fn move_head<T>(&mut self, vec: &Vec<T>, idelta: isize) -> isize {
         let ihead = self.head as isize;
@@ -72,7 +65,6 @@ impl Cursor {
         }
     }
 
-
     pub fn remove<T>(&mut self, vec: &mut Vec<T>) -> bool {
         if self.head >= vec.len() {
             false
@@ -83,7 +75,6 @@ impl Cursor {
         }
     }
 
-
     pub fn delete<T>(&self, vec: &mut Vec<T>) -> bool {
         if self.head >= vec.len() {
             false
@@ -92,7 +83,6 @@ impl Cursor {
             true
         } 
     }
-
 
     pub fn backspace<T>(&mut self, vec: &mut Vec<T>) -> bool {
         if self.peek_move(vec, -1) != 0 {
@@ -103,7 +93,6 @@ impl Cursor {
             true
         } 
     }
-
 
     pub fn insert_unique_with<T>(
         &mut self, vec: &mut Vec<T>, is_equal: impl Fn(&T) -> bool, unit: T
@@ -129,7 +118,6 @@ impl Cursor {
         }
     }
 
-
     pub fn insert<T>(&mut self, vec: &mut Vec<T>, c: T) {
         if self.head + 1 == vec.len() || vec.len() == 0 {
             vec.push(c);
@@ -139,7 +127,6 @@ impl Cursor {
             self.move_head(vec, 1);
         }
     }
-
 
     pub fn get_weighted_head(&self, vec: &[char]) -> usize {
         use unicode_width::UnicodeWidthChar;
@@ -159,12 +146,10 @@ pub struct Point {
     pref_x: usize,
 }
 
-
 impl Point {
     pub fn editor<T>(mut self, vec: &Vec<Vec<T>>) -> Self {
         vec.get(self.y.head).map(|v| self.x = self.x.editor(v)); self
     }
-
 
     pub fn get_linear<T>(&self, vec: &Vec<Vec<T>>) -> usize {
         vec
@@ -175,13 +160,11 @@ impl Point {
             .sum()
     }
 
-
     pub fn set_linear<T>(&mut self, vec: &Vec<Vec<T>>, idx: usize) {
         self.y.move_to_start();
         self.x.move_to_start();
         self.move_x(vec, idx as isize);
     }
-
 
     pub fn move_y<T>(&mut self, vec: &Vec<Vec<T>>, delta: isize) -> bool {
         if self.y.move_head(vec, delta) == delta {
@@ -191,7 +174,6 @@ impl Point {
             true
         }
     }
-
 
     pub fn move_x<T>(&mut self, vec: &Vec<Vec<T>>, delta: isize) {
         let mut remainder = delta;
@@ -219,14 +201,12 @@ impl Point {
         self.pref_x = self.x.head;
     }
 
-
     pub fn delete<T>(&mut self, vec: &mut Vec<Vec<T>>) -> bool {
         vec
             .get_mut(self.y.head)
             .map(|c| self.x.delete(c))
             .is_some()
     }
-
 
     pub fn backspace<T>(&mut self, vec: &mut Vec<Vec<T>>) -> bool {
         vec
@@ -235,7 +215,6 @@ impl Point {
             .is_some()
     }
 
-
     pub fn insert<T>(&mut self, vec: &mut Vec<Vec<T>>, t: T) -> bool {
         vec
             .get_mut(self.y.head)
@@ -243,16 +222,18 @@ impl Point {
             .is_some()
     }
 
-
     pub fn move_left<T>(&mut self, vec: &Vec<Vec<T>>, delta: usize) -> bool {
         self.move_x(vec, delta as isize * -1); true
     }
+
     pub fn move_right<T>(&mut self, vec: &Vec<Vec<T>>, delta: usize) -> bool {
         self.move_x(vec, delta as isize); true
     }
+
     pub fn move_down<T>(&mut self, vec: &Vec<Vec<T>>, delta: usize) -> bool {
         self.move_y(vec, delta as isize)
     }
+
     pub fn move_up<T>(&mut self, vec: &Vec<Vec<T>>, delta: usize) -> bool {
         self.move_y(vec, delta as isize * -1)
     }
@@ -266,13 +247,11 @@ pub struct PointView {
     y: CursorView,
 }
 
-
 impl From<&PointView> for Rect {
     fn from(pv: &PointView) -> Self {
         Rect::from(pv.dim()).with_pos(pv.pos()) 
     }
 }
-
 
 impl From<&Rect> for PointView {
     fn from(rect: &Rect) -> Self {
@@ -284,7 +263,6 @@ impl From<&Rect> for PointView {
         }
     }
 }
-
 
 impl PointView {
     pub fn get_x_view(&self) -> CursorView {self.x}
@@ -298,7 +276,6 @@ impl PointView {
     pub fn get_x_scroll(&self) -> usize {self.x.scroll}
     pub fn get_y_scroll(&self) -> usize {self.y.scroll}
 
-
     pub fn resize(&mut self, matrix: &PointMatrix<char>, rect: &Rect) {
         let rect = rect.clone();
         self.pos = rect.pos();
@@ -306,13 +283,11 @@ impl PointView {
         self.x.resize(matrix.get_weighted_x(), rect.w());
     }
 
-
     pub fn update(&mut self, matrix: &PointMatrix<char>) -> bool {
         let y = self.y.update(matrix.point.y.head);
         let x = self.x.update(matrix.get_weighted_x());
         x || y
     }
-
 
     pub fn draw(&self, w: &mut impl std::io::Write) -> std::io::Result<()> {
         use crossterm::{QueueableCommand, cursor};
@@ -332,7 +307,6 @@ pub struct CursorView {
     pub size: u16, // width or height of rectangle
 }
 
-
 impl CursorView {
     pub fn from_size(size: u16) -> Self {
         Self {
@@ -343,7 +317,6 @@ impl CursorView {
         }
     }
 
-
     pub fn get_unit_view<T>(self, vec: &Vec<T>) -> Vec<&T> {
         vec
             .iter()
@@ -351,7 +324,6 @@ impl CursorView {
             .take(self.size.into())
             .collect() 
     }
-
 
     pub fn get_weighted_view(self, vec: &[char]) -> Vec<(u16, &char)> {
         use unicode_width::UnicodeWidthChar;
@@ -366,7 +338,6 @@ impl CursorView {
         }
         result
     }
-
 
     // assure cursor position fits in the new bounds
     pub fn resize(&mut self, new_head: usize, new_size: u16) {
@@ -405,7 +376,6 @@ impl CursorView {
             }
         }
     }
-
 
     pub fn update(&mut self, new_head: usize) -> bool {
         // no move
@@ -456,13 +426,11 @@ pub struct CursorVec<T> {
     pub data: Vec<T>,
 }
 
-
 impl<T> Default for CursorVec<T> {
     fn default() -> Self { 
         Self { cursor: Cursor::default(), data: vec![] } 
     }
 }
-
 
 impl<T> From<Vec<T>> for CursorVec<T> {
     fn from(vec: Vec<T>) -> Self { 
@@ -470,32 +438,39 @@ impl<T> From<Vec<T>> for CursorVec<T> {
     }
 }
 
-
 impl<T> CursorVec<T> {
     pub fn move_head(&mut self, idelta: isize) -> isize {
         self.cursor.move_head(&self.data, idelta)
     }
+
     pub fn move_wrapped(&mut self, idelta: isize) {
         self.cursor.move_wrapped(&self.data, idelta)
     }
+
     pub fn get(&self) -> Option<&T> {
         self.data.get(self.cursor.head)
     }
+
     pub fn get_mut(&mut self) -> Option<&mut T> {
         self.data.get_mut(self.cursor.head)
     }
+
     pub fn remove(&mut self) -> bool {
         self.cursor.remove(&mut self.data)
     }
+
     pub fn delete(&mut self) -> bool {
         self.cursor.delete(&mut self.data)
     }
+
     pub fn backspace(&mut self) -> bool {
         self.cursor.backspace(&mut self.data)
     }
+
     pub fn insert(&mut self, t: T) {
         self.cursor.insert(&mut self.data, t)
     }
+
     pub fn insert_unique_with(
         &mut self, is_equal: impl Fn(&T) -> bool, unit: T
     ) -> bool {
@@ -509,11 +484,9 @@ pub struct PointMatrix<T> {
     pub data: Vec<Vec<T>>,
 }
 
-
 impl<T> crate::GetMaxHeight for PointMatrix<T> {
     fn get_max_height(&self) -> u16 { self.data.get_max_height() }
 }
-
 
 impl<T> Default for PointMatrix<T> {
     fn default() -> Self { 
@@ -521,13 +494,11 @@ impl<T> Default for PointMatrix<T> {
     }
 }
 
-
 impl<T> From<Vec<Vec<T>>> for PointMatrix<T> {
     fn from(matrix: Vec<Vec<T>>) -> Self {
         Self { point: Point::default(), data: matrix }
     }
 }
-
 
 impl PointMatrix<char> {
     pub fn get_weighted_x(&self) -> usize {
@@ -537,41 +508,51 @@ impl PointMatrix<char> {
     }
 }
 
-
 impl<T> PointMatrix<T> {
     pub fn editor(mut self) -> Self {
         self.point = self.point.editor(&self.data); self
     }
+
     pub fn get_linear(&self) -> usize {
         self.point.get_linear(&self.data)
     }
+
     pub fn set_linear(&mut self, idx: usize) {
         self.point.set_linear(&self.data, idx)
     }
+
     pub fn move_y(&mut self, idelta: isize) -> bool {
         self.point.move_y(&self.data, idelta)
     }
+
     pub fn move_x(&mut self, idelta: isize) -> isize {
         self.point.move_x(&self.data, idelta); 0
     }
+
     pub fn delete(&mut self) -> bool {
         self.point.delete(&mut self.data)
     }
+
     pub fn backspace(&mut self) -> bool {
         self.point.backspace(&mut self.data)
     }
+
     pub fn insert(&mut self, t: T) -> bool {
         self.point.insert(&mut self.data, t)
     }
+
     pub fn move_left(&mut self, delta: usize) -> bool {
         self.point.move_left(&self.data, delta)
     }
+
     pub fn move_right(&mut self, delta: usize) -> bool {
         self.point.move_right(&self.data, delta)
     }
+
     pub fn move_down(&mut self, delta: usize) -> bool {
         self.point.move_down(&self.data, delta)
     }
+
     pub fn move_up(&mut self, delta: usize) -> bool {
         self.point.move_up(&self.data, delta)
     }

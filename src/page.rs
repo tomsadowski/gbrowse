@@ -18,18 +18,15 @@ pub struct TextParams {
     pub wrap:  bool,
 }
 
-
 impl From<&TextParams> for Style {
     fn from(t: &TextParams) -> Self { t.style }
 }
-
 
 impl Default for TextParams {
     fn default() -> Self {
         Self { style: Style::default(), wrap: true, }
     }
 }
-
 
 impl TextParams {
     // split at spaces within width and split at lines
@@ -49,7 +46,6 @@ impl TextParams {
         }
     }
 }
-
 
 pub fn print(
     width: usize, styles: &[TextParams], source: &[impl std::fmt::Display]
@@ -76,7 +72,6 @@ pub struct PageParams<T> {
     pub source: Vec<T>,
 }
 
-
 impl<T> Default for PageParams<T> {
     fn default() -> Self {
         Self {
@@ -88,7 +83,6 @@ impl<T> Default for PageParams<T> {
         }
     }
 }
-
 
 impl<T: std::fmt::Display> PageParams<T> {
     pub fn init() -> Self { Self::default() }

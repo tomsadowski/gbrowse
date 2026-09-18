@@ -24,7 +24,6 @@ use url::Url;
 
 
 
-
 pub struct AppView {
     pub draw_frame: bool,
     pub rect:       Rect,

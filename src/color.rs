@@ -15,7 +15,6 @@ pub fn parse_color(v: &toml::Value) -> Result<Color, String> {
     }
 }
 
-
 pub fn parse_color_name(s: &str) -> Result<Color, String> {
     match s {
         "Red"         | "red"         => Ok(Color::Red),
@@ -40,9 +39,7 @@ pub fn parse_color_name(s: &str) -> Result<Color, String> {
     }
 }
 
-
 pub fn parse_hex_color(s: &str) -> Result<Color, String> {
-
     fn try_hex(c: char) -> Result<u8, String> {
         match c {
             '0' => Ok(0),  '1' => Ok(1),  '2' => Ok(2),  '3' => Ok(3),
@@ -52,7 +49,6 @@ pub fn parse_hex_color(s: &str) -> Result<Color, String> {
             _   => Err(format!("{c} is not a hex character")),
         }
     }
-
     let mut c = s.chars();
     let r1 = c
         .next()
@@ -94,7 +90,6 @@ pub struct Style {
     pub fg: Option<Color>,
     pub bg: Option<Color>,
 }
-
 
 impl crossterm::Command for Style {
     fn write_ansi(&self, f: &mut impl std::fmt::Write) -> std::fmt::Result {
