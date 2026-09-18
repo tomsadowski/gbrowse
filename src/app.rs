@@ -13,7 +13,6 @@ use crate::{
     GemText,
     DlgType,
     UserTable,
-    user_from_str,
     Request,
     Action,
     Rect, 
@@ -65,11 +64,7 @@ impl App {
 
         let params = std::fs::read_to_string(path).unwrap_or_default();
 
-        let (params, params_result) = 
-            match user_from_str::<SystemParams, ()>(&params, &()) {
-                Ok(u)  => (u, Ok(())),
-                Err(e) => (SystemParams::default(), Err(format!("{e}"))),
-            };
+        let (params, params_result) = SystemParams::from_str(&params, &());
         let view = AppView::new(
             &Rect::from(Dim(w, h)), 
             &params.style.get_frame_params()

@@ -100,14 +100,15 @@ impl Assign<()> for SystemStyleParams {
     fn assign(&mut self, f: Self::Field, v: Value, _: &()) -> Result<(), String> {
         match (f, v) {
             (SystemStyleField::Border(f), Value::Table(v)) => {
-                let v = BorderParams::default().read_table(v, &self.palette)?;
+                let (v, r) = BorderParams::from_table(v, &self.palette);
                 match f {
                     BorderField::App => self.border = Some(v),
                     BorderField::Dialog => self.dialog_border = v,
                 }
+                r
             }
             (SystemStyleField::Text(f), Value::Table(v)) => {
-                let v = TextParams::default().read_table(v, &self.palette)?;
+                let (v, r) = TextParams::from_table(v, &self.palette);
                 match f {
                     StyleTextField::General => self.general = v,
                     StyleTextField::Banner => self.banner = v,
@@ -124,19 +125,20 @@ impl Assign<()> for SystemStyleParams {
                     StyleTextField::Quote => self.quote = v,
                     StyleTextField::List => self.list = v,
                 }
+                r
             }
             (SystemStyleField::Margin(f), Value::Table(v)) => {
-                let v = MarginParams::default().read_table(v, &())?;
+                let (v, r) = MarginParams::from_table(v, &());
                 match f {
                     StyleMarginField::Text => self.text_margin = v,
                     StyleMarginField::Screen => self.screen_margin = v,
                 }
+                r
             }
-            (f, v) => return Err(
+            (f, v) => Err(
                 format!("field {f:?} value {v:?} not valid here")
             )
         }
-        Ok(())
     }
 }
 

@@ -63,7 +63,6 @@ pub use crate::user::{
     SystemParams,
     Assign,
     UserTable,
-    user_from_str,
 };
 pub use crate::cursor::{
     Cursor, 

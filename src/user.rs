@@ -19,62 +19,80 @@ pub trait Assign<C> {
 
 
 pub trait UserTable<C>: Sized {
-    fn read_table(self, _: toml::Table, _: &C) 
-        -> Result<Self, String>;
+    fn from_table(_: toml::Table, _: &C) -> (Self, Result<(), String>);
+
+    fn from_str(_: &str, _: &C) -> (Self, Result<(), String>);
 
     fn update_from_table(&mut self, _: toml::Table, _: &C) 
         -> Result<(), String>;
 
-    fn update_from_str(&mut self, _: &str, _: &C) 
-        -> Result<(), String>;
+    fn update_from_str(&mut self, _: &str, _: &C) -> Result<(), String>;
 }
 
 
 impl<T, F, C> UserTable<C> for T
-where   T: Assign<C, Field = F>,
+where   T: Assign<C, Field = F> + Default,
         F: std::str::FromStr<Err = String>
 {
-    fn read_table(mut self, mut table: toml::Table, context: &C) 
-        -> Result<Self, String> 
+    fn from_table(mut table: toml::Table, context: &C) 
+        -> (Self, Result<(), String>) 
     {
-        self.load_context(&mut table);
+        let mut user_table = Self::default();
+        user_table.load_context(&mut table);
+        let mut errors = String::new();
         for (key, value) in table.into_iter() {
-            let field = F::from_str(&key)?;
-            self.assign(field, value, context)?;
+            if let Ok(field) = F::from_str(&key)
+                .inspect_err(|e| errors.push_str(&e)) 
+            && let _ = user_table.assign(field, value, context)
+                .inspect_err(|e| errors.push_str(&e)) {}
         }
-        Ok(self)
+        if errors.len() > 0 {
+            (user_table, Err(errors))
+        } else {
+            (user_table, Ok(()))
+        }
     }
 
-
-    fn update_from_table(&mut self, mut table: toml::Table, context: &C) 
-        -> Result<(), String> 
-    {
-        self.load_context(&mut table);
-        for (key, value) in table.into_iter() {
-            let field = F::from_str(&key)?;
-            self.assign(field, value, context)?;
+    fn from_str(s: &str, ctx: &C) -> (Self, Result<(), String>) {  
+        let mut user_table = Self::default();
+        let mut errors = String::new();
+        if let Ok(mut table) = s.parse::<toml::Table>()
+            .inspect_err(|e| errors.push_str(&e.to_string()))
+        {
+            user_table.load_context(&mut table);
+            user_table.update_from_table(table, ctx);
         }
-        Ok(())
+        if errors.len() > 0 {
+            (user_table, Err(errors))
+        } else {
+            (user_table, Ok(()))
+        }
     }
 
+    fn update_from_table(
+        &mut self, mut table: toml::Table, context: &C
+    ) -> Result<(), String> {
+        self.load_context(&mut table);
+        let mut errors = "".to_string();
+        for (key, value) in table.into_iter() {
+            if let Ok(field) = F::from_str(&key)
+                .inspect_err(|e| errors.push_str(&e)) 
+            && let _ = self.assign(field, value, context)
+                .inspect_err(|e| errors.push_str(&e)) {}
+        }
+        if errors.len() > 0 {
+            Err(errors)
+        } else {
+            Ok(())
+        }
+    }
 
-    fn update_from_str(&mut self, s: &str, ctx: &C) 
-        -> Result<(), String> 
-    {  
+    fn update_from_str(&mut self, s: &str, ctx: &C) -> Result<(), String> {  
         let mut table = s.parse::<toml::Table>().map_err(|e| e.to_string())?;
         self.load_context(&mut table);
-        self.update_from_table(table, ctx)?;
+        self.update_from_table(table, ctx);
         Ok(())
     }
-}
-
-
-pub fn user_from_str<T, C>(s: &str, ctx: &C) 
-    -> Result<T, String> 
-where T: UserTable<C> + Default
-{
-    let table = s.parse::<toml::Table>().map_err(|e| e.to_string())?;
-    T::default().read_table(table, ctx)
 }
 
 
