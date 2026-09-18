@@ -152,7 +152,11 @@ impl App {
     fn join_gemdoc(&mut self, url: url::Url, response: String, content: String) {
         let Ok(StatusText {tag, text}) = StatusText::try_from(response.as_str()) 
         else {
-            self.ack_dlg(&format!("Invalid Gemini response: {response}."));
+            self.edit_dlg(
+                Task::Init(self.config.init_url.clone()), 
+                &format!("Invalid Gemini response: {response}."),
+                &self.config.init_url.clone(),
+            );
             return
         };
         use gemini::Status;
@@ -409,7 +413,7 @@ impl App {
                         util::VIEW_SETTINGS => {
                             let text = format!("{:#?}", self.config)
                                 .lines()
-                                .map(|l| l.into())
+                                .map(|str| str.into())
                                 .collect();
                             self.select_dlg(
                                 Task::Default, "Current Settings", text

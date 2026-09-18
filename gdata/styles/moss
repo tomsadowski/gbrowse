@@ -4,12 +4,12 @@ palette = {
   black    = "#202225",
   dgrey    = "#707880",
   grey     = "#b8b9c0",
-  white    = "#c4a79f",
+  white    = "#b8a098",
 
-  green    = "#bca67e",
+  green    = "#bca47c",
   cyan     = "#78a090",
-  magenta  = "#ca9ab0",
-  red      = "#e08f7c",
+  magenta  = "#c698ac",
+  red      = "#e08c78",
 
   dmagenta = "#402c40",
   dyellow  = "#4c4844",

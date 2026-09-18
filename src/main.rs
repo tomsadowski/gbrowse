@@ -10,7 +10,6 @@ mod user;
 mod userkeys;
 mod userstyle;
 mod cursor;
-mod tab;
 mod view;
 mod dlg;
 mod color;
@@ -43,6 +42,8 @@ pub use crate::action::{
 };
 pub use crate::view::{
     AppView,
+    Tab, 
+    TabText,
 };
 pub use crate::color::{
     Style, 
@@ -82,10 +83,6 @@ pub use crate::layout::{
     resize_views,
     fill,
     build_opt_views,
-};
-pub use crate::tab::{
-    Tab, 
-    TabText,
 };
 pub use crate::rect::{
     Pos, 
