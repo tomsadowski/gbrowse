@@ -3,7 +3,7 @@
 use crate::{
     Rect, 
     Style,
-    constants::*,
+    util,
 };
 
 
@@ -64,12 +64,12 @@ impl Default for BorderParams {
     fn default() -> Self {
         Self {
             style: Style::default(),
-            x: X_LINE,
-            y: Y_LINE,
-            northwest: NW_SQR,
-            northeast: NE_SQR,
-            southwest: SW_SQR,
-            southeast: SE_SQR,
+            x: util::X_LINE,
+            y: util::Y_LINE,
+            northwest: util::NW_SQR,
+            northeast: util::NE_SQR,
+            southwest: util::SW_SQR,
+            southeast: util::SE_SQR,
             open: ' ',
             close: ' ',
         }

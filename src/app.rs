@@ -6,7 +6,6 @@ use crate::{
     util,
     TabText,
     Dim,
-    user,
     SystemParams, 
     Draw,
     AppView,
@@ -20,7 +19,6 @@ use crate::{
     GemTag, 
     StatusText,
     Resize,
-    constants::*,
 };
 
 
@@ -322,7 +320,7 @@ impl App {
                 Action::Menu => self.select_dlg(
                     Task::Menu, 
                     "Choose: ",
-                    MENU.iter().map(|s| s.to_string()).collect(),
+                    util::MENU.iter().map(|s| s.to_string()).collect(),
                 ),
 
                 Action::NewTab => self.edit_dlg(
@@ -359,7 +357,7 @@ impl App {
 
                 (Task::ChangeKeys, Action::Select, DlgType::Select) => {
                     match std::fs::read_to_string(
-                        user::get_keys_file(&body.get_param_string())
+                        util::get_keys_file(&body.get_param_string())
                     ) {
                         Err(e) => {
                             self.ack_dlg(&format!("Problem: {e}"))
@@ -377,7 +375,7 @@ impl App {
 
                 (Task::ChangeStyle, Action::Select, DlgType::Select) => {
                     match std::fs::read_to_string(
-                        user::get_styles_file(&body.get_param_string())
+                        util::get_styles_file(&body.get_param_string())
                     ) {
                         Err(e) => {
                             self.ack_dlg(&e.to_string());
@@ -396,24 +394,28 @@ impl App {
                 }
 
                 (Task::Menu, Action::Select, DlgType::Select) => {
-                    match MENU[body.get_index()] {
-                        MANUAL => {
+                    match util::MENU[body.get_index()] {
+                        util::MANUAL => {
                             self.ack_dlg("View manual".into());
                             // write the bloody manual!
                         }
-                        CHANGE_KEYS => match util::get_entries(KEYS_PATH) {
+                        util::CHANGE_KEYS => 
+                            match util::get_entries(util::KEYS_PATH) 
+                        {
                             Err(e) => self.ack_dlg(&e),
                             Ok(entry) => self.select_dlg(
                                 Task::ChangeKeys, "Choose keys", entry
                             ),
                         }
-                        CHANGE_STYLE => match util::get_entries(STYLES_PATH) {
+                        util::CHANGE_STYLE => 
+                            match util::get_entries(util::STYLES_PATH) 
+                        {
                             Err(e) => self.ack_dlg(&e),
                             Ok(entry) => self.select_dlg(
                                 Task::ChangeStyle, "Choose Style", entry
                             ),
                         }
-                        VIEW_SETTINGS => {
+                        util::VIEW_SETTINGS => {
                             let text = format!("{:#?}", self.params)
                                 .lines()
                                 .map(|l| l.into())

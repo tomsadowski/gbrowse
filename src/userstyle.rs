@@ -13,7 +13,7 @@ use crate::{
     FrameParams,
     Style,
     color,
-    constants::*,
+    util,
 };
 use toml::{Value, map::Map};
 
@@ -390,16 +390,16 @@ impl Assign<Map<String, Value>> for BorderParams {
             (BorderParamsField::Corner, Value::String(value)) => {
                 match value.as_str() {
                     "square" => {
-                        self.northwest = NW_SQR;
-                        self.northeast = NE_SQR;
-                        self.southwest = SW_SQR;
-                        self.southeast = SE_SQR;
+                        self.northwest = util::NW_SQR;
+                        self.northeast = util::NE_SQR;
+                        self.southwest = util::SW_SQR;
+                        self.southeast = util::SE_SQR;
                     }
                     "round" => {
-                        self.northwest = NW_RND;
-                        self.northeast = NE_RND;
-                        self.southwest = SW_RND;
-                        self.southeast = SE_RND;
+                        self.northwest = util::NW_RND;
+                        self.northeast = util::NE_RND;
+                        self.southwest = util::SW_RND;
+                        self.southeast = util::SE_RND;
                     }
                     value => return Err(format!("
                         Corner field does not contain {value}
@@ -413,20 +413,20 @@ impl Assign<Map<String, Value>> for BorderParams {
                         self.close = ' ';
                     }
                     "tortoise" | "tort" | "t" => {
-                        self.open = OPEN_TORT;
-                        self.close = CLOSE_TORT;
+                        self.open = util::OPEN_TORT;
+                        self.close = util::CLOSE_TORT;
                     }
                     "integral" | "int"  | "i" | "j" | "J" => {
-                        self.open = OPEN_INT;
-                        self.close = CLOSE_INT;
+                        self.open = util::OPEN_INT;
+                        self.close = util::CLOSE_INT;
                     }
                     "square" | "sqr" => {
-                        self.open = OPEN_SQR;
-                        self.close = CLOSE_SQR;
+                        self.open = util::OPEN_SQR;
+                        self.close = util::CLOSE_SQR;
                     }
                     "E" | "e" => {
-                        self.open = OPEN_E;
-                        self.close = CLOSE_E;
+                        self.open = util::OPEN_E;
+                        self.close = util::CLOSE_E;
                     }
                     value => return Err(format!("
                         Bracket field does not contain {value}

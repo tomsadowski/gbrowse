@@ -4,28 +4,47 @@ use crate::{
     SystemControlParams,
     SystemStyleParams,
     DialogParams,
-    constants::*,
+    util,
 };
+
 
 
 pub trait Assign<C> {
     type Field;
 
+    // C is context provided by caller
+    //
     fn assign(&mut self, _: Self::Field, _: toml::Value, _: &C)
         -> Result<(), String>;
 
+
+    // default to empty implementation
+    //
     fn load_context(&mut self, _: &mut toml::Table) {}
 }
 
-
 pub trait UserTable<C>: Sized {
+
+    // always return an instance, collecting all errors encountered
+    // into one large error
+    //
     fn from_table(_: toml::Table, _: &C) -> (Self, Result<(), String>);
 
+
+    // same idea as `from_table`
+    //
     fn from_str(_: &str, _: &C) -> (Self, Result<(), String>);
 
+
+    // update all valid assignments, return an error if any assignment
+    // returned an error
+    //
     fn update_from_table(&mut self, _: toml::Table, _: &C) 
         -> Result<(), String>;
 
+
+    // same idea as `update_from_table`
+    //
     fn update_from_str(&mut self, _: &str, _: &C) -> Result<(), String>;
 }
 
@@ -34,14 +53,13 @@ impl<T, F, C> UserTable<C> for T
 where   T: Assign<C, Field = F> + Default,
         F: std::str::FromStr<Err = String>
 {
-    // always return an instance, collecting all errors encountered
-    // into one large error
     fn from_table(mut table: toml::Table, context: &C) 
         -> (Self, Result<(), String>) 
     {
         let mut user_table = Self::default();
         user_table.load_context(&mut table);
         let mut errors = String::new();
+
         for (key, value) in table.into_iter() {
             if let Ok(field) = F::from_str(&key)
                 .inspect_err(|e| errors.push_str(&e)) 
@@ -58,6 +76,7 @@ where   T: Assign<C, Field = F> + Default,
     fn from_str(s: &str, ctx: &C) -> (Self, Result<(), String>) {  
         let mut user_table = Self::default();
         let mut errors = String::new();
+
         if let Ok(mut table) = s.parse::<toml::Table>()
             .inspect_err(|e| errors.push_str(&e.to_string()))
         {
@@ -72,11 +91,12 @@ where   T: Assign<C, Field = F> + Default,
         }
     }
 
-    fn update_from_table(
-        &mut self, mut table: toml::Table, context: &C
-    ) -> Result<(), String> {
+    fn update_from_table(&mut self, mut table: toml::Table, context: &C) 
+        -> Result<(), String> 
+    {
         self.load_context(&mut table);
         let mut errors = "".to_string();
+
         for (key, value) in table.into_iter() {
             if let Ok(field) = F::from_str(&key)
                 .inspect_err(|e| errors.push_str(&e)) 
@@ -91,23 +111,11 @@ where   T: Assign<C, Field = F> + Default,
     }
 
     fn update_from_str(&mut self, s: &str, ctx: &C) -> Result<(), String> {  
-        let mut table = s.parse::<toml::Table>().map_err(|e| e.to_string())?;
+        let mut table = s.parse::<toml::Table>()
+            .map_err(|e| e.to_string())?;
         self.load_context(&mut table);
         self.update_from_table(table, ctx)
     }
-}
-
-
-pub fn get_init_file(f: &str) -> String {
-    format!("{DATA_PATH}/{f}")
-}
-
-pub fn get_keys_file(f: &str) -> String {
-    format!("{KEYS_PATH}/{f}")
-}
-
-pub fn get_styles_file(f: &str) -> String {
-    format!("{STYLES_PATH}/{f}")
 }
 
 
@@ -125,14 +133,16 @@ pub struct SystemParams {
 impl Default for SystemParams {
     // todo: return Self and errors encountered during creation
     fn default() -> Self {
-        let urls: Vec<String> = match std::fs::read_to_string(&SAVE_FILE) {
+        let urls: Vec<String> = 
+            match std::fs::read_to_string(&util::SAVE_FILE) 
+        {
             Ok(s)  => s.lines().map(|s| String::from(s)).collect(),
             Err(_) => vec![],
         };
         Self {
             timeout:        10,
             init_url:       "gemini://geminiprotocol.net/".into(),
-            save_file:      SAVE_FILE.into(),
+            save_file:      util::SAVE_FILE.into(),
             style:          SystemStyleParams::default(),
             keys:           SystemControlParams::default(),
             urls,
@@ -153,7 +163,7 @@ impl Assign<()> for SystemParams {
                 self.init_url = v.into();
             }
             (UserField::SaveFile, Value::String(v)) => {
-                self.save_file = format!("{DATA_PATH}/{v}");
+                self.save_file = format!("{}/{v}", util::DATA_PATH);
             }
             (UserField::Timeout, Value::Integer(v)) => {
                 self.timeout = u64::try_from(v).map_err(|e| e.to_string())?;
@@ -162,7 +172,7 @@ impl Assign<()> for SystemParams {
             (UserField::Style, Value::String(v)) => {
                 self.style.update_from_str(&std::fs::
                     read_to_string(
-                        get_styles_file(&v)).map_err(|e| e.to_string()
+                        util::get_styles_file(&v)).map_err(|e| e.to_string()
                     )?,
                     ctx
                 )?;
@@ -175,7 +185,7 @@ impl Assign<()> for SystemParams {
             (UserField::Keys, Value::String(v)) => {
                 self.keys.update_from_str(&std::fs::
                     read_to_string(
-                        get_keys_file(&v)).map_err(|e| e.to_string()
+                        util::get_keys_file(&v)).map_err(|e| e.to_string()
                     )?,
                     ctx
                 )?;

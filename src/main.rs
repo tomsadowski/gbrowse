@@ -23,7 +23,6 @@ mod app;
 mod action;
 mod layout;
 mod util;
-mod constants;
 
 pub use crate::dlg::{
     DialogParams,
@@ -109,8 +108,8 @@ fn main() -> std::io::Result<()> {
     let mut app = {
         let args = std::env::args().collect::<Vec<String>>();
         let init = match args.get(1) {
-            None => constants::INIT_FILE.into(),
-            Some(init) => user::get_init_file(init),
+            None => util::INIT_FILE.into(),
+            Some(init) => util::get_init_file(init),
         };
         let (w, h) = terminal::size()?;
         app::App::init(&init, w, h)

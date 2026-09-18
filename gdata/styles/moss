@@ -41,7 +41,8 @@ h2             = {fg = "_red", underline = true}
 h3             = {fg = "_red"}
 text           = {wrap = true}
 
-screen_margin = {n = 2, s = 2, e = 16, w = 16}
-text_margin   = {n = 1, s = 1, e = 4, w = 4}
-dialog_screen_margin = {n = 2, s = 2, e = 16, w = 16}
+screen_margin        = {n = 2, s = 2, e = 16, w = 16}
+text_margin          = {n = 1, s = 1, e = 4, w = 4}
+
+dialog_screen_margin = {n = 2, s = 2, e = 4, w = 4}
 dialog_text_margin   = {n = 1, s = 1, e = 4, w = 4}
