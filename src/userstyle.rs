@@ -2,10 +2,8 @@
 // src/userstyle.rs
 
 use crate::{
-    Assign, 
-    ContextAssign,
+    ContextAssign, 
     ContextUserTable,
-    UserTable,
     MarginParams,
     BorderParams,
     TextParams,
@@ -19,8 +17,11 @@ use crate::{
 };
 use toml::{Value, map::Map};
 
-impl UserTable for SystemStyleParams {
-    fn read_table(mut self, mut table: toml::Table) -> Result<Self, String> {
+
+impl ContextUserTable<()> for SystemStyleParams {
+    fn read_table(mut self, mut table: toml::Table, _: &()) 
+        -> Result<Self, String> 
+    {
         use std::str::FromStr;
         if let Some(Value::Table(p)) = table.remove("palette") {
             self.palette = p;
@@ -33,7 +34,7 @@ impl UserTable for SystemStyleParams {
     }
 
 
-    fn update_from_table(&mut self, mut table: toml::Table) 
+    fn update_from_table(&mut self, mut table: toml::Table, _: &()) 
         -> Result<(), String> 
     {
         use std::str::FromStr;
@@ -48,9 +49,9 @@ impl UserTable for SystemStyleParams {
     }
 
 
-    fn update_from_str(&mut self, s: &str) -> Result<(), String> {  
+    fn update_from_str(&mut self, s: &str, ctx: &()) -> Result<(), String> {  
         let table = s.parse::<toml::Table>().map_err(|e| e.to_string())?;
-        self.update_from_table(table)?;
+        self.update_from_table(table, ctx)?;
         Ok(())
     }
 }
@@ -153,7 +154,7 @@ impl SystemStyleParams {
                 }
             }
             (SystemStyleField::Margin(f), Value::Table(v)) => {
-                let v = MarginParams::default().read_table(v)?;
+                let v = MarginParams::default().read_table(v, &())?;
                 match f {
                     StyleMarginField::Text => self.text_margin = v,
                     StyleMarginField::Screen => self.screen_margin = v,
@@ -205,10 +206,12 @@ impl ContextAssign<Map<String, Value>> for Style {
 }
 
 
-impl Assign for MarginParams {
+impl ContextAssign<()> for MarginParams {
     type Field = MarginParamsField;
 
-    fn assign(&mut self, f: Self::Field, v: Value) -> Result<(), String> {
+    fn assign(&mut self, f: Self::Field, v: Value, _: &()) 
+        -> Result<(), String> 
+    {
         match (f, v) {
             (f, Value::Integer(v)) => {
                 let v = u16::try_from(v).map_err(|e| format!("{v:?} : {e}"))?;

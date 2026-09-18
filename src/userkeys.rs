@@ -1,7 +1,7 @@
 // src/userkeys.rs
 
 use crate::{
-    Assign,
+    ContextAssign,
     Action,
     DlgType,
 };
@@ -59,10 +59,12 @@ impl Default for SystemControlParams {
 }
 
 
-impl Assign for SystemControlParams {
+impl ContextAssign<()> for SystemControlParams {
     type Field = Action;
 
-    fn assign(&mut self, f: Self::Field, v: toml::Value) -> Result<(), String> {
+    fn assign(&mut self, f: Self::Field, v: toml::Value, _: &()) 
+        -> Result<(), String> 
+    {
         let get_keycode = || -> Result<KeyCode, String> {
             if let toml::Value::String(s) = v {
                 match s.as_str() {

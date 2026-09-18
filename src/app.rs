@@ -12,7 +12,7 @@ use crate::{
     AppView,
     GemText,
     DlgType,
-    UserTable,
+    ContextUserTable,
     user_from_str,
     Request,
     Action,
@@ -66,7 +66,7 @@ impl App {
         let params = std::fs::read_to_string(path).unwrap_or_default();
 
         let (params, params_result) = 
-            match user_from_str::<SystemParams>(&params) {
+            match user_from_str::<SystemParams, ()>(&params, &()) {
                 Ok(u)  => (u, Ok(())),
                 Err(e) => (SystemParams::default(), Err(format!("{e}"))),
             };
@@ -369,8 +369,8 @@ impl App {
                         Err(e) => {
                             self.ack_dlg(&format!("Problem: {e}"))
                         }
-                        Ok(s) 
-                        if let Err(e) = self.params.keys.update_from_str(&s)
+                        Ok(s) if let Err(e) = 
+                            self.params.keys.update_from_str(&s, &())
                         => {
                             self.ack_dlg(&format!("Problem: {e}"));
                         }
@@ -388,7 +388,7 @@ impl App {
                             self.ack_dlg(&e.to_string());
                         }
                         Ok(s) if let Err(e) = self.params.style
-                            .update_from_str(&s) => 
+                            .update_from_str(&s, &()) => 
                         {
                             self.ack_dlg(&e.to_string());
                             self.push_style();

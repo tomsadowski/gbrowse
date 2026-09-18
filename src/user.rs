@@ -8,11 +8,6 @@ use crate::{
 };
 
 
-pub trait Assign {
-    type Field;
-    fn assign(&mut self, _: Self::Field, _: toml::Value) -> Result<(), String>;
-}
-
 pub trait ContextAssign<C> {
     type Field;
     fn assign(
@@ -21,18 +16,6 @@ pub trait ContextAssign<C> {
         _: toml::Value,
         _: &C
         ) -> Result<(), String>;
-}
-
-
-pub trait UserTable: Sized {
-    fn read_table(self, _: toml::Table) 
-        -> Result<Self, String>;
-
-    fn update_from_table(&mut self, _: toml::Table) 
-        -> Result<(), String>;
-
-    fn update_from_str(&mut self, _: &str) 
-        -> Result<(), String>;
 }
 
 
@@ -47,35 +30,6 @@ pub trait ContextUserTable<C>: Sized {
         -> Result<(), String>;
 }
 
-
-impl<T, F> UserTable for T
-where   T: Assign<Field = F>,
-        F: std::str::FromStr<Err = String>
-{
-    fn read_table(mut self, table: toml::Table) -> Result<Self, String> {
-        for (key, value) in table.into_iter() {
-            let field = F::from_str(&key)?;
-            self.assign(field, value)?;
-        }
-        Ok(self)
-    }
-
-
-    fn update_from_table(&mut self, table: toml::Table) -> Result<(), String> {
-        for (key, value) in table.into_iter() {
-            let field = F::from_str(&key)?;
-            self.assign(field, value)?;
-        }
-        Ok(())
-    }
-
-
-    fn update_from_str(&mut self, s: &str) -> Result<(), String> {  
-        let table = s.parse::<toml::Table>().map_err(|e| e.to_string())?;
-        self.update_from_table(table)?;
-        Ok(())
-    }
-}
 
 impl<T, F, C> ContextUserTable<C> for T
 where   T: ContextAssign<C, Field = F>,
@@ -113,15 +67,26 @@ where   T: ContextAssign<C, Field = F>,
 }
 
 
-pub fn user_from_str<T: UserTable + Default>(s: &str) -> Result<T, String> {
+pub fn user_from_str<T, C>(s: &str, ctx: &C) 
+    -> Result<T, String> 
+where T: ContextUserTable<C> + Default
+{
     let table = s.parse::<toml::Table>().map_err(|e| e.to_string())?;
-    T::default().read_table(table)
+    T::default().read_table(table, ctx)
 }
 
 
-pub fn get_init_file(f: &str) -> String { format!("{DATA_PATH}/{f}") }
-pub fn get_keys_file(f: &str) -> String { format!("{KEYS_PATH}/{f}") }
-pub fn get_styles_file(f: &str) -> String { format!("{STYLES_PATH}/{f}") }
+pub fn get_init_file(f: &str) -> String {
+    format!("{DATA_PATH}/{f}")
+}
+
+pub fn get_keys_file(f: &str) -> String {
+    format!("{KEYS_PATH}/{f}")
+}
+
+pub fn get_styles_file(f: &str) -> String {
+    format!("{STYLES_PATH}/{f}")
+}
 
 
 #[derive(Debug)]
@@ -153,10 +118,12 @@ impl Default for SystemParams {
 }
 
 
-impl Assign for SystemParams {
+impl ContextAssign<()> for SystemParams {
     type Field = UserField;
 
-    fn assign(&mut self, f: Self::Field, v: toml::Value) -> Result<(), String> {
+    fn assign(&mut self, f: Self::Field, v: toml::Value, ctx: &()) 
+        -> Result<(), String> 
+    {
         use toml::Value;
         match (f, v) {
             (UserField::InitUrl, Value::String(v)) => {
@@ -173,24 +140,26 @@ impl Assign for SystemParams {
                 self.style.update_from_str(&std::fs::
                     read_to_string(
                         get_styles_file(&v)).map_err(|e| e.to_string()
-                    )?
+                    )?,
+                    ctx
                 )?;
             }
             // read style from this file
             (UserField::Style, Value::Table(v)) => {
-                self.style.update_from_table(v)?;
+                self.style.update_from_table(v, ctx)?;
             }
             // read keys from another file
             (UserField::Keys, Value::String(v)) => {
                 self.keys.update_from_str(&std::fs::
                     read_to_string(
                         get_keys_file(&v)).map_err(|e| e.to_string()
-                    )?
+                    )?,
+                    ctx
                 )?;
             }
             // read keys from this file
             (UserField::Keys, Value::Table(v)) => {
-                self.keys.update_from_table(v)?;
+                self.keys.update_from_table(v, ctx)?;
             }
             (f, v) => return Err(
                 format!("field {f:?} value {v:?} not valid here")

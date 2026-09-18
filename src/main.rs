@@ -61,10 +61,8 @@ pub use crate::frame::{
 };
 pub use crate::user::{
     SystemParams,
-    Assign,
     ContextAssign,
     ContextUserTable,
-    UserTable,
     user_from_str,
 };
 pub use crate::cursor::{
