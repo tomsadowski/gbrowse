@@ -55,9 +55,11 @@ pub fn get_data(url: &url::Url, timeout: u64)
         .ok_or(format!("socket address not found for {}", urlf))?;
 
     // get tcp stream from socket address
-    let tcpstream = 
-        TcpStream::connect_timeout(&socket_addr, Duration::new(timeout, 0))
-            .map_err(|e| e.to_string())?;
+    let tcpstream = TcpStream::connect_timeout(
+        &socket_addr, 
+        Duration::new(timeout, 0)
+    )
+        .map_err(|e| e.to_string())?;
 
     // get stream from tcp stream
     let mut stream = connector

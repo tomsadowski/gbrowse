@@ -111,13 +111,6 @@ impl std::fmt::Display for GemText {
 }
 
 
-impl From<(GemTag, String)> for GemText {
-    fn from(item: (GemTag, String)) -> Self {
-        Self {tag: item.0, string: item.1}
-    }
-}
-
-
 impl GemText {
     pub fn preformat(string: String) -> Self {
         Self {tag: GemTag::PreFormat, string}
@@ -162,10 +155,10 @@ pub fn parse_doc(text_str: &str) -> Vec<GemText> {
         match (&mut preformat, GemText::parse_line(line)) {
             (_, (GemTag::PreFormat, _)) => 
                 preformat = !preformat,
-            (true, (_, s)) => 
-                vec.push(GemText::preformat(s)),
-            (false, tuple) => 
-                vec.push(tuple.into()),
+            (true, (_, string)) => 
+                vec.push(GemText::preformat(string)),
+            (false, (tag, string)) => 
+                vec.push(GemText {tag, string}),
         }
     }
     vec

@@ -1,23 +1,22 @@
 # moss
 
 palette = {
-  black     = "#202225",
-  dgrey     = "#707880",
-  grey      = "#b8b9c0",
-  white     = "#b6a6a2",
+  black    = "#202225",
+  dgrey    = "#707880",
+  grey     = "#b8b9c0",
+  white    = "#c8aba3",
 
-  red       = "#d28470",
-  green     = "#a0a870",
-  cyan      = "#608880",
-  magenta   = "#c391a4",
+  green    = "#bca67e",
+  cyan     = "#78a090",
+  magenta  = "#ca9ab0",
+  red      = "#e08f7c",
 
-  dmagenta  = "#402c40",
-  dyellow   = "#4c4844",
-  dblue     = "#30343a",
+  dmagenta = "#402c40",
+  dyellow  = "#4c4844",
+  dblue    = "#30343a",
 }
-
 border = {
-  fg      = "_dgrey", 
+  fg      = "_grey", 
   bg      = "_black", 
   corner  = "round", 
   bracket = "space"
@@ -30,16 +29,19 @@ dialog_border = {
 }
 dialog_heading = {fg = "_grey",   bg = "_black", bold = true}
 dialog_body    = {fg = "_white",  bg = "_black"}
-banner         = {fg = "_dgrey"}
+banner         = {fg = "_grey"}
+footer         = {fg = "_grey"}
 general        = {fg = "_white",  bg = "_black"}
 list           = {fg = "_grey"}
 preformat      = {fg = "_magenta", wrap = false}
 quote          = {fg = "_grey"}
-link           = {fg = "_cyan", underline = true}
-h1             = {fg = "_red", bold = true, underline = true}
-h2             = {fg = "_red", bold = true}
+link           = {fg = "_cyan"}
+h1             = {fg = "_green", underline = true}
+h2             = {fg = "_red", underline = true}
 h3             = {fg = "_red"}
 text           = {wrap = true}
 
-screen_margin = {n = 1, s = 1, e = 8, w = 8}
+screen_margin = {n = 2, s = 2, e = 16, w = 16}
 text_margin   = {n = 1, s = 1, e = 4, w = 4}
+dialog_screen_margin = {n = 2, s = 2, e = 16, w = 16}
+dialog_text_margin   = {n = 1, s = 1, e = 4, w = 4}

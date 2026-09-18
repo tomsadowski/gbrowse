@@ -34,6 +34,8 @@ impl<T, F, C> UserTable<C> for T
 where   T: Assign<C, Field = F> + Default,
         F: std::str::FromStr<Err = String>
 {
+    // always return an instance, collecting all errors encountered
+    // into one large error
     fn from_table(mut table: toml::Table, context: &C) 
         -> (Self, Result<(), String>) 
     {
@@ -121,6 +123,7 @@ pub struct SystemParams {
 
 
 impl Default for SystemParams {
+    // todo: return Self and errors encountered during creation
     fn default() -> Self {
         let urls: Vec<String> = match std::fs::read_to_string(&SAVE_FILE) {
             Ok(s)  => s.lines().map(|s| String::from(s)).collect(),
