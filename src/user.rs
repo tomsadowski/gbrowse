@@ -1,24 +1,21 @@
 // src/user.rs
 
 use crate::{
-    SystemControlParams,
-    SystemStyleParams,
+    KeyConfig,
+    StyleConfig,
     util,
 };
 
 
 
-pub trait Assign<C> {
+pub trait UserAssign<C> {
     type Field;
 
     // C is context provided by caller
-    //
     fn assign(&mut self, _: Self::Field, _: toml::Value, _: &C)
         -> Result<(), String>;
 
-
     // default to empty implementation
-    //
     fn load_context(&mut self, _: &mut toml::Table) {}
 }
 
@@ -26,30 +23,23 @@ pub trait UserTable<C>: Sized {
 
     // always return an instance, collecting all errors encountered
     // into one large error
-    //
     fn from_table(_: toml::Table, _: &C) -> (Self, Result<(), String>);
 
-
     // same idea as `from_table`
-    //
     fn from_str(_: &str, _: &C) -> (Self, Result<(), String>);
-
 
     // update all valid assignments, return an error if any assignment
     // returned an error
-    //
     fn update_from_table(&mut self, _: toml::Table, _: &C) 
         -> Result<(), String>;
 
-
     // same idea as `update_from_table`
-    //
     fn update_from_str(&mut self, _: &str, _: &C) -> Result<(), String>;
 }
 
 
 impl<T, F, C> UserTable<C> for T
-where   T: Assign<C, Field = F> + Default,
+where   T: UserAssign<C, Field = F> + Default,
         F: std::str::FromStr<Err = String>
 {
     fn from_table(mut table: toml::Table, context: &C) 
@@ -119,15 +109,51 @@ where   T: Assign<C, Field = F> + Default,
 
 
 #[derive(Debug)]
+pub enum UserConfigField {
+    InitUrl, 
+    SaveFile,
+    Timeout, 
+    Style, 
+    Keys,
+}
+
+impl std::str::FromStr for UserConfigField {
+    type Err = String;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "init_url"  => Ok(Self::InitUrl),
+            "timeout"   => Ok(Self::Timeout),
+            "style"     => Ok(Self::Style),
+            "keys"      => Ok(Self::Keys),
+            "gsave" | 
+            "save_file" => Ok(Self::SaveFile),
+            s => Err(format!("No field {s} in User table")),
+        }
+    }
+}
+
+impl ToString for UserConfigField {
+    fn to_string(&self) -> String {
+        match self {
+          Self::InitUrl  => "init_url".into(),
+          Self::Timeout  => "timeout".into(),
+          Self::Style    => "style".into(),
+          Self::Keys     => "keys".into(),
+          Self::SaveFile => "save_file".into(),
+        }
+    }
+}
+
+
+#[derive(Debug)]
 pub struct UserConfig {
     pub timeout: u64,
     pub save_file: String,
     pub init_url: String,
-    pub style: SystemStyleParams,
-    pub keys: SystemControlParams,
+    pub style: StyleConfig,
+    pub keys: KeyConfig,
     pub urls: Vec<String>,
 } 
-
 
 impl Default for UserConfig {
     // todo: return Self and errors encountered during creation
@@ -142,33 +168,32 @@ impl Default for UserConfig {
             timeout:        10,
             init_url:       "gemini://geminiprotocol.net/".into(),
             save_file:      util::SAVE_FILE.into(),
-            style:          SystemStyleParams::default(),
-            keys:           SystemControlParams::default(),
+            style:          StyleConfig::default(),
+            keys:           KeyConfig::default(),
             urls,
         }
     }
 }
 
-
-impl Assign<()> for UserConfig {
-    type Field = UserField;
+impl UserAssign<()> for UserConfig {
+    type Field = UserConfigField;
 
     fn assign(&mut self, f: Self::Field, v: toml::Value, ctx: &()) 
         -> Result<(), String> 
     {
         use toml::Value;
         match (f, v) {
-            (UserField::InitUrl, Value::String(v)) => {
+            (UserConfigField::InitUrl, Value::String(v)) => {
                 self.init_url = v.into();
             }
-            (UserField::SaveFile, Value::String(v)) => {
+            (UserConfigField::SaveFile, Value::String(v)) => {
                 self.save_file = format!("{}/{v}", util::DATA_PATH);
             }
-            (UserField::Timeout, Value::Integer(v)) => {
+            (UserConfigField::Timeout, Value::Integer(v)) => {
                 self.timeout = u64::try_from(v).map_err(|e| e.to_string())?;
             }
             // read style from another file
-            (UserField::Style, Value::String(v)) => {
+            (UserConfigField::Style, Value::String(v)) => {
                 self.style.update_from_str(&std::fs::
                     read_to_string(
                         util::get_styles_file(&v)).map_err(|e| e.to_string()
@@ -177,11 +202,11 @@ impl Assign<()> for UserConfig {
                 )?;
             }
             // read style from this file
-            (UserField::Style, Value::Table(v)) => {
+            (UserConfigField::Style, Value::Table(v)) => {
                 self.style.update_from_table(v, ctx)?;
             }
             // read keys from another file
-            (UserField::Keys, Value::String(v)) => {
+            (UserConfigField::Keys, Value::String(v)) => {
                 self.keys.update_from_str(&std::fs::
                     read_to_string(
                         util::get_keys_file(&v)).map_err(|e| e.to_string()
@@ -190,7 +215,7 @@ impl Assign<()> for UserConfig {
                 )?;
             }
             // read keys from this file
-            (UserField::Keys, Value::Table(v)) => {
+            (UserConfigField::Keys, Value::Table(v)) => {
                 self.keys.update_from_table(v, ctx)?;
             }
             (f, v) => return Err(
@@ -200,7 +225,6 @@ impl Assign<()> for UserConfig {
         Ok(())
     }
 }
-
 
 impl UserConfig {
     pub fn save_url(&mut self, url: &url::Url) -> Result<(), String> {
@@ -225,45 +249,6 @@ impl UserConfig {
                     Ok(())
                 }
             }
-        }
-    }
-}
-
-
-#[derive(Debug)]
-pub enum UserField {
-    InitUrl, 
-    SaveFile,
-    Timeout, 
-    Style, 
-    Keys,
-}
-
-
-impl std::str::FromStr for UserField {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "init_url"  => Ok(Self::InitUrl),
-            "timeout"   => Ok(Self::Timeout),
-            "style"     => Ok(Self::Style),
-            "keys"      => Ok(Self::Keys),
-            "gsave" | "save_file" => Ok(Self::SaveFile),
-            s => Err(format!("No field {s} in User table")),
-        }
-    }
-}
-
-
-impl ToString for UserField {
-    fn to_string(&self) -> String {
-        match self {
-          Self::InitUrl  => "init_url".into(),
-          Self::Timeout  => "timeout".into(),
-          Self::Style    => "style".into(),
-          Self::Keys     => "keys".into(),
-          Self::SaveFile => "save_file".into(),
         }
     }
 }

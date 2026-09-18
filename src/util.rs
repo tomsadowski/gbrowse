@@ -74,7 +74,6 @@ pub fn split_whitespace_once(line: &str) -> Option<(&str, &str)> {
         .map(|i| (line[..i].trim(), line[i..].trim()))
 }
 
-
 pub fn join_if_relative(base: &url::Url, url_str: &str) 
     -> Result<url::Url, url::ParseError> 
 {
@@ -84,7 +83,6 @@ pub fn join_if_relative(base: &url::Url, url_str: &str)
         } else {Err(e)}
     )
 }
-
 
 pub fn get_entries(path: &str) -> Result<Vec<String>, String> {
     let mut vec = vec![];
@@ -98,7 +96,6 @@ pub fn get_entries(path: &str) -> Result<Vec<String>, String> {
     }
     Ok(vec)
 }
-
 
 pub fn get_wrapped_text(input: &str, width: usize) -> Vec<Vec<char>> {
     use unicode_width::UnicodeWidthChar;

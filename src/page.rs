@@ -92,21 +92,17 @@ impl<T> Default for PageParams<T> {
 impl<T: std::fmt::Display> PageParams<T> {
     pub fn init() -> Self { Self::default() }
 
-
     pub fn edit(mut self, b: bool) -> Self {
         self.edit = b; self 
     }
-    
 
     pub fn max(mut self, m: Option<u16>) -> Self {
         self.max = m; self
     }
 
-
     pub fn style(mut self, style: impl Into<Style>) -> Self {
         self.style = style.into(); self
     }
-
 
     pub fn text(mut self, text: Vec<T>) -> Self {
         self.source = text;
@@ -114,7 +110,6 @@ impl<T: std::fmt::Display> PageParams<T> {
             .iter().map(|_| TextParams::default()).collect();
         self
     }
-
 
     pub fn text_styles(
         mut self, text: Vec<T>, get_style: impl Fn(&T) -> TextParams,
@@ -124,7 +119,6 @@ impl<T: std::fmt::Display> PageParams<T> {
         self
     }
 }
-
 
 impl<T: std::fmt::Display> BuildView<Page<T>> for PageParams<T> {
     fn build(self, rect: &Rect) -> Page<T> {
@@ -167,7 +161,6 @@ pub struct Page<T> {
     pub indexes: Vec<usize>,
 }
 
-
 impl<T> Page<T> {
     pub fn get_index(&self) -> usize {
         self.indexes.get(self.matrix.point.y.head)
@@ -175,59 +168,49 @@ impl<T> Page<T> {
             .unwrap_or(usize::MIN)
     }
 
-
     pub fn get_source(&self) -> Option<&T> {
         self.source.get(self.get_index())
     }
-
 
     pub fn get_string(&self) -> Option<String> {
         self.matrix.data.get(self.matrix.point.y.head)
             .map(|c| c.iter().collect())
     }
 
-
     pub fn delete(&mut self) {
         self.matrix.delete();
         self.point_view.update(&self.matrix);
     }
-
 
     pub fn backspace(&mut self) {
         self.matrix.backspace();
         self.point_view.update(&self.matrix);
     }
 
-
     pub fn insert(&mut self, ch: char) {
         self.matrix.insert(ch);
         self.point_view.update(&self.matrix);
     }
-
 
     pub fn move_left(&mut self, delta: usize) {
         self.matrix.move_left(delta);
         self.point_view.update(&self.matrix);
     }
 
-
     pub fn move_right(&mut self, delta: usize) {
         self.matrix.move_right(delta);
         self.point_view.update(&self.matrix);
     }
-
 
     pub fn move_down(&mut self, delta: usize) {
         self.matrix.move_down(delta);
         self.point_view.update(&self.matrix);
     }
 
-
     pub fn move_up(&mut self, delta: usize) {
         self.matrix.move_up(delta);
         self.point_view.update(&self.matrix);
     }
-
 
     pub fn get_view(&self, axis: CursorView) -> Vec<(&usize, &Vec<char>)> {
         self.indexes
@@ -239,7 +222,6 @@ impl<T> Page<T> {
     }
 }
 
-
 impl<T: std::fmt::Display> Page<T> {
     pub fn get_param_string(&self) -> String {
         self.source
@@ -248,7 +230,6 @@ impl<T: std::fmt::Display> Page<T> {
             .unwrap_or("".to_string())
     }
 
-
     pub fn rebuild(&mut self, rect: &Rect) {
         let linear_head = self.matrix.get_linear();
         let (indexes, matrix) = print(
@@ -256,26 +237,22 @@ impl<T: std::fmt::Display> Page<T> {
             &self.styles, 
             &self.source
         );
-
         let matrix = if self.edit {
             PointMatrix::from(matrix).editor()
         } else {
             PointMatrix::from(matrix)
         };
-
         self.indexes = indexes;
         self.matrix = matrix;
         self.matrix.set_linear(linear_head);
         self.point_view.resize(&self.matrix, &rect);
     }
 
-
     pub fn restyle(&mut self, get_style: impl Fn(&T) -> TextParams) {
         self.styles = self.source.iter().map(|s| get_style(s)).collect();
         self.rebuild(&Rect::from(&self.point_view));
     }
 }
-
 
 impl<T: std::fmt::Display> crate::Resize for Page<T> {
     fn resize(&mut self, rect: &Rect) {
@@ -287,14 +264,11 @@ impl<T: std::fmt::Display> crate::Resize for Page<T> {
     }
 }
 
-
 impl<T> crate::GetDisplayHeight for Page<T> {
     fn get_display_height(&self) -> u16 {
-        //let self.point_view.get_y_scroll();
         self.point_view.get_height()
     }
 }
-
 
 impl<T> crate::GetMaxHeight for Page<T> {
     fn get_max_height(&self) -> u16 {
@@ -304,13 +278,11 @@ impl<T> crate::GetMaxHeight for Page<T> {
     }
 }
 
-
 impl<T: std::fmt::Display> crate::Draw for Page<T> {
     fn draw(&self, w: &mut impl std::io::Write) -> std::io::Result<()> {
         use crossterm::{QueueableCommand, cursor, style};
 
         let (mut x, mut y) = self.point_view.pos().into();
-
         w
             .queue(cursor::MoveTo(x, y))?
             .queue(style::SetAttribute(style::Attribute::Reset))?

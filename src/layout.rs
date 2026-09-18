@@ -1,29 +1,28 @@
 // src/layout.rs
 
 use crate::{
-    Rect, Page, Dialog,
+    Rect, 
+    Page, 
+    Dialog,
 };
+
 
 
 pub trait BuildView<T> where T: Resize {
     fn build(self, _: &Rect) -> T;
 }
 
-
 pub trait GetMaxHeight {
     fn get_max_height(&self) -> u16;
 }
-
 
 pub trait GetDisplayHeight {
     fn get_display_height(&self) -> u16;
 }
 
-
 pub trait Draw {
     fn draw(&self, _: &mut impl std::io::Write) -> std::io::Result<()>;
 }
-
 
 pub trait Resize {
     fn resize(&mut self, _: &Rect);
@@ -35,7 +34,6 @@ pub enum ViewType<'a, T> {
     Page(&'a Page<T>),
 }
 
-
 impl<'a, T> GetMaxHeight for ViewType<'a, T> {
     fn get_max_height(&self) -> u16 {
         match self {
@@ -45,7 +43,6 @@ impl<'a, T> GetMaxHeight for ViewType<'a, T> {
     }
 }
 
-
 impl<'a, T> GetDisplayHeight for ViewType<'a, T> {
     fn get_display_height(&self) -> u16 {
         match self {
@@ -54,7 +51,6 @@ impl<'a, T> GetDisplayHeight for ViewType<'a, T> {
         }
     }
 }
-
 
 impl<'a, T: std::fmt::Display> Draw for ViewType<'a, T> {
     fn draw(&self, w: &mut impl std::io::Write) -> std::io::Result<()> {
@@ -66,12 +62,10 @@ impl<'a, T: std::fmt::Display> Draw for ViewType<'a, T> {
     }
 }
 
-
 pub enum ViewTypeMut<'a, T> {
     Dialog(&'a mut Dialog), 
     Page(&'a mut Page<T>),
 }
-
 
 impl<'a, T> GetDisplayHeight for ViewTypeMut<'a, T> {
     fn get_display_height(&self) -> u16 {
@@ -82,7 +76,6 @@ impl<'a, T> GetDisplayHeight for ViewTypeMut<'a, T> {
     }
 }
 
-
 impl<'a, T> GetMaxHeight for ViewTypeMut<'a, T> {
     fn get_max_height(&self) -> u16 {
         match self {
@@ -91,7 +84,6 @@ impl<'a, T> GetMaxHeight for ViewTypeMut<'a, T> {
         }
     }
 }
-
 
 impl<'a, T: std::fmt::Display> Draw for ViewTypeMut<'a, T> {
     fn draw(&self, w: &mut impl std::io::Write) -> std::io::Result<()> {
@@ -103,7 +95,6 @@ impl<'a, T: std::fmt::Display> Draw for ViewTypeMut<'a, T> {
     }
 }
 
-
 impl<'a, T: std::fmt::Display> Resize for ViewTypeMut<'a, T> {
     fn resize(&mut self, rect: &Rect) {
         match self {
@@ -113,7 +104,6 @@ impl<'a, T: std::fmt::Display> Resize for ViewTypeMut<'a, T> {
     }
 }
 
-
 impl<T: Draw> Draw for Option<T> {
     fn draw(&self, w: &mut impl std::io::Write) -> std::io::Result<()> {
         if let Some(t) = self { t.draw(w)? } 
@@ -121,13 +111,11 @@ impl<T: Draw> Draw for Option<T> {
     }
 }
 
-
 impl<T: GetMaxHeight> GetMaxHeight for Option<T> {
     fn get_max_height(&self) -> u16 {
         if let Some(t) = self { t.get_max_height() } else { 0 }
     }
 }
-
 
 impl<T: GetDisplayHeight> GetDisplayHeight for Option<T> {
     fn get_display_height(&self) -> u16 {
@@ -135,20 +123,17 @@ impl<T: GetDisplayHeight> GetDisplayHeight for Option<T> {
     }
 }
 
-
 impl<T: Resize> Resize for Option<T> {
     fn resize(&mut self, rect: &Rect) {
         if let Some(t) = self { t.resize(rect) }
     }
 }
 
-
 impl<T> GetMaxHeight for Vec<T> {
     fn get_max_height(&self) -> u16 {
         u16::try_from(self.len()).unwrap_or(u16::MAX)
     }
 }
-
 
 pub fn fill(
     rect: &Rect, view: &impl GetDisplayHeight, w: &mut impl std::io::Write,
@@ -163,7 +148,6 @@ pub fn fill(
         .draw(w)?;
     Ok(())
 }
-
 
 pub fn get_display_bounds(
     rect: &Rect, views: &Vec<&impl GetMaxHeight>
@@ -185,7 +169,6 @@ pub fn get_display_bounds(
         vec
 }
 
-
 pub fn resize_views<T: Resize + GetMaxHeight>(
     rect: &Rect, views: &mut Vec<&mut T>
 ) {
@@ -196,7 +179,6 @@ pub fn resize_views<T: Resize + GetMaxHeight>(
         view.resize(&bound);
     }
 }
-
 
 pub fn build_opt_views<T: Resize + GetDisplayHeight>(
     rect: &Rect, params: Vec<Option<impl BuildView<T>>>

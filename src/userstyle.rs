@@ -2,7 +2,7 @@
 // src/userstyle.rs
 
 use crate::{
-    Assign, 
+    UserAssign, 
     UserTable,
     MarginParams,
     BorderParams,
@@ -20,17 +20,19 @@ use toml::{Value, map::Map};
 
 
 #[derive(Debug)]
-pub enum SystemStyleField {
+pub enum StyleConfigField {
     Palette,
     Border(BorderField), 
     Margin(StyleMarginField), 
     Text(StyleTextField),
 }
+
 #[derive(Debug)]
 pub enum BorderField {
     App, 
     Dialog,
 }
+
 #[derive(Debug)]
 pub enum StyleMarginField {
     Text, 
@@ -38,6 +40,7 @@ pub enum StyleMarginField {
     DialogText,
     DialogScreen,
 }
+
 #[derive(Debug)]
 pub enum StyleTextField {
     General,
@@ -55,31 +58,32 @@ pub enum StyleTextField {
     Quote,
     List,
 }
-impl std::str::FromStr for SystemStyleField {
+
+impl std::str::FromStr for StyleConfigField {
     type Err = String;
     fn from_str(string: &str) -> Result<Self, Self::Err> {
         match string {
-            "palette" => Ok(Self::Palette),
-            "border" => Ok(Self::Border(BorderField::App)),
-            "dialog_border" => Ok(Self::Border(BorderField::Dialog)),
-            "text_margin" => Ok(Self::Margin(StyleMarginField::Text)),
-            "screen_margin" => Ok(Self::Margin(StyleMarginField::Screen)),
-            "dialog_text_margin" => Ok(Self::Margin(StyleMarginField::DialogText)),
-            "dialog_screen_margin" => Ok(Self::Margin(StyleMarginField::DialogScreen)),
-            "general" => Ok(Self::Text(StyleTextField::General)),
-            "banner" => Ok(Self::Text(StyleTextField::Banner)),
-            "footer" => Ok(Self::Text(StyleTextField::Footer)),
-            "dialog_body" => Ok(Self::Text(StyleTextField::DialogBody)),
-            "dialog_heading" => Ok(Self::Text(StyleTextField::DialogHeading)),
-            "text" => Ok(Self::Text(StyleTextField::Text)),
-            "heading3"| "h3" => Ok(Self::Text(StyleTextField::Heading3)),
-            "heading2" | "h2" => Ok(Self::Text(StyleTextField::Heading2)),
-            "heading1" | "h1" => Ok(Self::Text(StyleTextField::Heading1)),
-            "preformat" => Ok(Self::Text(StyleTextField::Preformat)),
-            "link" => Ok(Self::Text(StyleTextField::Link)),
-            "error" => Ok(Self::Text(StyleTextField::Error)),
-            "quote" => Ok(Self::Text(StyleTextField::Quote)),
-            "list" => Ok(Self::Text(StyleTextField::List)),
+            "palette"               => Ok(Self::Palette),
+            "border"                => Ok(Self::Border(BorderField::App)),
+            "dialog_border"         => Ok(Self::Border(BorderField::Dialog)),
+            "text_margin"           => Ok(Self::Margin(StyleMarginField::Text)),
+            "screen_margin"         => Ok(Self::Margin(StyleMarginField::Screen)),
+            "dialog_text_margin"    => Ok(Self::Margin(StyleMarginField::DialogText)),
+            "dialog_screen_margin"  => Ok(Self::Margin(StyleMarginField::DialogScreen)),
+            "general"               => Ok(Self::Text(StyleTextField::General)),
+            "banner"                => Ok(Self::Text(StyleTextField::Banner)),
+            "footer"                => Ok(Self::Text(StyleTextField::Footer)),
+            "dialog_body"           => Ok(Self::Text(StyleTextField::DialogBody)),
+            "dialog_heading"        => Ok(Self::Text(StyleTextField::DialogHeading)),
+            "text"                  => Ok(Self::Text(StyleTextField::Text)),
+            "heading3"| "h3"        => Ok(Self::Text(StyleTextField::Heading3)),
+            "heading2" | "h2"       => Ok(Self::Text(StyleTextField::Heading2)),
+            "heading1" | "h1"       => Ok(Self::Text(StyleTextField::Heading1)),
+            "preformat"             => Ok(Self::Text(StyleTextField::Preformat)),
+            "link"                  => Ok(Self::Text(StyleTextField::Link)),
+            "error"                 => Ok(Self::Text(StyleTextField::Error)),
+            "quote"                 => Ok(Self::Text(StyleTextField::Quote)),
+            "list"                  => Ok(Self::Text(StyleTextField::List)),
             string => Err(format!("
                 Style table does not contain field {string}
             ")),
@@ -94,14 +98,15 @@ pub enum MarginParamsField {
     East, 
     West
 }
+
 impl std::str::FromStr for MarginParamsField {
     type Err = String;
     fn from_str(string: &str) -> Result<Self, Self::Err> {
         match string {
-            "north" | "n" => Ok(Self::North),
-            "south" | "s" => Ok(Self::South),
-            "east" | "e" => Ok(Self::East),
-            "west" | "w" => Ok(Self::West),
+            "north" | "n"   => Ok(Self::North),
+            "south" | "s"   => Ok(Self::South),
+            "east" | "e"    => Ok(Self::East),
+            "west" | "w"    => Ok(Self::West),
             string => Err(format!("
                 Margin table does not contain field {string}
             ")),
@@ -109,12 +114,12 @@ impl std::str::FromStr for MarginParamsField {
     }
 }
 
-
 #[derive(Debug)]
 pub enum TextStyleParamsField {
     Wrap, 
     Style(StyleField)
 }
+
 impl std::str::FromStr for TextStyleParamsField {
     type Err = String;
     fn from_str(string: &str) -> Result<Self, Self::Err> {
@@ -125,47 +130,49 @@ impl std::str::FromStr for TextStyleParamsField {
     }
 }
 
-
 #[derive(Debug)]
 pub enum BorderParamsField {
     Style(StyleField), 
     Corner, 
     Bracket,
 }
+
 impl std::str::FromStr for BorderParamsField {
     type Err = String;
     fn from_str(string: &str) -> Result<Self, Self::Err> {
         match string {
-            "corner" => Ok(Self::Corner),
-            "bracket" => Ok(Self::Bracket),
+            "corner"    => Ok(Self::Corner),
+            "bracket"   => Ok(Self::Bracket),
             string => StyleField::from_str(string).map(|s| Self::Style(s))
         }
     }
 }
-
 
 #[derive(Debug)]
 pub enum StyleField {
     Color(ColorField), 
     Attribute(AttributeField)
 }
+
 #[derive(Debug)]
 pub enum ColorField {
     Fg, 
     Bg
 }
+
 #[derive(Debug)]
 pub enum AttributeField {
     Bold, 
     Underline
 }
+
 impl std::str::FromStr for StyleField {
     type Err = String;
     fn from_str(string: &str) -> Result<Self, Self::Err> {
         match string {
-            "fg" => Ok(Self::Color(ColorField::Fg)),
-            "bg" => Ok(Self::Color(ColorField::Bg)),
-            "bold" => Ok(Self::Attribute(AttributeField::Bold)),
+            "fg"        => Ok(Self::Color(ColorField::Fg)),
+            "bg"        => Ok(Self::Color(ColorField::Bg)),
+            "bold"      => Ok(Self::Attribute(AttributeField::Bold)),
             "underline" => Ok(Self::Attribute(AttributeField::Underline)),
             string => Err(format!("
                 Style table does not contain field {string}
@@ -176,7 +183,7 @@ impl std::str::FromStr for StyleField {
 
 
 #[derive(Clone, Default, Debug)]
-pub struct SystemStyleParams {
+pub struct StyleConfig {
     pub palette: Map<String, Value>,
     pub text_margin: MarginParams,
     pub screen_margin: MarginParams,
@@ -199,7 +206,8 @@ pub struct SystemStyleParams {
     pub quote: TextParams,
     pub list: TextParams,
 } 
-impl SystemStyleParams {
+
+impl StyleConfig {
     pub fn get_frame_params(&self) -> FrameParams {
         FrameParams::init()
             .screen_margin(self.screen_margin)
@@ -231,19 +239,20 @@ impl SystemStyleParams {
 
     pub fn get_gem_tag_params(&self, tag: &GemTag) -> TextParams {
         match tag {
-            GemTag::HeadingOne => self.heading1.into(),
-            GemTag::HeadingTwo => self.heading2.into(),
+            GemTag::HeadingOne   => self.heading1.into(),
+            GemTag::HeadingTwo   => self.heading2.into(),
             GemTag::HeadingThree => self.heading3.into(),
-            GemTag::Text => self.text.into(),
-            GemTag::PreFormat => self.preformat.into(),
-            GemTag::Link(_) => self.link.into(),
-            GemTag::ListItem => self.list.into(),
-            GemTag::Quote => self.quote.into(),
+            GemTag::Text         => self.text.into(),
+            GemTag::PreFormat    => self.preformat.into(),
+            GemTag::Link(_)      => self.link.into(),
+            GemTag::ListItem     => self.list.into(),
+            GemTag::Quote        => self.quote.into(),
         }
     }
 }
-impl Assign<()> for SystemStyleParams {
-    type Field = SystemStyleField;
+
+impl UserAssign<()> for StyleConfig {
+    type Field = StyleConfigField;
 
     fn load_context(&mut self, table: &mut toml::Table) {
         if let Some(Value::Table(palette)) = table.remove("palette") {
@@ -256,7 +265,7 @@ impl Assign<()> for SystemStyleParams {
     ) -> Result<(), String> {
 
         match (field, value) {
-            (SystemStyleField::Border(field), Value::Table(value)) => {
+            (StyleConfigField::Border(field), Value::Table(value)) => {
                 let (value, result) = BorderParams::from_table(
                     value, &self.palette
                 );
@@ -266,35 +275,35 @@ impl Assign<()> for SystemStyleParams {
                 }
                 result
             }
-            (SystemStyleField::Text(field), Value::Table(value)) => {
+            (StyleConfigField::Text(field), Value::Table(value)) => {
                 let (value, result) = TextParams::from_table(
                     value, &self.palette
                 );
                 match field {
-                    StyleTextField::General => self.general = value,
-                    StyleTextField::Banner => self.banner = value,
-                    StyleTextField::Footer => self.footer = value,
-                    StyleTextField::DialogBody => self.dialog_body = value,
+                    StyleTextField::General       => self.general = value,
+                    StyleTextField::Banner        => self.banner = value,
+                    StyleTextField::Footer        => self.footer = value,
+                    StyleTextField::DialogBody    => self.dialog_body = value,
                     StyleTextField::DialogHeading => self.dialog_prompt = value,
-                    StyleTextField::Text => self.text = value,
-                    StyleTextField::Heading3 => self.heading3 = value,
-                    StyleTextField::Heading2 => self.heading2 = value,
-                    StyleTextField::Heading1 => self.heading1 = value,
-                    StyleTextField::Preformat => self.preformat = value,
-                    StyleTextField::Link => self.link = value,
-                    StyleTextField::Error => self.error = value,
-                    StyleTextField::Quote => self.quote = value,
-                    StyleTextField::List => self.list = value,
+                    StyleTextField::Text          => self.text = value,
+                    StyleTextField::Heading3      => self.heading3 = value,
+                    StyleTextField::Heading2      => self.heading2 = value,
+                    StyleTextField::Heading1      => self.heading1 = value,
+                    StyleTextField::Preformat     => self.preformat = value,
+                    StyleTextField::Link          => self.link = value,
+                    StyleTextField::Error         => self.error = value,
+                    StyleTextField::Quote         => self.quote = value,
+                    StyleTextField::List          => self.list = value,
                     
                 }
                 result
             }
-            (SystemStyleField::Margin(field), Value::Table(value)) => {
+            (StyleConfigField::Margin(field), Value::Table(value)) => {
                 let (value, result) = MarginParams::from_table(value, &());
                 match field {
-                    StyleMarginField::Text => self.text_margin = value,
-                    StyleMarginField::Screen => self.screen_margin = value,
-                    StyleMarginField::DialogText => self.dialog_text_margin = value,
+                    StyleMarginField::Text         => self.text_margin = value,
+                    StyleMarginField::Screen       => self.screen_margin = value,
+                    StyleMarginField::DialogText   => self.dialog_text_margin = value,
                     StyleMarginField::DialogScreen => self.dialog_screen_margin = value,
                 }
                 result
@@ -306,8 +315,7 @@ impl Assign<()> for SystemStyleParams {
     }
 }
 
-
-impl Assign<Map<String, Value>> for Style {
+impl UserAssign<Map<String, Value>> for Style {
     type Field = StyleField;
 
     fn assign(
@@ -335,7 +343,7 @@ impl Assign<Map<String, Value>> for Style {
             }
             (StyleField::Attribute(field), Value::Boolean(value)) => {
                 match field {
-                    AttributeField::Bold => self.bold = value,
+                    AttributeField::Bold      => self.bold = value,
                     AttributeField::Underline => self.underline = value,
                 }
             }
@@ -347,8 +355,7 @@ impl Assign<Map<String, Value>> for Style {
     }
 }
 
-
-impl Assign<()> for MarginParams {
+impl UserAssign<()> for MarginParams {
     type Field = MarginParamsField;
 
     fn assign(
@@ -363,8 +370,8 @@ impl Assign<()> for MarginParams {
                 match field {
                     MarginParamsField::North => self.north = value,
                     MarginParamsField::South => self.south = value,
-                    MarginParamsField::East => self.east = value,
-                    MarginParamsField::West => self.west = value,
+                    MarginParamsField::East  => self.east = value,
+                    MarginParamsField::West  => self.west = value,
                 }
             }
             (_, value) => return Err(format!("
@@ -375,8 +382,7 @@ impl Assign<()> for MarginParams {
     }
 }
 
-
-impl Assign<Map<String, Value>> for BorderParams {
+impl UserAssign<Map<String, Value>> for BorderParams {
     type Field = BorderParamsField;
 
     fn assign(
@@ -441,8 +447,7 @@ impl Assign<Map<String, Value>> for BorderParams {
     }
 }
 
-
-impl Assign<Map<String, Value>> for TextParams {
+impl UserAssign<Map<String, Value>> for TextParams {
     type Field = TextStyleParamsField;
 
     fn assign(
@@ -463,4 +468,3 @@ impl Assign<Map<String, Value>> for TextParams {
         Ok(())
     }
 }
-

@@ -33,7 +33,6 @@ pub enum Action {
     Cancel,
 }
 
-
 impl std::str::FromStr for Action {
     type Err = String;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -59,7 +58,6 @@ impl std::str::FromStr for Action {
     }
 }
 
-
 impl Action {
     pub fn update<T>(&self, page: &mut crate::Page<T>) {
         match self {
@@ -82,7 +80,6 @@ impl Action {
             _ => {}
         }
     }
-
 
     pub fn update_edit<T>(&self, page: &mut crate::Page<T>) {
         match self {

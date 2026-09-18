@@ -9,7 +9,6 @@ pub struct Request {
     pub handle: thread::JoinHandle<()>,
 }
 
-
 impl Request {
     pub fn new(url: &url::Url, timeout: u64) -> Self {
         let (tx, rx)  = mpsc::channel::<Result<(String, String), String>>();

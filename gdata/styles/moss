@@ -4,7 +4,7 @@ palette = {
   black    = "#202225",
   dgrey    = "#707880",
   grey     = "#b8b9c0",
-  white    = "#c8aba3",
+  white    = "#c4a79f",
 
   green    = "#bca67e",
   cyan     = "#78a090",

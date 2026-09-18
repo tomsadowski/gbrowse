@@ -1,7 +1,7 @@
 // src/userkeys.rs
 
 use crate::{
-    Assign,
+    UserAssign,
     Action,
     DialogType,
 };
@@ -9,7 +9,7 @@ use crossterm::event::KeyCode;
 
 
 #[derive(Copy, Clone, Debug)]
-pub struct SystemControlParams {
+pub struct KeyConfig {
     pub up:          KeyCode,
     pub down:        KeyCode,
     pub left:        KeyCode,
@@ -31,8 +31,7 @@ pub struct SystemControlParams {
     pub cancel:      KeyCode,
 } 
 
-
-impl Default for SystemControlParams {
+impl Default for KeyConfig {
     fn default() -> Self {
         Self {
             load_url:    KeyCode::Char('u'),
@@ -58,15 +57,14 @@ impl Default for SystemControlParams {
     }
 }
 
-
-impl Assign<()> for SystemControlParams {
+impl UserAssign<()> for KeyConfig {
     type Field = Action;
 
-    fn assign(&mut self, f: Self::Field, v: toml::Value, _: &()) 
+    fn assign(&mut self, field: Self::Field, value: toml::Value, _: &()) 
         -> Result<(), String> 
     {
         let get_keycode = || -> Result<KeyCode, String> {
-            if let toml::Value::String(s) = v {
+            if let toml::Value::String(s) = value {
                 match s.as_str() {
                     "esc" | "escape" => Ok(KeyCode::Esc),
                     "ent" | "enter"  => Ok(KeyCode::Enter),
@@ -89,27 +87,27 @@ impl Assign<()> for SystemControlParams {
                 Err("could not parse keycode from value".into())
             }
         };
-        let v = get_keycode()?;
-        match f {
-            Action::LoadUrl    => self.load_url    = v,
-            Action::SaveUrl    => self.save_url    = v,
-            Action::Menu       => self.menu        = v,
-            Action::MoveUp     => self.up          = v,
-            Action::MoveDown   => self.down        = v,
-            Action::MoveLeft   => self.left        = v,
-            Action::MoveRight  => self.right       = v,
-            Action::CycleLeft  => self.cycle_left  = v,
-            Action::CycleRight => self.cycle_right = v,
-            Action::DelTab     => self.delete_tab  = v,
-            Action::NewTab     => self.new_tab     = v,
-            Action::Select     => self.select      = v,
-            Action::Yes        => self.yes         = v,
-            Action::No         => self.no          = v,
-            Action::Cancel     => self.cancel      = v,
-            Action::Top        => self.top         = v,
-            Action::Bottom     => self.bottom      = v,
-            Action::PageUp     => self.pgup        = v,
-            Action::PageDown   => self.pgdown      = v,
+        let value = get_keycode()?;
+        match field {
+            Action::LoadUrl    => self.load_url    = value,
+            Action::SaveUrl    => self.save_url    = value,
+            Action::Menu       => self.menu        = value,
+            Action::MoveUp     => self.up          = value,
+            Action::MoveDown   => self.down        = value,
+            Action::MoveLeft   => self.left        = value,
+            Action::MoveRight  => self.right       = value,
+            Action::CycleLeft  => self.cycle_left  = value,
+            Action::CycleRight => self.cycle_right = value,
+            Action::DelTab     => self.delete_tab  = value,
+            Action::NewTab     => self.new_tab     = value,
+            Action::Select     => self.select      = value,
+            Action::Yes        => self.yes         = value,
+            Action::No         => self.no          = value,
+            Action::Cancel     => self.cancel      = value,
+            Action::Top        => self.top         = value,
+            Action::Bottom     => self.bottom      = value,
+            Action::PageUp     => self.pgup        = value,
+            Action::PageDown   => self.pgdown      = value,
             _ => {},
         }
         Ok(())
@@ -117,7 +115,7 @@ impl Assign<()> for SystemControlParams {
 }
 
 
-impl SystemControlParams {
+impl KeyConfig {
     pub fn get_tab_action(&self, kc: &KeyCode) -> Option<Action> {
         if        &self.load_url    == kc {Some(Action::LoadUrl)
         } else if &self.save_url    == kc {Some(Action::SaveUrl)

@@ -19,6 +19,7 @@ use crate::{
 };
 
 
+
 pub struct AppView {
     pub draw_frame: bool,
     pub rect: Rect,
@@ -27,7 +28,6 @@ pub struct AppView {
     pub dialog: Option<Dialog>,
     pub tabs: CursorVec<Tab>,
 }
-
 
 impl crate::Draw for AppView {
     fn draw(&self, w: &mut impl std::io::Write) -> std::io::Result<()> {
@@ -43,7 +43,6 @@ impl crate::Draw for AppView {
     }
 }
 
-
 impl crate::Resize for AppView {
     fn resize(&mut self, rect: &Rect) {
         self.rect = rect.clone();
@@ -51,7 +50,6 @@ impl crate::Resize for AppView {
         self.push_frame();
     }
 }
-
 
 impl AppView {
     pub fn new(rect: &Rect, params: &FrameParams) -> Self {
@@ -67,17 +65,14 @@ impl AppView {
         appview
     }
 
-
     pub fn reset_frame(&mut self) {
         self.frame = self.frame.params.build_from_outer(&self.rect);
         self.push_frame();
     }
 
-
     pub fn reset_draw_state(&mut self) {
         self.draw_frame = false;
     }
-
 
     pub fn push_frame(&mut self) {
         self.draw_frame = true;
@@ -93,7 +88,6 @@ impl AppView {
             .sum();
         self.frame = self.frame.params.build_from_inner(&inner_rect);
     }
-
     
     pub fn flash(&mut self, params: DialogParams) {
         self.frame = self.frame.params.build_from_outer(&self.rect);
@@ -101,13 +95,11 @@ impl AppView {
         self.push_frame();
     }
 
-
     pub fn dialog(&mut self, params: DialogParams) {
         self.frame = self.frame.params.build_from_outer(&self.rect);
         self.dialog = Some(params.build(&self.frame.inner_rect));
         self.push_frame();
     }
-
 
     pub fn tab(&mut self, url: &url::Url, params: PageParams<TabText>) {
         self.frame = self.frame.params.build_from_outer(&self.rect);
@@ -121,7 +113,6 @@ impl AppView {
         self.push_frame();
     }
 
-
     pub fn get_view_list<'a>(&'a self) -> Vec<Option<ViewType<'a, TabText>>> {
         vec![
             self.flash.as_ref().map(ViewType::Dialog),
@@ -129,7 +120,6 @@ impl AppView {
             self.tabs.get().map(|f| &f.page).map(ViewType::Page),
         ]
     }
-
 
     pub fn get_view_list_mut<'a>(&'a mut self) 
         -> Vec<Option<ViewTypeMut<'a, TabText>>> 

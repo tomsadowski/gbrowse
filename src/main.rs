@@ -30,10 +30,10 @@ pub use crate::dlg::{
     Dialog,
 };
 pub use crate::userkeys::{
-    SystemControlParams,
+    KeyConfig,
 };
 pub use crate::userstyle::{
-    SystemStyleParams,
+    StyleConfig,
 };
 pub use crate::network::{
     Request,
@@ -60,7 +60,7 @@ pub use crate::frame::{
 };
 pub use crate::user::{
     UserConfig,
-    Assign,
+    UserAssign,
     UserTable,
 };
 pub use crate::cursor::{
@@ -139,7 +139,6 @@ fn main() -> std::io::Result<()> {
             } 
         } 
     }
-
     // return terminal to normal state
     stdout
         .queue(terminal::LeaveAlternateScreen)?

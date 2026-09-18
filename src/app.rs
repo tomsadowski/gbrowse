@@ -57,12 +57,9 @@ pub struct App {
     pub quit:        bool,
 } 
 
-
 impl App {
     pub fn init(path: &str, w: u16, h: u16) -> Self {
-
         let config_str = std::fs::read_to_string(path).unwrap_or_default();
-
         let (config, config_result) = UserConfig::from_str(&config_str, &());
         let view = AppView::new(
             &Rect::from(Dim(w, h)), 
@@ -77,7 +74,6 @@ impl App {
             view,
             config,
         };
-
         match (url::Url::parse(&app.config.init_url), config_result) {
             (Err(e), Err(msg)) => {
                 app.edit_dlg(
@@ -110,14 +106,12 @@ impl App {
         app
     }
 
-
     pub fn focus_tabs(&mut self) {
         self.focus = Focus::Tab;
         self.guide = format!("Press {} for menu", self.config.keys.menu);
         self.view.dialog = None;
         self.view.reset_frame();
     }
-
 
     fn ack_dlg(&mut self, prompt: &str) {
         self.focus = Focus::Dlg(Task::Default);
@@ -128,7 +122,6 @@ impl App {
         );
     }
 
-
     fn ask_dlg(&mut self, task: Task, prompt: &str) {
         self.focus = Focus::Dlg(task);
         self.view.dialog(
@@ -137,7 +130,6 @@ impl App {
                 .ask()
         );
     }
-
 
     fn edit_dlg(&mut self, task: Task, prompt: &str, text: &str) {
         self.focus = Focus::Dlg(task);
@@ -148,7 +140,6 @@ impl App {
         );
     }
 
-
     fn select_dlg(&mut self, task: Task, prompt: &str, options: Vec<String>) {
         self.focus = Focus::Dlg(task);
         self.view.dialog(
@@ -157,7 +148,6 @@ impl App {
                 .select(options)
         );
     }
-
 
     fn join_gemdoc(&mut self, url: url::Url, response: String, content: String) {
         let Ok(StatusText {tag, text}) = StatusText::try_from(response.as_str()) 
@@ -204,7 +194,6 @@ impl App {
         }
     }
 
-
     pub fn join_request(&mut self) -> bool {
         let Some(request) = &mut self.request else {
             return false
@@ -249,7 +238,6 @@ impl App {
         }
     }
 
-
     pub fn push_style(&mut self) {
         for tab in self.view.tabs.data.iter_mut() {
             tab.page.restyle(
@@ -278,20 +266,17 @@ impl App {
         }
     }
 
-
     pub fn update(&mut self, message: &Msg) {
         self.clear = false;
         self.view.reset_draw_state();
 
         if let Msg::Quit = message {
             self.quit = true;
-
-        } else if let Msg::Resize(w, h) = message {
+        } else 
+            if let Msg::Resize(w, h) = message {
             self.view.resize(&Rect::from(Dim(*w, *h)));
             self.clear = true;
-        } 
-
-        else 
+        } else 
             if let Msg::Action(action) = message
             && let Focus::Tab = &mut self.focus
             && let Some(tab) = self.view.tabs.get_mut()
@@ -304,7 +289,6 @@ impl App {
                         Ok(()) => self.ack_dlg(&format!("Saved URL: {url}")),
                     }
                 }
-
                 Action::Select if let Some(source) = tab.page.get_source() => {
                     match source {
                         TabText::Gemini(
@@ -320,42 +304,33 @@ impl App {
                         _ => self.ack_dlg(&format!("You've selected nothing")),
                     }
                 }
-
                 Action::CycleLeft => {
                     self.view.tabs.move_wrapped(-1);
                     self.view.reset_frame();
                 }
-
                 Action::CycleRight => {
                     self.view.tabs.move_wrapped(1);
                     self.view.reset_frame();
                 }
-
                 Action::LoadUrl => self.select_dlg(
                     Task::NewTab, "Choose URL: ", self.config.urls.clone(),
                 ),
-
                 Action::Menu => self.select_dlg(
                     Task::Menu, 
                     "Choose: ",
                     util::MENU.iter().map(|s| s.to_string()).collect(),
                 ),
-
                 Action::NewTab => self.edit_dlg(
                     Task::NewTab, "enter path: ", "",
                 ),
-
                 Action::DelTab => self.ask_dlg(
                     Task::DelTab, "Delete current tab?",
                 ),
-
                 action => {
                     action.update(&mut tab.page);
                 }
             }
-        }
-
-        else 
+        } else 
         if let Msg::Action(action) = message
         && let Focus::Dlg(task) = &mut self.focus
         && let Some(Dialog {body: Some(body), dlg_type, ..}) 
@@ -372,7 +347,6 @@ impl App {
                         self.focus_tabs();
                     }
                 }
-
                 (Task::ChangeKeys, Action::Select, DialogType::Select) => {
                     match std::fs::read_to_string(
                         util::get_keys_file(&body.get_param_string())
@@ -390,7 +364,6 @@ impl App {
                         }
                     }
                 }
-
                 (Task::ChangeStyle, Action::Select, DialogType::Select) => {
                     match std::fs::read_to_string(
                         util::get_styles_file(&body.get_param_string())
@@ -410,12 +383,12 @@ impl App {
                         }
                     }
                 }
-
                 (Task::Menu, Action::Select, DialogType::Select) => {
                     match util::MENU[body.get_index()] {
                         util::MANUAL => {
-                            self.ack_dlg("View manual".into());
-                            // write the bloody manual!
+                            self.ack_dlg("
+                                Manual not yet written, but I will get to it.
+                            ".into());
                         }
                         util::CHANGE_KEYS => 
                             match util::get_entries(util::KEYS_PATH) 
@@ -445,7 +418,6 @@ impl App {
                         _ => self.focus_tabs(),
                     }
                 }
-
                 (Task::Init(_), Action::Enter, _) => {
                     let url_str = body.get_string().unwrap();
                     match url::Url::parse(&url_str) {
@@ -460,12 +432,10 @@ impl App {
                         }
                     }
                 }
-
                 (Task::Init(url_str), Action::Cancel, DialogType::Edit) => {
                     let url_str = url_str.clone();
                     self.ask_dlg(Task::Init(url_str), "Exit application?");
                 }
-
                 (Task::Init(url_str), Action::Cancel, _) |
                 (Task::Init(url_str), Action::No, _) => {
                     let url_str = url_str.clone();
@@ -475,7 +445,6 @@ impl App {
                         &url_str,
                     );
                 }
-
                 (Task::Reply(url), Action::Enter, _) => {
                     let text = body
                         .get_string()
@@ -492,7 +461,6 @@ impl App {
                         }
                     }
                 }
-
                 (Task::NewTab, Action::Enter, _) => {
                     match url::Url::parse(&body.get_string().unwrap()) {
                         Err(e) => {
@@ -504,17 +472,14 @@ impl App {
                         }
                     }
                 }
-
                 (Task::Init(_), Action::Yes, _) => {
                     self.quit = true;
                 }
-
                 (Task::Go(url), Action::Yes, _) => {
                     let url = url.clone();
                     self.focus_tabs();
                     self.spawn_request(&url);
                 }
-
                 (Task::DelTab, Action::Yes, _) => {
                     self.view.tabs.remove(); 
                     if 0 == self.view.tabs.data.len() {
@@ -528,18 +493,15 @@ impl App {
                         self.focus_tabs();
                     }
                 }
-
                 (_, _, DialogType::Ack) |
                 (_, Action::Select, _) |
                 (_, Action::No, _) |
                 (_, Action::Cancel, _) => {
                     self.focus_tabs();
                 }
-
                 (_, action, DialogType::Edit) => {
                     action.update_edit(body);
                 }
-
                 (_, action, _) => {
                     action.update(body);
                 }
