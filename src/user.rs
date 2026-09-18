@@ -8,18 +8,17 @@ use crate::{
 };
 
 
-pub trait ContextAssign<C> {
+pub trait Assign<C> {
     type Field;
-    fn assign(
-        &mut self, 
-        _: Self::Field, 
-        _: toml::Value,
-        _: &C
-        ) -> Result<(), String>;
+
+    fn assign(&mut self, _: Self::Field, _: toml::Value, _: &C)
+        -> Result<(), String>;
+
+    fn load_context(&mut self, _: &mut toml::Table) {}
 }
 
 
-pub trait ContextUserTable<C>: Sized {
+pub trait UserTable<C>: Sized {
     fn read_table(self, _: toml::Table, _: &C) 
         -> Result<Self, String>;
 
@@ -31,13 +30,14 @@ pub trait ContextUserTable<C>: Sized {
 }
 
 
-impl<T, F, C> ContextUserTable<C> for T
-where   T: ContextAssign<C, Field = F>,
+impl<T, F, C> UserTable<C> for T
+where   T: Assign<C, Field = F>,
         F: std::str::FromStr<Err = String>
 {
-    fn read_table(mut self, table: toml::Table, context: &C) 
+    fn read_table(mut self, mut table: toml::Table, context: &C) 
         -> Result<Self, String> 
     {
+        self.load_context(&mut table);
         for (key, value) in table.into_iter() {
             let field = F::from_str(&key)?;
             self.assign(field, value, context)?;
@@ -46,9 +46,10 @@ where   T: ContextAssign<C, Field = F>,
     }
 
 
-    fn update_from_table(&mut self, table: toml::Table, context: &C) 
+    fn update_from_table(&mut self, mut table: toml::Table, context: &C) 
         -> Result<(), String> 
     {
+        self.load_context(&mut table);
         for (key, value) in table.into_iter() {
             let field = F::from_str(&key)?;
             self.assign(field, value, context)?;
@@ -57,11 +58,12 @@ where   T: ContextAssign<C, Field = F>,
     }
 
 
-    fn update_from_str(&mut self, s: &str, context: &C) 
+    fn update_from_str(&mut self, s: &str, ctx: &C) 
         -> Result<(), String> 
     {  
-        let table = s.parse::<toml::Table>().map_err(|e| e.to_string())?;
-        self.update_from_table(table, context)?;
+        let mut table = s.parse::<toml::Table>().map_err(|e| e.to_string())?;
+        self.load_context(&mut table);
+        self.update_from_table(table, ctx)?;
         Ok(())
     }
 }
@@ -69,7 +71,7 @@ where   T: ContextAssign<C, Field = F>,
 
 pub fn user_from_str<T, C>(s: &str, ctx: &C) 
     -> Result<T, String> 
-where T: ContextUserTable<C> + Default
+where T: UserTable<C> + Default
 {
     let table = s.parse::<toml::Table>().map_err(|e| e.to_string())?;
     T::default().read_table(table, ctx)
@@ -118,7 +120,7 @@ impl Default for SystemParams {
 }
 
 
-impl ContextAssign<()> for SystemParams {
+impl Assign<()> for SystemParams {
     type Field = UserField;
 
     fn assign(&mut self, f: Self::Field, v: toml::Value, ctx: &()) 

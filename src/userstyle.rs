@@ -2,8 +2,8 @@
 // src/userstyle.rs
 
 use crate::{
-    ContextAssign, 
-    ContextUserTable,
+    Assign, 
+    UserTable,
     MarginParams,
     BorderParams,
     TextParams,
@@ -17,44 +17,6 @@ use crate::{
 };
 use toml::{Value, map::Map};
 
-
-impl ContextUserTable<()> for SystemStyleParams {
-    fn read_table(mut self, mut table: toml::Table, _: &()) 
-        -> Result<Self, String> 
-    {
-        use std::str::FromStr;
-        if let Some(Value::Table(p)) = table.remove("palette") {
-            self.palette = p;
-        }
-        for (key, value) in table.into_iter() {
-            let field = SystemStyleField::from_str(&key)?;
-            self.assign(field, value)?;
-        }
-        Ok(self)
-    }
-
-
-    fn update_from_table(&mut self, mut table: toml::Table, _: &()) 
-        -> Result<(), String> 
-    {
-        use std::str::FromStr;
-        if let Some(Value::Table(p)) = table.remove("palette") {
-            self.palette = p;
-        }
-        for (key, value) in table.into_iter() {
-            let field = SystemStyleField::from_str(&key)?;
-            self.assign(field, value)?;
-        }
-        Ok(())
-    }
-
-
-    fn update_from_str(&mut self, s: &str, ctx: &()) -> Result<(), String> {  
-        let table = s.parse::<toml::Table>().map_err(|e| e.to_string())?;
-        self.update_from_table(table, ctx)?;
-        Ok(())
-    }
-}
 
 #[derive(Clone, Default, Debug)]
 pub struct SystemStyleParams {
@@ -124,8 +86,18 @@ impl SystemStyleParams {
             GemTag::Quote        => self.quote.into(),
         }
     }
+}
 
-    pub fn assign(&mut self, f: SystemStyleField, v: Value) -> Result<(), String> {
+impl Assign<()> for SystemStyleParams {
+    type Field = SystemStyleField;
+
+    fn load_context(&mut self, t: &mut toml::Table) {
+        if let Some(Value::Table(p)) = t.remove("palette") {
+            self.palette = p;
+        }
+    }
+
+    fn assign(&mut self, f: Self::Field, v: Value, _: &()) -> Result<(), String> {
         match (f, v) {
             (SystemStyleField::Border(f), Value::Table(v)) => {
                 let v = BorderParams::default().read_table(v, &self.palette)?;
@@ -169,7 +141,7 @@ impl SystemStyleParams {
 }
 
 
-impl ContextAssign<Map<String, Value>> for Style {
+impl Assign<Map<String, Value>> for Style {
     type Field = StyleField;
 
     fn assign(&mut self, f: Self::Field, v: Value, ctx: &Map<String, Value>) 
@@ -206,7 +178,7 @@ impl ContextAssign<Map<String, Value>> for Style {
 }
 
 
-impl ContextAssign<()> for MarginParams {
+impl Assign<()> for MarginParams {
     type Field = MarginParamsField;
 
     fn assign(&mut self, f: Self::Field, v: Value, _: &()) 
@@ -231,7 +203,7 @@ impl ContextAssign<()> for MarginParams {
 }
 
 
-impl ContextAssign<Map<String, Value>> for BorderParams {
+impl Assign<Map<String, Value>> for BorderParams {
     type Field = BorderParamsField;
 
     fn assign(&mut self, f: Self::Field, v: Value, ctx: &Map<String, Value>) 
@@ -296,7 +268,7 @@ impl ContextAssign<Map<String, Value>> for BorderParams {
 }
 
 
-impl ContextAssign<Map<String, Value>> for TextParams {
+impl Assign<Map<String, Value>> for TextParams {
     type Field = TextStyleParamsField;
 
     fn assign(&mut self, f: Self::Field, v: Value, ctx: &Map<String, Value>) 

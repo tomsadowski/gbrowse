@@ -1,7 +1,7 @@
 // src/userkeys.rs
 
 use crate::{
-    ContextAssign,
+    Assign,
     Action,
     DlgType,
 };
@@ -59,7 +59,7 @@ impl Default for SystemControlParams {
 }
 
 
-impl ContextAssign<()> for SystemControlParams {
+impl Assign<()> for SystemControlParams {
     type Field = Action;
 
     fn assign(&mut self, f: Self::Field, v: toml::Value, _: &()) 

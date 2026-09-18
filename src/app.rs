@@ -12,7 +12,7 @@ use crate::{
     AppView,
     GemText,
     DlgType,
-    ContextUserTable,
+    UserTable,
     user_from_str,
     Request,
     Action,
