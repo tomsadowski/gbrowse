@@ -60,7 +60,8 @@ where   T: Assign<C, Field = F> + Default,
             .inspect_err(|e| errors.push_str(&e.to_string()))
         {
             user_table.load_context(&mut table);
-            user_table.update_from_table(table, ctx);
+            let _ = user_table.update_from_table(table, ctx)
+                .inspect_err(|e| errors.push_str(&e));
         }
         if errors.len() > 0 {
             (user_table, Err(errors))
