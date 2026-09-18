@@ -91,8 +91,7 @@ where   T: Assign<C, Field = F> + Default,
     fn update_from_str(&mut self, s: &str, ctx: &C) -> Result<(), String> {  
         let mut table = s.parse::<toml::Table>().map_err(|e| e.to_string())?;
         self.load_context(&mut table);
-        self.update_from_table(table, ctx);
-        Ok(())
+        self.update_from_table(table, ctx)
     }
 }
 
