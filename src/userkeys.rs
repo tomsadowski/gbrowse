@@ -3,7 +3,7 @@
 use crate::{
     Assign,
     Action,
-    DlgType,
+    DialogType,
 };
 use crossterm::event::KeyCode;
 
@@ -157,14 +157,14 @@ impl SystemControlParams {
     }
 
 
-    pub fn get_dlg_action(&self, dlg_type: &DlgType, kc: &KeyCode) 
+    pub fn get_dlg_action(&self, dlg_type: &DialogType, kc: &KeyCode) 
         -> Option<Action> 
     {
         match dlg_type {
-            DlgType::Ack    => self.get_ack_dlg_action(kc),
-            DlgType::Ask    => self.get_ask_dlg_action(kc),
-            DlgType::Edit   => self.get_edit_dlg_action(kc),
-            DlgType::Select => self.get_select_dlg_action(kc),
+            DialogType::Ack    => self.get_ack_dlg_action(kc),
+            DialogType::Ask    => self.get_ask_dlg_action(kc),
+            DialogType::Edit   => self.get_edit_dlg_action(kc),
+            DialogType::Select => self.get_select_dlg_action(kc),
             _ => None,
         }
     }

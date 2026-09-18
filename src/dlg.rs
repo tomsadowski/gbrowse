@@ -1,7 +1,7 @@
 // src/dlg.rs
 
 use crate::{
-    SystemParams, 
+    UserConfig, 
     FrameParams,
     Frame,
     PageParams,
@@ -14,7 +14,7 @@ use crate::{
 
 
 #[derive(Debug)]
-pub enum DlgType {
+pub enum DialogType {
     Ack, 
     Ask, 
     Edit, 
@@ -24,26 +24,24 @@ pub enum DlgType {
 
 
 pub struct DialogParams<'a> {
-    params: &'a SystemParams, 
+    params: &'a UserConfig, 
     frame: FrameParams,
-    dlg_type: DlgType,
+    dialog_type: DialogType,
     prompt: Option<PageParams<String>>,
     body: Option<PageParams<String>>,
 }
 
-
-impl<'a> From<&'a SystemParams> for DialogParams<'a> {
-    fn from(params: &'a SystemParams) -> Self {
+impl<'a> From<&'a UserConfig> for DialogParams<'a> {
+    fn from(params: &'a UserConfig) -> Self {
         Self {
             frame: params.style.get_dialog_frame_params(),
             prompt: None,
             body: None,
-            dlg_type: DlgType::Flash,
+            dialog_type: DialogType::Flash,
             params
         }
     }
 }
-
 
 impl<'a> DialogParams<'a> { 
     pub fn prompt(mut self, prompt: &str) -> Self {
@@ -55,7 +53,6 @@ impl<'a> DialogParams<'a> {
         );
         self
     }
-
 
     pub fn ack(mut self) -> Self {
         if let Some(prompt) = self.prompt {
@@ -71,10 +68,9 @@ impl<'a> DialogParams<'a> {
                 .style(&self.params.style.dialog_prompt)
                 .max(Some(2))
         );
-        self.dlg_type = DlgType::Ack;
+        self.dialog_type = DialogType::Ack;
         self
     }
-
 
     pub fn ask(mut self) -> Self {
         let guide = format!(
@@ -93,10 +89,9 @@ impl<'a> DialogParams<'a> {
                 .style(&self.params.style.dialog_prompt)
                 .max(Some(2))
         );
-        self.dlg_type = DlgType::Ask;
+        self.dialog_type = DialogType::Ask;
         self
     }
-
 
     pub fn edit(mut self, text: &str) -> Self {
         self.body = Some(
@@ -105,10 +100,9 @@ impl<'a> DialogParams<'a> {
                 .style(&self.params.style.dialog_body)
                 .edit(true)
         );
-        self.dlg_type = DlgType::Edit;
+        self.dialog_type = DialogType::Edit;
         self
     }
-
 
     pub fn select(mut self, options: Vec<String>) -> Self {
         self.body = Some(
@@ -116,7 +110,7 @@ impl<'a> DialogParams<'a> {
                 .text(options)
                 .style(&self.params.style.dialog_body)
         );
-        self.dlg_type = DlgType::Select;
+        self.dialog_type = DialogType::Select;
         self
     }
 }
@@ -136,7 +130,7 @@ impl<'a> crate::BuildView<Dialog> for DialogParams<'a> {
 
         Dialog {
             frame, 
-            dlg_type: self.dlg_type, 
+            dlg_type: self.dialog_type, 
             body: views.pop().unwrap(),
             prompt: views.pop().unwrap(),
         }
@@ -146,7 +140,7 @@ impl<'a> crate::BuildView<Dialog> for DialogParams<'a> {
 
 pub struct Dialog {
     pub frame: Frame,
-    pub dlg_type: DlgType,
+    pub dlg_type: DialogType,
     pub prompt: Option<Page<String>>,
     pub body: Option<Page<String>>,
 }

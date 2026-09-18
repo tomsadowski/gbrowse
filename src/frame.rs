@@ -5,6 +5,12 @@ use crate::{
     Style,
     util,
 };
+use crossterm::{
+    QueueableCommand, 
+    cursor::{self, MoveTo}, 
+    style::{Print, SetAttribute, Attribute},
+};
+
 
 
 #[derive(Copy, Debug, Clone, Default)]
@@ -14,7 +20,6 @@ pub struct MarginParams {
     pub east: u16,
     pub west: u16,
 }
-
 
 impl MarginParams {
     pub fn symmetric(m: u16) -> Self {
@@ -26,7 +31,6 @@ impl MarginParams {
         }
     }
 
-
     pub fn get_from_inner(&self, rect: &Rect) -> Rect {
         rect
             .shift_west(self.west as i16)
@@ -34,7 +38,6 @@ impl MarginParams {
             .shift_north(self.north as i16)
             .shift_south(self.south as i16)
     }
-
 
     pub fn get_from_outer(&self, rect: &Rect) -> Rect {
         rect
@@ -59,7 +62,6 @@ pub struct BorderParams {
     pub close: char,
 }
 
-
 impl Default for BorderParams {
     fn default() -> Self {
         Self {
@@ -76,17 +78,16 @@ impl Default for BorderParams {
     }
 }
 
-
 impl BorderParams {
     pub fn get_from_inner(&self, rect: &Rect) -> Rect {
         rect.shift_x(1).shift_y(1)
     }
 
-
     pub fn get_from_outer(&self, rect: &Rect) -> Rect {
         rect.shift_x(-1).shift_y(-1)
     }
 }
+
 
 #[derive(Copy, Debug, Default, Clone)]
 pub struct FrameParams {
@@ -98,42 +99,34 @@ pub struct FrameParams {
     pub footer: Style,
 }
 
-
 impl FrameParams {
     pub fn init() -> Self {
         Self::default() 
     }
 
-
     pub fn screen_margin(mut self, screen_margin: MarginParams) -> Self {
         self.screen_margin = screen_margin; self
     }
-
 
     pub fn text_margin(mut self, screen_margin: MarginParams) -> Self {
         self.text_margin = screen_margin; self
     }
 
-
     pub fn banner_style(mut self, style: impl Into<Style>) -> Self {
         self.banner = style.into(); self
     }
-
 
     pub fn footer_style(mut self, style: impl Into<Style>) -> Self {
         self.footer = style.into(); self
     }
 
-
     pub fn margin_style(mut self, style: impl Into<Style>) -> Self {
         self.margin = style.into(); self
     }
 
-
     pub fn border_style(mut self, style: Option<BorderParams>) -> Self {
         self.border = style; self
     }
-
 
     pub fn build_from_inner(&self, rect: &Rect) -> Frame {
         let inner_rect = rect.clone();
@@ -150,7 +143,6 @@ impl FrameParams {
             inner_rect,
         }
     }
-
 
     pub fn build_from_outer(&self, rect: &Rect) -> Frame {
         let border_rect = self.screen_margin.get_from_outer(rect);
@@ -177,14 +169,6 @@ pub struct Frame {
     pub outer_rect: Rect,
     pub inner_rect: Rect,
 }
-
-
-use crossterm::{
-    QueueableCommand, 
-    cursor::{self, MoveTo}, 
-    style::{Print, SetAttribute, Attribute},
-};
-
 
 impl Frame {
     pub fn draw_footer(&self, text: &str, w: &mut impl std::io::Write) 
@@ -238,7 +222,6 @@ impl Frame {
         Ok(())
     }
 
-
     pub fn draw_banner(&self, text: &str, w: &mut impl std::io::Write) 
         -> std::io::Result<()> 
     {
@@ -281,7 +264,6 @@ impl Frame {
         Ok(())
     }
 
-
     pub fn draw_east(&self, w: &mut impl std::io::Write) 
         -> std::io::Result<()> 
     {
@@ -311,7 +293,6 @@ impl Frame {
         Ok(())
     }
 
-
     pub fn draw_west(&self, w: &mut impl std::io::Write) -> std::io::Result<()> {
         // border
         if let Some(border) = self.params.border {
@@ -340,13 +321,11 @@ impl Frame {
     }
 }
 
-
 impl crate::GetDisplayHeight for Frame {
     fn get_display_height(&self) -> u16 {
         self.screen.h
     }
 }
-
 
 impl crate::Draw for Frame {
     fn draw(&self, w: &mut impl std::io::Write) -> std::io::Result<()> {

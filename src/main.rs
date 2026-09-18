@@ -26,7 +26,7 @@ mod util;
 
 pub use crate::dlg::{
     DialogParams,
-    DlgType,
+    DialogType,
     Dialog,
 };
 pub use crate::userkeys::{
@@ -59,7 +59,7 @@ pub use crate::frame::{
     MarginParams, 
 };
 pub use crate::user::{
-    SystemParams,
+    UserConfig,
     Assign,
     UserTable,
 };

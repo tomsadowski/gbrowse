@@ -6,11 +6,12 @@ use crate::{
     util,
     TabText,
     Dim,
-    SystemParams, 
+    UserConfig, 
     Draw,
     AppView,
     GemText,
-    DlgType,
+    DialogType,
+    DialogParams,
     UserTable,
     Request,
     Action,
@@ -47,7 +48,7 @@ pub enum Focus {
 }
 
 pub struct App {
-    pub params:      SystemParams,
+    pub config:      UserConfig,
     pub view:        AppView,
     pub focus:       Focus,
     pub request:     Option<Request>,
@@ -60,12 +61,12 @@ pub struct App {
 impl App {
     pub fn init(path: &str, w: u16, h: u16) -> Self {
 
-        let params = std::fs::read_to_string(path).unwrap_or_default();
+        let config_str = std::fs::read_to_string(path).unwrap_or_default();
 
-        let (params, params_result) = SystemParams::from_str(&params, &());
+        let (config, config_result) = UserConfig::from_str(&config_str, &());
         let view = AppView::new(
             &Rect::from(Dim(w, h)), 
-            &params.style.get_frame_params()
+            &config.style.get_frame_params()
         );
         let mut app = Self {
             guide:       "".into(),
@@ -74,27 +75,27 @@ impl App {
             clear:       true,
             quit:        false,
             view,
-            params,
+            config,
         };
 
-        match (url::Url::parse(&app.params.init_url), params_result) {
+        match (url::Url::parse(&app.config.init_url), config_result) {
             (Err(e), Err(msg)) => {
                 app.edit_dlg(
-                    Task::Init(app.params.init_url.clone()), 
+                    Task::Init(app.config.init_url.clone()), 
                     &format!("
                         Config issue: {msg},
                         {e}, enter revised URL:
                     "), 
-                    &app.params.init_url.clone(),
+                    &app.config.init_url.clone(),
                 );
             }
             (Err(e), Ok(())) => {
                 app.edit_dlg(
-                    Task::Init(app.params.init_url.clone()), 
+                    Task::Init(app.config.init_url.clone()), 
                     &format!("
                         {e}, enter revised URL:
                     "), 
-                    &app.params.init_url.clone(),
+                    &app.config.init_url.clone(),
                 );
             }
             (Ok(url), Err(msg)) => {
@@ -112,7 +113,7 @@ impl App {
 
     pub fn focus_tabs(&mut self) {
         self.focus = Focus::Tab;
-        self.guide = format!("Press {} for menu", self.params.keys.menu);
+        self.guide = format!("Press {} for menu", self.config.keys.menu);
         self.view.dialog = None;
         self.view.reset_frame();
     }
@@ -120,25 +121,41 @@ impl App {
 
     fn ack_dlg(&mut self, prompt: &str) {
         self.focus = Focus::Dlg(Task::Default);
-        self.view.dialog(self.params.dlg(&prompt).ack());
+        self.view.dialog(
+            DialogParams::from(&self.config)
+                .prompt(&prompt)
+                .ack()
+        );
     }
 
 
     fn ask_dlg(&mut self, task: Task, prompt: &str) {
         self.focus = Focus::Dlg(task);
-        self.view.dialog(self.params.dlg(&prompt).ask());
+        self.view.dialog(
+            DialogParams::from(&self.config)
+                .prompt(&prompt)
+                .ask()
+        );
     }
 
 
     fn edit_dlg(&mut self, task: Task, prompt: &str, text: &str) {
         self.focus = Focus::Dlg(task);
-        self.view.dialog(self.params.dlg(&prompt).edit(text));
+        self.view.dialog(
+            DialogParams::from(&self.config)
+                .prompt(&prompt)
+                .edit(text)
+        );
     }
 
 
     fn select_dlg(&mut self, task: Task, prompt: &str, options: Vec<String>) {
         self.focus = Focus::Dlg(task);
-        self.view.dialog(self.params.dlg(&prompt).select(options));
+        self.view.dialog(
+            DialogParams::from(&self.config)
+                .prompt(&prompt)
+                .select(options)
+        );
     }
 
 
@@ -174,13 +191,13 @@ impl App {
                 self.view.tab(
                     &url, 
                     PageParams::init()
-                        .style(&self.params.style.general)
+                        .style(&self.config.style.general)
                         .text_styles(
                             gemini::parse_doc(&content)
                                 .into_iter()
                                 .map(TabText::Gemini)
                                 .collect(),
-                            |g| self.params.style.get_tab_text_params(g)
+                            |g| self.config.style.get_tab_text_params(g)
                         )
                 );
             }
@@ -216,9 +233,10 @@ impl App {
     pub fn spawn_request(&mut self, url: &url::Url) {
         match (&mut self.request, url.scheme()) {
             (None, "gemini") => {
-                self.request = Some(Request::new(&url, self.params.timeout));
+                self.request = Some(Request::new(&url, self.config.timeout));
                 self.view.flash(
-                    self.params.dlg(&format!("pending request: {url}"))
+                    DialogParams::from(&self.config)
+                        .prompt(&format!("pending request: {url}"))
                 );
             }
             (None, scheme) => self.ack_dlg(
@@ -235,9 +253,9 @@ impl App {
     pub fn push_style(&mut self) {
         for tab in self.view.tabs.data.iter_mut() {
             tab.page.restyle(
-                |text| self.params.style.get_tab_text_params(text)
+                |text| self.config.style.get_tab_text_params(text)
             );
-            tab.page.style = self.params.style.general.style;
+            tab.page.style = self.config.style.general.style;
         }
         self.view.push_frame();
     }
@@ -281,7 +299,7 @@ impl App {
             match action {
                 Action::SaveUrl => {
                     let url = tab.url.clone();
-                    match self.params.save_url(&url) {
+                    match self.config.save_url(&url) {
                         Err(e) => self.ack_dlg(&e),
                         Ok(()) => self.ack_dlg(&format!("Saved URL: {url}")),
                     }
@@ -314,7 +332,7 @@ impl App {
                 }
 
                 Action::LoadUrl => self.select_dlg(
-                    Task::NewTab, "Choose URL: ", self.params.urls.clone(),
+                    Task::NewTab, "Choose URL: ", self.config.urls.clone(),
                 ),
 
                 Action::Menu => self.select_dlg(
@@ -344,8 +362,8 @@ impl App {
             = &mut self.view.dialog 
         {
             match (task, action, dlg_type) {
-                (Task::NewTab, Action::Select, DlgType::Select) => {
-                    if let Some(link) = self.params.urls
+                (Task::NewTab, Action::Select, DialogType::Select) => {
+                    if let Some(link) = self.config.urls
                         .get(body.get_index()) 
                     {
                         let link = link.clone();
@@ -355,7 +373,7 @@ impl App {
                     }
                 }
 
-                (Task::ChangeKeys, Action::Select, DlgType::Select) => {
+                (Task::ChangeKeys, Action::Select, DialogType::Select) => {
                     match std::fs::read_to_string(
                         util::get_keys_file(&body.get_param_string())
                     ) {
@@ -363,7 +381,7 @@ impl App {
                             self.ack_dlg(&format!("Problem: {e}"))
                         }
                         Ok(s) if let Err(e) = 
-                            self.params.keys.update_from_str(&s, &())
+                            self.config.keys.update_from_str(&s, &())
                         => {
                             self.ack_dlg(&format!("Problem: {e}"));
                         }
@@ -373,14 +391,14 @@ impl App {
                     }
                 }
 
-                (Task::ChangeStyle, Action::Select, DlgType::Select) => {
+                (Task::ChangeStyle, Action::Select, DialogType::Select) => {
                     match std::fs::read_to_string(
                         util::get_styles_file(&body.get_param_string())
                     ) {
                         Err(e) => {
                             self.ack_dlg(&e.to_string());
                         }
-                        Ok(s) if let Err(e) = self.params.style
+                        Ok(s) if let Err(e) = self.config.style
                             .update_from_str(&s, &()) => 
                         {
                             self.ack_dlg(&e.to_string());
@@ -393,7 +411,7 @@ impl App {
                     }
                 }
 
-                (Task::Menu, Action::Select, DlgType::Select) => {
+                (Task::Menu, Action::Select, DialogType::Select) => {
                     match util::MENU[body.get_index()] {
                         util::MANUAL => {
                             self.ack_dlg("View manual".into());
@@ -416,7 +434,7 @@ impl App {
                             ),
                         }
                         util::VIEW_SETTINGS => {
-                            let text = format!("{:#?}", self.params)
+                            let text = format!("{:#?}", self.config)
                                 .lines()
                                 .map(|l| l.into())
                                 .collect();
@@ -443,7 +461,7 @@ impl App {
                     }
                 }
 
-                (Task::Init(url_str), Action::Cancel, DlgType::Edit) => {
+                (Task::Init(url_str), Action::Cancel, DialogType::Edit) => {
                     let url_str = url_str.clone();
                     self.ask_dlg(Task::Init(url_str), "Exit application?");
                 }
@@ -500,7 +518,7 @@ impl App {
                 (Task::DelTab, Action::Yes, _) => {
                     self.view.tabs.remove(); 
                     if 0 == self.view.tabs.data.len() {
-                        let url_str = self.params.init_url.clone();
+                        let url_str = self.config.init_url.clone();
                         self.edit_dlg(
                             Task::Init(url_str.clone()), 
                             &format!("Enter URL: "),
@@ -511,14 +529,14 @@ impl App {
                     }
                 }
 
-                (_, _, DlgType::Ack) |
+                (_, _, DialogType::Ack) |
                 (_, Action::Select, _) |
                 (_, Action::No, _) |
                 (_, Action::Cancel, _) => {
                     self.focus_tabs();
                 }
 
-                (_, action, DlgType::Edit) => {
+                (_, action, DialogType::Edit) => {
                     action.update_edit(body);
                 }
 
@@ -548,11 +566,11 @@ impl App {
                 code, kind: KeyEventKind::Press, ..
             }) => 
                 if let Focus::Tab = &self.focus {
-                    self.params.keys
+                    self.config.keys
                         .get_tab_action(&code)
                         .map(Msg::Action)
                 } else if let Some(dlg) = &self.view.dialog {
-                    self.params.keys
+                    self.config.keys
                         .get_dlg_action(&dlg.dlg_type, &code)
                         .map(Msg::Action)
                 }
@@ -582,7 +600,7 @@ impl App {
         else 
         if let Some(Dialog {body: Some(body), dlg_type, ..}) 
             = &self.view.dialog 
-        && let DlgType::Select | DlgType::Edit = dlg_type
+        && let DialogType::Select | DialogType::Edit = dlg_type
         {
             body.point_view.draw(w)?;
         }

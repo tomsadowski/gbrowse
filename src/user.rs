@@ -3,7 +3,6 @@
 use crate::{
     SystemControlParams,
     SystemStyleParams,
-    DialogParams,
     util,
 };
 
@@ -120,7 +119,7 @@ where   T: Assign<C, Field = F> + Default,
 
 
 #[derive(Debug)]
-pub struct SystemParams {
+pub struct UserConfig {
     pub timeout: u64,
     pub save_file: String,
     pub init_url: String,
@@ -130,7 +129,7 @@ pub struct SystemParams {
 } 
 
 
-impl Default for SystemParams {
+impl Default for UserConfig {
     // todo: return Self and errors encountered during creation
     fn default() -> Self {
         let urls: Vec<String> = 
@@ -151,7 +150,7 @@ impl Default for SystemParams {
 }
 
 
-impl Assign<()> for SystemParams {
+impl Assign<()> for UserConfig {
     type Field = UserField;
 
     fn assign(&mut self, f: Self::Field, v: toml::Value, ctx: &()) 
@@ -203,14 +202,7 @@ impl Assign<()> for SystemParams {
 }
 
 
-impl SystemParams {
-
-    // convenience method
-    pub fn dlg<'a>(&'a self, prompt: &str) -> DialogParams<'a> {
-        DialogParams::from(self).prompt(prompt)
-    }
-
-
+impl UserConfig {
     pub fn save_url(&mut self, url: &url::Url) -> Result<(), String> {
         let url_str = url.to_string();
         if self.urls.iter().any(|url| **url == url_str) {
