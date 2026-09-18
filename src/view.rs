@@ -70,13 +70,13 @@ impl AppView {
         appview
     }
 
+    pub fn reset_draw_state(&mut self) {
+        self.draw_frame = false;
+    }
+
     pub fn reset_frame(&mut self) {
         self.frame = self.frame.params.build_from_outer(&self.rect);
         self.push_frame();
-    }
-
-    pub fn reset_draw_state(&mut self) {
-        self.draw_frame = false;
     }
 
     pub fn push_frame(&mut self) {
