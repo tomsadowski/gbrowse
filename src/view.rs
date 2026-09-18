@@ -69,6 +69,11 @@ impl AppView {
         appview
     }
 
+    pub fn update_frame_params(&mut self, params: &FrameParams) {
+        self.frame = params.build_from_outer(&self.rect);
+    }
+
+
     pub fn reset_draw_state(&mut self) {
         self.draw_frame = false;
     }

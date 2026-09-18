@@ -11,7 +11,9 @@ pub fn parse_color(v: &toml::Value) -> Result<Color, String> {
             } else {
                 parse_color_name(&s)
             }
-        _ => Err(format!("could not parse color from value {v}")),
+        _ => Err(format!("
+            could not parse color from value {v}
+        ")),
     }
 }
 
@@ -35,7 +37,9 @@ pub fn parse_color_name(s: &str) -> Result<Color, String> {
         "DarkCyan"    | "darkcyan"    => Ok(Color::DarkCyan),
         "DarkBlue"    | "darkblue"    => Ok(Color::DarkBlue),
         "DarkMagenta" | "darkmagenta" => Ok(Color::DarkMagenta),
-        _ => Err(format!("could not parse color from value {s}"))
+        _ => Err(format!("
+            could not parse color from value {s}
+        "))
     }
 }
 

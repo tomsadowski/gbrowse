@@ -7,7 +7,7 @@ palette = {
   white    = "#b8a098",
 
   green    = "#bca47c",
-  cyan     = "#78a090",
+  cyan     = "#709080",
   magenta  = "#c698ac",
   red      = "#e08c78",
 
@@ -16,7 +16,7 @@ palette = {
   dblue    = "#30343a",
 }
 border = {
-  fg      = "_grey", 
+  fg      = "_dgrey", 
   bg      = "_black", 
   corner  = "round", 
   bracket = "space"
@@ -36,9 +36,9 @@ list           = {fg = "_grey"}
 preformat      = {fg = "_magenta", wrap = false}
 quote          = {fg = "_grey"}
 link           = {fg = "_cyan"}
-h1             = {fg = "_green", underline = true}
-h2             = {fg = "_red", underline = true}
-h3             = {fg = "_red"}
+h1             = {fg = "_red", underline = true}
+h2             = {fg = "_green", underline = true}
+h3             = {fg = "_green"}
 text           = {wrap = true}
 
 screen_margin        = {n = 2, s = 2, e = 16, w = 16}

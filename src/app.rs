@@ -2,6 +2,7 @@
 
 use crate::{
     gemini, 
+    Status,
     Dialog,
     util,
     TabText,
@@ -107,11 +108,30 @@ impl App {
         app
     }
 
+    pub fn push_style(&mut self) {
+        self.view.update_frame_params(&self.config.style.get_frame_params());
+        for tab in self.view.tabs.data.iter_mut() {
+            tab.page.restyle(
+                |text| self.config.style.get_tab_text_params(text)
+            );
+            tab.page.style = self.config.style.general.style;
+        }
+        self.view.push_frame();
+        self.clear = true;
+    }
+
     pub fn focus_tabs(&mut self) {
         self.focus = Focus::Tab;
         self.guide = format!("Press {} for menu", self.config.keys.menu);
         self.view.dialog = None;
         self.view.reset_frame();
+    }
+
+    fn flash(&mut self, prompt: &str) {
+        self.view.flash(
+            DialogParams::from(&self.config)
+                .prompt(&prompt)
+        );
     }
 
     fn ack_dlg(&mut self, prompt: &str) {
@@ -151,106 +171,128 @@ impl App {
     }
 
     fn join_gemdoc(&mut self, url: url::Url, response: String, content: String) {
-        let Ok(StatusText {tag, text}) = StatusText::try_from(response.as_str()) 
-        else {
-            self.edit_dlg(
-                Task::Init(self.config.init_url.clone()), 
-                &format!("Invalid Gemini response: {response}."),
-                &self.config.init_url.clone(),
-            );
-            return
-        };
-        use gemini::Status;
-        match tag {
-            Status::InputExpected | 
-            Status::InputExpectedSensitive => {
-                self.edit_dlg(Task::Reply(url.clone()), &text, "");
-            }
-            Status::RedirectTemporary | 
-            Status::RedirectPermanent => {
-                match url::Url::parse(&text) {
-                    Err(e) => 
-                        self.ack_dlg(
+        match StatusText::try_from(response.as_str()) {
+            Ok(StatusText {tag, text}) => match tag {
+                Status::InputExpected | 
+                Status::InputExpectedSensitive => {
+                    self.edit_dlg(Task::Reply(url.clone()), &text, "");
+                }
+                Status::RedirectTemporary | 
+                Status::RedirectPermanent => {
+                    match url::Url::parse(&text) {
+                        Err(e) => self.ack_dlg(
                             &format!("Redirects to invalid URL. {e}")
                         ),
-                    Ok(url) => 
-                        self.ask_dlg(Task::Go(url.clone()), &text),
+                        Ok(url) => self.ask_dlg(
+                            Task::Go(url.clone()), &text
+                        ),
+                    }
+                }
+                Status::CertRequiredClient | 
+                Status::CertRequiredTransient | 
+                Status::CertRequiredAuthorized => {
+                    self.ack_dlg(&text);
+                }
+                _ => {
+                    self.view.tab(
+                        &url, 
+                        PageParams::init()
+                            .style(&self.config.style.general)
+                            .text_styles(
+                                gemini::parse_doc(&content)
+                                    .into_iter()
+                                    .map(TabText::Gemini)
+                                    .collect(),
+                                |g| self.config.style.get_tab_text_params(g)
+                            )
+                    );
                 }
             }
-            Status::CertRequiredClient | 
-            Status::CertRequiredTransient | 
-            Status::CertRequiredAuthorized => {
-                self.ack_dlg(&text);
-            }
-            _ => {
-                self.view.tab(
-                    &url, 
-                    PageParams::init()
-                        .style(&self.config.style.general)
-                        .text_styles(
-                            gemini::parse_doc(&content)
-                                .into_iter()
-                                .map(TabText::Gemini)
-                                .collect(),
-                            |g| self.config.style.get_tab_text_params(g)
-                        )
-                );
+            Err(e) => {
+                if 0 == self.view.tabs.data.len() {
+                    self.edit_dlg(
+                        Task::Init(self.config.init_url.clone()), 
+                        &format!("Invalid response for Gemini: {e}."),
+                        &self.config.init_url.clone(),
+                    );
+                } else {
+                    self.ack_dlg(
+                        &format!("Invalid response for Gemini: {e}."),
+                    );
+                }
             }
         }
     }
 
     pub fn join_request(&mut self) -> bool {
+        // there is no request to join
         let Some(request) = &mut self.request else {
             return false
         };
+        // there is a request but it's not ready
         if !request.handle.is_finished() {
             return false
         }
-        match request.rx.recv().unwrap() {
+        self.view.flash = None;
+        match request.rx.recv() {
             Err(e) => {
-                self.ack_dlg(&e);
-                self.request = None;
-                self.view.flash = None;
+                self.ack_dlg(&format!("{e}"));
                 self.view.reset_frame();
-                true
             }
-            Ok((r, c)) => {
+            Ok(Err(e)) => {
+                if 0 == self.view.tabs.data.len() {
+                    self.edit_dlg(
+                        Task::Init(self.config.init_url.clone()), 
+                        &format!("Network error: {e}."),
+                        &self.config.init_url.clone(),
+                    );
+                } else {
+                    self.ack_dlg(&format!(
+                        "Network error: {e}.
+                    "));
+                }
+                self.view.reset_frame();
+            }
+            Ok(Ok((r, c))) => {
+                // assume only gemdoc is supported for now
                 let url = request.url.clone();
-                self.view.flash = None;
-                self.request = None;
                 self.join_gemdoc(url, r, c);
-                true
             }
         }
+        self.request = None;
+        true
     }
 
+    // Checks the scheme of the given URL against supported schemes.
+    // An error dialog displays if not supported.
+    // Otherwise, a new request is spawned (but ideally, queued).
     pub fn spawn_request(&mut self, url: &url::Url) {
         match (&mut self.request, url.scheme()) {
-            (None, "gemini") => {
-                self.request = Some(Request::new(&url, self.config.timeout));
-                self.view.flash(
-                    DialogParams::from(&self.config)
-                        .prompt(&format!("pending request: {url}"))
-                );
-            }
-            (None, scheme) => self.ack_dlg(
-                &format!("Protocol {scheme} not yet supported")
-            ),
+            // queue not yet implemented
             (Some(request), _) => {
                 let url = request.url.to_string();
-                self.ack_dlg(&format!("still processing request for {url}"));
+                self.ack_dlg(&format!("
+                    still processing request for {url}
+                "));
+            }
+            (None, "gemini") => {
+                self.request = Some(Request::new(&url, self.config.timeout));
+                self.flash(&format!("pending request: {url}"));
+            }
+            (None, scheme) => {
+                if 0 == self.view.tabs.data.len() {
+                    self.edit_dlg(
+                        Task::Init(self.config.init_url.clone()), 
+                        &format!("Protocol: {scheme} not yet supported."),
+                        &self.config.init_url.clone(),
+                    );
+                } else {
+                    self.ack_dlg(
+                        &format!("Protocol {scheme} not yet supported")
+                    );
+                }
             }
         }
-    }
-
-    pub fn push_style(&mut self) {
-        for tab in self.view.tabs.data.iter_mut() {
-            tab.page.restyle(
-                |text| self.config.style.get_tab_text_params(text)
-            );
-            tab.page.style = self.config.style.general.style;
-        }
-        self.view.push_frame();
     }
 
 
@@ -343,9 +385,7 @@ impl App {
         {
             match (task, action, dlg_type) {
                 (Task::NewTab, Action::Select, DialogType::Select) => {
-                    if let Some(link) = self.config.urls
-                        .get(body.get_index()) 
-                    {
+                    if let Some(link) = self.config.urls.get(body.get_index()) {
                         let link = link.clone();
                         self.select_link(&link);
                     } else {
@@ -359,13 +399,14 @@ impl App {
                         Err(e) => {
                             self.ack_dlg(&format!("Problem: {e}"))
                         }
-                        Ok(s) if let Err(e) = 
-                            self.config.keys.update_from_str(&s, &())
-                        => {
-                            self.ack_dlg(&format!("Problem: {e}"));
-                        }
-                        Ok(_) => {
-                            self.focus_tabs();
+                        Ok(s) => {
+                            if let Err(e) = self.config.keys
+                                .update_from_str(&s, &()) 
+                            {
+                                self.ack_dlg(&format!("Problem: {e}"));
+                            } else {
+                                self.focus_tabs();
+                            }
                         }
                     }
                 }
@@ -376,14 +417,14 @@ impl App {
                         Err(e) => {
                             self.ack_dlg(&e.to_string());
                         }
-                        Ok(s) if let Err(e) = self.config.style
-                            .update_from_str(&s, &()) => 
-                        {
-                            self.ack_dlg(&e.to_string());
-                            self.push_style();
-                        }
-                        _ => {
-                            self.focus_tabs();
+                        Ok(s) => {
+                            if let Err(e) = self.config.style
+                                .update_from_str(&s, &()) 
+                            {
+                                self.ack_dlg(&e.to_string());
+                            } else {
+                                self.focus_tabs();
+                            }
                             self.push_style();
                         }
                     }
