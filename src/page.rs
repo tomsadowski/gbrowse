@@ -2,6 +2,7 @@
 
 use crate::{
     Rect,
+    Pos,
     Style, 
     CursorView,
     PointView,
@@ -282,7 +283,7 @@ impl<T: std::fmt::Display> crate::Draw for Page<T> {
     fn draw(&self, w: &mut impl std::io::Write) -> std::io::Result<()> {
         use crossterm::{QueueableCommand, cursor, style};
 
-        let (mut x, mut y) = self.point_view.pos().into();
+        let Pos(mut x, mut y) = self.point_view.pos();
         w
             .queue(cursor::MoveTo(x, y))?
             .queue(style::SetAttribute(style::Attribute::Reset))?

@@ -4,40 +4,13 @@
 #[derive(Clone, Copy, Debug, Default)]
 pub struct Dim(pub u16, pub u16);
 
-
-impl From<(u16, u16)> for Dim {
-    fn from((w, h): (u16, u16)) -> Self { 
-        Self(w.into(), h.into()) 
-    }
-}
-
-
-impl From<Dim> for (u16, u16) {
-    fn from(dim: Dim) -> Self { (dim.w(), dim.h()) }
-}
-
-
 impl Dim {
     pub fn w(&self) -> u16 { self.0 }
     pub fn h(&self) -> u16 { self.1 }
 }
 
-
 #[derive(Clone, Copy, Debug, Default)]
 pub struct Pos(pub u16, pub u16);
-
-
-impl From<(u16, u16)> for Pos {
-    fn from((x, y): (u16, u16)) -> Self { 
-        Self(x, y) 
-    }
-}
-
-
-impl From<Pos> for (u16, u16) {
-    fn from(pos: Pos) -> Self { (pos.x(), pos.y()) }
-}
-
 
 impl Pos {
     pub fn x(&self) -> u16 { self.0 }
@@ -53,13 +26,11 @@ pub struct Rect {
     pub h: u16,
 }
 
-
 impl From<Dim> for Rect {
     fn from(d: Dim) -> Self {
         Self { x: 0, y: 0, w: d.w(), h: d.h() }
     }
 }
-
 
 impl From<Pos> for Rect {
     fn from(p: Pos) -> Self {
@@ -67,19 +38,16 @@ impl From<Pos> for Rect {
     }
 }
 
-
 impl Rect {
     pub fn with_dim(mut self, dim: Dim) -> Self {
         self.w = dim.w(); 
         self.h = dim.h(); self
     }
 
-
     pub fn with_pos(mut self, pos: Pos) -> Self {
         self.x = pos.x(); 
         self.y = pos.y(); self
     }
-
 
     pub fn shift_north(&self, idelta: i16) -> Self {
         let mut rect = self.clone();
@@ -88,20 +56,17 @@ impl Rect {
         rect
     }
 
-
     pub fn shift_south(&self, idelta: i16) -> Self {
         let mut rect = self.clone();
         rect.h = (rect.h as i16 + idelta) as u16;
         rect
     }
 
-
     pub fn shift_east(&self, idelta: i16) -> Self {
         let mut rect = self.clone();
         rect.w = (rect.w as i16 + idelta) as u16;
         rect
     }
-
 
     pub fn shift_west(&self, idelta: i16) -> Self {
         let mut rect = self.clone();
@@ -110,34 +75,31 @@ impl Rect {
         rect
     }
 
-
     pub fn shift_y(&self, idelta: i16) -> Self {
         self.shift_north(idelta).shift_south(idelta)
     }
-
 
     pub fn shift_x(&self, idelta: i16) -> Self {
         self.shift_east(idelta).shift_west(idelta)
     }
 
-
     pub fn x(&self) -> u16 { self.pos().x() }
     pub fn y(&self) -> u16 { self.pos().y() }
     pub fn w(&self) -> u16 { self.dim().w() }
     pub fn h(&self) -> u16 { self.dim().h() }
-    pub fn dim(&self) -> Dim { (self.w, self.h).into() }
-    pub fn pos(&self) -> Pos { (self.x, self.y).into() }
+    pub fn dim(&self) -> Dim { Dim(self.w, self.h) }
+    pub fn pos(&self) -> Pos { Pos(self.x, self.y) }
     pub fn x_end(&self) -> u16 { self.x + self.w }
     pub fn y_end(&self) -> u16 { self.y + self.h }
-    pub fn northwest(&self) -> Pos { (self.x, self.y).into() }
+    pub fn northwest(&self) -> Pos { Pos(self.x, self.y) }
     pub fn northeast(&self) -> Pos {
-        (self.x_end().saturating_sub(1), self.y).into()
+        Pos(self.x_end().saturating_sub(1), self.y)
     }
     pub fn southwest(&self) -> Pos {
-        (self.x, self.y_end().saturating_sub(1)).into()
+        Pos(self.x, self.y_end().saturating_sub(1))
     }
     pub fn southeast(&self) -> Pos {
-        (self.x_end().saturating_sub(1), self.y_end().saturating_sub(1)).into()
+        Pos(self.x_end().saturating_sub(1), self.y_end().saturating_sub(1))
     }
     pub fn x_range(&self) -> std::ops::Range<u16> {
         std::ops::Range { start: self.x, end: self.x_end() }
@@ -146,7 +108,6 @@ impl Rect {
         std::ops::Range { start: self.y, end: self.y_end() }
     }
 }
-
 
 impl crate::Draw for Rect {
     fn draw(&self, w: &mut impl std::io::Write) -> std::io::Result<()> {

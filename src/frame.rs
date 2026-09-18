@@ -2,6 +2,7 @@
 
 use crate::{
     Rect, 
+    Pos,
     Style,
     util,
 };
@@ -269,8 +270,8 @@ impl Frame {
     {
         // border
         if let Some(border) = self.params.border {
-            let (nex, ney) = self.border_rect.northeast().into();
-            let (sex, sey) = self.border_rect.southeast().into();
+            let Pos(nex, ney) = self.border_rect.northeast();
+            let Pos(sex, sey) = self.border_rect.southeast();
             w
                 .queue(SetAttribute(Attribute::Reset))?
                 .queue(&border.style)?
@@ -296,8 +297,8 @@ impl Frame {
     pub fn draw_west(&self, w: &mut impl std::io::Write) -> std::io::Result<()> {
         // border
         if let Some(border) = self.params.border {
-            let (nwx, nwy) = self.border_rect.northwest().into();
-            let (swx, swy) = self.border_rect.southwest().into();
+            let Pos(nwx, nwy) = self.border_rect.northwest();
+            let Pos(swx, swy) = self.border_rect.southwest();
             w
                 .queue(SetAttribute(Attribute::Reset))?
                 .queue(&border.style)?
@@ -331,10 +332,10 @@ impl crate::Draw for Frame {
     fn draw(&self, w: &mut impl std::io::Write) -> std::io::Result<()> {
         // border
         if let Some(border) = self.params.border {
-            let (nwx, nwy) = self.border_rect.northwest().into();
-            let (nex, ney) = self.border_rect.northeast().into();
-            let (swx, swy) = self.border_rect.southwest().into();
-            let (sex, sey) = self.border_rect.southeast().into();
+            let Pos(nwx, nwy) = self.border_rect.northwest();
+            let Pos(nex, ney) = self.border_rect.northeast();
+            let Pos(swx, swy) = self.border_rect.southwest();
+            let Pos(sex, sey) = self.border_rect.southeast();
             w
                 .queue(SetAttribute(Attribute::Reset))?
                 .queue(&border.style)?
