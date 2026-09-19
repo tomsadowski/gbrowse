@@ -9,37 +9,11 @@ pub fn parse_color(v: &toml::Value) -> Result<Color, String> {
             if let Some('#') = s.chars().next() {
                 parse_hex_color(&s[1..])
             } else {
-                parse_color_name(&s)
+                Err(format!("{s}"))
             }
         _ => Err(format!("
             could not parse color from value {v}
         ")),
-    }
-}
-
-pub fn parse_color_name(s: &str) -> Result<Color, String> {
-    match s {
-        "Red"         | "red"         => Ok(Color::Red),
-        "Yellow"      | "yellow"      => Ok(Color::Yellow),
-        "Green"       | "green"       => Ok(Color::Green),
-        "Cyan"        | "cyan"        => Ok(Color::Cyan),
-        "Blue"        | "blue"        => Ok(Color::Blue),
-        "Magenta"     | "magenta"     => Ok(Color::Magenta),
-        "Black"       | "black"       => Ok(Color::Black),
-        "White"       | "white"       => Ok(Color::White),
-        "Grey"        | "grey"     | 
-        "Gray"        | "gray"        => Ok(Color::Grey),
-        "DarkGrey"    | "darkgrey" | 
-        "DarkGray"    | "darkgray"    => Ok(Color::DarkGrey),
-        "DarkRed"     | "darkred"     => Ok(Color::DarkRed),
-        "DarkYellow"  | "darkyellow"  => Ok(Color::DarkYellow),
-        "DarkGreen"   | "darkgreen"   => Ok(Color::DarkGreen),
-        "DarkCyan"    | "darkcyan"    => Ok(Color::DarkCyan),
-        "DarkBlue"    | "darkblue"    => Ok(Color::DarkBlue),
-        "DarkMagenta" | "darkmagenta" => Ok(Color::DarkMagenta),
-        _ => Err(format!("
-            could not parse color from value {s}
-        "))
     }
 }
 

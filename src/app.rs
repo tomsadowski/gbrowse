@@ -243,13 +243,11 @@ impl App {
                 if 0 == self.view.tabs.data.len() {
                     self.edit_dlg(
                         Task::Init(self.config.init_url.clone()), 
-                        &format!("Network error: {e}."),
+                        &format!("{e}"),
                         &self.config.init_url.clone(),
                     );
                 } else {
-                    self.ack_dlg(&format!(
-                        "Network error: {e}.
-                    "));
+                    self.ack_dlg(&format!("{e}"));
                 }
                 self.view.reset_frame();
             }
@@ -294,7 +292,6 @@ impl App {
             }
         }
     }
-
 
     pub fn select_link(&mut self, url_str: &str) {
         match self.view.tabs
@@ -555,7 +552,6 @@ impl App {
         } 
     }
 
-
     pub fn get_update(&self, event: crossterm::event::Event) -> Option<Msg> {
         use crossterm::event::{
             Event, KeyEvent, KeyEventKind, KeyModifiers, KeyCode,
@@ -586,7 +582,6 @@ impl App {
             _ => None,
         }
     }
-
 
     pub fn draw(&self, w: &mut impl std::io::Write) -> std::io::Result<()> {
         use crossterm::{QueueableCommand, cursor, terminal};

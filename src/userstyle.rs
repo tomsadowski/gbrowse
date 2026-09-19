@@ -319,23 +319,39 @@ impl UserAssign<Map<String, Value>> for Style {
     type Field = StyleField;
 
     fn assign(
-        &mut self, field: Self::Field, value: Value, ctx: &Map<String, Value>
-    ) -> Result<(), String> {
+        &mut self, 
+        field:   Self::Field, 
+        value:   Value, 
+        palette: &Map<String, Value>
 
+    ) -> Result<(), String> 
+    {
         match (field, value) {
             (StyleField::Color(field), value) => {
-                let value = 
-                    if let Value::String(string) = &value
-                    && let Some('_') = string.chars().next() 
-                    && let Some(value) = ctx.get(&string[1..])
-                    {
-                        value.clone()
-                    } else {
-                        value
-                    };
-                let value = color::parse_color(&value).map_err(
-                    |e| format!("{value:?}: {e}")
-                )?;
+                let value = match &value {
+                    Value::String(string) => {
+                        if let Some(value) = palette.get(string)
+                        && let Value::String(string) = value
+                        && let Some('#') = string.chars().next()
+                        {
+                            color::parse_hex_color(&string[1..])?
+                        }
+                        else if let Some('#') = string.chars().next() {
+                            color::parse_hex_color(&string[1..])?
+                        } else {
+                            return Err(format!("
+                                {string} is a toml string type, 
+                                but it does not refer to 
+                                a variable in the palette table, 
+                                nor is it a hex value (#RRGGBB). 
+                            "))
+                        }
+                    }
+                    value => return Err(format!("
+                        {value:?} is of a toml type that can not be used
+                        in a color assignment.
+                    "))
+                };
                 match field {
                     ColorField::Fg => self.fg = Some(value),
                     ColorField::Bg => self.bg = Some(value),

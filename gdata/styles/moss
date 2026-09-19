@@ -2,47 +2,47 @@
 
 palette = {
   black    = "#202225",
-  dgrey    = "#707880",
-  grey     = "#b8b9c0",
+  grey     = "#aaabb0",
   white    = "#b8a098",
 
   green    = "#bca47c",
   cyan     = "#709080",
-  magenta  = "#c698ac",
+  magenta  = "#c494ac",
   red      = "#e08c78",
 
-  dmagenta = "#402c40",
-  dyellow  = "#4c4844",
-  dblue    = "#30343a",
+  darkmagenta = "#402c40",
+  darkgrey    = "#707880",
+  darkyellow  = "#4c4844",
+  darkblue    = "#30343a",
 }
 border = {
-  fg      = "_dgrey", 
-  bg      = "_black", 
+  fg      = "darkgrey", 
+  bg      = "black", 
   corner  = "round", 
   bracket = "space"
 }
 dialog_border = {
-  fg      = "_grey",
-  bg      = "_black",
+  fg      = "grey",
+  bg      = "black",
   corner  = "round",
   bracket = "space"
 }
-dialog_heading = {fg = "_grey",   bg = "_black", bold = true}
-dialog_body    = {fg = "_white",  bg = "_black"}
-banner         = {fg = "_grey"}
-footer         = {fg = "_grey"}
-general        = {fg = "_white",  bg = "_black"}
-list           = {fg = "_grey"}
-preformat      = {fg = "_magenta", wrap = false}
-quote          = {fg = "_grey"}
-link           = {fg = "_cyan"}
-h1             = {fg = "_red", underline = true}
-h2             = {fg = "_green", underline = true}
-h3             = {fg = "_green"}
+dialog_heading = {fg = "grey",   bg = "black", bold = true}
+dialog_body    = {fg = "white",  bg = "black"}
+banner         = {fg = "grey"}
+footer         = {fg = "grey"}
+general        = {fg = "white",  bg = "black"}
+list           = {fg = "grey"}
+preformat      = {fg = "magenta", wrap = false}
+quote          = {fg = "grey"}
+link           = {fg = "cyan"}
+h1             = {fg = "red", underline = true}
+h2             = {fg = "green", underline = true}
+h3             = {fg = "green"}
 text           = {wrap = true}
 
 screen_margin        = {n = 2, s = 2, e = 16, w = 16}
 text_margin          = {n = 1, s = 1, e = 4, w = 4}
 
-dialog_screen_margin = {n = 2, s = 2, e = 4, w = 4}
-dialog_text_margin   = {n = 1, s = 1, e = 4, w = 4}
+#dialog_screen_margin = {n = 2, s = 2, e = 4, w = 4}
+#dialog_text_margin   = {n = 1, s = 1, e = 4, w = 4}
