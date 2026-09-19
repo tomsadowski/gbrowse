@@ -33,7 +33,7 @@ banner         = {fg = "grey"}
 footer         = {fg = "grey"}
 general        = {fg = "white",  bg = "black"}
 list           = {fg = "grey"}
-preformat      = {fg = "mgenta", wrap = false}
+preformat      = {fg = "magenta", wrap = false}
 quote          = {fg = "grey"}
 link           = {fg = "cyan"}
 h1             = {fg = "red", underline = true}
