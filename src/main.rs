@@ -63,6 +63,10 @@ pub use crate::user::{
     UserConfig,
     UserAssign,
     UserTable,
+    AssignResult,
+    AssignErr,
+    ValueResult,
+    ValueErr,
 };
 pub use crate::cursor::{
     Cursor, 

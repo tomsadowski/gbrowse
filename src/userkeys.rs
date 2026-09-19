@@ -4,6 +4,10 @@ use crate::{
     UserAssign,
     Action,
     DialogType,
+    AssignResult,
+    AssignErr,
+    ValueResult,
+    ValueErr,
 };
 use crossterm::event::KeyCode;
 
@@ -60,10 +64,10 @@ impl Default for KeyConfig {
 impl UserAssign<()> for KeyConfig {
     type Field = Action;
 
-    fn assign(&mut self, field: Self::Field, value: toml::Value, _: &()) 
-        -> Result<(), String> 
+    fn assign(&mut self, field: &Self::Field, value: toml::Value, _: &()) 
+        -> AssignResult 
     {
-        let get_keycode = || -> Result<KeyCode, String> {
+        let get_keycode = || -> ValueResult<KeyCode> {
             if let toml::Value::String(s) = value {
                 match s.as_str() {
                     "esc" | "escape" => Ok(KeyCode::Esc),
@@ -81,13 +85,15 @@ impl UserAssign<()> for KeyConfig {
                         .chars()
                         .next()
                         .map(KeyCode::Char)
-                        .ok_or("could not parse keycode from string".into()),
+                        .ok_or(ValueErr::InvalidParse("could not parse keycode from string".into())),
                 }
             } else {
-                Err("could not parse keycode from value".into())
+                Err(ValueErr::InvalidTomlType(value))
             }
         };
-        let value = get_keycode()?;
+        let value = get_keycode().map_err(|e| 
+            AssignErr(format!("{field:?}"), e)
+        )?;
         match field {
             Action::LoadUrl    => self.load_url    = value,
             Action::SaveUrl    => self.save_url    = value,

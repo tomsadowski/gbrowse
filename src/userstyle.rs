@@ -4,6 +4,10 @@
 use crate::{
     UserAssign, 
     UserTable,
+    AssignResult,
+    AssignErr,
+    ValueResult,
+    ValueErr,
     MarginParams,
     BorderParams,
     TextParams,
@@ -261,25 +265,27 @@ impl UserAssign<()> for StyleConfig {
     }
 
     fn assign(
-        &mut self, field: Self::Field, value: Value, _: &()
-    ) -> Result<(), String> {
+        &mut self, field: &Self::Field, value: Value, _: &()
+    ) -> AssignResult {
 
         match (field, value) {
-            (StyleConfigField::Border(field), Value::Table(value)) => {
+            (StyleConfigField::Border(border), Value::Table(value)) => {
                 let (value, result) = BorderParams::from_table(
                     value, &self.palette
                 );
-                match field {
+                match border {
                     BorderField::App => self.border = Some(value),
                     BorderField::Dialog => self.dialog_border = value,
                 }
-                result
+                result.map_err(|e| AssignErr(
+                    format!("field:?"), ValueErr::Msg(e)
+                ))
             }
-            (StyleConfigField::Text(field), Value::Table(value)) => {
+            (StyleConfigField::Text(text), Value::Table(value)) => {
                 let (value, result) = TextParams::from_table(
                     value, &self.palette
                 );
-                match field {
+                match text {
                     StyleTextField::General       => self.general = value,
                     StyleTextField::Banner        => self.banner = value,
                     StyleTextField::Footer        => self.footer = value,
@@ -296,7 +302,9 @@ impl UserAssign<()> for StyleConfig {
                     StyleTextField::List          => self.list = value,
                     
                 }
-                result
+                result.map_err(|e| AssignErr(
+                    format!("field:?"), ValueErr::Msg(e)
+                ))
             }
             (StyleConfigField::Margin(field), Value::Table(value)) => {
                 let (value, result) = MarginParams::from_table(value, &());
@@ -306,18 +314,22 @@ impl UserAssign<()> for StyleConfig {
                     StyleMarginField::DialogText   => self.dialog_text_margin = value,
                     StyleMarginField::DialogScreen => self.dialog_screen_margin = value,
                 }
-                result
+                result.map_err(|e| AssignErr(
+                    format!("field:?"), ValueErr::Msg(e)
+                ))
             }
-            (field, value) => Err(format!("
-                field {field:?} value {value:?} not valid here
-            ")),
+            (field, value) => Err(AssignErr(
+                format!("{field:?}"), ValueErr::InvalidTomlType(value)
+            )),
         }
     }
 }
 
 
+
+
 pub fn parse_color(value: &toml::Value, palette: &Map<String, Value>) 
-    -> Result<crossterm::style::Color, String> 
+    -> ValueResult<crossterm::style::Color> 
 {
     match &value {
         Value::String(string) => {
@@ -326,21 +338,20 @@ pub fn parse_color(value: &toml::Value, palette: &Map<String, Value>)
             && let Some('#') = string.chars().next()
             {
                 color::parse_hex_color(&string[1..])
+                    .map_err(|e| ValueErr::InvalidParse(e))
             }
             else if let Some('#') = string.chars().next() {
                 color::parse_hex_color(&string[1..])
+                    .map_err(|e| ValueErr::InvalidParse(e))
             } else {
-                return Err(format!("
-                Color error for value `{string}`:
-                    `{string}` does not refer to a variable in the palette table, 
-                    nor is it a hex value (#RRGGBB). 
-                "))
+                return Err(ValueErr::InvalidParse(format!("
+                    Color error for value `{string}`:
+                        `{string}` does not refer to a variable in the palette table, 
+                        nor is it a hex value (#RRGGBB). 
+                ")))
             }
         }
-        value => return Err(format!("
-                {value:?} is of a toml type that can not be used
-                in a color assignment.
-        "))
+        value => return Err(ValueErr::InvalidTomlType((*value).clone()))
     }
 }
 
@@ -349,30 +360,30 @@ impl UserAssign<Map<String, Value>> for Style {
 
     fn assign(
         &mut self, 
-        field:   Self::Field, 
+        field:   &Self::Field, 
         value:   Value, 
         palette: &Map<String, Value>
 
-    ) -> Result<(), String> 
-    {
+    ) -> AssignResult {
+
         match (field, value) {
             (StyleField::Color(field), value) => {
                 let value = parse_color(&value, palette)
-                    .map_err(|e| format!("{field:?}\n{e}"))?;
+                    .map_err(|e| AssignErr(format!("{field:?}"), e))?;
                 match field {
                     ColorField::Fg => self.fg = Some(value),
                     ColorField::Bg => self.bg = Some(value),
                 }
             }
-            (StyleField::Attribute(field), Value::Boolean(value)) => {
-                match field {
+            (StyleField::Attribute(attr), Value::Boolean(value)) => {
+                match attr {
                     AttributeField::Bold      => self.bold = value,
                     AttributeField::Underline => self.underline = value,
                 }
             }
-            (field, value) => return Err(format!("
-                field {field:?} value {value:?} not valid here
-            ")),
+            (field, value) => return Err(AssignErr(
+                format!("{field:?}"), ValueErr::InvalidTomlType(value)
+            )),
         }
         Ok(())
     }
@@ -382,13 +393,16 @@ impl UserAssign<()> for MarginParams {
     type Field = MarginParamsField;
 
     fn assign(
-        &mut self, field: Self::Field, value: Value, _: &()
-    ) -> Result<(), String> {
+        &mut self, field: &Self::Field, value: Value, _: &()
+    ) -> AssignResult {
 
         match (field, value) {
             (field, Value::Integer(value)) => {
                 let value = u16::try_from(value).map_err(
-                    |e| format!("{value:?} : {e}")
+                    |e| AssignErr(
+                        format!("{field:?})"), 
+                        ValueErr::InvalidParse(e.to_string())
+                    )
                 )?;
                 match field {
                     MarginParamsField::North => self.north = value,
@@ -397,9 +411,10 @@ impl UserAssign<()> for MarginParams {
                     MarginParamsField::West  => self.west = value,
                 }
             }
-            (_, value) => return Err(format!("
-                Margin must be a number, not {value:?}
-            ")),
+            (field, value) => return Err(AssignErr(
+                format!("{field:?}"),
+                ValueErr::InvalidTomlType(value)
+            )),
         }
         Ok(())
     }
@@ -409,8 +424,8 @@ impl UserAssign<Map<String, Value>> for BorderParams {
     type Field = BorderParamsField;
 
     fn assign(
-        &mut self, field: Self::Field, value: Value, ctx: &Map<String, Value>
-    ) -> Result<(), String> {
+        &mut self, field: &Self::Field, value: Value, ctx: &Map<String, Value>
+    ) -> AssignResult {
 
         match (field, value) {
             (BorderParamsField::Style(field), value) => {
@@ -430,9 +445,10 @@ impl UserAssign<Map<String, Value>> for BorderParams {
                         self.southwest = util::SW_RND;
                         self.southeast = util::SE_RND;
                     }
-                    value => return Err(format!("
-                        Corner field does not contain {value}
-                    ")),
+                    value => return Err(AssignErr(
+                        format!("{field:?}"),
+                        ValueErr::InvalidParse(value.into())
+                    )),
                 }
             }
             (BorderParamsField::Bracket, Value::String(value)) => {
@@ -457,14 +473,16 @@ impl UserAssign<Map<String, Value>> for BorderParams {
                         self.open = util::OPEN_E;
                         self.close = util::CLOSE_E;
                     }
-                    value => return Err(format!("
-                        Bracket field does not contain {value}
-                    ")),
+                    value => return Err(AssignErr(
+                        format!("{field:?}"),
+                        ValueErr::InvalidParse(value.into())
+                    )),
                 }
             }
-            (field, value) => return Err(format!("
-                field {field:?} value {value:?} not valid here
-            ")),
+            (field, value) => return Err(AssignErr(
+                format!("{field:?}"),
+                ValueErr::InvalidTomlType(value)
+            )),
         }
         Ok(())
     }
@@ -474,8 +492,8 @@ impl UserAssign<Map<String, Value>> for TextParams {
     type Field = TextStyleParamsField;
 
     fn assign(
-        &mut self, field: Self::Field, value: Value, ctx: &Map<String, Value>
-    ) -> Result<(), String> {
+        &mut self, field: &Self::Field, value: Value, ctx: &Map<String, Value>
+    ) -> AssignResult {
 
         match (field, value) {
             (TextStyleParamsField::Wrap, Value::Boolean(value)) => {
@@ -484,9 +502,10 @@ impl UserAssign<Map<String, Value>> for TextParams {
             (TextStyleParamsField::Style(field), value) => {
                 self.style.assign(field, value, ctx)?;
             }
-            (field, value) => return Err(format!("
-                field {field:?} value {value:?} not valid here
-            ")),
+            (field, value) => return Err(AssignErr(
+                format!("{field:?}"),
+                ValueErr::InvalidTomlType(value)
+            )),
         }
         Ok(())
     }

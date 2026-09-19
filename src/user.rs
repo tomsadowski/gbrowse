@@ -8,12 +8,43 @@ use crate::{
 
 
 
+#[derive(Debug)]
+pub enum ValueErr {
+    InvalidTomlType(toml::Value),
+    InvalidParse(String),
+    Msg(String),
+}
+
+impl std::fmt::Display for ValueErr {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            Self::InvalidTomlType(t)  => write!(f, "Invalid type {t:?}"),
+            Self::InvalidParse(s) => write!(f, "Invalid value: {s}"),
+            Self::Msg(msg) => write!(f, "{msg}"),
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct AssignErr(pub String, pub ValueErr);
+
+impl std::fmt::Display for AssignErr {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        let Self(field, value) = self;
+        write!(f, "{field}: {value}")
+    }
+}
+
+pub type ValueResult<T> = std::result::Result<T, ValueErr>;
+
+pub type AssignResult = std::result::Result<(), AssignErr>;
+
 pub trait UserAssign<C> {
     type Field;
 
     // C is context provided by caller
-    fn assign(&mut self, _: Self::Field, _: toml::Value, _: &C)
-        -> Result<(), String>;
+    fn assign(&mut self, _: &Self::Field, _: toml::Value, _: &C)
+        -> AssignResult;
 
     // default to empty implementation
     fn load_context(&mut self, _: &mut toml::Table) {}
@@ -52,8 +83,8 @@ where   T: UserAssign<C, Field = F> + Default,
         for (key, value) in table.into_iter() {
             if let Ok(field) = F::from_str(&key)
                 .inspect_err(|e| errors.push_str(&e)) 
-            && let _ = user_table.assign(field, value, context)
-                .inspect_err(|e| errors.push_str(&e)) {}
+            && let _ = user_table.assign(&field, value, context)
+                .inspect_err(|e| errors.push_str(&format!("{e}"))) {}
         }
         if errors.len() > 0 {
             (user_table, Err(errors))
@@ -89,8 +120,8 @@ where   T: UserAssign<C, Field = F> + Default,
         for (key, value) in table.into_iter() {
             if let Ok(field) = F::from_str(&key)
                 .inspect_err(|e| errors.push_str(&e)) 
-            && let _ = self.assign(field, value, context)
-                .inspect_err(|e| errors.push_str(&e)) {}
+            && let _ = self.assign(&field, value, context)
+                .inspect_err(|e| errors.push_str(&e.to_string())) {}
         }
         if errors.len() > 0 {
             Err(errors)
@@ -176,8 +207,8 @@ impl Default for UserConfig {
 
 impl UserAssign<()> for UserConfig {
     type Field = UserConfigField;
-    fn assign(&mut self, field: Self::Field, value: toml::Value, ctx: &()) 
-        -> Result<(), String> 
+    fn assign(&mut self, field: &Self::Field, value: toml::Value, ctx: &()) 
+        -> AssignResult 
     {
         use toml::Value;
         match (field, value) {
@@ -188,35 +219,52 @@ impl UserAssign<()> for UserConfig {
                 self.save_file = format!("{}/{value}", util::DATA_PATH);
             }
             (UserConfigField::Timeout, Value::Integer(value)) => {
-                self.timeout = u64::try_from(value).map_err(|e| e.to_string())?;
+                self.timeout = u64::try_from(value)
+                    .map_err(|e| 
+                        AssignErr(
+                            format!("{field:?}"),
+                            ValueErr::InvalidParse(e.to_string())
+                    ))?;
             }
             // read style from another file
-            (UserConfigField::Style, Value::String(value)) => {
-                self.style.update_from_str(&std::fs::read_to_string(
-                        util::get_styles_file(&value)).map_err(|e| e.to_string()
-                    )?,
-                    ctx
-                )?;
+            (UserConfigField::Style, Value::String(string)) => {
+                let string = &std::fs::read_to_string(util::get_keys_file(&string))
+                    .map_err(|e| AssignErr(
+                        format!("{field:?}"), ValueErr::Msg(e.to_string())
+                    ))?;
+                self.style.update_from_str(string, ctx)
+                    .map_err(|e| AssignErr(
+                        format!("{field:?}"), ValueErr::Msg(e.to_string())
+                    ))?;
             }
             // read style from this file
             (UserConfigField::Style, Value::Table(value)) => {
-                self.style.update_from_table(value, ctx)?;
+                self.style.update_from_table(value, ctx)
+                    .map_err(|e| AssignErr(
+                        format!("{field:?}"), ValueErr::Msg(e.to_string())
+                    ))?;
             }
             // read keys from another file
-            (UserConfigField::Keys, Value::String(value)) => {
-                self.keys.update_from_str(&std::fs::read_to_string(
-                        util::get_keys_file(&value)).map_err(|e| e.to_string()
-                    )?,
-                    ctx
-                )?;
+            (UserConfigField::Keys, Value::String(string)) => {
+                let string = &std::fs::read_to_string(util::get_keys_file(&string))
+                    .map_err(|e| AssignErr(
+                        format!("{field:?}"), ValueErr::Msg(e.to_string())
+                    ))?;
+                self.keys.update_from_str(string, ctx)
+                    .map_err(|e| AssignErr(
+                        format!("{field:?}"), ValueErr::Msg(e.to_string())
+                    ))?;
             }
             // read keys from this file
             (UserConfigField::Keys, Value::Table(value)) => {
-                self.keys.update_from_table(value, ctx)?;
+                self.keys.update_from_table(value, ctx)
+                    .map_err(|e| AssignErr(
+                        format!("{field:?}"), ValueErr::Msg(e.to_string())
+                    ))?;
             }
-            (field, value) => return Err(format!("
-                field {field:?} value {value:?} not valid here
-            "))
+            (field, value) => return Err(AssignErr(
+                format!("{field:?}"), ValueErr::InvalidTomlType(value)
+            ))
         }
         Ok(())
     }
