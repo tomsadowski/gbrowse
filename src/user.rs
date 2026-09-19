@@ -228,7 +228,7 @@ impl UserAssign<()> for UserConfig {
             }
             // read style from another file
             (UserConfigField::Style, Value::String(string)) => {
-                let string = &std::fs::read_to_string(util::get_keys_file(&string))
+                let string = &std::fs::read_to_string(util::get_styles_file(&string))
                     .map_err(|e| AssignErr(
                         format!("{field:?}"), ValueErr::Msg(e.to_string())
                     ))?;
