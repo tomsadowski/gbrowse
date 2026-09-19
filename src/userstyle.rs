@@ -315,6 +315,35 @@ impl UserAssign<()> for StyleConfig {
     }
 }
 
+
+pub fn parse_color(value: &toml::Value, palette: &Map<String, Value>) 
+    -> Result<crossterm::style::Color, String> 
+{
+    match &value {
+        Value::String(string) => {
+            if let Some(value) = palette.get(string)
+            && let Value::String(string) = value
+            && let Some('#') = string.chars().next()
+            {
+                color::parse_hex_color(&string[1..])
+            }
+            else if let Some('#') = string.chars().next() {
+                color::parse_hex_color(&string[1..])
+            } else {
+                return Err(format!("
+                Color error for value `{string}`:
+                    `{string}` does not refer to a variable in the palette table, 
+                    nor is it a hex value (#RRGGBB). 
+                "))
+            }
+        }
+        value => return Err(format!("
+                {value:?} is of a toml type that can not be used
+                in a color assignment.
+        "))
+    }
+}
+
 impl UserAssign<Map<String, Value>> for Style {
     type Field = StyleField;
 
@@ -328,30 +357,8 @@ impl UserAssign<Map<String, Value>> for Style {
     {
         match (field, value) {
             (StyleField::Color(field), value) => {
-                let value = match &value {
-                    Value::String(string) => {
-                        if let Some(value) = palette.get(string)
-                        && let Value::String(string) = value
-                        && let Some('#') = string.chars().next()
-                        {
-                            color::parse_hex_color(&string[1..])?
-                        }
-                        else if let Some('#') = string.chars().next() {
-                            color::parse_hex_color(&string[1..])?
-                        } else {
-                            return Err(format!("
-                                {string} is a toml string type, 
-                                but it does not refer to 
-                                a variable in the palette table, 
-                                nor is it a hex value (#RRGGBB). 
-                            "))
-                        }
-                    }
-                    value => return Err(format!("
-                        {value:?} is of a toml type that can not be used
-                        in a color assignment.
-                    "))
-                };
+                let value = parse_color(&value, palette)
+                    .map_err(|e| format!("{field:?}\n{e}"))?;
                 match field {
                     ColorField::Fg => self.fg = Some(value),
                     ColorField::Bg => self.bg = Some(value),

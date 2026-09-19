@@ -3,20 +3,6 @@
 use crossterm::style::Color;
 
 
-pub fn parse_color(v: &toml::Value) -> Result<Color, String> {
-    match v {
-        toml::Value::String(s) => 
-            if let Some('#') = s.chars().next() {
-                parse_hex_color(&s[1..])
-            } else {
-                Err(format!("{s}"))
-            }
-        _ => Err(format!("
-            could not parse color from value {v}
-        ")),
-    }
-}
-
 pub fn parse_hex_color(s: &str) -> Result<Color, String> {
     fn try_hex(c: char) -> Result<u8, String> {
         match c {
