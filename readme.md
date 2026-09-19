@@ -79,8 +79,8 @@ priority. Some justification for leaving that feature out might be
 that doing so minimizes the possibility that a key assignment
 collides with one used by your operating system, window manager, 
 terminal emulator, terminal multiplexer, etc. For example, if you 
-assigned CTL-C to the `new_tab` function, but forgot your OS or 
-terminal already uses CTL-C to paste text, you wouldn't see gbrowse 
+assigned CTL-V to the `new_tab` function, but forgot your OS or 
+terminal already uses CTL-V to paste text, you wouldn't see gbrowse 
 create a new tab, nor would you see any text pasted. You'd see nothing, and
 that's just depressing. 
 Leaving the feature out also means that when you're setting keyboard 
