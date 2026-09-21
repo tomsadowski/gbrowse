@@ -60,7 +60,8 @@ pub struct App {
 } 
 
 impl App {
-    pub fn init(config_str: String, w: u16, h: u16) -> Self {
+    pub fn init(path: String, w: u16, h: u16) -> Self {
+        let config_str = std::fs::read_to_string(path).unwrap_or_default();
         let (config, config_result) = UserConfig::from_str(&config_str, &());
         let view = AppView::new(
             &Rect::from(Dim(w, h)), 
