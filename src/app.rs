@@ -60,8 +60,7 @@ pub struct App {
 } 
 
 impl App {
-    pub fn init(path: &str, w: u16, h: u16) -> Self {
-        let config_str = std::fs::read_to_string(path).unwrap_or_default();
+    pub fn init(config_str: String, w: u16, h: u16) -> Self {
         let (config, config_result) = UserConfig::from_str(&config_str, &());
         let view = AppView::new(
             &Rect::from(Dim(w, h)), 
@@ -77,32 +76,32 @@ impl App {
             config,
         };
         match (url::Url::parse(&app.config.init_url), config_result) {
-            (Err(e), Err(msg)) => {
-                app.edit_dlg(
-                    Task::Init(app.config.init_url.clone()), 
-                    &format!("
-                        Config issue: {msg},
-                        {e}, enter revised URL:
-                    "), 
-                    &app.config.init_url.clone(),
-                );
-            }
-            (Err(e), Ok(())) => {
-                app.edit_dlg(
-                    Task::Init(app.config.init_url.clone()), 
-                    &format!("
-                        {e}, enter revised URL:
-                    "), 
-                    &app.config.init_url.clone(),
-                );
-            }
-            (Ok(url), Err(msg)) => {
-                app.ack_dlg(&format!("Config issue: {msg}"));
-                app.spawn_request(&url);
-            }
-            (Ok(url), Ok(())) => {
+            (Ok(url), Ok(_)) => {
                 app.focus_tabs();
                 app.spawn_request(&url);
+            }
+            (Ok(url), Err(config_err)) => {
+                app.ack_dlg(&format!("Config Error:\n{config_err}"));
+                app.spawn_request(&url);
+            }
+            (Err(url_parse_err_str), Ok(_)) => {
+                app.edit_dlg(
+                    Task::Init(app.config.init_url.clone()), 
+                    &format!("
+                        {url_parse_err_str}. Enter revised URL:
+                    "), 
+                    &app.config.init_url.clone(),
+                );
+            }
+            (Err(url_parse_err_str), Err(config_err)) => {
+                app.edit_dlg(
+                    Task::Init(app.config.init_url.clone()), 
+                    &format!("
+                        Config Error:\n{config_err},
+                        {url_parse_err_str}. Enter revised URL:
+                    "), 
+                    &app.config.init_url.clone(),
+                );
             }
         }
         app
@@ -391,37 +390,41 @@ impl App {
                 }
                 (Task::ChangeKeys, Action::Select, DialogType::Select) => {
                     match std::fs::read_to_string(
-                        util::get_keys_file(&body.get_param_string())
+                        util::get_keys_file_path(&body.get_param_string())
                     ) {
-                        Err(e) => {
-                            self.ack_dlg(&format!("Problem: {e}"))
+                        Err(fs_err) => {
+                            self.ack_dlg(&format!("
+                                Could not update config:\n{fs_err}
+                            "))
                         }
-                        Ok(s) => {
-                            if let Err(e) = self.config.keys
-                                .update_from_str(&s, &()) 
-                            {
-                                self.ack_dlg(&format!("Problem: {e}"));
-                            } else {
-                                self.focus_tabs();
+                        Ok(config_str) => {
+                            let (config, config_result) = 
+                                UserConfig::from_str(&config_str, &());
+                            if let Err(config_err) = config_result {
+                                self.ack_dlg(&format!("
+                                    Config Error:\n{config_err}
+                                "));
                             }
+                            self.config = config;
                         }
                     }
                 }
                 (Task::ChangeStyle, Action::Select, DialogType::Select) => {
                     match std::fs::read_to_string(
-                        util::get_styles_file(&body.get_param_string())
+                        util::get_styles_file_path(&body.get_param_string())
                     ) {
                         Err(e) => {
                             self.ack_dlg(&e.to_string());
                         }
-                        Ok(s) => {
-                            if let Err(e) = self.config.style
-                                .update_from_str(&s, &()) 
-                            {
-                                self.ack_dlg(&e.to_string());
-                            } else {
-                                self.focus_tabs();
+                        Ok(config_str) => {
+                            let (config, config_result) = 
+                                UserConfig::from_str(&config_str, &());
+                            if let Err(config_err) = config_result {
+                                self.ack_dlg(&format!("
+                                    Config Error:\n{config_err}
+                                "));
                             }
+                            self.config = config;
                             self.push_style();
                         }
                     }

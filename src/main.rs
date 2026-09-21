@@ -113,7 +113,7 @@ fn main() -> std::io::Result<()> {
             Some(init) => util::get_init_file(init),
         };
         let (w, h) = terminal::size()?;
-        app::App::init(&init, w, h)
+        app::App::init(init, w, h)
     };
     let mut stdout = std::io::stdout();
 

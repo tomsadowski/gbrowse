@@ -73,9 +73,6 @@ pub trait UserTable<C>: Sized {
     // returned an error
     fn update_from_table(&mut self, _: toml::Table, _: &C) 
         -> Result<(), String>;
-
-    // same idea as `update_from_table`
-    fn update_from_str(&mut self, _: &str, _: &C) -> Result<(), String>;
 }
 
 
@@ -138,13 +135,6 @@ where   T: UserAssign<C, Field = F> + Default,
         } else {
             Ok(())
         }
-    }
-
-    fn update_from_str(&mut self, s: &str, ctx: &C) -> Result<(), String> {  
-        let mut table = s.parse::<toml::Table>()
-            .map_err(|e| e.to_string())?;
-        self.load_context(&mut table);
-        self.update_from_table(table, ctx)
     }
 }
 
@@ -237,39 +227,55 @@ impl UserAssign<()> for UserConfig {
             }
             // read style from another file
             (UserConfigField::Style, Value::String(string)) => {
-                let string = &std::fs::read_to_string(util::get_styles_file(&string))
+                let string = &std::fs::read_to_string(
+                    util::get_styles_file_path(&string)
+                )
                     .map_err(|e| AssignErr::new(
                         field, ValueErr::Message(e.to_string())
                     ))?;
-                self.style.update_from_str(string, ctx)
-                    .map_err(|e| AssignErr::new(
+                let (style, style_result) = StyleConfig::from_str(string, ctx);
+                self.style = style;
+                return style_result.map_err(
+                    |e| AssignErr::new(
                         field, ValueErr::Message(e.to_string())
-                    ))?;
+                    )
+                )
             }
             // read style from this file
-            (UserConfigField::Style, Value::Table(value)) => {
-                self.style.update_from_table(value, ctx)
-                    .map_err(|e| AssignErr::new(
+            (UserConfigField::Style, Value::Table(table)) => {
+                let (style, style_result) = StyleConfig::from_table(table, ctx);
+                self.style = style;
+                return style_result.map_err(
+                    |e| AssignErr::new(
                         field, ValueErr::Message(e.to_string())
-                    ))?;
+                    )
+                )
             }
             // read keys from another file
             (UserConfigField::Keys, Value::String(string)) => {
-                let string = &std::fs::read_to_string(util::get_keys_file(&string))
+                let string = &std::fs::read_to_string(
+                    util::get_keys_file_path(&string)
+                )
                     .map_err(|e| AssignErr::new(
                         field, ValueErr::Message(e.to_string())
                     ))?;
-                self.keys.update_from_str(string, ctx)
-                    .map_err(|e| AssignErr::new(
+                let (keys, style_result) = KeyConfig::from_str(string, ctx);
+                self.keys = keys;
+                return style_result.map_err(
+                    |e| AssignErr::new(
                         field, ValueErr::Message(e.to_string())
-                    ))?;
+                    )
+                )
             }
             // read keys from this file
-            (UserConfigField::Keys, Value::Table(value)) => {
-                self.keys.update_from_table(value, ctx)
-                    .map_err(|e| AssignErr::new(
+            (UserConfigField::Keys, Value::Table(table)) => {
+                let (keys, style_result) = KeyConfig::from_table(table, ctx);
+                self.keys = keys;
+                return style_result.map_err(
+                    |e| AssignErr::new(
                         field, ValueErr::Message(e.to_string())
-                    ))?;
+                    )
+                )
             }
             (field, value) => return Err(AssignErr::new(
                 field, ValueErr::InvalidTomlType(value)

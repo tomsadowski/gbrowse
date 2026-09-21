@@ -59,11 +59,11 @@ pub fn get_init_file(f: &str) -> String {
     format!("{DATA_PATH}/{f}")
 }
 
-pub fn get_keys_file(f: &str) -> String {
+pub fn get_keys_file_path(f: &str) -> String {
     format!("{KEYS_PATH}/{f}")
 }
 
-pub fn get_styles_file(f: &str) -> String {
+pub fn get_styles_file_path(f: &str) -> String {
     format!("{STYLES_PATH}/{f}")
 }
 
