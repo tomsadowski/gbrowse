@@ -12,15 +12,15 @@ use crate::{
 pub enum ValueErr {
     InvalidTomlType(toml::Value),
     InvalidParse(String),
-    Msg(String),
+    Message(String),
 }
 
 impl std::fmt::Display for ValueErr {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            Self::InvalidTomlType(t)  => write!(f, "Invalid type {t:?}"),
-            Self::InvalidParse(s) => write!(f, "Invalid value: {s}"),
-            Self::Msg(msg) => write!(f, "{msg}"),
+            Self::InvalidTomlType(t)  => write!(f, "{t:?} is not a valid TOML type"),
+            Self::InvalidParse(s) => write!(f, "Failed to parse value. {s}"),
+            Self::Message(msg) => write!(f, "{msg}"),
         }
     }
 }
@@ -30,8 +30,18 @@ pub struct AssignErr(pub String, pub ValueErr);
 
 impl std::fmt::Display for AssignErr {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        let Self(field, value) = self;
-        write!(f, "{field}: {value}")
+        let Self(field, value_err) = self;
+        match value_err {
+            ValueErr::InvalidTomlType(_)  => write!(f, "{field}: '{value_err}'"),
+            ValueErr::InvalidParse(_) => write!(f, "{field}: '{value_err}'"),
+            ValueErr::Message(e) => write!(f, "{field} > {e}"),
+        }
+    }
+}
+
+impl AssignErr {
+    pub fn new<F: std::fmt::Display>(field: F, value: ValueErr) -> Self {
+        Self(field.to_string(), value)
     }
 }
 
@@ -163,14 +173,14 @@ impl std::str::FromStr for UserConfigField {
     }
 }
 
-impl ToString for UserConfigField {
-    fn to_string(&self) -> String {
+impl std::fmt::Display for UserConfigField {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-          Self::InitUrl  => "init_url".into(),
-          Self::Timeout  => "timeout".into(),
-          Self::Style    => "style".into(),
-          Self::Keys     => "keys".into(),
-          Self::SaveFile => "save_file".into(),
+            Self::InitUrl  => write!(f, "init_url"),
+            Self::Timeout  => write!(f, "timeout"),
+            Self::Style    => write!(f, "style"),
+            Self::Keys     => write!(f, "keys"),
+            Self::SaveFile => write!(f, "save_file"),
         }
     }
 }
@@ -221,49 +231,48 @@ impl UserAssign<()> for UserConfig {
             (UserConfigField::Timeout, Value::Integer(value)) => {
                 self.timeout = u64::try_from(value)
                     .map_err(|e| 
-                        AssignErr(
-                            format!("{field:?}"),
-                            ValueErr::InvalidParse(e.to_string())
+                        AssignErr::new(
+                            field, ValueErr::InvalidParse(e.to_string())
                     ))?;
             }
             // read style from another file
             (UserConfigField::Style, Value::String(string)) => {
                 let string = &std::fs::read_to_string(util::get_styles_file(&string))
-                    .map_err(|e| AssignErr(
-                        format!("{field:?}"), ValueErr::Msg(e.to_string())
+                    .map_err(|e| AssignErr::new(
+                        field, ValueErr::Message(e.to_string())
                     ))?;
                 self.style.update_from_str(string, ctx)
-                    .map_err(|e| AssignErr(
-                        format!("{field:?}"), ValueErr::Msg(e.to_string())
+                    .map_err(|e| AssignErr::new(
+                        field, ValueErr::Message(e.to_string())
                     ))?;
             }
             // read style from this file
             (UserConfigField::Style, Value::Table(value)) => {
                 self.style.update_from_table(value, ctx)
-                    .map_err(|e| AssignErr(
-                        format!("{field:?}"), ValueErr::Msg(e.to_string())
+                    .map_err(|e| AssignErr::new(
+                        field, ValueErr::Message(e.to_string())
                     ))?;
             }
             // read keys from another file
             (UserConfigField::Keys, Value::String(string)) => {
                 let string = &std::fs::read_to_string(util::get_keys_file(&string))
-                    .map_err(|e| AssignErr(
-                        format!("{field:?}"), ValueErr::Msg(e.to_string())
+                    .map_err(|e| AssignErr::new(
+                        field, ValueErr::Message(e.to_string())
                     ))?;
                 self.keys.update_from_str(string, ctx)
-                    .map_err(|e| AssignErr(
-                        format!("{field:?}"), ValueErr::Msg(e.to_string())
+                    .map_err(|e| AssignErr::new(
+                        field, ValueErr::Message(e.to_string())
                     ))?;
             }
             // read keys from this file
             (UserConfigField::Keys, Value::Table(value)) => {
                 self.keys.update_from_table(value, ctx)
-                    .map_err(|e| AssignErr(
-                        format!("{field:?}"), ValueErr::Msg(e.to_string())
+                    .map_err(|e| AssignErr::new(
+                        field, ValueErr::Message(e.to_string())
                     ))?;
             }
-            (field, value) => return Err(AssignErr(
-                format!("{field:?}"), ValueErr::InvalidTomlType(value)
+            (field, value) => return Err(AssignErr::new(
+                field, ValueErr::InvalidTomlType(value)
             ))
         }
         Ok(())
@@ -271,6 +280,7 @@ impl UserAssign<()> for UserConfig {
 }
 
 impl UserConfig {
+    // may fail when saving a URL or writing to the URL file (2 points)
     pub fn save_url(&mut self, url: &url::Url) -> Result<(), String> {
         let url_str = url.to_string();
         if self.urls.iter().any(|url| **url == url_str) {

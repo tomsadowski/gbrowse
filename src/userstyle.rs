@@ -16,10 +16,10 @@ use crate::{
     GemText,
     FrameParams,
     Style,
-    color,
     util,
 };
 use toml::{Value, map::Map};
+use crossterm::style::Color;
 
 
 
@@ -95,12 +95,51 @@ impl std::str::FromStr for StyleConfigField {
     }
 }
 
+impl std::fmt::Display for StyleConfigField {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            Self::Palette                                => write!(f, "palette"),
+            Self::Border(BorderField::App)               => write!(f, "border"),
+            Self::Border(BorderField::Dialog)            => write!(f, "dialog_border"),
+            Self::Margin(StyleMarginField::Text)         => write!(f, "text_margin"),
+            Self::Margin(StyleMarginField::Screen)       => write!(f, "screen_margin"),
+            Self::Margin(StyleMarginField::DialogText)   => write!(f, "dialog_text_margin"),
+            Self::Margin(StyleMarginField::DialogScreen) => write!(f, "dialog_screen_margin"),
+            Self::Text(StyleTextField::General)          => write!(f, "general"),
+            Self::Text(StyleTextField::Banner)           => write!(f, "banner"),
+            Self::Text(StyleTextField::Footer)           => write!(f, "footer"),
+            Self::Text(StyleTextField::DialogBody)       => write!(f, "dialog_body"),
+            Self::Text(StyleTextField::DialogHeading)    => write!(f, "dialog_heading"),
+            Self::Text(StyleTextField::Text)             => write!(f, "text"),
+            Self::Text(StyleTextField::Heading3)         => write!(f, "heading3"),
+            Self::Text(StyleTextField::Heading2)         => write!(f, "heading2"),
+            Self::Text(StyleTextField::Heading1)         => write!(f, "heading1"),
+            Self::Text(StyleTextField::Preformat)        => write!(f, "preformat"),
+            Self::Text(StyleTextField::Link)             => write!(f, "link"),
+            Self::Text(StyleTextField::Error)            => write!(f, "error"),
+            Self::Text(StyleTextField::Quote)            => write!(f, "quote"),
+            Self::Text(StyleTextField::List)             => write!(f, "list"),
+        }
+    }
+}
+
 #[derive(Debug)]
 pub enum MarginParamsField {
     North, 
     South, 
     East, 
     West
+}
+
+impl std::fmt::Display for MarginParamsField {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            Self::North  => write!(f, "north"),
+            Self::South  => write!(f, "south"),
+            Self::East   => write!(f, "east"),
+            Self::West   => write!(f, "west"),
+        }
+    }
 }
 
 impl std::str::FromStr for MarginParamsField {
@@ -134,6 +173,15 @@ impl std::str::FromStr for TextStyleParamsField {
     }
 }
 
+impl std::fmt::Display for TextStyleParamsField {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            Self::Wrap          => write!(f, "wrap"),
+            Self::Style(style)  => style.fmt(f),
+        }
+    }
+}
+
 #[derive(Debug)]
 pub enum BorderParamsField {
     Style(StyleField), 
@@ -147,7 +195,17 @@ impl std::str::FromStr for BorderParamsField {
         match string {
             "corner"    => Ok(Self::Corner),
             "bracket"   => Ok(Self::Bracket),
-            string => StyleField::from_str(string).map(|s| Self::Style(s))
+            string      => StyleField::from_str(string).map(|s| Self::Style(s))
+        }
+    }
+}
+
+impl std::fmt::Display for BorderParamsField {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            Self::Corner        => write!(f, "corner"),
+            Self::Bracket       => write!(f, "bracket"),
+            Self::Style(style)  => style.fmt(f),
         }
     }
 }
@@ -181,6 +239,17 @@ impl std::str::FromStr for StyleField {
             string => Err(format!("
                 Style table does not contain field {string}
             ")),
+        }
+    }
+}
+
+impl std::fmt::Display for StyleField {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            Self::Color(ColorField::Fg)                => write!(f, "fg"),
+            Self::Color(ColorField::Bg)                => write!(f, "bg"),
+            Self::Attribute(AttributeField::Bold)      => write!(f, "bold"),
+            Self::Attribute(AttributeField::Underline) => write!(f, "underline"),
         }
     }
 }
@@ -270,66 +339,106 @@ impl UserAssign<()> for StyleConfig {
 
         match (field, value) {
             (StyleConfigField::Border(border), Value::Table(value)) => {
-                let (value, result) = BorderParams::from_table(
+                let (string, result) = BorderParams::from_table(
                     value, &self.palette
                 );
                 match border {
-                    BorderField::App => self.border = Some(value),
-                    BorderField::Dialog => self.dialog_border = value,
+                    BorderField::App => self.border = Some(string),
+                    BorderField::Dialog => self.dialog_border = string,
                 }
-                result.map_err(|e| AssignErr(
-                    format!("field:?"), ValueErr::Msg(e)
+                result.map_err(|e| AssignErr::new(
+                    field, ValueErr::Message(e)
                 ))
             }
             (StyleConfigField::Text(text), Value::Table(value)) => {
-                let (value, result) = TextParams::from_table(
+                let (text_params, result) = TextParams::from_table(
                     value, &self.palette
                 );
                 match text {
-                    StyleTextField::General       => self.general = value,
-                    StyleTextField::Banner        => self.banner = value,
-                    StyleTextField::Footer        => self.footer = value,
-                    StyleTextField::DialogBody    => self.dialog_body = value,
-                    StyleTextField::DialogHeading => self.dialog_prompt = value,
-                    StyleTextField::Text          => self.text = value,
-                    StyleTextField::Heading3      => self.heading3 = value,
-                    StyleTextField::Heading2      => self.heading2 = value,
-                    StyleTextField::Heading1      => self.heading1 = value,
-                    StyleTextField::Preformat     => self.preformat = value,
-                    StyleTextField::Link          => self.link = value,
-                    StyleTextField::Error         => self.error = value,
-                    StyleTextField::Quote         => self.quote = value,
-                    StyleTextField::List          => self.list = value,
-                    
+                    StyleTextField::General       => self.general = text_params,
+                    StyleTextField::Banner        => self.banner = text_params,
+                    StyleTextField::Footer        => self.footer = text_params,
+                    StyleTextField::DialogBody    => self.dialog_body = text_params,
+                    StyleTextField::DialogHeading => self.dialog_prompt = text_params,
+                    StyleTextField::Text          => self.text = text_params,
+                    StyleTextField::Heading3      => self.heading3 = text_params,
+                    StyleTextField::Heading2      => self.heading2 = text_params,
+                    StyleTextField::Heading1      => self.heading1 = text_params,
+                    StyleTextField::Preformat     => self.preformat = text_params,
+                    StyleTextField::Link          => self.link = text_params,
+                    StyleTextField::Error         => self.error = text_params,
+                    StyleTextField::Quote         => self.quote = text_params,
+                    StyleTextField::List          => self.list = text_params,
                 }
-                result.map_err(|e| AssignErr(
-                    format!("field:?"), ValueErr::Msg(e)
+                result.map_err(|e| AssignErr::new(
+                    field, ValueErr::Message(e)
                 ))
             }
-            (StyleConfigField::Margin(field), Value::Table(value)) => {
+            (StyleConfigField::Margin(margin), Value::Table(value)) => {
                 let (value, result) = MarginParams::from_table(value, &());
-                match field {
+                match margin {
                     StyleMarginField::Text         => self.text_margin = value,
                     StyleMarginField::Screen       => self.screen_margin = value,
                     StyleMarginField::DialogText   => self.dialog_text_margin = value,
                     StyleMarginField::DialogScreen => self.dialog_screen_margin = value,
                 }
-                result.map_err(|e| AssignErr(
-                    format!("field:?"), ValueErr::Msg(e)
+                result.map_err(|e| AssignErr::new(
+                    field, ValueErr::Message(e)
                 ))
             }
-            (field, value) => Err(AssignErr(
-                format!("{field:?}"), ValueErr::InvalidTomlType(value)
+            (field, value) => Err(AssignErr::new(
+                field, ValueErr::InvalidTomlType(value)
             )),
         }
     }
 }
 
 
+pub fn parse_hex_color(s: &str) -> Result<Color, String> {
+    fn try_hex(c: char) -> Result<u8, String> {
+        match c {
+            '0' => Ok(0),  '1' => Ok(1),  '2' => Ok(2),  '3' => Ok(3),
+            '4' => Ok(4),  '5' => Ok(5),  '6' => Ok(6),  '7' => Ok(7),
+            '8' => Ok(8),  '9' => Ok(9),  'a' => Ok(10), 'b' => Ok(11),
+            'c' => Ok(12), 'd' => Ok(13), 'e' => Ok(14), 'f' => Ok(15),
+            _   => Err(format!("{c} is not a hex character")),
+        }
+    }
+    let mut c = s.chars();
+    let r1 = c
+        .next()
+        .ok_or("Missing 6 hex characters.".into())
+        .and_then(|c| try_hex(c))?;
+    let r2 = c
+        .next()
+        .ok_or("Missing 5 hex characters.".into())
+        .and_then(|c| try_hex(c))?;
+    let g1 = c
+        .next()
+        .ok_or("Missing 4 hex characters.".into())
+        .and_then(|c| try_hex(c))?;
+    let g2 = c
+        .next()
+        .ok_or("Missing 3 hex characters.".into())
+        .and_then(|c| try_hex(c))?;
+    let b1 = c
+        .next()
+        .ok_or("Missing 2 hex characters.".into())
+        .and_then(|c| try_hex(c))?;
+    let b2 = c
+        .next()
+        .ok_or("Missing 1 hex character.".into())
+        .and_then(|c| try_hex(c))?;
 
+    let r = 16 * r1 + r2;
+    let g = 16 * g1 + g2;
+    let b = 16 * b1 + b2;
+
+    Ok(Color::Rgb {r, g, b})
+}
 
 pub fn parse_color(value: &toml::Value, palette: &Map<String, Value>) 
-    -> ValueResult<crossterm::style::Color> 
+    -> ValueResult<Color> 
 {
     match &value {
         Value::String(string) => {
@@ -337,17 +446,15 @@ pub fn parse_color(value: &toml::Value, palette: &Map<String, Value>)
             && let Value::String(string) = value
             && let Some('#') = string.chars().next()
             {
-                color::parse_hex_color(&string[1..])
+                parse_hex_color(&string[1..])
                     .map_err(|e| ValueErr::InvalidParse(e))
             }
             else if let Some('#') = string.chars().next() {
-                color::parse_hex_color(&string[1..])
+                parse_hex_color(&string[1..])
                     .map_err(|e| ValueErr::InvalidParse(e))
             } else {
                 return Err(ValueErr::InvalidParse(format!("
-                    Color error for value `{string}`:
-                        `{string}` does not refer to a variable in the palette table, 
-                        nor is it a hex value (#RRGGBB). 
+                    `{string}` does not refer to a variable in the palette table, nor is it a hex value.
                 ")))
             }
         }
@@ -367,10 +474,10 @@ impl UserAssign<Map<String, Value>> for Style {
     ) -> AssignResult {
 
         match (field, value) {
-            (StyleField::Color(field), value) => {
+            (StyleField::Color(color), value) => {
                 let value = parse_color(&value, palette)
-                    .map_err(|e| AssignErr(format!("{field:?}"), e))?;
-                match field {
+                    .map_err(|e| AssignErr::new(field, e))?;
+                match color {
                     ColorField::Fg => self.fg = Some(value),
                     ColorField::Bg => self.bg = Some(value),
                 }
@@ -381,8 +488,8 @@ impl UserAssign<Map<String, Value>> for Style {
                     AttributeField::Underline => self.underline = value,
                 }
             }
-            (field, value) => return Err(AssignErr(
-                format!("{field:?}"), ValueErr::InvalidTomlType(value)
+            (field, value) => return Err(AssignErr::new(
+                field, ValueErr::InvalidTomlType(value)
             )),
         }
         Ok(())
@@ -399,9 +506,8 @@ impl UserAssign<()> for MarginParams {
         match (field, value) {
             (field, Value::Integer(value)) => {
                 let value = u16::try_from(value).map_err(
-                    |e| AssignErr(
-                        format!("{field:?})"), 
-                        ValueErr::InvalidParse(e.to_string())
+                    |e| AssignErr::new(
+                        field, ValueErr::InvalidParse(e.to_string())
                     )
                 )?;
                 match field {
@@ -411,9 +517,8 @@ impl UserAssign<()> for MarginParams {
                     MarginParamsField::West  => self.west = value,
                 }
             }
-            (field, value) => return Err(AssignErr(
-                format!("{field:?}"),
-                ValueErr::InvalidTomlType(value)
+            (field, value) => return Err(AssignErr::new(
+                field, ValueErr::InvalidTomlType(value)
             )),
         }
         Ok(())
@@ -445,9 +550,8 @@ impl UserAssign<Map<String, Value>> for BorderParams {
                         self.southwest = util::SW_RND;
                         self.southeast = util::SE_RND;
                     }
-                    value => return Err(AssignErr(
-                        format!("{field:?}"),
-                        ValueErr::InvalidParse(value.into())
+                    value => return Err(AssignErr::new(
+                        field, ValueErr::InvalidParse(value.into())
                     )),
                 }
             }
@@ -473,15 +577,13 @@ impl UserAssign<Map<String, Value>> for BorderParams {
                         self.open = util::OPEN_E;
                         self.close = util::CLOSE_E;
                     }
-                    value => return Err(AssignErr(
-                        format!("{field:?}"),
-                        ValueErr::InvalidParse(value.into())
+                    value => return Err(AssignErr::new(
+                        field, ValueErr::InvalidParse(value.into())
                     )),
                 }
             }
-            (field, value) => return Err(AssignErr(
-                format!("{field:?}"),
-                ValueErr::InvalidTomlType(value)
+            (field, value) => return Err(AssignErr::new(
+                field, ValueErr::InvalidTomlType(value)
             )),
         }
         Ok(())
@@ -502,9 +604,8 @@ impl UserAssign<Map<String, Value>> for TextParams {
             (TextStyleParamsField::Style(field), value) => {
                 self.style.assign(field, value, ctx)?;
             }
-            (field, value) => return Err(AssignErr(
-                format!("{field:?}"),
-                ValueErr::InvalidTomlType(value)
+            (field, value) => return Err(AssignErr::new(
+                field, ValueErr::InvalidTomlType(value)
             )),
         }
         Ok(())
