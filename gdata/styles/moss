@@ -5,7 +5,7 @@ palette = {
   grey     = "#aaabb0",
   white    = "#b8a098",
 
-  green    = "#bca47",
+  green    = "#bca47c",
   cyan     = "#709080",
   magenta  = "#c494ac",
   red      = "#e08c78",

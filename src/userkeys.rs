@@ -85,7 +85,9 @@ impl UserAssign<()> for KeyConfig {
                         .chars()
                         .next()
                         .map(KeyCode::Char)
-                        .ok_or(ValueErr::InvalidParse("could not parse keycode from string".into())),
+                        .ok_or(ValueErr::InvalidParse("
+                            could not parse keycode from string
+                        ".into())),
                 }
             } else {
                 Err(ValueErr::InvalidTomlType(value))

@@ -8,6 +8,10 @@ use crate::{
 
 
 
+pub type ValueResult<T> = std::result::Result<T, ValueErr>;
+
+pub type AssignResult = std::result::Result<(), AssignErr>;
+
 #[derive(Debug)]
 pub enum ValueErr {
     InvalidTomlType(toml::Value),
@@ -34,6 +38,8 @@ impl std::fmt::Display for AssignErr {
         match value_err {
             ValueErr::InvalidTomlType(_)  => write!(f, "{field}: '{value_err}'"),
             ValueErr::InvalidParse(_) => write!(f, "{field}: '{value_err}'"),
+            // Use arrow with spaces on either side because 
+            // this field contains a subfield
             ValueErr::Message(e) => write!(f, "{field} > {e}"),
         }
     }
@@ -44,10 +50,6 @@ impl AssignErr {
         Self(field.to_string(), value)
     }
 }
-
-pub type ValueResult<T> = std::result::Result<T, ValueErr>;
-
-pub type AssignResult = std::result::Result<(), AssignErr>;
 
 pub trait UserAssign<C> {
     type Field;
@@ -88,10 +90,13 @@ where   T: UserAssign<C, Field = F> + Default,
         let mut errors = String::new();
 
         for (key, value) in table.into_iter() {
-            if let Ok(field) = F::from_str(&key)
+
+            let Ok(field) = F::from_str(&key)
                 .inspect_err(|e| errors.push_str(&e)) 
-            && let _ = user_table.assign(&field, value, context)
-                .inspect_err(|e| errors.push_str(&format!("{e}"))) {}
+            else {continue};
+
+            let _ = user_table.assign(&field, value, context)
+                .inspect_err(|e| errors.push_str(&format!("{e}")));
         }
         if errors.len() > 0 {
             (user_table, Err(errors))
@@ -125,10 +130,13 @@ where   T: UserAssign<C, Field = F> + Default,
         let mut errors = "".to_string();
 
         for (key, value) in table.into_iter() {
-            if let Ok(field) = F::from_str(&key)
+
+            let Ok(field) = F::from_str(&key)
                 .inspect_err(|e| errors.push_str(&e)) 
-            && let _ = self.assign(&field, value, context)
-                .inspect_err(|e| errors.push_str(&e.to_string())) {}
+            else {continue};
+
+            let _ = self.assign(&field, value, context)
+                .inspect_err(|e| errors.push_str(&e.to_string()));
         }
         if errors.len() > 0 {
             Err(errors)
@@ -286,7 +294,7 @@ impl UserAssign<()> for UserConfig {
 }
 
 impl UserConfig {
-    // may fail when saving a URL or writing to the URL file (2 points)
+    // may fail when saving a URL or writing to the URL file
     pub fn save_url(&mut self, url: &url::Url) -> Result<(), String> {
         let url_str = url.to_string();
         if self.urls.iter().any(|url| **url == url_str) {
