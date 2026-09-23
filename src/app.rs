@@ -390,42 +390,29 @@ impl App {
                     }
                 }
                 (Task::ChangeKeys, Action::Select, DialogType::Select) => {
-                    match std::fs::read_to_string(
-                        util::get_keys_file_path(&body.get_param_string())
+                    match self.config.set_keys_file(
+                        &body.get_param_string()
                     ) {
                         Err(fs_err) => {
                             self.ack_dlg(&format!("
                                 Could not update config:\n{fs_err}
                             "))
                         }
-                        Ok(config_str) => {
-                            let (config, config_result) = 
-                                UserConfig::from_str(&config_str, &());
-                            if let Err(config_err) = config_result {
-                                self.ack_dlg(&format!("
-                                    Config Error:\n{config_err}
-                                "));
-                            }
-                            self.config = config;
+                        Ok(_) => {
+                            self.focus_tabs();
+                            self.push_style();
                         }
                     }
                 }
                 (Task::ChangeStyle, Action::Select, DialogType::Select) => {
-                    match std::fs::read_to_string(
-                        util::get_styles_file_path(&body.get_param_string())
+                    match self.config.set_style_file(
+                        &body.get_param_string()
                     ) {
                         Err(e) => {
                             self.ack_dlg(&e.to_string());
                         }
-                        Ok(config_str) => {
-                            let (config, config_result) = 
-                                UserConfig::from_str(&config_str, &());
-                            if let Err(config_err) = config_result {
-                                self.ack_dlg(&format!("
-                                    Config Error:\n{config_err}
-                                "));
-                            }
-                            self.config = config;
+                        Ok(_) => {
+                            self.focus_tabs();
                             self.push_style();
                         }
                     }

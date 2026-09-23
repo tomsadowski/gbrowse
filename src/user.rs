@@ -215,7 +215,7 @@ impl Default for UserConfig {
 
 impl UserAssign<()> for UserConfig {
     type Field = UserConfigField;
-    fn assign(&mut self, field: &Self::Field, value: toml::Value, ctx: &()) 
+    fn assign(&mut self, field: &Self::Field, value: toml::Value, _: &()) 
         -> AssignResult 
     {
         use toml::Value;
@@ -234,56 +234,20 @@ impl UserAssign<()> for UserConfig {
                     ))?;
             }
             // read style from another file
-            (UserConfigField::Style, Value::String(string)) => {
-                let string = &std::fs::read_to_string(
-                    util::get_styles_file_path(&string)
-                )
-                    .map_err(|e| AssignErr::new(
-                        field, ValueErr::Message(e.to_string())
-                    ))?;
-                let (style, style_result) = StyleConfig::from_str(string, ctx);
-                self.style = style;
-                return style_result.map_err(
-                    |e| AssignErr::new(
-                        field, ValueErr::Message(e.to_string())
-                    )
-                )
+            (UserConfigField::Style, Value::String(filename)) => {
+                return self.set_style_file(&filename)
             }
             // read style from this file
             (UserConfigField::Style, Value::Table(table)) => {
-                let (style, style_result) = StyleConfig::from_table(table, ctx);
-                self.style = style;
-                return style_result.map_err(
-                    |e| AssignErr::new(
-                        field, ValueErr::Message(e.to_string())
-                    )
-                )
+                return self.set_style_table(table)
             }
             // read keys from another file
-            (UserConfigField::Keys, Value::String(string)) => {
-                let string = &std::fs::read_to_string(
-                    util::get_keys_file_path(&string)
-                )
-                    .map_err(|e| AssignErr::new(
-                        field, ValueErr::Message(e.to_string())
-                    ))?;
-                let (keys, style_result) = KeyConfig::from_str(string, ctx);
-                self.keys = keys;
-                return style_result.map_err(
-                    |e| AssignErr::new(
-                        field, ValueErr::Message(e.to_string())
-                    )
-                )
+            (UserConfigField::Keys, Value::String(filename)) => {
+                return self.set_keys_file(&filename)
             }
             // read keys from this file
             (UserConfigField::Keys, Value::Table(table)) => {
-                let (keys, style_result) = KeyConfig::from_table(table, ctx);
-                self.keys = keys;
-                return style_result.map_err(
-                    |e| AssignErr::new(
-                        field, ValueErr::Message(e.to_string())
-                    )
-                )
+                return self.set_keys_table(table)
             }
             (field, value) => return Err(AssignErr::new(
                 field, ValueErr::InvalidTomlType(value)
@@ -294,6 +258,62 @@ impl UserAssign<()> for UserConfig {
 }
 
 impl UserConfig {
+    pub fn set_style_file(&mut self, filename: &str) -> AssignResult {
+        let string = &std::fs::read_to_string(
+            util::get_styles_file_path(&filename)
+        )
+            .map_err(|e| AssignErr::new(
+                UserConfigField::Style, ValueErr::Message(e.to_string())
+            ))?;
+        let (style, style_result) = StyleConfig::from_str(string, &());
+        self.style = style;
+        return style_result.map_err(
+            |e| AssignErr::new(
+                UserConfigField::Style, ValueErr::Message(e.to_string())
+            )
+        )
+    }
+
+
+    pub fn set_style_table(&mut self, table: toml::Table) -> AssignResult {
+        let (style, style_result) = StyleConfig::from_table(table, &());
+        self.style = style;
+        return style_result.map_err(
+            |e| AssignErr::new(
+                UserConfigField::Style, ValueErr::Message(e.to_string())
+            )
+        )
+    }
+
+
+    pub fn set_keys_file(&mut self, filename: &str) -> AssignResult {
+        let string = &std::fs::read_to_string(
+            util::get_keys_file_path(&filename)
+        )
+            .map_err(|e| AssignErr::new(
+                UserConfigField::Keys, ValueErr::Message(e.to_string())
+            ))?;
+        let (keys, keys_result) = KeyConfig::from_str(string, &());
+        self.keys = keys;
+        return keys_result.map_err(
+            |e| AssignErr::new(
+                UserConfigField::Keys, ValueErr::Message(e.to_string())
+            )
+        )
+    }
+
+
+    pub fn set_keys_table(&mut self, table: toml::Table) -> AssignResult {
+        let (keys, style_result) = KeyConfig::from_table(table, &());
+        self.keys = keys;
+        return style_result.map_err(
+            |e| AssignErr::new(
+                UserConfigField::Keys, ValueErr::Message(e.to_string())
+            )
+        )
+    }
+
+
     // may fail when saving a URL or writing to the URL file
     pub fn save_url(&mut self, url: &url::Url) -> Result<(), String> {
         let url_str = url.to_string();
