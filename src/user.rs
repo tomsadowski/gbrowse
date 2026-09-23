@@ -36,8 +36,8 @@ impl std::fmt::Display for AssignErr {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         let Self(field, value_err) = self;
         match value_err {
-            ValueErr::InvalidTomlType(_)  => write!(f, "{field}: '{value_err}'"),
-            ValueErr::InvalidParse(_) => write!(f, "{field}: '{value_err}'"),
+            ValueErr::InvalidTomlType(_)  => write!(f, "{field}: '{value_err}'\n"),
+            ValueErr::InvalidParse(_) => write!(f, "{field}: '{value_err}'\n"),
             // Use arrow with spaces on either side because 
             // this field contains a subfield
             ValueErr::Message(e) => write!(f, "{field} > {e}"),
