@@ -8,7 +8,7 @@ palette = {
   yellow   = "#ccb0a8",
   cyan     = "#80c4bc",
   darkcyan = "#9cbce8",
-  magenta  = "#dcacc0",
+  magenta  = "#e0a8c4",
   red      = "#e8807c",
 
   darkmagenta = "#402c40",
