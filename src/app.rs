@@ -278,6 +278,7 @@ impl App {
                 self.flash(&format!("pending request: {url}"));
             }
             (None, scheme) => {
+                // Show init dialog when there aren't any tabs left
                 if 0 == self.view.tabs.data.len() {
                     self.edit_dlg(
                         Task::Init(self.config.init_url.clone()), 
