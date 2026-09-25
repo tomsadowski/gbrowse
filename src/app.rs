@@ -262,11 +262,10 @@ impl App {
     }
 
     // Checks the scheme of the given URL against supported schemes.
-    // An error dialog displays if not supported.
-    // Otherwise, a new request is spawned (but ideally, queued).
+    // An error dialog displays if not supported. Otherwise, a new 
+    // request is spawned.
     pub fn spawn_request(&mut self, url: &url::Url) {
         match (&mut self.request, url.scheme()) {
-            // queue not yet implemented
             (Some(request), _) => {
                 let url = request.url.to_string();
                 self.ack_dlg(&format!("

@@ -4,16 +4,12 @@ palette = {
   black    = "#202225",
   darkgrey = "#707880",
   grey     = "#bdbfc8",
-
+  red      = "#e09878",
   yellow   = "#ccb0a8",
-  cyan     = "#80c4bc",
-  darkcyan = "#9cbce8",
-  magenta  = "#e0a8c4",
-  red      = "#e8807c",
-
-  darkmagenta = "#402c40",
-  darkyellow  = "#4a403c",
-  dblue       = "#30343a",
+  cyan     = "#88c0b8",
+  darkcyan = "#a2a0dc",
+  magenta  = "#cc98b0",
+  darkblue = "#30343a",
 }
 border = {
   fg      = "darkgrey", 
@@ -29,8 +25,8 @@ dialog_border = {
 }
 dialog_heading = {fg = "grey",   bg = "black", bold = true}
 dialog_body    = {fg = "yellow",  bg = "black"}
-banner         = {fg = "grey"}
-footer         = {fg = "grey"}
+banner         = {fg = "grey", bg = "darkblue"}
+footer         = {fg = "grey", bg = "darkblue"}
 general        = {fg = "yellow",  bg = "black"}
 list           = {fg = "grey"}
 preformat      = {fg = "magenta", wrap = false}
@@ -41,8 +37,10 @@ h2             = {fg = "cyan", underline = true}
 h3             = {fg = "yellow", underline = true}
 text           = {wrap = true}
 
-screen_margin        = {n = 2, s = 2, e = 16, w = 16}
-text_margin          = {n = 1, s = 1, e = 4, w = 4}
+#screen_margin        = {n = 2, s = 2, e = 16, w = 16}
+#text_margin          = {n = 1, s = 1, e = 4, w = 4}
+screen_margin        = {n = 1, s = 1, e = 16, w = 16}
+text_margin          = {n = 1, s = 1, e = 1, w = 1}
 
 #dialog_screen_margin = {n = 2, s = 2, e = 4, w = 4}
 #dialog_text_margin   = {n = 1, s = 1, e = 4, w = 4}
