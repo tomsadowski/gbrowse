@@ -454,7 +454,7 @@ pub fn parse_color(value: &toml::Value, palette: &Map<String, Value>)
                     .map_err(|e| ValueErr::InvalidParse(e))
             } else {
                 return Err(ValueErr::InvalidParse(format!("
-                    `{string}` does not refer to a variable in the palette table, nor is it a hex value.
+                    `{string}` is not in the palette table, nor is it a hex value.
                 ")))
             }
         }

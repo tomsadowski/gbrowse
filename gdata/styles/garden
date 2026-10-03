@@ -1,0 +1,42 @@
+# fire
+
+palette = {
+  black    = "#202225",
+  darkgrey = "#707880",
+  grey     = "#bdbfc8",
+  red      = "#bcac60",
+  yellow   = "#ccb0a8",
+  cyan     = "#80aaa4",
+  darkcyan = "#a2a0dc",
+  magenta  = "#c89cc0",
+  darkblue = "#30343a",
+}
+border = {
+  fg      = "darkgrey", 
+  bg      = "black", 
+  corner  = "round", 
+  bracket = "space"
+}
+dialog_border = {
+  fg      = "grey",
+  bg      = "black",
+  corner  = "round",
+  bracket = "space"
+}
+dialog_heading = {fg = "grey",   bg = "black", bold = true}
+dialog_body    = {fg = "yellow",  bg = "black"}
+banner         = {fg = "grey", bg = "darkblue"}
+footer         = {fg = "grey", bg = "darkblue"}
+general        = {fg = "yellow",  bg = "black"}
+list           = {fg = "grey"}
+preformat      = {fg = "magenta", wrap = false}
+quote          = {fg = "grey"}
+link           = {fg = "cyan"}
+h1             = {fg = "red", underline = true}
+h2             = {fg = "red"}
+h3             = {fg = "yellow", underline = true}
+text           = {wrap = true}
+
+screen_margin        = {n = 1, s = 1, e = 16, w = 16}
+text_margin          = {n = 1, s = 1, e = 1, w = 1}
+
