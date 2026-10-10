@@ -6,8 +6,10 @@ palette = {
   darkgrey = "#787880",
   grey     = "#c4c4cc",
   red      = "#d87688",
-  yellow   = "#c8aca0",
+ # yellow   = "#c8aca0",
+  yellow   = "#c0aca0",
   cyan     = "#80b0a4",
+  darkcyan = "#b0a8d0",
   magenta  = "#c09cb0",
 }
 border = {
@@ -27,7 +29,7 @@ dialog_body    = {fg = "yellow",  bg = "black"}
 banner         = {fg = "grey", bg = "darkblue"}
 footer         = {fg = "grey", bg = "darkblue"}
 general        = {fg = "yellow",  bg = "black"}
-list           = {fg = "grey"}
+list           = {fg = "darkcyan"}
 preformat      = {fg = "magenta", wrap = false}
 quote          = {fg = "grey"}
 link           = {fg = "cyan"}
@@ -36,6 +38,5 @@ h2             = {fg = "red"}
 h3             = {fg = "yellow", underline = true}
 text           = {wrap = true}
 
-screen_margin        = {n = 1, s = 1, e = 8, w = 8}
+screen_margin        = {n = 1, s = 1, e = 24, w = 24}
 text_margin          = {n = 1, s = 1, e = 1, w = 1}
-
