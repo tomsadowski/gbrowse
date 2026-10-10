@@ -333,10 +333,7 @@ impl UserAssign<()> for StyleConfig {
         }
     }
 
-    fn assign(
-        &mut self, field: &Self::Field, value: Value, _: &()
-    ) -> AssignResult {
-
+    fn assign(&mut self, field: &Self::Field, value: Value, _: &()) -> AssignResult {
         match (field, value) {
             (StyleConfigField::Border(border), Value::Table(value)) => {
                 let (string, result) = BorderParams::from_table(
@@ -393,65 +390,46 @@ impl UserAssign<()> for StyleConfig {
     }
 }
 
+fn try_hex(c: char) -> Result<u8, String> {
+    match c {
+        '0' => Ok(0),  '1' => Ok(1),  '2' => Ok(2),  '3' => Ok(3),
+        '4' => Ok(4),  '5' => Ok(5),  '6' => Ok(6),  '7' => Ok(7),
+        '8' => Ok(8),  '9' => Ok(9),  'a' => Ok(10), 'b' => Ok(11),
+        'c' => Ok(12), 'd' => Ok(13), 'e' => Ok(14), 'f' => Ok(15),
+        _   => Err(format!("{c} is not a hex character")),
+    }
+}
 
 pub fn parse_hex_color(s: &str) -> Result<Color, String> {
-    fn try_hex(c: char) -> Result<u8, String> {
-        match c {
-            '0' => Ok(0),  '1' => Ok(1),  '2' => Ok(2),  '3' => Ok(3),
-            '4' => Ok(4),  '5' => Ok(5),  '6' => Ok(6),  '7' => Ok(7),
-            '8' => Ok(8),  '9' => Ok(9),  'a' => Ok(10), 'b' => Ok(11),
-            'c' => Ok(12), 'd' => Ok(13), 'e' => Ok(14), 'f' => Ok(15),
-            _   => Err(format!("{c} is not a hex character")),
-        }
-    }
     let mut c = s.chars();
-    let r1 = c
-        .next()
-        .ok_or("Missing 6 hex characters.".into())
+    let r1 = c.next().ok_or("Missing 6 hex characters.".into())
         .and_then(|c| try_hex(c))?;
-    let r2 = c
-        .next()
-        .ok_or("Missing 5 hex characters.".into())
+    let r2 = c.next().ok_or("Missing 5 hex characters.".into())
         .and_then(|c| try_hex(c))?;
-    let g1 = c
-        .next()
-        .ok_or("Missing 4 hex characters.".into())
+    let g1 = c.next().ok_or("Missing 4 hex characters.".into())
         .and_then(|c| try_hex(c))?;
-    let g2 = c
-        .next()
-        .ok_or("Missing 3 hex characters.".into())
+    let g2 = c.next().ok_or("Missing 3 hex characters.".into())
         .and_then(|c| try_hex(c))?;
-    let b1 = c
-        .next()
-        .ok_or("Missing 2 hex characters.".into())
+    let b1 = c.next().ok_or("Missing 2 hex characters.".into())
         .and_then(|c| try_hex(c))?;
-    let b2 = c
-        .next()
-        .ok_or("Missing 1 hex character.".into())
+    let b2 = c.next().ok_or("Missing 1 hex character.".into())
         .and_then(|c| try_hex(c))?;
-
     let r = 16 * r1 + r2;
     let g = 16 * g1 + g2;
     let b = 16 * b1 + b2;
-
     Ok(Color::Rgb {r, g, b})
 }
 
-pub fn parse_color(value: &toml::Value, palette: &Map<String, Value>) 
-    -> ValueResult<Color> 
-{
+pub fn parse_color(value: &toml::Value, palette: &Map<String, Value>) -> ValueResult<Color> {
     match &value {
         Value::String(string) => {
             if let Some(value) = palette.get(string)
             && let Value::String(string) = value
-            && let Some('#') = string.chars().next()
-            {
-                parse_hex_color(&string[1..])
-                    .map_err(|e| ValueErr::InvalidParse(e))
+            && let Some('#') = string.chars().next() {
+                parse_hex_color(&string[1..]).map_err(|e| ValueErr::InvalidParse(e))
             }
             else if let Some('#') = string.chars().next() {
-                parse_hex_color(&string[1..])
-                    .map_err(|e| ValueErr::InvalidParse(e))
+                parse_hex_color(&string[1..]).map_err(|e| ValueErr::InvalidParse(e))
             } else {
                 return Err(ValueErr::InvalidParse(format!("
                     `{string}` is not in the palette table, nor is it a hex value.
@@ -464,19 +442,12 @@ pub fn parse_color(value: &toml::Value, palette: &Map<String, Value>)
 
 impl UserAssign<Map<String, Value>> for Style {
     type Field = StyleField;
-
-    fn assign(
-        &mut self, 
-        field:   &Self::Field, 
-        value:   Value, 
-        palette: &Map<String, Value>
-
-    ) -> AssignResult {
-
+    fn assign(&mut self, field: &Self::Field, value: Value, palette: &Map<String, Value>) 
+        -> AssignResult 
+    {
         match (field, value) {
             (StyleField::Color(color), value) => {
-                let value = parse_color(&value, palette)
-                    .map_err(|e| AssignErr::new(field, e))?;
+                let value = parse_color(&value, palette).map_err(|e| AssignErr::new(field, e))?;
                 match color {
                     ColorField::Fg => self.fg = Some(value),
                     ColorField::Bg => self.bg = Some(value),
@@ -498,11 +469,7 @@ impl UserAssign<Map<String, Value>> for Style {
 
 impl UserAssign<()> for MarginParams {
     type Field = MarginParamsField;
-
-    fn assign(
-        &mut self, field: &Self::Field, value: Value, _: &()
-    ) -> AssignResult {
-
+    fn assign(&mut self, field: &Self::Field, value: Value, _: &()) -> AssignResult {
         match (field, value) {
             (field, Value::Integer(value)) => {
                 let value = u16::try_from(value).map_err(
@@ -527,11 +494,9 @@ impl UserAssign<()> for MarginParams {
 
 impl UserAssign<Map<String, Value>> for BorderParams {
     type Field = BorderParamsField;
-
-    fn assign(
-        &mut self, field: &Self::Field, value: Value, ctx: &Map<String, Value>
-    ) -> AssignResult {
-
+    fn assign(&mut self, field: &Self::Field, value: Value, ctx: &Map<String, Value>) 
+        -> AssignResult 
+    {
         match (field, value) {
             (BorderParamsField::Style(field), value) => {
                 self.style.assign(field, value, ctx)?;
@@ -592,11 +557,9 @@ impl UserAssign<Map<String, Value>> for BorderParams {
 
 impl UserAssign<Map<String, Value>> for TextParams {
     type Field = TextStyleParamsField;
-
-    fn assign(
-        &mut self, field: &Self::Field, value: Value, ctx: &Map<String, Value>
-    ) -> AssignResult {
-
+    fn assign(&mut self, field: &Self::Field, value: Value, ctx: &Map<String, Value>) 
+        -> AssignResult 
+    {
         match (field, value) {
             (TextStyleParamsField::Wrap, Value::Boolean(value)) => {
                 self.wrap = value;

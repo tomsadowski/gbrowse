@@ -126,7 +126,7 @@ impl AppView {
         vec![
             self.flash.as_ref().map(ViewType::Dialog),
             self.dialog.as_ref().map(ViewType::Dialog),
-            self.tabs.get().map(|f| &f.page).map(ViewType::Page),
+            self.tabs.get().map(|f| ViewType::Page(&f.page)),
         ]
     }
 
@@ -136,7 +136,7 @@ impl AppView {
         vec![
             self.flash.as_mut().map(ViewTypeMut::Dialog),
             self.dialog.as_mut().map(ViewTypeMut::Dialog),
-            self.tabs.get_mut().map(|f| &mut f.page).map(ViewTypeMut::Page),
+            self.tabs.get_mut().map(|f| ViewTypeMut::Page(&mut f.page)),
         ]
     }
 }

@@ -326,9 +326,9 @@ impl UserConfig {
                 .truncate(true)
                 .open(&self.save_file) 
             {
-                Err(e) => Err(
-                    format!("could not create save file: {e}")
-                ),
+                Err(e) => Err(format!("
+                    could not create save file: {e}
+                ")),
                 Ok(mut f) => {
                     use std::io::Write;
                     for url in self.urls.iter() {

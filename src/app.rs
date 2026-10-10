@@ -317,14 +317,13 @@ impl App {
         if let Msg::Quit = message {
             self.quit = true;
         } else 
-            if let Msg::Resize(w, h) = message {
+        if let Msg::Resize(w, h) = message {
             self.view.resize(&Rect::from(Dim(*w, *h)));
             self.clear = true;
         } else 
-            if let Msg::Action(action) = message
-            && let Focus::Tab = &mut self.focus
-            && let Some(tab) = self.view.tabs.get_mut()
-        {
+        if let Msg::Action(action) = message
+        && let Focus::Tab = &mut self.focus
+        && let Some(tab) = self.view.tabs.get_mut() {
             match action {
                 Action::SaveUrl => {
                     let url = tab.url.clone();
@@ -335,9 +334,7 @@ impl App {
                 }
                 Action::Select if let Some(source) = tab.page.get_source() => {
                     match source {
-                        TabText::Gemini(
-                            GemText {tag: GemTag::Link(link), ..}
-                        ) => {
+                        TabText::Gemini(GemText {tag: GemTag::Link(link), ..}) => {
                             let link = link.clone();
                             self.select_link(&link);
                         }
@@ -377,9 +374,7 @@ impl App {
         } else 
         if let Msg::Action(action) = message
         && let Focus::Dlg(task) = &mut self.focus
-        && let Some(Dialog {body: Some(body), dlg_type, ..}) 
-            = &mut self.view.dialog 
-        {
+        && let Some(Dialog {body: Some(body), dlg_type, ..}) = &mut self.view.dialog {
             match (task, action, dlg_type) {
                 (Task::NewTab, Action::Select, DialogType::Select) => {
                     if let Some(link) = self.config.urls.get(body.get_index()) {
@@ -390,9 +385,7 @@ impl App {
                     }
                 }
                 (Task::ChangeKeys, Action::Select, DialogType::Select) => {
-                    match self.config.set_keys_file(
-                        &body.get_param_string()
-                    ) {
+                    match self.config.set_keys_file(&body.get_param_string()) {
                         Err(fs_err) => {
                             self.ack_dlg(&format!("
                                 Could not update config:\n{fs_err}
@@ -405,9 +398,7 @@ impl App {
                     }
                 }
                 (Task::ChangeStyle, Action::Select, DialogType::Select) => {
-                    match self.config.set_style_file(
-                        &body.get_param_string()
-                    ) {
+                    match self.config.set_style_file(&body.get_param_string()) {
                         Err(e) => {
                             self.ack_dlg(&e.to_string());
                         }
@@ -424,21 +415,21 @@ impl App {
                                 Manual not yet written, but I will get to it.
                             ".into());
                         }
-                        util::CHANGE_KEYS => 
-                            match util::get_entries(util::KEYS_PATH) 
-                        {
-                            Err(e) => self.ack_dlg(&e),
+                        util::CHANGE_KEYS => match util::get_entries(util::KEYS_PATH) {
                             Ok(entry) => self.select_dlg(
-                                Task::ChangeKeys, "Choose keys", entry
+                                Task::ChangeKeys, 
+                                "Choose keys", 
+                                entry
                             ),
+                            Err(e) => self.ack_dlg(&e),
                         }
-                        util::CHANGE_STYLE => 
-                            match util::get_entries(util::STYLES_PATH) 
-                        {
-                            Err(e) => self.ack_dlg(&e),
+                        util::CHANGE_STYLE => match util::get_entries(util::STYLES_PATH) {
                             Ok(entry) => self.select_dlg(
-                                Task::ChangeStyle, "Choose Style", entry
+                                Task::ChangeStyle, 
+                                "Choose style", 
+                                entry
                             ),
+                            Err(e) => self.ack_dlg(&e),
                         }
                         util::VIEW_SETTINGS => {
                             let text = format!("{:#?}", self.config)
@@ -592,8 +583,7 @@ impl App {
             page.point_view.draw(w)?;
         } 
         else 
-        if let Some(Dialog {body: Some(body), dlg_type, ..}) 
-            = &self.view.dialog 
+        if let Some(Dialog {body: Some(body), dlg_type, ..}) = &self.view.dialog 
         && let DialogType::Select | DialogType::Edit = dlg_type
         {
             body.point_view.draw(w)?;

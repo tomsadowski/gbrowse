@@ -1,15 +1,14 @@
 # garden
 
 palette = {
-  black    = "#202225",
-  darkgrey = "#707880",
-  grey     = "#bdbfc8",
-  green    = "#c0a860",
-  yellow   = "#ccafa8",
-  cyan     = "#789a94",
-  darkcyan = "#a2a0dc",
-  magenta  = "#c89cc0",
-  darkblue = "#30343a",
+  black    = "#242425",
+  darkblue = "#2d2d30",
+  darkgrey = "#787880",
+  grey     = "#c4c4cc",
+  red      = "#d87688",
+  yellow   = "#c8aca0",
+  cyan     = "#80b0a4",
+  magenta  = "#c09cb0",
 }
 border = {
   fg      = "darkgrey", 
@@ -32,11 +31,11 @@ list           = {fg = "grey"}
 preformat      = {fg = "magenta", wrap = false}
 quote          = {fg = "grey"}
 link           = {fg = "cyan"}
-h1             = {fg = "green", underline = true}
-h2             = {fg = "green"}
+h1             = {fg = "red", underline = true}
+h2             = {fg = "red"}
 h3             = {fg = "yellow", underline = true}
 text           = {wrap = true}
 
-screen_margin        = {n = 1, s = 1, e = 16, w = 16}
+screen_margin        = {n = 1, s = 1, e = 8, w = 8}
 text_margin          = {n = 1, s = 1, e = 1, w = 1}
 

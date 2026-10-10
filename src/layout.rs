@@ -145,8 +145,7 @@ pub fn fill(
                 .min(rect.h())
                 .saturating_sub(1) as i16 * -1
         )
-        .draw(w)?;
-    Ok(())
+        .draw(w)
 }
 
 pub fn get_display_bounds(
