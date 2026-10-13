@@ -1,0 +1,42 @@
+# garden
+
+palette = {
+  black    = "#1f1f20",
+  darkblue = "#2d2d30",
+  darkgrey = "#787a80",
+  grey     = "#c4c6ca",
+  red      = "#d87484",
+ # yellow   = "#c8aca0",
+  yellow   = "#c8b0a0",
+  cyan     = "#80b0a4",
+  darkcyan = "#b0a8d0",
+  magenta  = "#c8a0b4",
+}
+border = {
+  fg      = "darkgrey", 
+  bg      = "black", 
+  corner  = "round", 
+  bracket = "space"
+}
+dialog_border = {
+  fg      = "grey",
+  bg      = "black",
+  corner  = "round",
+  bracket = "space"
+}
+dialog_heading = {fg = "yellow",   bg = "black", bold = true}
+dialog_body    = {fg = "grey",  bg = "black"}
+banner         = {fg = "grey", bg = "darkblue"}
+footer         = {fg = "grey", bg = "darkblue"}
+general        = {fg = "grey",  bg = "black"}
+list           = {fg = "darkcyan"}
+preformat      = {fg = "magenta", wrap = false}
+quote          = {fg = "yellow"}
+link           = {fg = "cyan"}
+h1             = {fg = "red", underline = true}
+h2             = {fg = "red"}
+h3             = {fg = "yellow", underline = true}
+text           = {wrap = true}
+
+screen_margin        = {n = 1, s = 1, e = 20, w = 20}
+text_margin          = {n = 1, s = 1, e = 1, w = 1}
