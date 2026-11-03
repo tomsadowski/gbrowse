@@ -1,0 +1,41 @@
+# ya
+
+palette = {
+  black    = "#202022",
+  darkblue = "#2a2c32",
+  darkgrey = "#707688",
+  grey     = "#bcbcc8",
+  red      = "#c08272",
+  yellow   = "#baa79c",
+  cyan     = "#84aaa0",
+  darkcyan = "#b0a8d0",
+  magenta  = "#a892a8",
+}
+border = {
+  fg      = "darkgrey", 
+  bg      = "black", 
+  corner  = "round", 
+  bracket = "space"
+}
+dialog_border = {
+  fg      = "grey",
+  bg      = "black",
+  corner  = "round",
+  bracket = "space"
+}
+dialog_heading = {fg = "red", bg = "black"}
+dialog_body    = {fg = "yellow", bg = "black"}
+banner         = {fg = "grey", bg = "darkblue"}
+footer         = {fg = "grey", bg = "darkblue"}
+general        = {fg = "yellow", bg = "black"}
+list           = {fg = "magenta"}
+preformat      = {fg = "magenta", wrap = false}
+quote          = {fg = "grey"}
+link           = {fg = "cyan"}
+h1             = {fg = "red", underline = true}
+h2             = {fg = "red"}
+h3             = {fg = "yellow", underline = true}
+text           = {wrap = true}
+
+screen_margin        = {n = 1, s = 1, e = 20, w = 20}
+text_margin          = {n = 1, s = 1, e = 1, w = 1}

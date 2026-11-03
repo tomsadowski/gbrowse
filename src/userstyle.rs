@@ -336,9 +336,7 @@ impl UserAssign<()> for StyleConfig {
     fn assign(&mut self, field: &Self::Field, value: Value, _: &()) -> AssignResult {
         match (field, value) {
             (StyleConfigField::Border(border), Value::Table(value)) => {
-                let (string, result) = BorderParams::from_table(
-                    value, &self.palette
-                );
+                let (string, result) = BorderParams::from_table(value, &self.palette);
                 match border {
                     BorderField::App => self.border = Some(string),
                     BorderField::Dialog => self.dialog_border = string,
@@ -348,9 +346,7 @@ impl UserAssign<()> for StyleConfig {
                 ))
             }
             (StyleConfigField::Text(text), Value::Table(value)) => {
-                let (text_params, result) = TextParams::from_table(
-                    value, &self.palette
-                );
+                let (text_params, result) = TextParams::from_table(value, &self.palette);
                 match text {
                     StyleTextField::General       => self.general = text_params,
                     StyleTextField::Banner        => self.banner = text_params,
@@ -402,17 +398,23 @@ fn try_hex(c: char) -> Result<u8, String> {
 
 pub fn parse_hex_color(s: &str) -> Result<Color, String> {
     let mut c = s.chars();
-    let r1 = c.next().ok_or("Missing 6 hex characters.".into())
+    let r1 = c.next()
+        .ok_or("Missing 6 hex characters.".into())
         .and_then(|c| try_hex(c))?;
-    let r2 = c.next().ok_or("Missing 5 hex characters.".into())
+    let r2 = c.next()
+        .ok_or("Missing 5 hex characters.".into())
         .and_then(|c| try_hex(c))?;
-    let g1 = c.next().ok_or("Missing 4 hex characters.".into())
+    let g1 = c.next()
+        .ok_or("Missing 4 hex characters.".into())
         .and_then(|c| try_hex(c))?;
-    let g2 = c.next().ok_or("Missing 3 hex characters.".into())
+    let g2 = c.next()
+        .ok_or("Missing 3 hex characters.".into())
         .and_then(|c| try_hex(c))?;
-    let b1 = c.next().ok_or("Missing 2 hex characters.".into())
+    let b1 = c.next()
+        .ok_or("Missing 2 hex characters.".into())
         .and_then(|c| try_hex(c))?;
-    let b2 = c.next().ok_or("Missing 1 hex character.".into())
+    let b2 = c.next()
+        .ok_or("Missing 1 hex character.".into())
         .and_then(|c| try_hex(c))?;
     let r = 16 * r1 + r2;
     let g = 16 * g1 + g2;
@@ -442,9 +444,10 @@ pub fn parse_color(value: &toml::Value, palette: &Map<String, Value>) -> ValueRe
 
 impl UserAssign<Map<String, Value>> for Style {
     type Field = StyleField;
-    fn assign(&mut self, field: &Self::Field, value: Value, palette: &Map<String, Value>) 
-        -> AssignResult 
-    {
+    fn assign(
+        &mut self, field: &Self::Field, value: Value, palette: &Map<String, Value>
+    ) -> AssignResult {
+
         match (field, value) {
             (StyleField::Color(color), value) => {
                 let value = parse_color(&value, palette).map_err(|e| AssignErr::new(field, e))?;

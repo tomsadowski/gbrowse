@@ -14,19 +14,18 @@ pub struct Style {
 
 impl crossterm::Command for Style {
     fn write_ansi(&self, f: &mut impl std::fmt::Write) -> std::fmt::Result {
-        use crossterm::style;
-        let mut contentstyle = style::ContentStyle::new();
+        let mut contentstyle = crossterm::style::ContentStyle::new();
         contentstyle.foreground_color = self.fg;
         contentstyle.background_color = self.bg;
-        let mut attributes = style::Attributes::none();
+        let mut attributes = crossterm::style::Attributes::none();
         if self.bold {
-            attributes.set(style::Attribute::Bold);
+            attributes.set(crossterm::style::Attribute::Bold);
         }
         if self.underline {
-            attributes.set(style::Attribute::Underlined);
+            attributes.set(crossterm::style::Attribute::Underlined);
         }
         contentstyle.attributes = attributes;
-        style::SetStyle(contentstyle).write_ansi(f)?;
+        crossterm::style::SetStyle(contentstyle).write_ansi(f)?;
         Ok(())
     }
 }

@@ -177,12 +177,8 @@ impl Point {
 
     pub fn move_x<T>(&mut self, vec: &Vec<Vec<T>>, delta: isize) {
         let mut remainder = delta;
-
-        while 0 != remainder
-        && let Some(x_vec) = vec.get(self.y.head) 
-        {
+        while 0 != remainder && let Some(x_vec) = vec.get(self.y.head) {
             remainder = self.x.move_head(x_vec, remainder);
-
             if 0 != remainder
             && 0 == self.y.move_head(vec, remainder.signum()) 
             && let Some(x_vec) = vec.get(self.y.head) 

@@ -2,5 +2,5 @@
 
 timeout  = 5
 init_url = "gemini://geminiprotocol.net/"
-style    = "jojo"
+style    = "ya"
 keys     = "pearbear"

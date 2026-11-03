@@ -24,9 +24,7 @@ impl Request {
 
 
 // returns response and content
-pub fn get_data(url: &url::Url, timeout: u64) 
-    -> Result<(String, String), String> 
-{
+pub fn get_data(url: &url::Url, timeout: u64) -> Result<(String, String), String> {
     use std::{
         time::Duration, 
         io::{Write, Read},

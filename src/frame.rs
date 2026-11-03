@@ -172,9 +172,7 @@ pub struct Frame {
 }
 
 impl Frame {
-    pub fn draw_footer(&self, text: &str, w: &mut impl std::io::Write) 
-        -> std::io::Result<()> 
-    {
+    pub fn draw_footer(&self, text: &str, w: &mut impl std::io::Write) -> std::io::Result<()> {
         if let Some(border) = self.params.border {
             let mut x = self.outer_rect.x_end().saturating_sub(1);
             let y = self.border_rect.y_end().saturating_sub(1);

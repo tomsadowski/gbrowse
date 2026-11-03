@@ -130,9 +130,7 @@ impl AppView {
         ]
     }
 
-    pub fn get_view_list_mut<'a>(&'a mut self) 
-        -> Vec<Option<ViewTypeMut<'a, TabText>>> 
-    {
+    pub fn get_view_list_mut<'a>(&'a mut self) -> Vec<Option<ViewTypeMut<'a, TabText>>> {
         vec![
             self.flash.as_mut().map(ViewTypeMut::Dialog),
             self.dialog.as_mut().map(ViewTypeMut::Dialog),
@@ -148,9 +146,7 @@ pub enum TabText {
 }
 
 impl std::fmt::Display for TabText {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) 
-        -> Result<(), std::fmt::Error> 
-    {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         match self {
             Self::Gemini(gemtext) => gemtext.fmt(f),
             Self::Gopher(string) => string.fmt(f),
