@@ -105,6 +105,17 @@ fn main() -> std::io::Result<()> {
     use crossterm::{QueueableCommand, terminal, event, cursor};
     use std::io::Write;
 
+    let log_file = std::fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open("debug.log")
+        .expect("Failed to open debug.log");
+
+    env_logger::Builder::from_default_env()
+        .target(env_logger::Target::Pipe(Box::new(log_file)))
+        .format_timestamp_millis()
+        .init();
+
     // initialize app
     let mut app = {
         let args = std::env::args().collect::<Vec<String>>();

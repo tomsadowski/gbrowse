@@ -184,3 +184,20 @@ impl crate::Resize for Dialog {
         self.frame = self.frame.params.build_from_inner(&inner_rect);
     }
 }
+
+impl Dialog {
+    pub fn get_debug_str(&self) -> String {
+        use crate::layout::GetMaxHeight;
+        [
+            "-- Dialog START".into(),
+            format!("\ttype:           {:?}", self.dlg_type),
+            format!("\tmax_height:     {:?}", self.get_max_height()),
+            format!("\tdisplay_height: {:?}", self.get_display_height()),
+            self.frame.get_debug_str(),
+            self.prompt.as_ref().map(|p| p.get_debug_str()).unwrap_or_default(),
+            self.body.as_ref().map(|p| p.get_debug_str()).unwrap_or_default(),
+            "-- Dialog END".into(),
+        ]
+            .join("\n")
+    }
+}

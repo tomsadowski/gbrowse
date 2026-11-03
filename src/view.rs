@@ -73,6 +73,23 @@ impl AppView {
         self.frame = params.build_from_outer(&self.rect);
     }
 
+    pub fn get_debug_str(&self) -> String {
+        let mut v: Vec<_> = vec![];
+        v.push("\n\n-- AppView START".into());
+        v.push(format!("\tscreen: {:?}", self.rect));
+        v.push(self.frame.get_debug_str());
+        if let Some(dlg) = &self.flash {
+            v.push(dlg.get_debug_str());
+        }
+        if let Some(dlg) = &self.dialog {
+            v.push(dlg.get_debug_str());
+        }
+        if let Some(tab) = &self.tabs.get() {
+            v.push(tab.page.get_debug_str());
+        }
+        v.push("-- AppView END\n\n".into());
+        v.join("\n")
+    }
 
     pub fn reset_draw_state(&mut self) {
         self.draw_frame = false;
@@ -96,6 +113,7 @@ impl AppView {
             .map(|v| v.get_display_height())
             .sum();
         self.frame = self.frame.params.build_from_inner(&inner_rect);
+        log::debug!("\n{}", self.get_debug_str());
     }
     
     pub fn flash(&mut self, params: DialogParams) {
