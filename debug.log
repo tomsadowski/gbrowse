@@ -1,0 +1,779 @@
+[2026-11-04T00:35:26.196Z DEBUG gbrowse::view] 
+    {
+        "flash": {},
+        "dialog": {},
+        "tab": {},
+        "screen": "Rect { x: 0, y: 0, w: 139, h: 39 }",
+        "frame": {
+            "display_height": 6,
+            "border": "Rect { x: 20, y: 1, w: 99, h: 4 }",
+            "inner": "Rect { x: 22, y: 3, w: 95, h: 0 }",
+            "outer": "Rect { x: 21, y: 2, w: 97, h: 2 }",
+        },
+    }
+[2026-11-04T00:35:26.196Z DEBUG gbrowse::view] 
+    {
+        "tab": {},
+        "flash": {},
+        "screen": "Rect { x: 0, y: 0, w: 139, h: 39 }",
+        "frame": {
+            "display_height": 6,
+            "border": "Rect { x: 20, y: 1, w: 99, h: 4 }",
+            "outer": "Rect { x: 21, y: 2, w: 97, h: 2 }",
+            "inner": "Rect { x: 22, y: 3, w: 95, h: 0 }",
+        },
+        "dialog": {},
+    }
+[2026-11-04T00:35:26.196Z DEBUG gbrowse::view] 
+    {
+        "screen": "Rect { x: 0, y: 0, w: 139, h: 39 }",
+        "flash": {
+            "max_height": 3,
+            "display_height": 3,
+            "frame": {
+                "display_height": 3,
+                "outer": "Rect { x: 23, y: 4, w: 93, h: 1 }",
+                "border": "Rect { x: 22, y: 3, w: 95, h: 3 }",
+                "inner": "Rect { x: 23, y: 4, w: 93, h: 1 }",
+            },
+            "prompt": {
+                "max_height": 1,
+                "cursor_x": "CursorView { head: 0, scroll: 0, cursor: 0, size: 93 }",
+                "display_height": 1,
+                "cursor_pos": Pos(
+                    23,
+                    4,
+                ),
+                "cursor_y": "CursorView { head: 0, scroll: 0, cursor: 0, size: 1 }",
+                "max": Some(
+                    2,
+                ),
+            },
+            "max": Flash,
+            "body": {},
+        },
+        "tab": {},
+        "frame": {
+            "inner": "Rect { x: 22, y: 3, w: 95, h: 3 }",
+            "display_height": 9,
+            "border": "Rect { x: 20, y: 1, w: 99, h: 7 }",
+            "outer": "Rect { x: 21, y: 2, w: 97, h: 5 }",
+        },
+        "dialog": {},
+    }
+[2026-11-04T00:35:26.817Z DEBUG gbrowse::view] 
+    {
+        "screen": "Rect { x: 0, y: 0, w: 139, h: 39 }",
+        "frame": {
+            "border": "Rect { x: 20, y: 1, w: 99, h: 28 }",
+            "inner": "Rect { x: 22, y: 3, w: 95, h: 24 }",
+            "display_height": 30,
+            "outer": "Rect { x: 21, y: 2, w: 97, h: 26 }",
+        },
+        "dialog": {},
+        "flash": {},
+        "tab": {
+            "max_height": 24,
+            "cursor_x": "CursorView { head: 0, scroll: 0, cursor: 0, size: 95 }",
+            "display_height": 24,
+            "max": None,
+            "cursor_pos": Pos(
+                22,
+                3,
+            ),
+            "cursor_y": "CursorView { head: 0, scroll: 0, cursor: 0, size: 24 }",
+        },
+    }
+[2026-11-04T00:35:33.344Z DEBUG gbrowse::view] 
+    {
+        "dialog": {
+            "display_height": 33,
+            "prompt": {
+                "cursor_y": "CursorView { head: 0, scroll: 0, cursor: 0, size: 1 }",
+                "display_height": 1,
+                "max": Some(
+                    2,
+                ),
+                "max_height": 1,
+                "cursor_pos": Pos(
+                    23,
+                    4,
+                ),
+                "cursor_x": "CursorView { head: 0, scroll: 0, cursor: 0, size: 93 }",
+            },
+            "body": {
+                "cursor_pos": Pos(
+                    23,
+                    5,
+                ),
+                "cursor_y": "CursorView { head: 0, scroll: 0, cursor: 0, size: 30 }",
+                "max_height": 33,
+                "display_height": 30,
+                "max": None,
+                "cursor_x": "CursorView { head: 0, scroll: 0, cursor: 0, size: 93 }",
+            },
+            "max": Select,
+            "max_height": 36,
+            "frame": {
+                "border": "Rect { x: 22, y: 3, w: 95, h: 33 }",
+                "outer": "Rect { x: 23, y: 4, w: 93, h: 31 }",
+                "inner": "Rect { x: 23, y: 4, w: 93, h: 31 }",
+                "display_height": 33,
+            },
+        },
+        "flash": {},
+        "tab": {
+            "display_height": 0,
+            "max_height": 24,
+            "cursor_pos": Pos(
+                22,
+                36,
+            ),
+            "max": None,
+            "cursor_y": "CursorView { head: 17, scroll: 17, cursor: 0, size: 0 }",
+            "cursor_x": "CursorView { head: 0, scroll: 0, cursor: 0, size: 95 }",
+        },
+        "frame": {
+            "outer": "Rect { x: 21, y: 2, w: 97, h: 35 }",
+            "inner": "Rect { x: 22, y: 3, w: 95, h: 33 }",
+            "border": "Rect { x: 20, y: 1, w: 99, h: 37 }",
+            "display_height": 39,
+        },
+        "screen": "Rect { x: 0, y: 0, w: 139, h: 39 }",
+    }
+[2026-11-04T00:37:11.862Z DEBUG gbrowse::view] 
+    {
+        "dialog": {},
+        "screen": "Rect { x: 0, y: 0, w: 139, h: 39 }",
+        "frame": {
+            "display_height": 6,
+            "border": "Rect { x: 20, y: 1, w: 99, h: 4 }",
+            "outer": "Rect { x: 21, y: 2, w: 97, h: 2 }",
+            "inner": "Rect { x: 22, y: 3, w: 95, h: 0 }",
+        },
+        "flash": {},
+        "tab": {},
+    }
+[2026-11-04T00:37:11.863Z DEBUG gbrowse::view] 
+    {
+        "flash": {},
+        "tab": {},
+        "screen": "Rect { x: 0, y: 0, w: 139, h: 39 }",
+        "frame": {
+            "border": "Rect { x: 20, y: 1, w: 99, h: 4 }",
+            "inner": "Rect { x: 22, y: 3, w: 95, h: 0 }",
+            "display_height": 6,
+            "outer": "Rect { x: 21, y: 2, w: 97, h: 2 }",
+        },
+        "dialog": {},
+    }
+[2026-11-04T00:37:11.863Z DEBUG gbrowse::view] 
+    {
+        "frame": {
+            "display_height": 9,
+            "outer": "Rect { x: 21, y: 2, w: 97, h: 5 }",
+            "border": "Rect { x: 20, y: 1, w: 99, h: 7 }",
+            "inner": "Rect { x: 22, y: 3, w: 95, h: 3 }",
+        },
+        "dialog": {},
+        "screen": "Rect { x: 0, y: 0, w: 139, h: 39 }",
+        "tab": {},
+        "flash": {
+            "display_height": 3,
+            "frame": {
+                "inner": "Rect { x: 23, y: 4, w: 93, h: 1 }",
+                "outer": "Rect { x: 23, y: 4, w: 93, h: 1 }",
+                "border": "Rect { x: 22, y: 3, w: 95, h: 3 }",
+                "display_height": 3,
+            },
+            "max": Flash,
+            "prompt": {
+                "cursor_pos": "Pos(23, 4)",
+                "max": Some(
+                    2,
+                ),
+                "max_height": 1,
+                "display_height": 1,
+                "cursor_x": "CursorView { head: 0, scroll: 0, cursor: 0, size: 93 }",
+                "cursor_y": "CursorView { head: 0, scroll: 0, cursor: 0, size: 1 }",
+            },
+            "body": {},
+            "max_height": 3,
+        },
+    }
+[2026-11-04T00:37:12.436Z DEBUG gbrowse::view] 
+    {
+        "flash": {},
+        "screen": "Rect { x: 0, y: 0, w: 139, h: 39 }",
+        "frame": {
+            "display_height": 30,
+            "border": "Rect { x: 20, y: 1, w: 99, h: 28 }",
+            "inner": "Rect { x: 22, y: 3, w: 95, h: 24 }",
+            "outer": "Rect { x: 21, y: 2, w: 97, h: 26 }",
+        },
+        "tab": {
+            "max_height": 24,
+            "cursor_x": "CursorView { head: 0, scroll: 0, cursor: 0, size: 95 }",
+            "display_height": 24,
+            "cursor_pos": "Pos(22, 3)",
+            "cursor_y": "CursorView { head: 0, scroll: 0, cursor: 0, size: 24 }",
+            "max": None,
+        },
+        "dialog": {},
+    }
+[2026-11-04T00:37:18.376Z DEBUG gbrowse::view] 
+    {
+        "frame": {
+            "inner": "Rect { x: 22, y: 3, w: 95, h: 33 }",
+            "display_height": 39,
+            "outer": "Rect { x: 21, y: 2, w: 97, h: 35 }",
+            "border": "Rect { x: 20, y: 1, w: 99, h: 37 }",
+        },
+        "screen": "Rect { x: 0, y: 0, w: 139, h: 39 }",
+        "dialog": {
+            "display_height": 33,
+            "prompt": {
+                "cursor_x": "CursorView { head: 0, scroll: 0, cursor: 0, size: 93 }",
+                "cursor_y": "CursorView { head: 0, scroll: 0, cursor: 0, size: 1 }",
+                "max": Some(
+                    2,
+                ),
+                "display_height": 1,
+                "cursor_pos": "Pos(23, 4)",
+                "max_height": 1,
+            },
+            "body": {
+                "display_height": 30,
+                "cursor_x": "CursorView { head: 0, scroll: 0, cursor: 0, size: 93 }",
+                "max": None,
+                "max_height": 33,
+                "cursor_pos": "Pos(23, 5)",
+                "cursor_y": "CursorView { head: 0, scroll: 0, cursor: 0, size: 30 }",
+            },
+            "frame": {
+                "border": "Rect { x: 22, y: 3, w: 95, h: 33 }",
+                "outer": "Rect { x: 23, y: 4, w: 93, h: 31 }",
+                "inner": "Rect { x: 23, y: 4, w: 93, h: 31 }",
+                "display_height": 33,
+            },
+            "max": Select,
+            "max_height": 36,
+        },
+        "flash": {},
+        "tab": {
+            "max": None,
+            "display_height": 0,
+            "cursor_pos": "Pos(22, 36)",
+            "max_height": 24,
+            "cursor_x": "CursorView { head: 0, scroll: 0, cursor: 0, size: 95 }",
+            "cursor_y": "CursorView { head: 0, scroll: 0, cursor: 0, size: 0 }",
+        },
+    }
+[2026-11-04T00:39:17.606Z DEBUG gbrowse::view] 
+    {
+        "flash": {},
+        "tab": {
+            "max": None,
+            "cursor_x": "CursorView { head: 0, scroll: 0, cursor: 0, size: 149 }",
+            "display_height": 11,
+            "cursor_y": "CursorView { head: 0, scroll: 0, cursor: 0, size: 11 }",
+            "max_height": 22,
+            "cursor_pos": "Pos(22, 39)",
+        },
+        "frame": {
+            "border": "Rect { x: 20, y: 1, w: 153, h: 51 }",
+            "outer": "Rect { x: 21, y: 2, w: 151, h: 49 }",
+            "inner": "Rect { x: 22, y: 3, w: 149, h: 47 }",
+            "display_height": 53,
+        },
+        "screen": "Rect { x: 0, y: 0, w: 193, h: 53 }",
+        "dialog": {
+            "body": {
+                "max": None,
+                "cursor_y": "CursorView { head: 0, scroll: 0, cursor: 0, size: 33 }",
+                "cursor_x": "CursorView { head: 0, scroll: 0, cursor: 0, size: 147 }",
+                "max_height": 33,
+                "display_height": 33,
+                "cursor_pos": "Pos(23, 5)",
+            },
+            "display_height": 36,
+            "prompt": {
+                "display_height": 1,
+                "cursor_pos": "Pos(23, 4)",
+                "cursor_x": "CursorView { head: 0, scroll: 0, cursor: 0, size: 147 }",
+                "cursor_y": "CursorView { head: 0, scroll: 0, cursor: 0, size: 1 }",
+                "max": Some(
+                    2,
+                ),
+                "max_height": 1,
+            },
+            "max": Select,
+            "max_height": 36,
+            "frame": {
+                "display_height": 36,
+                "inner": "Rect { x: 23, y: 4, w: 147, h: 34 }",
+                "border": "Rect { x: 22, y: 3, w: 149, h: 36 }",
+                "outer": "Rect { x: 23, y: 4, w: 147, h: 34 }",
+            },
+        },
+    }
+[2026-11-04T00:39:25.671Z DEBUG gbrowse::view] 
+    {
+        "frame": {
+            "display_height": 50,
+            "inner": "Rect { x: 22, y: 3, w: 149, h: 44 }",
+            "outer": "Rect { x: 21, y: 2, w: 151, h: 46 }",
+            "border": "Rect { x: 20, y: 1, w: 153, h: 48 }",
+        },
+        "screen": "Rect { x: 0, y: 0, w: 193, h: 50 }",
+        "flash": {},
+        "dialog": {
+            "prompt": {
+                "display_height": 1,
+                "max": Some(
+                    2,
+                ),
+                "max_height": 1,
+                "cursor_pos": "Pos(23, 4)",
+                "cursor_x": "CursorView { head: 0, scroll: 0, cursor: 0, size: 147 }",
+                "cursor_y": "CursorView { head: 0, scroll: 0, cursor: 0, size: 1 }",
+            },
+            "frame": {
+                "display_height": 36,
+                "inner": "Rect { x: 23, y: 4, w: 147, h: 34 }",
+                "outer": "Rect { x: 23, y: 4, w: 147, h: 34 }",
+                "border": "Rect { x: 22, y: 3, w: 149, h: 36 }",
+            },
+            "max_height": 36,
+            "body": {
+                "cursor_x": "CursorView { head: 0, scroll: 0, cursor: 0, size: 147 }",
+                "max": None,
+                "cursor_pos": "Pos(23, 5)",
+                "display_height": 33,
+                "max_height": 33,
+                "cursor_y": "CursorView { head: 30, scroll: 0, cursor: 30, size: 33 }",
+            },
+            "display_height": 36,
+            "max": Select,
+        },
+        "tab": {
+            "display_height": 8,
+            "cursor_pos": "Pos(22, 39)",
+            "cursor_x": "CursorView { head: 0, scroll: 0, cursor: 0, size: 149 }",
+            "cursor_y": "CursorView { head: 0, scroll: 0, cursor: 0, size: 8 }",
+            "max_height": 22,
+            "max": None,
+        },
+    }
+[2026-11-04T00:39:30.961Z DEBUG gbrowse::view] 
+    {
+        "frame": {
+            "display_height": 28,
+            "border": "Rect { x: 20, y: 1, w: 153, h: 26 }",
+            "inner": "Rect { x: 22, y: 3, w: 149, h: 22 }",
+            "outer": "Rect { x: 21, y: 2, w: 151, h: 24 }",
+        },
+        "screen": "Rect { x: 0, y: 0, w: 193, h: 50 }",
+        "dialog": {},
+        "flash": {},
+        "tab": {
+            "max_height": 22,
+            "cursor_x": "CursorView { head: 0, scroll: 0, cursor: 0, size: 149 }",
+            "cursor_y": "CursorView { head: 0, scroll: 0, cursor: 0, size: 22 }",
+            "cursor_pos": "Pos(22, 3)",
+            "display_height": 22,
+            "max": None,
+        },
+    }
+[2026-11-04T00:43:51.468Z DEBUG gbrowse::view] 
+    {
+        "screen": "Rect { x: 0, y: 0, w: 147, h: 42 }",
+        "frame": {
+            "outer": "Rect { x: 21, y: 2, w: 105, h: 24 }",
+            "inner": "Rect { x: 22, y: 3, w: 103, h: 22 }",
+            "display_height": 28,
+            "border": "Rect { x: 20, y: 1, w: 107, h: 26 }",
+        },
+        "dialog": {},
+        "flash": {},
+        "tab": {
+            "display_height": 22,
+            "cursor_y": "CursorView { head: 0, scroll: 0, cursor: 0, size: 22 }",
+            "max": None,
+            "max_height": 24,
+            "cursor_x": "CursorView { head: 0, scroll: 0, cursor: 0, size: 103 }",
+            "cursor_pos": "Pos(22, 3)",
+        },
+    }
+[2026-11-04T00:43:59.869Z DEBUG gbrowse::view] 
+    {
+        "dialog": {},
+        "tab": {},
+        "screen": "Rect { x: 0, y: 0, w: 147, h: 42 }",
+        "frame": {
+            "outer": "Rect { x: 21, y: 2, w: 105, h: 2 }",
+            "inner": "Rect { x: 22, y: 3, w: 103, h: 0 }",
+            "display_height": 6,
+            "border": "Rect { x: 20, y: 1, w: 107, h: 4 }",
+        },
+        "flash": {},
+    }
+[2026-11-04T00:43:59.869Z DEBUG gbrowse::view] 
+    {
+        "frame": {
+            "border": "Rect { x: 20, y: 1, w: 107, h: 4 }",
+            "inner": "Rect { x: 22, y: 3, w: 103, h: 0 }",
+            "outer": "Rect { x: 21, y: 2, w: 105, h: 2 }",
+            "display_height": 6,
+        },
+        "screen": "Rect { x: 0, y: 0, w: 147, h: 42 }",
+        "flash": {},
+        "tab": {},
+        "dialog": {},
+    }
+[2026-11-04T00:43:59.869Z DEBUG gbrowse::view] 
+    {
+        "screen": "Rect { x: 0, y: 0, w: 147, h: 42 }",
+        "frame": {
+            "display_height": 9,
+            "inner": "Rect { x: 22, y: 3, w: 103, h: 3 }",
+            "border": "Rect { x: 20, y: 1, w: 107, h: 7 }",
+            "outer": "Rect { x: 21, y: 2, w: 105, h: 5 }",
+        },
+        "dialog": {},
+        "tab": {},
+        "flash": {
+            "body": {},
+            "max_height": 3,
+            "display_height": 3,
+            "max": Flash,
+            "frame": {
+                "display_height": 3,
+                "border": "Rect { x: 22, y: 3, w: 103, h: 3 }",
+                "outer": "Rect { x: 23, y: 4, w: 101, h: 1 }",
+                "inner": "Rect { x: 23, y: 4, w: 101, h: 1 }",
+            },
+            "prompt": {
+                "cursor_pos": "Pos(23, 4)",
+                "cursor_x": "CursorView { head: 0, scroll: 0, cursor: 0, size: 101 }",
+                "max_height": 1,
+                "cursor_y": "CursorView { head: 0, scroll: 0, cursor: 0, size: 1 }",
+                "display_height": 1,
+                "max": "Some(2)",
+            },
+        },
+    }
+[2026-11-04T00:44:00.424Z DEBUG gbrowse::view] 
+    {
+        "screen": "Rect { x: 0, y: 0, w: 147, h: 42 }",
+        "frame": {
+            "display_height": 30,
+            "border": "Rect { x: 20, y: 1, w: 107, h: 28 }",
+            "outer": "Rect { x: 21, y: 2, w: 105, h: 26 }",
+            "inner": "Rect { x: 22, y: 3, w: 103, h: 24 }",
+        },
+        "flash": {},
+        "dialog": {},
+        "tab": {
+            "max": "None",
+            "cursor_y": "CursorView { head: 0, scroll: 0, cursor: 0, size: 24 }",
+            "cursor_x": "CursorView { head: 0, scroll: 0, cursor: 0, size: 103 }",
+            "display_height": 24,
+            "cursor_pos": "Pos(22, 3)",
+            "max_height": 24,
+        },
+    }
+[2026-11-04T00:44:05.714Z DEBUG gbrowse::view] 
+    {
+        "screen": "Rect { x: 0, y: 0, w: 147, h: 42 }",
+        "flash": {},
+        "tab": {
+            "max": "None",
+            "max_height": 24,
+            "cursor_pos": "Pos(22, 39)",
+            "cursor_x": "CursorView { head: 0, scroll: 0, cursor: 0, size: 103 }",
+            "cursor_y": "CursorView { head: 16, scroll: 16, cursor: 0, size: 0 }",
+            "display_height": 0,
+        },
+        "dialog": {
+            "body": {
+                "cursor_pos": "Pos(23, 5)",
+                "max_height": 33,
+                "cursor_x": "CursorView { head: 0, scroll: 0, cursor: 0, size: 101 }",
+                "max": "None",
+                "display_height": 33,
+                "cursor_y": "CursorView { head: 0, scroll: 0, cursor: 0, size: 33 }",
+            },
+            "max": Select,
+            "max_height": 36,
+            "display_height": 36,
+            "frame": {
+                "border": "Rect { x: 22, y: 3, w: 103, h: 36 }",
+                "display_height": 36,
+                "outer": "Rect { x: 23, y: 4, w: 101, h: 34 }",
+                "inner": "Rect { x: 23, y: 4, w: 101, h: 34 }",
+            },
+            "prompt": {
+                "cursor_y": "CursorView { head: 0, scroll: 0, cursor: 0, size: 1 }",
+                "max": "Some(2)",
+                "cursor_pos": "Pos(23, 4)",
+                "max_height": 1,
+                "display_height": 1,
+                "cursor_x": "CursorView { head: 0, scroll: 0, cursor: 0, size: 101 }",
+            },
+        },
+        "frame": {
+            "border": "Rect { x: 20, y: 1, w: 107, h: 40 }",
+            "inner": "Rect { x: 22, y: 3, w: 103, h: 36 }",
+            "outer": "Rect { x: 21, y: 2, w: 105, h: 38 }",
+            "display_height": 42,
+        },
+    }
+[2026-11-04T00:44:59.080Z DEBUG gbrowse::view] 
+    {
+        "frame": {
+            "border": "Rect { x: 20, y: 1, w: 153, h: 48 }",
+            "inner": "Rect { x: 22, y: 3, w: 149, h: 44 }",
+            "outer": "Rect { x: 21, y: 2, w: 151, h: 46 }",
+            "display_height": 50,
+        },
+        "flash": {},
+        "screen": "Rect { x: 0, y: 0, w: 193, h: 50 }",
+        "tab": {
+            "cursor_x": "CursorView { head: 0, scroll: 0, cursor: 0, size: 149 }",
+            "cursor_pos": "Pos(22, 39)",
+            "display_height": 8,
+            "cursor_y": "CursorView { head: 14, scroll: 6, cursor: 8, size: 8 }",
+            "max": "None",
+            "max_height": 22,
+        },
+        "dialog": {
+            "display_height": 36,
+            "frame": {
+                "outer": "Rect { x: 23, y: 4, w: 147, h: 34 }",
+                "inner": "Rect { x: 23, y: 4, w: 147, h: 34 }",
+                "border": "Rect { x: 22, y: 3, w: 149, h: 36 }",
+                "display_height": 36,
+            },
+            "prompt": {
+                "cursor_pos": "Pos(23, 4)",
+                "cursor_x": "CursorView { head: 0, scroll: 0, cursor: 0, size: 147 }",
+                "cursor_y": "CursorView { head: 0, scroll: 0, cursor: 0, size: 1 }",
+                "max": "Some(2)",
+                "max_height": 1,
+                "display_height": 1,
+            },
+            "body": {
+                "max": "None",
+                "display_height": 33,
+                "cursor_x": "CursorView { head: 0, scroll: 0, cursor: 0, size: 147 }",
+                "max_height": 33,
+                "cursor_y": "CursorView { head: 0, scroll: 0, cursor: 0, size: 33 }",
+                "cursor_pos": "Pos(23, 5)",
+            },
+            "max": Select,
+            "max_height": 36,
+        },
+    }
+[2026-11-04T01:02:19.180Z DEBUG gbrowse::view] 
+    {
+        "screen": "Rect { x: 0, y: 0, w: 132, h: 38 }",
+        "tab": {
+            "display_height": 0,
+            "cursor_x": "CursorView { head: 0, scroll: 0, cursor: 0, size: 88 }",
+            "max_height": 25,
+            "max": "None",
+            "cursor_pos": "Pos(22, 35)",
+            "cursor_y": "CursorView { head: 17, scroll: 17, cursor: 0, size: 0 }",
+        },
+        "dialog": {
+            "body": {
+                "max_height": 33,
+                "cursor_pos": "Pos(23, 5)",
+                "cursor_x": "CursorView { head: 0, scroll: 0, cursor: 0, size: 86 }",
+                "cursor_y": "CursorView { head: 0, scroll: 0, cursor: 0, size: 29 }",
+                "display_height": 29,
+                "max": "None",
+            },
+            "max_height": 36,
+            "display_height": 32,
+            "frame": {
+                "outer": "Rect { x: 23, y: 4, w: 86, h: 30 }",
+                "border": "Rect { x: 22, y: 3, w: 88, h: 32 }",
+                "inner": "Rect { x: 23, y: 4, w: 86, h: 30 }",
+                "display_height": 32,
+            },
+            "prompt": {
+                "max_height": 1,
+                "display_height": 1,
+                "cursor_y": "CursorView { head: 0, scroll: 0, cursor: 0, size: 1 }",
+                "cursor_x": "CursorView { head: 0, scroll: 0, cursor: 0, size: 86 }",
+                "cursor_pos": "Pos(23, 4)",
+                "max": "Some(2)",
+            },
+            "max": Select,
+        },
+        "frame": {
+            "border": "Rect { x: 20, y: 1, w: 92, h: 36 }",
+            "outer": "Rect { x: 21, y: 2, w: 90, h: 34 }",
+            "inner": "Rect { x: 22, y: 3, w: 88, h: 32 }",
+            "display_height": 38,
+        },
+        "flash": {},
+    }
+[2026-11-04T01:02:20.994Z DEBUG gbrowse::view] 
+    {
+        "dialog": {},
+        "screen": "Rect { x: 0, y: 0, w: 132, h: 38 }",
+        "flash": {},
+        "tab": {},
+        "frame": {
+            "border": "Rect { x: 20, y: 1, w: 92, h: 4 }",
+            "outer": "Rect { x: 21, y: 2, w: 90, h: 2 }",
+            "display_height": 6,
+            "inner": "Rect { x: 22, y: 3, w: 88, h: 0 }",
+        },
+    }
+[2026-11-04T01:02:20.994Z DEBUG gbrowse::view] 
+    {
+        "screen": "Rect { x: 0, y: 0, w: 132, h: 38 }",
+        "frame": {
+            "border": "Rect { x: 20, y: 1, w: 92, h: 4 }",
+            "inner": "Rect { x: 22, y: 3, w: 88, h: 0 }",
+            "display_height": 6,
+            "outer": "Rect { x: 21, y: 2, w: 90, h: 2 }",
+        },
+        "dialog": {},
+        "flash": {},
+        "tab": {},
+    }
+[2026-11-04T01:02:20.994Z DEBUG gbrowse::view] 
+    {
+        "tab": {},
+        "dialog": {},
+        "screen": "Rect { x: 0, y: 0, w: 132, h: 38 }",
+        "flash": {
+            "display_height": 3,
+            "max": Flash,
+            "body": {},
+            "frame": {
+                "inner": "Rect { x: 23, y: 4, w: 86, h: 1 }",
+                "outer": "Rect { x: 23, y: 4, w: 86, h: 1 }",
+                "display_height": 3,
+                "border": "Rect { x: 22, y: 3, w: 88, h: 3 }",
+            },
+            "prompt": {
+                "max": "Some(2)",
+                "cursor_x": "CursorView { head: 0, scroll: 0, cursor: 0, size: 86 }",
+                "display_height": 1,
+                "cursor_y": "CursorView { head: 0, scroll: 0, cursor: 0, size: 1 }",
+                "cursor_pos": "Pos(23, 4)",
+                "max_height": 1,
+            },
+            "max_height": 3,
+        },
+        "frame": {
+            "border": "Rect { x: 20, y: 1, w: 92, h: 7 }",
+            "display_height": 9,
+            "outer": "Rect { x: 21, y: 2, w: 90, h: 5 }",
+            "inner": "Rect { x: 22, y: 3, w: 88, h: 3 }",
+        },
+    }
+[2026-11-04T01:02:21.649Z DEBUG gbrowse::view] 
+    {
+        "frame": {
+            "border": "Rect { x: 20, y: 1, w: 92, h: 29 }",
+            "display_height": 31,
+            "outer": "Rect { x: 21, y: 2, w: 90, h: 27 }",
+            "inner": "Rect { x: 22, y: 3, w: 88, h: 25 }",
+        },
+        "flash": {},
+        "dialog": {},
+        "screen": "Rect { x: 0, y: 0, w: 132, h: 38 }",
+        "tab": {
+            "max": "None",
+            "max_height": 25,
+            "cursor_x": "CursorView { head: 0, scroll: 0, cursor: 0, size: 88 }",
+            "display_height": 25,
+            "cursor_y": "CursorView { head: 0, scroll: 0, cursor: 0, size: 25 }",
+            "cursor_pos": "Pos(22, 3)",
+        },
+    }
+[2026-11-04T01:08:00.237Z DEBUG gbrowse::view] 
+    {
+        "screen": "Rect { x: 0, y: 0, w: 132, h: 38 }",
+        "flash": {},
+        "tab": {},
+        "frame": {
+            "display_height": 6,
+            "border": "Rect { x: 20, y: 1, w: 92, h: 4 }",
+            "inner": "Rect { x: 22, y: 3, w: 88, h: 0 }",
+            "outer": "Rect { x: 21, y: 2, w: 90, h: 2 }",
+        },
+        "dialog": {},
+    }
+[2026-11-04T01:08:00.237Z DEBUG gbrowse::view] 
+    {
+        "frame": {
+            "inner": "Rect { x: 22, y: 3, w: 88, h: 0 }",
+            "display_height": 6,
+            "outer": "Rect { x: 21, y: 2, w: 90, h: 2 }",
+            "border": "Rect { x: 20, y: 1, w: 92, h: 4 }",
+        },
+        "flash": {},
+        "tab": {},
+        "screen": "Rect { x: 0, y: 0, w: 132, h: 38 }",
+        "dialog": {},
+    }
+[2026-11-04T01:08:00.237Z DEBUG gbrowse::view] 
+    {
+        "screen": "Rect { x: 0, y: 0, w: 132, h: 38 }",
+        "dialog": {},
+        "tab": {},
+        "frame": {
+            "border": "Rect { x: 20, y: 1, w: 92, h: 7 }",
+            "outer": "Rect { x: 21, y: 2, w: 90, h: 5 }",
+            "inner": "Rect { x: 22, y: 3, w: 88, h: 3 }",
+            "display_height": 9,
+        },
+        "flash": {
+            "frame": {
+                "inner": "Rect { x: 23, y: 4, w: 86, h: 1 }",
+                "outer": "Rect { x: 23, y: 4, w: 86, h: 1 }",
+                "display_height": 3,
+                "border": "Rect { x: 22, y: 3, w: 88, h: 3 }",
+            },
+            "display_height": 3,
+            "max": Flash,
+            "body": {},
+            "prompt": {
+                "cursor_y": "CursorView { head: 0, scroll: 0, cursor: 0, size: 1 }",
+                "cursor_pos": "Pos(23, 4)",
+                "max_height": 1,
+                "display_height": 1,
+                "cursor_x": "CursorView { head: 0, scroll: 0, cursor: 0, size: 86 }",
+                "max": "Some(2)",
+            },
+            "max_height": 3,
+        },
+    }
+[2026-11-04T01:08:00.843Z DEBUG gbrowse::view] 
+    {
+        "dialog": {},
+        "flash": {},
+        "frame": {
+            "outer": "Rect { x: 21, y: 2, w: 90, h: 27 }",
+            "border": "Rect { x: 20, y: 1, w: 92, h: 29 }",
+            "inner": "Rect { x: 22, y: 3, w: 88, h: 25 }",
+            "display_height": 31,
+        },
+        "tab": {
+            "max_height": 25,
+            "cursor_x": "CursorView { head: 0, scroll: 0, cursor: 0, size: 88 }",
+            "max": "None",
+            "display_height": 25,
+            "cursor_pos": "Pos(22, 3)",
+            "cursor_y": "CursorView { head: 0, scroll: 0, cursor: 0, size: 25 }",
+        },
+        "screen": "Rect { x: 0, y: 0, w: 132, h: 38 }",
+    }

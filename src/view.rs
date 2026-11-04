@@ -11,8 +11,6 @@ use crate::{
     Dialog,
     DialogParams,
     CursorVec,
-    ViewType,
-    ViewTypeMut,
     BuildView,
     Draw,
     Resize,
@@ -43,7 +41,7 @@ impl crate::Draw for AppView {
         for view in self.get_view_list() {
             view.draw(w)?;
         }
-        fill(&self.rect, &self.frame, w)?;
+        fill(&self.rect, Box::new(&self.frame) as Box<dyn GetDisplayHeight>, w)?;
         Ok(())
     }
 }

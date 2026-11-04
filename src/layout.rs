@@ -29,80 +29,80 @@ pub trait Resize {
 }
 
 
-pub enum ViewType<'a, T> {
-    Dialog(&'a Dialog), 
-    Page(&'a Page<T>),
-}
+//  pub enum ViewType<'a, T> {
+//      Dialog(&'a Dialog), 
+//      Page(&'a Page<T>),
+//  }
 
-impl<'a, T> GetMaxHeight for ViewType<'a, T> {
-    fn get_max_height(&self) -> u16 {
-        match self {
-            Self::Dialog(dialog) => dialog.get_max_height(),
-            Self::Page(page) => page.get_max_height(),
-        }
-    }
-}
+//  impl<'a, T> GetMaxHeight for ViewType<'a, T> {
+//      fn get_max_height(&self) -> u16 {
+//          match self {
+//              Self::Dialog(dialog) => dialog.get_max_height(),
+//              Self::Page(page) => page.get_max_height(),
+//          }
+//      }
+//  }
 
-impl<'a, T> GetDisplayHeight for ViewType<'a, T> {
-    fn get_display_height(&self) -> u16 {
-        match self {
-            Self::Dialog(dialog) => dialog.get_display_height(),
-            Self::Page(page) => page.get_display_height(),
-        }
-    }
-}
+//  impl<'a, T> GetDisplayHeight for ViewType<'a, T> {
+//      fn get_display_height(&self) -> u16 {
+//          match self {
+//              Self::Dialog(dialog) => dialog.get_display_height(),
+//              Self::Page(page) => page.get_display_height(),
+//          }
+//      }
+//  }
 
-impl<'a, T: std::fmt::Display> Draw for ViewType<'a, T> {
-    fn draw(&self, w: &mut impl std::io::Write) -> std::io::Result<()> {
-        match self {
-            Self::Dialog(dialog) => {dialog.draw(w)?;}
-            Self::Page(page) => {page.draw(w)?;}
-        }
-        Ok(())
-    }
-}
+//  impl<'a, T: std::fmt::Display> Draw for ViewType<'a, T> {
+//      fn draw(&self, w: &mut impl std::io::Write) -> std::io::Result<()> {
+//          match self {
+//              Self::Dialog(dialog) => {dialog.draw(w)?;}
+//              Self::Page(page) => {page.draw(w)?;}
+//          }
+//          Ok(())
+//      }
+//  }
 
-pub enum ViewTypeMut<'a, T> {
-    Dialog(&'a mut Dialog), 
-    Page(&'a mut Page<T>),
-}
+//  pub enum ViewTypeMut<'a, T> {
+//      Dialog(&'a mut Dialog), 
+//      Page(&'a mut Page<T>),
+//  }
 
-impl<'a, T> GetDisplayHeight for ViewTypeMut<'a, T> {
-    fn get_display_height(&self) -> u16 {
-        match self {
-            Self::Dialog(dialog) => dialog.get_display_height(),
-            Self::Page(page) => page.get_display_height(),
-        }
-    }
-}
+//  impl<'a, T> GetDisplayHeight for ViewTypeMut<'a, T> {
+//      fn get_display_height(&self) -> u16 {
+//          match self {
+//              Self::Dialog(dialog) => dialog.get_display_height(),
+//              Self::Page(page) => page.get_display_height(),
+//          }
+//      }
+//  }
 
-impl<'a, T> GetMaxHeight for ViewTypeMut<'a, T> {
-    fn get_max_height(&self) -> u16 {
-        match self {
-            Self::Dialog(dialog) => dialog.get_max_height(),
-            Self::Page(page) => page.get_max_height(),
-        }
-    }
-}
+//  impl<'a, T> GetMaxHeight for ViewTypeMut<'a, T> {
+//      fn get_max_height(&self) -> u16 {
+//          match self {
+//              Self::Dialog(dialog) => dialog.get_max_height(),
+//              Self::Page(page) => page.get_max_height(),
+//          }
+//      }
+//  }
 
-impl<'a, T: std::fmt::Display> Draw for ViewTypeMut<'a, T> {
-    fn draw(&self, w: &mut impl std::io::Write) -> std::io::Result<()> {
-        match self {
-            Self::Dialog(dialog) => {dialog.draw(w)?;}
-            Self::Page(page) => {page.draw(w)?;}
-        }
-        Ok(())
-    }
-}
+//  impl<'a, T: std::fmt::Display> Draw for ViewTypeMut<'a, T> {
+//      fn draw(&self, w: &mut impl std::io::Write) -> std::io::Result<()> {
+//          match self {
+//              Self::Dialog(dialog) => {dialog.draw(w)?;}
+//              Self::Page(page) => {page.draw(w)?;}
+//          }
+//          Ok(())
+//      }
+//  }
 
-impl<'a, T: std::fmt::Display> Resize for ViewTypeMut<'a, T> {
-    fn resize(&mut self, rect: &Rect) {
-        match self {
-            Self::Dialog(dialog) => dialog.resize(rect),
-            Self::Page(page) => page.resize(rect),
-        }
-    }
-}
+//  impl<'a, T: std::fmt::Display> Resize for ViewTypeMut<'a, T> {
+//      fn resize(&mut self, rect: &Rect) {
+//          match self {
+//              Self::Dialog(dialog) => dialog.resize(rect),
+//              Self::Page(page) => page.resize(rect),
+//          }
+//      }
+//  }
 
 impl<T: Draw> Draw for Option<T> {
     fn draw(&self, w: &mut impl std::io::Write) -> std::io::Result<()> {
@@ -136,7 +136,7 @@ impl<T> GetMaxHeight for Vec<T> {
 }
 
 pub fn fill(
-    rect: &Rect, view: &impl GetDisplayHeight, w: &mut impl std::io::Write,
+    rect: &Rect, view: &Box<dyn GetDisplayHeight>, w: &mut Box<impl std::io::Write>,
 ) -> std::io::Result<()> {
     rect
         .shift_north(
@@ -149,7 +149,7 @@ pub fn fill(
 }
 
 pub fn get_display_bounds(
-    rect: &Rect, views: &Vec<&impl GetMaxHeight>
+    rect: &Rect, views: &Vec<&Box<impl GetMaxHeight>>
 ) -> Vec<Rect> {
         let mut remaining = rect.clone();
         let mut vec: Vec<Rect> = vec![];
