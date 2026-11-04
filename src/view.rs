@@ -21,6 +21,7 @@ use crate::{
     Page,
 };
 use url::Url;
+use std::collections::HashMap;
 
 
 
@@ -73,24 +74,6 @@ impl AppView {
         self.frame = params.build_from_outer(&self.rect);
     }
 
-    pub fn get_debug_str(&self) -> String {
-        let mut v: Vec<_> = vec![];
-        v.push("\n\n-- AppView START".into());
-        v.push(format!("\tscreen: {:?}", self.rect));
-        v.push(self.frame.get_debug_str());
-        if let Some(dlg) = &self.flash {
-            v.push(dlg.get_debug_str());
-        }
-        if let Some(dlg) = &self.dialog {
-            v.push(dlg.get_debug_str());
-        }
-        if let Some(tab) = &self.tabs.get() {
-            v.push(tab.page.get_debug_str());
-        }
-        v.push("-- AppView END\n\n".into());
-        v.join("\n")
-    }
-
     pub fn reset_draw_state(&mut self) {
         self.draw_frame = false;
     }
@@ -113,7 +96,7 @@ impl AppView {
             .map(|v| v.get_display_height())
             .sum();
         self.frame = self.frame.params.build_from_inner(&inner_rect);
-        log::debug!("\n{}", self.get_debug_str());
+        log::debug!("\n{:#?}", self.get_debug_hashmap());
     }
     
     pub fn flash(&mut self, params: DialogParams) {
@@ -154,6 +137,47 @@ impl AppView {
             self.dialog.as_mut().map(ViewTypeMut::Dialog),
             self.tabs.get_mut().map(|f| ViewTypeMut::Page(&mut f.page)),
         ]
+    }
+
+    pub fn get_debug_hashmap(&self) -> HashMap<&'static str, Box<dyn std::fmt::Debug>> {
+        use std::fmt::Debug;
+        HashMap::from([ 
+            ("screen", Box::new(format!("{:?}", self.rect)) as Box<dyn Debug>),
+            ("frame", Box::new(self.frame.get_debug_hashmap()) as Box<dyn Debug>),
+            ("flash", Box::new(
+                    self.flash.as_ref()
+                        .map(|dlg| dlg.get_debug_hashmap()).unwrap_or_default()
+                ) as Box<dyn Debug>
+            ),
+            ("dialog", Box::new(
+                    self.dialog.as_ref()
+                        .map(|dlg| dlg.get_debug_hashmap()).unwrap_or_default()
+                ) as Box<dyn Debug>
+            ),
+            ("tab", Box::new(
+                    self.tabs.get().as_ref()
+                        .map(|tab| tab.page.get_debug_hashmap()).unwrap_or_default()
+                ) as Box<dyn Debug>
+            ),
+        ])
+    }
+
+    pub fn get_debug_str(&self) -> String {
+        let mut v: Vec<_> = vec![];
+        v.push("\n\n-- AppView START".into());
+        v.push(format!("\tscreen: {:?}", self.rect));
+        v.push(self.frame.get_debug_str());
+        if let Some(dlg) = &self.flash {
+            v.push(dlg.get_debug_str());
+        }
+        if let Some(dlg) = &self.dialog {
+            v.push(dlg.get_debug_str());
+        }
+        if let Some(tab) = &self.tabs.get() {
+            v.push(tab.page.get_debug_str());
+        }
+        v.push("-- AppView END\n\n".into());
+        v.join("\n")
     }
 }
 

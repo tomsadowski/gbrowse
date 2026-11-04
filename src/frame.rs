@@ -11,6 +11,8 @@ use crossterm::{
     cursor::{self, MoveTo}, 
     style::{Print, SetAttribute, Attribute},
 };
+use std::collections::HashMap;
+use std::fmt::Debug;
 
 
 
@@ -172,6 +174,16 @@ pub struct Frame {
 }
 
 impl Frame {
+    pub fn get_debug_hashmap(&self) -> HashMap<&'static str, Box<dyn Debug>> {
+        use crate::layout::{GetMaxHeight, GetDisplayHeight};
+        HashMap::from([ 
+            ("border",         Box::new(format!("{:?}", self.border_rect)) as Box<dyn Debug>),
+            ("outer",          Box::new(format!("{:?}", self.outer_rect)) as Box<dyn Debug>),
+            ("inner",          Box::new(format!("{:?}", self.inner_rect)) as Box<dyn Debug>),
+            ("display_height", Box::new(self.get_display_height()) as Box<dyn Debug>),
+        ])
+    }
+
     pub fn get_debug_str(&self) -> String {
         use crate::layout::GetDisplayHeight;
         [

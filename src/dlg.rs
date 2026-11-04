@@ -11,10 +11,12 @@ use crate::{
     resize_views,
     build_opt_views,
 };
+use std::fmt::Debug;
+use std::collections::HashMap;
 
 
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum DialogType {
     Ack, 
     Ask, 
@@ -186,6 +188,31 @@ impl crate::Resize for Dialog {
 }
 
 impl Dialog {
+    pub fn get_debug_hashmap(&self) -> HashMap<&'static str, Box<dyn Debug>> {
+        use crate::layout::{GetMaxHeight, GetDisplayHeight};
+        HashMap::from([ 
+            ("max", Box::new(self.dlg_type.clone()) as Box<dyn Debug>),
+            ("max_height", Box::new(self.get_max_height()) as Box<dyn Debug>),
+            ("display_height", Box::new(self.get_display_height()) as Box<dyn Debug>),
+            ("frame", Box::new(self.frame.get_debug_hashmap()) as Box<dyn Debug>
+            ),
+            ("prompt", Box::new(
+                    self.prompt
+                        .as_ref()
+                        .map(|page| page.get_debug_hashmap())
+                        .unwrap_or_default()
+                ) as Box<dyn Debug>
+            ),
+            ("body", Box::new(
+                    self.body
+                        .as_ref()
+                        .map(|page| page.get_debug_hashmap())
+                        .unwrap_or_default()
+                ) as Box<dyn Debug>
+            ),
+        ])
+    }
+
     pub fn get_debug_str(&self) -> String {
         use crate::layout::GetMaxHeight;
         [
