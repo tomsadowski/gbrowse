@@ -184,19 +184,6 @@ impl Frame {
         ])
     }
 
-    pub fn get_debug_str(&self) -> String {
-        use crate::layout::GetDisplayHeight;
-        [
-            "-- Frame START".into(),
-            format!("\tborder:         {:?}", self.border_rect),
-            format!("\touter:          {:?}", self.outer_rect),
-            format!("\tinner:          {:?}", self.inner_rect),
-            format!("\tdisplay_height: {:?}", self.get_display_height()),
-            "-- Frame END".into(),
-        ]
-            .join("\n")
-    }
-
     pub fn draw_footer(&self, text: &str, w: &mut impl std::io::Write) -> std::io::Result<()> {
         if let Some(border) = self.params.border {
             let mut x = self.outer_rect.x_end().saturating_sub(1);

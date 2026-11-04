@@ -229,21 +229,6 @@ impl<T> Page<T> {
             ("cursor_y", Box::new(format!("{:?}", self.point_view.get_y_view())) as Box<dyn Debug>),
         ])
     }
-
-    pub fn get_debug_str(&self) -> String {
-        use crate::layout::{GetMaxHeight, GetDisplayHeight};
-        [
-            "-- Page START".into(),
-            format!("\tmax:            {:?}", self.max),
-            format!("\tmax_height:     {:?}", self.get_max_height()),
-            format!("\tdisplay_height: {:?}", self.get_display_height()),
-            format!("\tcursor_pos:     {:?}", self.point_view.pos()),
-            format!("\tcursor_x:       {:?}", self.point_view.get_x_view()),
-            format!("\tcursor_y:       {:?}", self.point_view.get_y_view()),
-            "-- Page END".into(),
-        ]
-            .join("\n")
-    }
 }
 
 impl<T: std::fmt::Display> Page<T> {

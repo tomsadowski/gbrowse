@@ -161,24 +161,6 @@ impl AppView {
             ),
         ])
     }
-
-    pub fn get_debug_str(&self) -> String {
-        let mut v: Vec<_> = vec![];
-        v.push("\n\n-- AppView START".into());
-        v.push(format!("\tscreen: {:?}", self.rect));
-        v.push(self.frame.get_debug_str());
-        if let Some(dlg) = &self.flash {
-            v.push(dlg.get_debug_str());
-        }
-        if let Some(dlg) = &self.dialog {
-            v.push(dlg.get_debug_str());
-        }
-        if let Some(tab) = &self.tabs.get() {
-            v.push(tab.page.get_debug_str());
-        }
-        v.push("-- AppView END\n\n".into());
-        v.join("\n")
-    }
 }
 
 

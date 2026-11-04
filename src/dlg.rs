@@ -194,37 +194,17 @@ impl Dialog {
             ("max", Box::new(self.dlg_type.clone()) as Box<dyn Debug>),
             ("max_height", Box::new(self.get_max_height()) as Box<dyn Debug>),
             ("display_height", Box::new(self.get_display_height()) as Box<dyn Debug>),
-            ("frame", Box::new(self.frame.get_debug_hashmap()) as Box<dyn Debug>
-            ),
+            ("frame", Box::new(self.frame.get_debug_hashmap()) as Box<dyn Debug>),
             ("prompt", Box::new(
-                    self.prompt
-                        .as_ref()
-                        .map(|page| page.get_debug_hashmap())
-                        .unwrap_or_default()
+                    self.prompt.as_ref()
+                        .map(|page| page.get_debug_hashmap()).unwrap_or_default()
                 ) as Box<dyn Debug>
             ),
             ("body", Box::new(
-                    self.body
-                        .as_ref()
-                        .map(|page| page.get_debug_hashmap())
-                        .unwrap_or_default()
+                    self.body.as_ref()
+                        .map(|page| page.get_debug_hashmap()).unwrap_or_default()
                 ) as Box<dyn Debug>
             ),
         ])
-    }
-
-    pub fn get_debug_str(&self) -> String {
-        use crate::layout::GetMaxHeight;
-        [
-            "-- Dialog START".into(),
-            format!("\ttype:           {:?}", self.dlg_type),
-            format!("\tmax_height:     {:?}", self.get_max_height()),
-            format!("\tdisplay_height: {:?}", self.get_display_height()),
-            self.frame.get_debug_str(),
-            self.prompt.as_ref().map(|p| p.get_debug_str()).unwrap_or_default(),
-            self.body.as_ref().map(|p| p.get_debug_str()).unwrap_or_default(),
-            "-- Dialog END".into(),
-        ]
-            .join("\n")
     }
 }
