@@ -177,8 +177,8 @@ pub enum TabText {
 impl std::fmt::Display for TabText {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         match self {
-            Self::Gemini(gemtext) => gemtext.fmt(f),
-            Self::Gopher(string) => string.fmt(f),
+            Self::Gemini(d) => d.fmt(f),
+            Self::Gopher(d) => d.fmt(f),
         }
     }
 }
