@@ -5,6 +5,8 @@ use crate::{
     FrameParams,
     Rect,
     Frame,
+    DialecticalResize,
+    View,
     fill,
     resize_views,
     GetDisplayHeight,
@@ -33,7 +35,7 @@ pub struct AppView {
 }
 
 impl crate::Draw for AppView {
-    fn draw(&self, w: &mut impl std::io::Write) -> std::io::Result<()> {
+    fn draw(&self, w: &mut dyn std::io::Write) -> std::io::Result<()> {
         if self.draw_frame {
             self.frame.draw_east(w)?;
             self.frame.draw_west(w)?;
@@ -41,7 +43,7 @@ impl crate::Draw for AppView {
         for view in self.get_view_list() {
             view.draw(w)?;
         }
-        fill(&self.rect, Box::new(&self.frame) as Box<dyn GetDisplayHeight>, w)?;
+        fill(&self.rect, &self.frame, w)?;
         Ok(())
     }
 }
@@ -121,19 +123,19 @@ impl AppView {
         self.push_frame();
     }
 
-    pub fn get_view_list<'a>(&'a self) -> Vec<Option<ViewType<'a, TabText>>> {
+    pub fn get_view_list(&self) -> Vec<Option<&dyn View>> {
         vec![
-            self.flash.as_ref().map(ViewType::Dialog),
-            self.dialog.as_ref().map(ViewType::Dialog),
-            self.tabs.get().map(|f| ViewType::Page(&f.page)),
+            self.flash.as_ref().map(|x| x as &dyn View),
+            self.dialog.as_ref().map(|x| x as &dyn View),
+            self.tabs.get().map(|f| &f.page as &dyn View),
         ]
     }
 
-    pub fn get_view_list_mut<'a>(&'a mut self) -> Vec<Option<ViewTypeMut<'a, TabText>>> {
+    pub fn get_view_list_mut<'a>(&'a mut self) -> Vec<Option<&'a mut dyn View>> {
         vec![
-            self.flash.as_mut().map(ViewTypeMut::Dialog),
-            self.dialog.as_mut().map(ViewTypeMut::Dialog),
-            self.tabs.get_mut().map(|f| ViewTypeMut::Page(&mut f.page)),
+            self.flash.as_mut().map(|x| x as &mut dyn View),
+            self.dialog.as_mut().map(|x| x as &mut dyn View),
+            self.tabs.get_mut().map(|f| &mut f.page as &mut dyn View),
         ]
     }
 
@@ -193,7 +195,7 @@ impl GetMaxHeight for CursorVec<Tab> {
 }
 
 impl Draw for CursorVec<Tab> {
-    fn draw(&self, writer: &mut impl std::io::Write) -> std::io::Result<()> {
+    fn draw(&self, writer: &mut dyn std::io::Write) -> std::io::Result<()> {
         if let Some(view) = self.get() {
             view.page.draw(writer)?;
         }

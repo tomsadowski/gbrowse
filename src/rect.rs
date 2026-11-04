@@ -110,7 +110,7 @@ impl Rect {
 }
 
 impl crate::Draw for Rect {
-    fn draw(&self, w: &mut impl std::io::Write) -> std::io::Result<()> {
+    fn draw(&self, w: &mut dyn std::io::Write) -> std::io::Result<()> {
         use crossterm::{QueueableCommand, cursor, style};
         w
             .queue(cursor::MoveTo(self.x, self.y))?

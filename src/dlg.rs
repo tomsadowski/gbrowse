@@ -5,6 +5,7 @@ use crate::{
     FrameParams,
     Frame,
     PageParams,
+    DialecticalResize,
     Page,
     Rect,
     GetDisplayHeight,
@@ -150,8 +151,8 @@ pub struct Dialog {
 
 impl crate::GetMaxHeight for Dialog {
     fn get_max_height(&self) -> u16 {
-        self.prompt.get_max_height() 
-            + self.body.get_max_height()
+        self.prompt.as_ref().map(|p| p.get_max_height()).unwrap_or(0)
+            + self.body.as_ref().map(|p| p.get_max_height()).unwrap_or(0)
             + (self.frame.screen.h - self.frame.inner_rect.h)
     }
 }
@@ -163,10 +164,14 @@ impl crate::GetDisplayHeight for Dialog {
 }
 
 impl crate::Draw for Dialog {
-    fn draw(&self, w: &mut impl std::io::Write) -> std::io::Result<()> {
+    fn draw(&self, w: &mut dyn std::io::Write) -> std::io::Result<()> {
         self.frame.draw(w)?;
-        self.prompt.draw(w)?;
-        self.body.draw(w)?;
+        if let Some(page) = &self.prompt {
+            page.draw(w)?;
+        }
+        if let Some(page) = &self.body {
+            page.draw(w)?;
+        }
         Ok(())
     }
 }
@@ -176,13 +181,13 @@ impl crate::Resize for Dialog {
         let frame = self.frame.params.build_from_outer(rect);
         resize_views(
             &frame.inner_rect, 
-            &mut vec![&mut self.prompt, &mut self.body]
+            &mut vec![&mut self.prompt as &mut dyn DialecticalResize, &mut self.body]
         );
 
         let mut inner_rect = frame.inner_rect.clone();
         inner_rect.h = 
-            self.prompt.get_display_height() 
-            + self.body.get_display_height();
+            self.prompt.as_ref().map(|p| p.get_display_height()).unwrap_or(0)
+            + self.body.as_ref().map(|p| p.get_display_height()).unwrap_or(0);
         self.frame = self.frame.params.build_from_inner(&inner_rect);
     }
 }

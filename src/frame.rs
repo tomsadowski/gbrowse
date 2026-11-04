@@ -275,7 +275,7 @@ impl Frame {
         Ok(())
     }
 
-    pub fn draw_east(&self, w: &mut impl std::io::Write) 
+    pub fn draw_east(&self, w: &mut dyn std::io::Write) 
         -> std::io::Result<()> 
     {
         // border
@@ -304,7 +304,7 @@ impl Frame {
         Ok(())
     }
 
-    pub fn draw_west(&self, w: &mut impl std::io::Write) -> std::io::Result<()> {
+    pub fn draw_west(&self, w: &mut dyn std::io::Write) -> std::io::Result<()> {
         // border
         if let Some(border) = self.params.border {
             let Pos(nwx, nwy) = self.border_rect.northwest();
@@ -339,7 +339,7 @@ impl crate::GetDisplayHeight for Frame {
 }
 
 impl crate::Draw for Frame {
-    fn draw(&self, w: &mut impl std::io::Write) -> std::io::Result<()> {
+    fn draw(&self, w: &mut dyn std::io::Write) -> std::io::Result<()> {
         // border
         if let Some(border) = self.params.border {
             let Pos(nwx, nwy) = self.border_rect.northwest();
