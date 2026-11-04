@@ -109,7 +109,7 @@ impl Rect {
     }
 }
 
-impl crate::Draw for Rect {
+impl crate::View for Rect {
     fn draw(&self, w: &mut dyn std::io::Write) -> std::io::Result<()> {
         use crossterm::{QueueableCommand, cursor, style};
         w

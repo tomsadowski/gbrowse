@@ -5,6 +5,7 @@ use crate::{
     Pos,
     Style,
     util,
+    View,
 };
 use crossterm::{
     QueueableCommand, 
@@ -175,11 +176,10 @@ pub struct Frame {
 
 impl Frame {
     pub fn get_debug_hashmap(&self) -> HashMap<&'static str, Box<dyn Debug>> {
-        use crate::layout::{GetMaxHeight, GetDisplayHeight};
         HashMap::from([ 
-            ("border",         Box::new(format!("{:?}", self.border_rect)) as Box<dyn Debug>),
-            ("outer",          Box::new(format!("{:?}", self.outer_rect)) as Box<dyn Debug>),
-            ("inner",          Box::new(format!("{:?}", self.inner_rect)) as Box<dyn Debug>),
+            ("border", Box::new(format!("{:?}", self.border_rect)) as Box<dyn Debug>),
+            ("outer", Box::new(format!("{:?}", self.outer_rect)) as Box<dyn Debug>),
+            ("inner", Box::new(format!("{:?}", self.inner_rect)) as Box<dyn Debug>),
             ("display_height", Box::new(self.get_display_height()) as Box<dyn Debug>),
         ])
     }
@@ -332,13 +332,11 @@ impl Frame {
     }
 }
 
-impl crate::GetDisplayHeight for Frame {
+impl View for Frame {
     fn get_display_height(&self) -> u16 {
         self.screen.h
     }
-}
 
-impl crate::Draw for Frame {
     fn draw(&self, w: &mut dyn std::io::Write) -> std::io::Result<()> {
         // border
         if let Some(border) = self.params.border {

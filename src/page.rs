@@ -8,6 +8,7 @@ use crate::{
     PointView,
     BuildView,
     PointMatrix,
+    View,
 };
 use std::collections::HashMap;
 use std::fmt::Debug;
@@ -66,7 +67,7 @@ pub fn print(
 
 
 #[derive(Debug)]
-pub struct PageParams<T> {
+pub struct PageParams<T: std::fmt::Display> {
     pub max: Option<u16>,
     pub edit: bool,
     pub style: Style,
@@ -74,7 +75,7 @@ pub struct PageParams<T> {
     pub source: Vec<T>,
 }
 
-impl<T> Default for PageParams<T> {
+impl<T: std::fmt::Display> Default for PageParams<T> {
     fn default() -> Self {
         Self {
             max: None,
@@ -147,7 +148,7 @@ impl<T: std::fmt::Display> BuildView<Page<T>> for PageParams<T> {
 }
 
 
-pub struct Page<T> {
+pub struct Page<T: std::fmt::Display> {
     pub max: Option<u16>,
     pub style: Style,
     pub edit: bool,
@@ -158,7 +159,7 @@ pub struct Page<T> {
     pub indexes: Vec<usize>,
 }
 
-impl<T> Page<T> {
+impl<T: std::fmt::Display> Page<T> {
     pub fn get_index(&self) -> usize {
         self.indexes.get(self.matrix.point.y.head)
             .map(|u| u.clone())
@@ -219,7 +220,6 @@ impl<T> Page<T> {
     }
 
     pub fn get_debug_hashmap(&self) -> HashMap<&'static str, Box<dyn Debug>> {
-        use crate::layout::{GetMaxHeight, GetDisplayHeight};
         HashMap::from([ 
             ("max", Box::new(format!("{:?}", self.max)) as Box<dyn Debug>),
             ("max_height", Box::new(self.get_max_height()) as Box<dyn Debug>),
@@ -229,9 +229,7 @@ impl<T> Page<T> {
             ("cursor_y", Box::new(format!("{:?}", self.point_view.get_y_view())) as Box<dyn Debug>),
         ])
     }
-}
 
-impl<T: std::fmt::Display> Page<T> {
     pub fn get_param_string(&self) -> String {
         self.source
             .get(self.get_index())
@@ -263,7 +261,17 @@ impl<T: std::fmt::Display> Page<T> {
     }
 }
 
-impl<T: std::fmt::Display> crate::Resize for Page<T> {
+impl<T: std::fmt::Display> View for Page<T> {
+    fn get_display_height(&self) -> u16 {
+        self.point_view.get_height()
+    }
+
+    fn get_max_height(&self) -> u16 {
+        self.matrix.data
+            .get_max_height()
+            .min(self.max.unwrap_or(u16::MAX))
+    }
+
     fn resize(&mut self, rect: &Rect) {
         if self.point_view.get_width() == rect.w() {
             self.point_view.resize(&self.matrix, rect);
@@ -271,23 +279,7 @@ impl<T: std::fmt::Display> crate::Resize for Page<T> {
             self.rebuild(rect);
         }
     }
-}
 
-impl<T> crate::GetDisplayHeight for Page<T> {
-    fn get_display_height(&self) -> u16 {
-        self.point_view.get_height()
-    }
-}
-
-impl<T> crate::GetMaxHeight for Page<T> {
-    fn get_max_height(&self) -> u16 {
-        self.matrix.data
-            .get_max_height()
-            .min(self.max.unwrap_or(u16::MAX))
-    }
-}
-
-impl<T: std::fmt::Display> crate::Draw for Page<T> {
     fn draw(&self, w: &mut dyn std::io::Write) -> std::io::Result<()> {
         use crossterm::{QueueableCommand, cursor, style};
 

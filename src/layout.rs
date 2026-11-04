@@ -8,66 +8,24 @@ use crate::{
 
 
 
-pub trait BuildView<T> where T: Resize {
+pub trait BuildView<T> where T: View {
     fn build(self, _: &Rect) -> T;
 }
 
-pub trait GetMaxHeight {
-    fn get_max_height(&self) -> u16;
+pub trait View {
+    fn resize(&mut self, _: &Rect) {}
+    fn draw(&self, _: &mut dyn std::io::Write) -> std::io::Result<()> {Ok(())}
+    fn get_display_height(&self) -> u16 {0}
+    fn get_max_height(&self) -> u16 {0}
 }
-
-pub trait GetDisplayHeight {
-    fn get_display_height(&self) -> u16;
-}
-
-pub trait Draw {
-    fn draw(&self, _: &mut dyn std::io::Write) -> std::io::Result<()>;
-}
-
-pub trait Resize {
-    fn resize(&mut self, _: &Rect);
-}
-
-impl Draw for Option<&dyn Draw> {
-    fn draw(&self, w: &mut dyn std::io::Write) -> std::io::Result<()> {
-        if let Some(t) = self { t.draw(w)? } 
-        Ok(())
-    }
-}
-
-impl GetMaxHeight for Option<&dyn GetMaxHeight> {
-    fn get_max_height(&self) -> u16 {
-        if let Some(t) = self { t.get_max_height() } else { 0 }
-    }
-}
-
-impl GetDisplayHeight for Option<&dyn GetDisplayHeight> {
-    fn get_display_height(&self) -> u16 {
-        if let Some(t) = self { t.get_display_height() } else { 0 }
-    }
-}
-
-impl Resize for Option<&mut dyn Resize> {
-    fn resize(&mut self, rect: &Rect) {
-        if let Some(t) = self { t.resize(rect) }
-    }
-}
-
-impl<T> GetMaxHeight for Vec<T> {
+impl<T> View for Vec<T> {
     fn get_max_height(&self) -> u16 {
         u16::try_from(self.len()).unwrap_or(u16::MAX)
     }
 }
 
-pub trait View: Draw + GetMaxHeight + GetDisplayHeight + Resize {}
-impl<T: Draw + GetMaxHeight + GetDisplayHeight + Resize> View for T {}
-
-pub trait DialecticalResize: Resize + GetMaxHeight {}
-impl<T: Resize + GetMaxHeight> DialecticalResize for T {}
-
-
 pub fn fill(
-    rect: &Rect, view: &dyn GetDisplayHeight, w: &mut dyn std::io::Write,
+    rect: &Rect, view: &dyn View, w: &mut dyn std::io::Write,
 ) -> std::io::Result<()> {
     rect
         .shift_north(
@@ -80,7 +38,7 @@ pub fn fill(
 }
 
 pub fn get_display_bounds(
-    rect: &Rect, views: &Vec<&dyn DialecticalResize>
+    rect: &Rect, views: &Vec<&dyn View>
 ) -> Vec<Rect> {
         let mut remaining = rect.clone();
         let mut vec: Vec<Rect> = vec![];
@@ -100,7 +58,7 @@ pub fn get_display_bounds(
 }
 
 pub fn resize_views(
-    rect: &Rect, views: &mut Vec<&mut dyn DialecticalResize>
+    rect: &Rect, views: &mut Vec<&mut dyn View>
 ) {
     let bounds = get_display_bounds(&rect, 
         &views.iter().map(|v| &**v).collect()
@@ -110,16 +68,16 @@ pub fn resize_views(
     }
 }
 
-pub fn build_opt_views<T: Resize + GetDisplayHeight>(
-    rect: &Rect, params: Vec<Option<impl BuildView<T>>>
-) -> Vec<Option<T>> {
-    let mut rect = rect.clone();
-    let mut views: Vec<Option<T>> = vec![];
-    for param in params {
-        let v = param.map(|p| p.build(&rect));
-        let vheight = v.get_display_height().min(rect.h());
-        rect = rect.shift_north((vheight as i16) * -1);
-        views.push(v);
-    }
-    views
-}
+//  pub fn build_opt_views<T: View>(
+//      rect: &Rect, params: Vec<&dyn BuildView<T>>
+//  ) -> Vec<T> {
+//      let mut rect = rect.clone();
+//      let mut views: Vec<_> = vec![];
+//      for param in params {
+//          let v = param.build(&rect);
+//          let vheight = v.get_display_height().min(rect.h());
+//          rect = rect.shift_north((vheight as i16) * -1);
+//          views.push(v);
+//      }
+//      views
+//  }

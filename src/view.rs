@@ -5,18 +5,13 @@ use crate::{
     FrameParams,
     Rect,
     Frame,
-    DialecticalResize,
     View,
     fill,
     resize_views,
-    GetDisplayHeight,
     Dialog,
     DialogParams,
     CursorVec,
     BuildView,
-    Draw,
-    Resize,
-    GetMaxHeight,
     GemText,
     Page,
 };
@@ -34,7 +29,7 @@ pub struct AppView {
     pub tabs:       CursorVec<Tab>,
 }
 
-impl crate::Draw for AppView {
+impl View for AppView {
     fn draw(&self, w: &mut dyn std::io::Write) -> std::io::Result<()> {
         if self.draw_frame {
             self.frame.draw_east(w)?;
@@ -46,9 +41,7 @@ impl crate::Draw for AppView {
         fill(&self.rect, &self.frame, w)?;
         Ok(())
     }
-}
 
-impl crate::Resize for AppView {
     fn resize(&mut self, rect: &Rect) {
         self.rect = rect.clone();
         self.frame = self.frame.params.build_from_outer(rect);
@@ -88,7 +81,7 @@ impl AppView {
         let mut inner_rect = self.frame.inner_rect;
         resize_views(
             &inner_rect, 
-            &mut self.get_view_list_mut().iter_mut().collect()
+            &mut self.get_view_list_mut().into_iter().collect()
         );
         inner_rect.h = self
             .get_view_list()
@@ -123,20 +116,32 @@ impl AppView {
         self.push_frame();
     }
 
-    pub fn get_view_list(&self) -> Vec<Option<&dyn View>> {
-        vec![
-            self.flash.as_ref().map(|x| x as &dyn View),
-            self.dialog.as_ref().map(|x| x as &dyn View),
-            self.tabs.get().map(|f| &f.page as &dyn View),
-        ]
+    pub fn get_view_list(&self) -> Vec<&dyn View> {
+        let mut v = vec![];
+        if let Some(dlg) = self.flash.as_ref() {
+            v.push(dlg as &dyn View);
+        }
+        if let Some(dlg) = self.dialog.as_ref() {
+            v.push(dlg as &dyn View);
+        }
+        if let Some(tab) = self.tabs.get() {
+            v.push(&tab.page as &dyn View);
+        }
+        v
     }
 
-    pub fn get_view_list_mut<'a>(&'a mut self) -> Vec<Option<&'a mut dyn View>> {
-        vec![
-            self.flash.as_mut().map(|x| x as &mut dyn View),
-            self.dialog.as_mut().map(|x| x as &mut dyn View),
-            self.tabs.get_mut().map(|f| &mut f.page as &mut dyn View),
-        ]
+    pub fn get_view_list_mut<'a>(&'a mut self) -> Vec<&'a mut dyn View> {
+        let mut v = vec![];
+        if let Some(dlg) = self.flash.as_mut() {
+            v.push(dlg as &mut dyn View);
+        }
+        if let Some(dlg) = self.dialog.as_mut() {
+            v.push(dlg as &mut dyn View);
+        }
+        if let Some(tab) = self.tabs.get_mut() {
+            v.push(&mut tab.page as &mut dyn View);
+        }
+        v
     }
 
     pub fn get_debug_hashmap(&self) -> HashMap<&'static str, Box<dyn std::fmt::Debug>> {
@@ -184,7 +189,7 @@ pub struct Tab {
     pub page: Page<TabText>,
 } 
 
-impl GetMaxHeight for CursorVec<Tab> {
+impl View for CursorVec<Tab> {
     fn get_max_height(&self) -> u16 {
         if let Some(view) = self.get() {
             view.page.get_max_height()
@@ -192,18 +197,14 @@ impl GetMaxHeight for CursorVec<Tab> {
             u16::MAX
         }
     }
-}
 
-impl Draw for CursorVec<Tab> {
     fn draw(&self, writer: &mut dyn std::io::Write) -> std::io::Result<()> {
         if let Some(view) = self.get() {
             view.page.draw(writer)?;
         }
         Ok(())
     }
-}
 
-impl Resize for CursorVec<Tab> {
     fn resize(&mut self, rect: &Rect) {
         for tab in self.data.iter_mut() {
             tab.page.resize(rect);

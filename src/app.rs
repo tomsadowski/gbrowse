@@ -8,7 +8,7 @@ use crate::{
     TabText,
     Dim,
     UserConfig, 
-    Draw,
+    View,
     AppView,
     GemText,
     DialogType,
@@ -20,7 +20,6 @@ use crate::{
     PageParams,
     GemTag, 
     StatusText,
-    Resize,
 };
 
 

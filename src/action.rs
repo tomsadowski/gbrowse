@@ -59,7 +59,7 @@ impl std::str::FromStr for Action {
 }
 
 impl Action {
-    pub fn update<T>(&self, page: &mut crate::Page<T>) {
+    pub fn update<T: std::fmt::Display>(&self, page: &mut crate::Page<T>) {
         match self {
             Action::PageDown => {
                 page.move_down(page.point_view.get_height() as usize);
@@ -81,7 +81,7 @@ impl Action {
         }
     }
 
-    pub fn update_edit<T>(&self, page: &mut crate::Page<T>) {
+    pub fn update_edit<T: std::fmt::Display>(&self, page: &mut crate::Page<T>) {
         match self {
             Action::PageDown  => {page.move_left(15);}
             Action::PageUp    => {page.move_right(15);}

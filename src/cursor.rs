@@ -480,7 +480,7 @@ pub struct PointMatrix<T> {
     pub data: Vec<Vec<T>>,
 }
 
-impl<T> crate::GetMaxHeight for PointMatrix<T> {
+impl<T> crate::View for PointMatrix<T> {
     fn get_max_height(&self) -> u16 { self.data.get_max_height() }
 }
 

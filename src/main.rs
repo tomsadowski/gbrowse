@@ -77,16 +77,10 @@ pub use crate::cursor::{
     CursorView,
 };
 pub use crate::layout::{
-    Resize,
-    Draw,
     BuildView,
-    GetMaxHeight,
-    GetDisplayHeight,
-    DialecticalResize,
     View,
     resize_views,
     fill,
-    build_opt_views,
 };
 pub use crate::rect::{
     Pos, 
