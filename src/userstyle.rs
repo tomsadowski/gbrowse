@@ -322,7 +322,9 @@ impl UserAssign<()> for StyleConfig {
                     BorderField::App => self.border = Some(string),
                     BorderField::Dialog => self.dialog_border = string,
                 }
-                result.map_err(|e| AssignErr::new(field, ValueErr::Message(e)))
+                result.map_err(|e| AssignErr::value_err(
+                    field, ValueErr::TableErr(Box::new(e)))
+                )
             }
             (StyleConfigField::Text(text), Value::Table(value)) => {
                 let (text_params, result) = TextParams::from_table(value, &self.palette);
@@ -342,7 +344,9 @@ impl UserAssign<()> for StyleConfig {
                     StyleTextField::Quote         => self.quote = text_params,
                     StyleTextField::List          => self.list = text_params,
                 }
-                result.map_err(|e| AssignErr::new(field, ValueErr::Message(e)))
+                result.map_err(|e| AssignErr::value_err(
+                    field, ValueErr::TableErr(Box::new(e))
+                ))
             }
             (StyleConfigField::Margin(margin), Value::Table(value)) => {
                 let (value, result) = MarginParams::from_table(value, &());
@@ -352,9 +356,11 @@ impl UserAssign<()> for StyleConfig {
                     StyleMarginField::DialogText   => self.dialog_text_margin = value,
                     StyleMarginField::DialogScreen => self.dialog_screen_margin = value,
                 }
-                result.map_err(|e| AssignErr::new(field, ValueErr::Message(e)))
+                result.map_err(|e| AssignErr::value_err(
+                    field, ValueErr::TableErr(Box::new(e))
+                ))
             }
-            (field, value) => Err(AssignErr::new(
+            (field, value) => Err(AssignErr::value_err(
                 field, ValueErr::InvalidTomlType(value)
             )),
         }
@@ -425,7 +431,7 @@ impl UserAssign<Map<String, Value>> for Style {
 
         match (field, value) {
             (StyleField::Color(color), value) => {
-                let value = parse_color(&value, palette).map_err(|e| AssignErr::new(field, e))?;
+                let value = parse_color(&value, palette).map_err(|e| AssignErr::value_err(field, e))?;
                 match color {
                     ColorField::Fg => self.fg = Some(value),
                     ColorField::Bg => self.bg = Some(value),
@@ -437,7 +443,7 @@ impl UserAssign<Map<String, Value>> for Style {
                     AttributeField::Underline => self.underline = value,
                 }
             }
-            (field, value) => return Err(AssignErr::new(
+            (field, value) => return Err(AssignErr::value_err(
                 field, ValueErr::InvalidTomlType(value)
             )),
         }
@@ -451,7 +457,7 @@ impl UserAssign<()> for MarginParams {
         match (field, value) {
             (field, Value::Integer(value)) => {
                 let value = u16::try_from(value).map_err(
-                    |e| AssignErr::new(field, ValueErr::InvalidParse(e.to_string()))
+                    |e| AssignErr::value_err(field, ValueErr::InvalidParse(e.to_string()))
                 )?;
                 match field {
                     MarginParamsField::North => self.north = value,
@@ -460,7 +466,7 @@ impl UserAssign<()> for MarginParams {
                     MarginParamsField::West  => self.west = value,
                 }
             }
-            (field, value) => return Err(AssignErr::new(
+            (field, value) => return Err(AssignErr::value_err(
                 field, ValueErr::InvalidTomlType(value)
             )),
         }
@@ -491,7 +497,7 @@ impl UserAssign<Map<String, Value>> for BorderParams {
                         self.southwest = util::SW_RND;
                         self.southeast = util::SE_RND;
                     }
-                    value => return Err(AssignErr::new(
+                    value => return Err(AssignErr::value_err(
                         field, ValueErr::InvalidParse(value.into())
                     )),
                 }
@@ -518,12 +524,12 @@ impl UserAssign<Map<String, Value>> for BorderParams {
                         self.open = util::OPEN_E;
                         self.close = util::CLOSE_E;
                     }
-                    value => return Err(AssignErr::new(
+                    value => return Err(AssignErr::value_err(
                         field, ValueErr::InvalidParse(value.into())
                     )),
                 }
             }
-            (field, value) => return Err(AssignErr::new(
+            (field, value) => return Err(AssignErr::value_err(
                 field, ValueErr::InvalidTomlType(value)
             )),
         }
@@ -543,7 +549,7 @@ impl UserAssign<Map<String, Value>> for TextParams {
             (TextStyleParamsField::Style(field), value) => {
                 self.style.assign(field, value, ctx)?;
             }
-            (field, value) => return Err(AssignErr::new(
+            (field, value) => return Err(AssignErr::value_err(
                 field, ValueErr::InvalidTomlType(value)
             )),
         }

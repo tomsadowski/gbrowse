@@ -7,44 +7,52 @@ use crate::{
 };
 
 
-pub type ValueResult<T> = std::result::Result<T, ValueErr>;
-pub type AssignResult = std::result::Result<(), AssignErr>;
-
 #[derive(Debug)]
 pub enum ValueErr {
     InvalidTomlType(toml::Value),
     InvalidParse(String),
     Message(String),
+    TableErr(Box<Vec<AssignErr>>)
 }
 impl std::fmt::Display for ValueErr {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            Self::InvalidTomlType(t)  => write!(f, "{t:?} is not a valid TOML type"),
+            Self::InvalidTomlType(t) => write!(f, "{t:?} is not a valid TOML type"),
             Self::InvalidParse(s) => write!(f, "Failed to parse value. {s}"),
             Self::Message(msg) => write!(f, "{msg}"),
+            Self::TableErr(msg) => write!(f, ""),
         }
     }
 }
 
 #[derive(Debug)]
-pub struct AssignErr(pub String, pub ValueErr);
+pub enum AssignErr {
+    KeyErr(String),
+    ValueErr(String, ValueErr),
+}
 impl std::fmt::Display for AssignErr {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        let Self(field, value_err) = self;
-        match value_err {
-            ValueErr::InvalidTomlType(_)  => write!(f, "{field}: '{value_err}'\n"),
-            ValueErr::InvalidParse(_) => write!(f, "{field}: '{value_err}'\n"),
-            // Use arrow with spaces on either side because 
-            // this field contains a subfield
-            ValueErr::Message(e) => write!(f, "{field} > {e}"),
+        match self {
+            Self::KeyErr(s) => write!(f, "{s}"), 
+            Self::ValueErr(field, value_err) => match value_err {
+                ValueErr::InvalidTomlType(_)  => write!(f, "{field}: '{value_err}'\n"),
+                ValueErr::InvalidParse(_) => write!(f, "{field}: '{value_err}'\n"),
+                // Use arrow with spaces on either side because 
+                // this field contains a subfield
+                ValueErr::Message(e) => write!(f, "{field} > {e}"),
+                ValueErr::TableErr(e) => write!(f, "{field} > "),
+            }
         }
     }
 }
 impl AssignErr {
-    pub fn new<F: std::fmt::Display>(field: F, value: ValueErr) -> Self {
-        Self(field.to_string(), value)
+    pub fn value_err<F: std::fmt::Display>(field: F, value: ValueErr) -> Self {
+        Self::ValueErr(field.to_string(), value)
     }
 }
+
+pub type ValueResult<T> = std::result::Result<T, ValueErr>;
+pub type AssignResult = std::result::Result<(), AssignErr>;
 
 pub trait UserAssign<C> {
     type Field;
@@ -57,12 +65,12 @@ pub trait UserAssign<C> {
 pub trait UserTable<C>: Sized {
     // always return an instance, collecting all errors encountered
     // into one large error
-    fn from_table(_: toml::Table, _: &C) -> (Self, Result<(), String>);
+    fn from_table(_: toml::Table, _: &C) -> (Self, Result<(), Vec<AssignErr>>);
     // same idea as `from_table`
-    fn from_str(_: &str, _: &C) -> (Self, Result<(), String>);
+    fn from_str(_: &str, _: &C) -> (Self, Result<(), Vec<AssignErr>>);
     // update all valid assignments, return an error if any assignment
     // returned an error
-    fn update_from_table(&mut self, _: toml::Table, _: &C) -> Result<(), String>;
+    fn update_from_table(&mut self, _: toml::Table, _: &C) -> Result<(), Vec<AssignErr>>;
 }
 
 impl<T, F, C> UserTable<C> for T
@@ -70,20 +78,20 @@ where   T: UserAssign<C, Field = F> + Default,
         F: std::str::FromStr<Err = String>
 {
     fn from_table(mut table: toml::Table, context: &C) 
-        -> (Self, Result<(), String>)
+        -> (Self, Result<(), Vec<AssignErr>>)
     {
         let mut user_table = Self::default();
         user_table.load_context(&mut table);
-        let mut errors = String::new();
+        let mut errors = vec![];
 
         for (key, value) in table.into_iter() {
-
-            let Ok(field) = F::from_str(&key)
-                .inspect_err(|e| errors.push_str(&e)) 
-            else {continue};
-
-            let _ = user_table.assign(&field, value, context)
-                .inspect_err(|e| errors.push_str(&format!("{e}")));
+            match F::from_str(&key) {
+                Err(e)    => errors.push(AssignErr::KeyErr(e)),
+                Ok(field) => match user_table.assign(&field, value, context) {
+                    Err(e) => errors.push(e),
+                    _ => {}
+                }
+            }
         }
         if errors.len() > 0 {
             (user_table, Err(errors))
@@ -92,16 +100,22 @@ where   T: UserAssign<C, Field = F> + Default,
         }
     }
 
-    fn from_str(s: &str, ctx: &C) -> (Self, Result<(), String>) {  
+    fn from_str(s: &str, ctx: &C) -> (Self, Result<(), Vec<AssignErr>>) {  
         let mut user_table = Self::default();
-        let mut errors = String::new();
+        let mut errors = vec![];
 
-        if let Ok(mut table) = s.parse::<toml::Table>()
-            .inspect_err(|e| errors.push_str(&e.to_string()))
-        {
-            user_table.load_context(&mut table);
-            let _ = user_table.update_from_table(table, ctx)
-                .inspect_err(|e| errors.push_str(&e));
+        match s.parse::<toml::Table>() {
+            Err(e) => errors.push(AssignErr::KeyErr(e.to_string())),
+            Ok(mut table) => {
+                user_table.load_context(&mut table);
+                match user_table.update_from_table(table, ctx) {
+                    Err(e) => errors.push(AssignErr::ValueErr(
+                        "self".into(), 
+                        ValueErr::TableErr(Box::new(e))
+                    )),
+                    _ => {}
+                }
+            }
         }
         if errors.len() > 0 {
             (user_table, Err(errors))
@@ -111,19 +125,19 @@ where   T: UserAssign<C, Field = F> + Default,
     }
 
     fn update_from_table(&mut self, mut table: toml::Table, context: &C) 
-        -> Result<(), String> 
+        -> Result<(), Vec<AssignErr>> 
     {
         self.load_context(&mut table);
-        let mut errors = "".to_string();
+        let mut errors = vec![];
 
         for (key, value) in table.into_iter() {
-
-            let Ok(field) = F::from_str(&key)
-                .inspect_err(|e| errors.push_str(&e)) 
-            else {continue};
-
-            let _ = self.assign(&field, value, context)
-                .inspect_err(|e| errors.push_str(&e.to_string()));
+            match F::from_str(&key) {
+                Err(e)    => errors.push(AssignErr::KeyErr(e)),
+                Ok(field) => match self.assign(&field, value, context) {
+                    Err(e) => errors.push(e),
+                    _ => {}
+                }
+            }
         }
         if errors.len() > 0 {
             Err(errors)
@@ -210,7 +224,7 @@ impl UserAssign<()> for UserConfig {
             (UserConfigField::Timeout, Value::Integer(value)) => {
                 self.timeout = u64::try_from(value)
                     .map_err(|e| 
-                        AssignErr::new(
+                        AssignErr::value_err(
                             field, ValueErr::InvalidParse(e.to_string())
                     ))?;
             }
@@ -230,7 +244,7 @@ impl UserAssign<()> for UserConfig {
             (UserConfigField::Keys, Value::Table(table)) => {
                 return self.set_keys_table(table)
             }
-            (field, value) => return Err(AssignErr::new(
+            (field, value) => return Err(AssignErr::value_err(
                 field, ValueErr::InvalidTomlType(value)
             ))
         }
@@ -242,14 +256,14 @@ impl UserConfig {
         let string = &std::fs::read_to_string(
             util::get_styles_file_path(&filename)
         )
-            .map_err(|e| AssignErr::new(
+            .map_err(|e| AssignErr::value_err(
                 UserConfigField::Style, ValueErr::Message(e.to_string())
             ))?;
         let (style, style_result) = StyleConfig::from_str(string, &());
         self.style = style;
         return style_result.map_err(
-            |e| AssignErr::new(
-                UserConfigField::Style, ValueErr::Message(e.to_string())
+            |e| AssignErr::value_err(
+                UserConfigField::Style, ValueErr::TableErr(Box::new(e))
             )
         )
     }
@@ -258,8 +272,8 @@ impl UserConfig {
         let (style, style_result) = StyleConfig::from_table(table, &());
         self.style = style;
         return style_result.map_err(
-            |e| AssignErr::new(
-                UserConfigField::Style, ValueErr::Message(e.to_string())
+            |e| AssignErr::value_err(
+                UserConfigField::Style, ValueErr::TableErr(Box::new(e))
             )
         )
     }
@@ -268,14 +282,14 @@ impl UserConfig {
         let string = &std::fs::read_to_string(
             util::get_keys_file_path(&filename)
         )
-            .map_err(|e| AssignErr::new(
+            .map_err(|e| AssignErr::value_err(
                 UserConfigField::Keys, ValueErr::Message(e.to_string())
             ))?;
         let (keys, keys_result) = KeyConfig::from_str(string, &());
         self.keys = keys;
         return keys_result.map_err(
-            |e| AssignErr::new(
-                UserConfigField::Keys, ValueErr::Message(e.to_string())
+            |e| AssignErr::value_err(
+                UserConfigField::Keys, ValueErr::TableErr(Box::new(e))
             )
         )
     }
@@ -284,8 +298,8 @@ impl UserConfig {
         let (keys, style_result) = KeyConfig::from_table(table, &());
         self.keys = keys;
         return style_result.map_err(
-            |e| AssignErr::new(
-                UserConfigField::Keys, ValueErr::Message(e.to_string())
+            |e| AssignErr::value_err(
+                UserConfigField::Keys, ValueErr::TableErr(Box::new(e))
             )
         )
     }

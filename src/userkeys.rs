@@ -91,7 +91,7 @@ impl UserAssign<()> for KeyConfig {
                 Err(ValueErr::InvalidTomlType(value))
             }
         };
-        let value = get_keycode().map_err(|e| AssignErr(format!("{field:?}"), e))?;
+        let value = get_keycode().map_err(|e| AssignErr::ValueErr(format!("{field:?}"), e))?;
         match field {
             Action::LoadUrl    => self.load_url    = value,
             Action::SaveUrl    => self.save_url    = value,
