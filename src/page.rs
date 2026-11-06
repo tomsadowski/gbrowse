@@ -14,23 +14,19 @@ use std::collections::HashMap;
 use std::fmt::Debug;
 
 
-
 #[derive(Copy, Clone, Debug)]
 pub struct TextParams {
     pub style: Style,
     pub wrap:  bool,
 }
-
 impl From<&TextParams> for Style {
     fn from(t: &TextParams) -> Self { t.style }
 }
-
 impl Default for TextParams {
     fn default() -> Self {
         Self { style: Style::default(), wrap: true, }
     }
 }
-
 impl TextParams {
     // split at spaces within width and split at lines
     pub fn get_matrix(&self, string: &str, width: usize) -> Vec<Vec<char>> {
@@ -65,7 +61,6 @@ pub fn print(
         ).unzip()
 }
 
-
 #[derive(Debug)]
 pub struct PageParams<T: std::fmt::Display> {
     pub max: Option<u16>,
@@ -86,29 +81,24 @@ impl<T: std::fmt::Display> Default for PageParams<T> {
         }
     }
 }
-
 impl<T: std::fmt::Display> PageParams<T> {
-    pub fn init() -> Self { Self::default() }
-
+    pub fn new() -> Self {
+        Self::default() 
+    }
     pub fn edit(mut self, b: bool) -> Self {
         self.edit = b; self 
     }
-
     pub fn max(mut self, m: Option<u16>) -> Self {
         self.max = m; self
     }
-
     pub fn style(mut self, style: impl Into<Style>) -> Self {
         self.style = style.into(); self
     }
-
     pub fn text(mut self, text: Vec<T>) -> Self {
         self.source = text;
-        self.styles = self.source
-            .iter().map(|_| TextParams::default()).collect();
+        self.styles = self.source.iter().map(|_| TextParams::default()).collect();
         self
     }
-
     pub fn text_styles(
         mut self, text: Vec<T>, get_style: impl Fn(&T) -> TextParams,
     ) -> Self {
@@ -117,7 +107,6 @@ impl<T: std::fmt::Display> PageParams<T> {
         self
     }
 }
-
 impl<T: std::fmt::Display> BuildView<Page<T>> for PageParams<T> {
     fn build(self, rect: &Rect) -> Page<T> {
         let (indexes, matrix) = print(
@@ -147,7 +136,6 @@ impl<T: std::fmt::Display> BuildView<Page<T>> for PageParams<T> {
     }
 }
 
-
 pub struct Page<T: std::fmt::Display> {
     pub max: Option<u16>,
     pub style: Style,
@@ -158,7 +146,6 @@ pub struct Page<T: std::fmt::Display> {
     pub matrix: PointMatrix<char>, 
     pub indexes: Vec<usize>,
 }
-
 impl<T: std::fmt::Display> Page<T> {
     pub fn get_index(&self) -> usize {
         self.indexes.get(self.matrix.point.y.head)
@@ -260,7 +247,6 @@ impl<T: std::fmt::Display> Page<T> {
         self.rebuild(&Rect::from(&self.point_view));
     }
 }
-
 impl<T: std::fmt::Display> View for Page<T> {
     fn get_display_height(&self) -> u16 {
         self.point_view.get_height()

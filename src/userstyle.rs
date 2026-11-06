@@ -1,4 +1,3 @@
-
 // src/userstyle.rs
 
 use crate::{
@@ -20,7 +19,6 @@ use crate::{
 };
 use toml::{Value, map::Map};
 use crossterm::style::Color;
-
 
 
 #[derive(Debug)]
@@ -62,7 +60,6 @@ pub enum StyleTextField {
     Quote,
     List,
 }
-
 impl std::str::FromStr for StyleConfigField {
     type Err = String;
     fn from_str(string: &str) -> Result<Self, Self::Err> {
@@ -94,7 +91,6 @@ impl std::str::FromStr for StyleConfigField {
         }
     }
 }
-
 impl std::fmt::Display for StyleConfigField {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
@@ -130,7 +126,6 @@ pub enum MarginParamsField {
     East, 
     West
 }
-
 impl std::fmt::Display for MarginParamsField {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
@@ -141,7 +136,6 @@ impl std::fmt::Display for MarginParamsField {
         }
     }
 }
-
 impl std::str::FromStr for MarginParamsField {
     type Err = String;
     fn from_str(string: &str) -> Result<Self, Self::Err> {
@@ -162,7 +156,6 @@ pub enum TextStyleParamsField {
     Wrap, 
     Style(StyleField)
 }
-
 impl std::str::FromStr for TextStyleParamsField {
     type Err = String;
     fn from_str(string: &str) -> Result<Self, Self::Err> {
@@ -172,7 +165,6 @@ impl std::str::FromStr for TextStyleParamsField {
         }
     }
 }
-
 impl std::fmt::Display for TextStyleParamsField {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
@@ -188,7 +180,6 @@ pub enum BorderParamsField {
     Corner, 
     Bracket,
 }
-
 impl std::str::FromStr for BorderParamsField {
     type Err = String;
     fn from_str(string: &str) -> Result<Self, Self::Err> {
@@ -199,7 +190,6 @@ impl std::str::FromStr for BorderParamsField {
         }
     }
 }
-
 impl std::fmt::Display for BorderParamsField {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
@@ -211,23 +201,18 @@ impl std::fmt::Display for BorderParamsField {
 }
 
 #[derive(Debug)]
+pub enum ColorField { Fg, Bg }
+
+#[derive(Debug)]
+pub enum AttributeField {
+    Bold, Underline
+}
+
+#[derive(Debug)]
 pub enum StyleField {
     Color(ColorField), 
     Attribute(AttributeField)
 }
-
-#[derive(Debug)]
-pub enum ColorField {
-    Fg, 
-    Bg
-}
-
-#[derive(Debug)]
-pub enum AttributeField {
-    Bold, 
-    Underline
-}
-
 impl std::str::FromStr for StyleField {
     type Err = String;
     fn from_str(string: &str) -> Result<Self, Self::Err> {
@@ -242,7 +227,6 @@ impl std::str::FromStr for StyleField {
         }
     }
 }
-
 impl std::fmt::Display for StyleField {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
@@ -253,7 +237,6 @@ impl std::fmt::Display for StyleField {
         }
     }
 }
-
 
 #[derive(Clone, Default, Debug)]
 pub struct StyleConfig {
@@ -279,7 +262,6 @@ pub struct StyleConfig {
     pub quote: TextParams,
     pub list: TextParams,
 } 
-
 impl StyleConfig {
     pub fn get_frame_params(&self) -> FrameParams {
         FrameParams::init()
@@ -323,7 +305,6 @@ impl StyleConfig {
         }
     }
 }
-
 impl UserAssign<()> for StyleConfig {
     type Field = StyleConfigField;
 
@@ -341,9 +322,7 @@ impl UserAssign<()> for StyleConfig {
                     BorderField::App => self.border = Some(string),
                     BorderField::Dialog => self.dialog_border = string,
                 }
-                result.map_err(|e| AssignErr::new(
-                    field, ValueErr::Message(e)
-                ))
+                result.map_err(|e| AssignErr::new(field, ValueErr::Message(e)))
             }
             (StyleConfigField::Text(text), Value::Table(value)) => {
                 let (text_params, result) = TextParams::from_table(value, &self.palette);
@@ -363,9 +342,7 @@ impl UserAssign<()> for StyleConfig {
                     StyleTextField::Quote         => self.quote = text_params,
                     StyleTextField::List          => self.list = text_params,
                 }
-                result.map_err(|e| AssignErr::new(
-                    field, ValueErr::Message(e)
-                ))
+                result.map_err(|e| AssignErr::new(field, ValueErr::Message(e)))
             }
             (StyleConfigField::Margin(margin), Value::Table(value)) => {
                 let (value, result) = MarginParams::from_table(value, &());
@@ -375,9 +352,7 @@ impl UserAssign<()> for StyleConfig {
                     StyleMarginField::DialogText   => self.dialog_text_margin = value,
                     StyleMarginField::DialogScreen => self.dialog_screen_margin = value,
                 }
-                result.map_err(|e| AssignErr::new(
-                    field, ValueErr::Message(e)
-                ))
+                result.map_err(|e| AssignErr::new(field, ValueErr::Message(e)))
             }
             (field, value) => Err(AssignErr::new(
                 field, ValueErr::InvalidTomlType(value)
@@ -476,9 +451,7 @@ impl UserAssign<()> for MarginParams {
         match (field, value) {
             (field, Value::Integer(value)) => {
                 let value = u16::try_from(value).map_err(
-                    |e| AssignErr::new(
-                        field, ValueErr::InvalidParse(e.to_string())
-                    )
+                    |e| AssignErr::new(field, ValueErr::InvalidParse(e.to_string()))
                 )?;
                 match field {
                     MarginParamsField::North => self.north = value,

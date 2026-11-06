@@ -7,9 +7,7 @@ use crate::{
 };
 
 
-
 pub type ValueResult<T> = std::result::Result<T, ValueErr>;
-
 pub type AssignResult = std::result::Result<(), AssignErr>;
 
 #[derive(Debug)]
@@ -18,7 +16,6 @@ pub enum ValueErr {
     InvalidParse(String),
     Message(String),
 }
-
 impl std::fmt::Display for ValueErr {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
@@ -31,7 +28,6 @@ impl std::fmt::Display for ValueErr {
 
 #[derive(Debug)]
 pub struct AssignErr(pub String, pub ValueErr);
-
 impl std::fmt::Display for AssignErr {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         let Self(field, value_err) = self;
@@ -44,7 +40,6 @@ impl std::fmt::Display for AssignErr {
         }
     }
 }
-
 impl AssignErr {
     pub fn new<F: std::fmt::Display>(field: F, value: ValueErr) -> Self {
         Self(field.to_string(), value)
@@ -53,37 +48,29 @@ impl AssignErr {
 
 pub trait UserAssign<C> {
     type Field;
-
     // C is context provided by caller
-    fn assign(&mut self, _: &Self::Field, _: toml::Value, _: &C)
-        -> AssignResult;
-
+    fn assign(&mut self, _: &Self::Field, _: toml::Value, _: &C) -> AssignResult;
     // default to empty implementation
     fn load_context(&mut self, _: &mut toml::Table) {}
 }
 
 pub trait UserTable<C>: Sized {
-
     // always return an instance, collecting all errors encountered
     // into one large error
     fn from_table(_: toml::Table, _: &C) -> (Self, Result<(), String>);
-
     // same idea as `from_table`
     fn from_str(_: &str, _: &C) -> (Self, Result<(), String>);
-
     // update all valid assignments, return an error if any assignment
     // returned an error
-    fn update_from_table(&mut self, _: toml::Table, _: &C) 
-        -> Result<(), String>;
+    fn update_from_table(&mut self, _: toml::Table, _: &C) -> Result<(), String>;
 }
-
 
 impl<T, F, C> UserTable<C> for T
 where   T: UserAssign<C, Field = F> + Default,
         F: std::str::FromStr<Err = String>
 {
     fn from_table(mut table: toml::Table, context: &C) 
-        -> (Self, Result<(), String>) 
+        -> (Self, Result<(), String>)
     {
         let mut user_table = Self::default();
         user_table.load_context(&mut table);
@@ -146,7 +133,6 @@ where   T: UserAssign<C, Field = F> + Default,
     }
 }
 
-
 #[derive(Debug)]
 pub enum UserConfigField {
     InitUrl, 
@@ -155,7 +141,6 @@ pub enum UserConfigField {
     Style, 
     Keys,
 }
-
 impl std::str::FromStr for UserConfigField {
     type Err = String;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -170,7 +155,6 @@ impl std::str::FromStr for UserConfigField {
         }
     }
 }
-
 impl std::fmt::Display for UserConfigField {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
@@ -183,7 +167,6 @@ impl std::fmt::Display for UserConfigField {
     }
 }
 
-
 #[derive(Debug)]
 pub struct UserConfig {
     pub timeout: u64,
@@ -193,7 +176,6 @@ pub struct UserConfig {
     pub keys: KeyConfig,
     pub urls: Vec<String>,
 } 
-
 impl Default for UserConfig {
     fn default() -> Self {
         let urls: Vec<String> = 
@@ -212,7 +194,6 @@ impl Default for UserConfig {
         }
     }
 }
-
 impl UserAssign<()> for UserConfig {
     type Field = UserConfigField;
     fn assign(&mut self, field: &Self::Field, value: toml::Value, _: &()) 
@@ -256,7 +237,6 @@ impl UserAssign<()> for UserConfig {
         Ok(())
     }
 }
-
 impl UserConfig {
     pub fn set_style_file(&mut self, filename: &str) -> AssignResult {
         let string = &std::fs::read_to_string(
@@ -274,7 +254,6 @@ impl UserConfig {
         )
     }
 
-
     pub fn set_style_table(&mut self, table: toml::Table) -> AssignResult {
         let (style, style_result) = StyleConfig::from_table(table, &());
         self.style = style;
@@ -284,7 +263,6 @@ impl UserConfig {
             )
         )
     }
-
 
     pub fn set_keys_file(&mut self, filename: &str) -> AssignResult {
         let string = &std::fs::read_to_string(
@@ -302,7 +280,6 @@ impl UserConfig {
         )
     }
 
-
     pub fn set_keys_table(&mut self, table: toml::Table) -> AssignResult {
         let (keys, style_result) = KeyConfig::from_table(table, &());
         self.keys = keys;
@@ -312,7 +289,6 @@ impl UserConfig {
             )
         )
     }
-
 
     // may fail when saving a URL or writing to the URL file
     pub fn save_url(&mut self, url: &url::Url) -> Result<(), String> {

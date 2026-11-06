@@ -8,7 +8,6 @@ pub struct Request {
     pub rx: mpsc::Receiver<Result<(String, String), String>>,
     pub handle: thread::JoinHandle<()>,
 }
-
 impl Request {
     pub fn new(url: &url::Url, timeout: u64) -> Self {
         let (tx, rx)  = mpsc::channel::<Result<(String, String), String>>();
@@ -21,7 +20,6 @@ impl Request {
         Self {url: url.clone(), rx, handle}
     }
 }
-
 
 // returns response and content
 pub fn get_data(url: &url::Url, timeout: u64) -> Result<(String, String), String> {

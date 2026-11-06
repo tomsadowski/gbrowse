@@ -15,7 +15,6 @@ use std::fmt::Debug;
 use std::collections::HashMap;
 
 
-
 #[derive(Debug, Clone)]
 pub enum DialogType {
     Ack, 
@@ -25,7 +24,6 @@ pub enum DialogType {
     Flash,
 }
 
-
 pub struct DialogParams<'a> {
     params: &'a UserConfig, 
     frame: FrameParams,
@@ -33,7 +31,6 @@ pub struct DialogParams<'a> {
     prompt: Option<PageParams<String>>,
     body: Option<PageParams<String>>,
 }
-
 impl<'a> From<&'a UserConfig> for DialogParams<'a> {
     fn from(params: &'a UserConfig) -> Self {
         Self {
@@ -45,11 +42,10 @@ impl<'a> From<&'a UserConfig> for DialogParams<'a> {
         }
     }
 }
-
 impl<'a> DialogParams<'a> { 
     pub fn prompt(mut self, prompt: &str) -> Self {
         self.prompt = Some(
-            PageParams::init()
+            PageParams::new()
                 .text(vec![prompt.to_string()])
                 .style(&self.params.style.dialog_prompt)
                 .max(Some(2))
@@ -66,7 +62,7 @@ impl<'a> DialogParams<'a> {
             );
         }
         self.body = Some(
-            PageParams::init()
+            PageParams::new()
                 .text(vec![format!("Press any key to acknowledge")])
                 .style(&self.params.style.dialog_prompt)
                 .max(Some(2))
@@ -87,7 +83,7 @@ impl<'a> DialogParams<'a> {
             );
         }
         self.body = Some(
-            PageParams::init()
+            PageParams::new()
                 .text(vec![guide])
                 .style(&self.params.style.dialog_prompt)
                 .max(Some(2))
@@ -98,7 +94,7 @@ impl<'a> DialogParams<'a> {
 
     pub fn edit(mut self, text: &str) -> Self {
         self.body = Some(
-            PageParams::init()
+            PageParams::new()
                 .text(vec![text.to_string()])
                 .style(&self.params.style.dialog_body)
                 .edit(true)
@@ -109,7 +105,7 @@ impl<'a> DialogParams<'a> {
 
     pub fn select(mut self, options: Vec<String>) -> Self {
         self.body = Some(
-            PageParams::init()
+            PageParams::new()
                 .text(options)
                 .style(&self.params.style.dialog_body)
         );
@@ -117,7 +113,6 @@ impl<'a> DialogParams<'a> {
         self
     }
 }
-
 impl<'a> BuildView<Dialog> for DialogParams<'a> {
     fn build(self, rect: &Rect) -> Dialog {
         let frame = self.frame.build_from_outer(rect);
@@ -150,14 +145,12 @@ impl<'a> BuildView<Dialog> for DialogParams<'a> {
     }
 }
 
-
 pub struct Dialog {
     pub frame: Frame,
     pub dlg_type: DialogType,
     pub prompt: Option<Page<String>>,
     pub body: Option<Page<String>>,
 }
-
 impl View for Dialog {
     fn get_max_height(&self) -> u16 {
         self.prompt.as_ref().map(|p| p.get_max_height()).unwrap_or(0)
@@ -194,7 +187,6 @@ impl View for Dialog {
         self.frame = self.frame.params.build_from_inner(&inner_rect);
     }
 }
-
 impl Dialog {
     pub fn get_view_list_mut<'a>(&'a mut self) -> Vec<&'a mut dyn View> {
         let mut v = vec![];
@@ -208,21 +200,17 @@ impl Dialog {
     }
 
     pub fn get_debug_hashmap(&self) -> HashMap<&'static str, Box<dyn Debug>> {
-        HashMap::from([ 
-            ("max", Box::new(self.dlg_type.clone()) as Box<dyn Debug>),
-            ("max_height", Box::new(self.get_max_height()) as Box<dyn Debug>),
-            ("display_height", Box::new(self.get_display_height()) as Box<dyn Debug>),
-            ("frame", Box::new(self.frame.get_debug_hashmap()) as Box<dyn Debug>),
-            ("prompt", Box::new(
-                    self.prompt.as_ref()
-                        .map(|page| page.get_debug_hashmap()).unwrap_or_default()
-                ) as Box<dyn Debug>
-            ),
-            ("body", Box::new(
-                    self.body.as_ref()
-                        .map(|page| page.get_debug_hashmap()).unwrap_or_default()
-                ) as Box<dyn Debug>
-            ),
-        ])
+        let mut map = HashMap::new();
+        map.insert("max", Box::new(self.dlg_type.clone()) as Box<dyn Debug>);
+        map.insert("max_height", Box::new(self.get_max_height()) as Box<dyn Debug>);
+        map.insert("display_height", Box::new(self.get_display_height()) as Box<dyn Debug>);
+        map.insert("frame", Box::new(self.frame.get_debug_hashmap()) as Box<dyn Debug>);
+        if let Some(page) = &self.prompt {
+            map.insert("prompt", Box::new(page.get_debug_hashmap()) as Box<dyn Debug>);
+        }
+        if let Some(page) = &self.body {
+            map.insert("body", Box::new(page.get_debug_hashmap()) as Box<dyn Debug>);
+        }
+        map
     }
 }

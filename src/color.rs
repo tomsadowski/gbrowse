@@ -3,7 +3,6 @@
 use crossterm::style::Color;
 
 
-
 #[derive(Copy, Clone, Debug, Default)]
 pub struct Style {
     pub underline: bool,
@@ -11,7 +10,6 @@ pub struct Style {
     pub fg: Option<Color>,
     pub bg: Option<Color>,
 }
-
 impl crossterm::Command for Style {
     fn write_ansi(&self, f: &mut impl std::fmt::Write) -> std::fmt::Result {
         let mut contentstyle = crossterm::style::ContentStyle::new();

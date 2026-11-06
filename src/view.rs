@@ -19,7 +19,6 @@ use url::Url;
 use std::collections::HashMap;
 
 
-
 pub struct AppView {
     pub draw_frame: bool,
     pub rect:       Rect,
@@ -28,7 +27,6 @@ pub struct AppView {
     pub dialog:     Option<Dialog>,
     pub tabs:       CursorVec<Tab>,
 }
-
 impl View for AppView {
     fn draw(&self, w: &mut dyn std::io::Write) -> std::io::Result<()> {
         if self.draw_frame {
@@ -48,7 +46,6 @@ impl View for AppView {
         self.push_frame();
     }
 }
-
 impl AppView {
     pub fn new(rect: &Rect, params: &FrameParams) -> Self {
         let mut appview = Self {
@@ -146,34 +143,26 @@ impl AppView {
 
     pub fn get_debug_hashmap(&self) -> HashMap<&'static str, Box<dyn std::fmt::Debug>> {
         use std::fmt::Debug;
-        HashMap::from([ 
-            ("screen", Box::new(format!("{:?}", self.rect)) as Box<dyn Debug>),
-            ("frame", Box::new(self.frame.get_debug_hashmap()) as Box<dyn Debug>),
-            ("flash", Box::new(
-                    self.flash.as_ref()
-                        .map(|dlg| dlg.get_debug_hashmap()).unwrap_or_default()
-                ) as Box<dyn Debug>
-            ),
-            ("dialog", Box::new(
-                    self.dialog.as_ref()
-                        .map(|dlg| dlg.get_debug_hashmap()).unwrap_or_default()
-                ) as Box<dyn Debug>
-            ),
-            ("tab", Box::new(
-                    self.tabs.get().as_ref()
-                        .map(|tab| tab.page.get_debug_hashmap()).unwrap_or_default()
-                ) as Box<dyn Debug>
-            ),
-        ])
+        let mut map = HashMap::new();
+        map.insert("screen", Box::new(format!("{:?}", self.rect)) as Box<dyn Debug>);
+        map.insert("frame", Box::new(self.frame.get_debug_hashmap()) as Box<dyn Debug>);
+        if let Some(dlg) = &self.flash {
+            map.insert("flash", Box::new(dlg.get_debug_hashmap()) as Box<dyn Debug>);
+        }
+        if let Some(dlg) = &self.dialog {
+            map.insert("dialog", Box::new(dlg.get_debug_hashmap()) as Box<dyn Debug>);
+        }
+        if let Some(tab) = self.tabs.get() {
+            map.insert("flash", Box::new(tab.page.get_debug_hashmap()) as Box<dyn Debug>);
+        }
+        map
     }
 }
-
 
 pub enum TabText {
     Gemini(GemText),
     Gopher(String),
 }
-
 impl std::fmt::Display for TabText {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         match self {
@@ -183,12 +172,10 @@ impl std::fmt::Display for TabText {
     }
 }
 
-
 pub struct Tab {
     pub url: Url,
     pub page: Page<TabText>,
 } 
-
 impl View for CursorVec<Tab> {
     fn get_max_height(&self) -> u16 {
         if let Some(view) = self.get() {
@@ -211,7 +198,6 @@ impl View for CursorVec<Tab> {
         }
     }
 }
-
 impl CursorVec<Tab> {
     pub fn get_banner_text(&self) -> String {
         match self.get().map(|tab| tab.url.to_string()) {

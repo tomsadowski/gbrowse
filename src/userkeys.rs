@@ -34,7 +34,6 @@ pub struct KeyConfig {
     pub no:          KeyCode,
     pub cancel:      KeyCode,
 } 
-
 impl Default for KeyConfig {
     fn default() -> Self {
         Self {
@@ -60,7 +59,6 @@ impl Default for KeyConfig {
         }
     }
 }
-
 impl UserAssign<()> for KeyConfig {
     type Field = Action;
 
@@ -93,9 +91,7 @@ impl UserAssign<()> for KeyConfig {
                 Err(ValueErr::InvalidTomlType(value))
             }
         };
-        let value = get_keycode().map_err(|e| 
-            AssignErr(format!("{field:?}"), e)
-        )?;
+        let value = get_keycode().map_err(|e| AssignErr(format!("{field:?}"), e))?;
         match field {
             Action::LoadUrl    => self.load_url    = value,
             Action::SaveUrl    => self.save_url    = value,
@@ -121,8 +117,6 @@ impl UserAssign<()> for KeyConfig {
         Ok(())
     }
 }
-
-
 impl KeyConfig {
     pub fn get_tab_action(&self, kc: &KeyCode) -> Option<Action> {
         if        &self.load_url    == kc {Some(Action::LoadUrl)
@@ -134,7 +128,6 @@ impl KeyConfig {
         } else if &self.menu        == kc {Some(Action::Menu)
         } else                            {self.get_text_box_action(kc)}
     }
-
 
     pub fn get_text_box_action(&self, kc: &KeyCode) -> Option<Action> {
         if        &self.up          == kc {Some(Action::MoveUp)
@@ -149,7 +142,6 @@ impl KeyConfig {
         } else {None}
     }
 
-
     pub fn get_edit_box_action(&self, kc: &KeyCode) -> Option<Action> {
         match kc {
             KeyCode::Left      => Some(Action::MoveLeft),
@@ -161,7 +153,6 @@ impl KeyConfig {
             _                  => None,
         }
     }
-
 
     pub fn get_dlg_action(&self, dlg_type: &DialogType, kc: &KeyCode) 
         -> Option<Action> 
@@ -175,11 +166,9 @@ impl KeyConfig {
         }
     }
 
-
     pub fn get_ack_dlg_action(&self, _: &KeyCode) -> Option<Action> {
         Some(Action::Ack)
     }
-
 
     pub fn get_ask_dlg_action(&self, kc: &KeyCode) -> Option<Action> {
         if &self.cancel == kc { Some(Action::Cancel)
@@ -188,12 +177,10 @@ impl KeyConfig {
         } else { None }
     }
 
-
     pub fn get_select_dlg_action(&self, kc: &KeyCode) -> Option<Action> {
         if &self.cancel == kc { Some(Action::Cancel)
         } else { self.get_text_box_action(kc) }
     }
-
 
     pub fn get_edit_dlg_action(&self, kc: &KeyCode) -> Option<Action> {
         if &self.cancel == kc { Some(Action::Cancel)

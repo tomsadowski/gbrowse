@@ -3,13 +3,11 @@
 use crate::{Rect, Pos, Dim};
 
 
-
 #[derive(Clone, Copy, Debug, Default)]
 pub struct Cursor {
     pub head: usize,
     pub buff: bool,
 }
-
 impl Cursor {
     pub fn editor<T>(mut self, vec: &Vec<T>) -> Self {
         self.buff = true;
@@ -138,14 +136,12 @@ impl Cursor {
     }
 }
 
-
 #[derive(Clone, Copy, Debug, Default)]
 pub struct Point {
     pub x: Cursor,
     pub y: Cursor,
     pref_x: usize,
 }
-
 impl Point {
     pub fn editor<T>(mut self, vec: &Vec<Vec<T>>) -> Self {
         vec.get(self.y.head).map(|v| self.x = self.x.editor(v)); self
@@ -235,20 +231,17 @@ impl Point {
     }
 }
 
-
 #[derive(Copy, Clone, Debug, Default)]
 pub struct PointView {
     pos: Pos,
     x: CursorView,
     y: CursorView,
 }
-
 impl From<&PointView> for Rect {
     fn from(pv: &PointView) -> Self {
         Rect::from(pv.dim()).with_pos(pv.pos()) 
     }
 }
-
 impl From<&Rect> for PointView {
     fn from(rect: &Rect) -> Self {
         let rect = rect.clone();
@@ -259,7 +252,6 @@ impl From<&Rect> for PointView {
         }
     }
 }
-
 impl PointView {
     pub fn get_x_view(&self) -> CursorView {self.x}
     pub fn get_y_view(&self) -> CursorView {self.y}
@@ -294,7 +286,6 @@ impl PointView {
     }
 }
 
-
 #[derive(Copy, Clone, Debug, Default)]
 pub struct CursorView {
     pub head: usize, // data head
@@ -302,7 +293,6 @@ pub struct CursorView {
     pub cursor: u16, // on-screen cursor
     pub size: u16, // width or height of rectangle
 }
-
 impl CursorView {
     pub fn from_size(size: u16) -> Self {
         Self {
@@ -416,24 +406,20 @@ impl CursorView {
     }
 }
 
-
 pub struct CursorVec<T> {
     pub cursor: Cursor,
     pub data: Vec<T>,
 }
-
 impl<T> Default for CursorVec<T> {
     fn default() -> Self { 
         Self { cursor: Cursor::default(), data: vec![] } 
     }
 }
-
 impl<T> From<Vec<T>> for CursorVec<T> {
     fn from(vec: Vec<T>) -> Self { 
         Self { cursor: Cursor::default(), data: vec } 
     }
 }
-
 impl<T> CursorVec<T> {
     pub fn move_head(&mut self, idelta: isize) -> isize {
         self.cursor.move_head(&self.data, idelta)
@@ -474,28 +460,23 @@ impl<T> CursorVec<T> {
     }
 }
 
-
 pub struct PointMatrix<T> {
     pub point: Point,
     pub data: Vec<Vec<T>>,
 }
-
 impl<T> crate::View for PointMatrix<T> {
     fn get_max_height(&self) -> u16 { self.data.get_max_height() }
 }
-
 impl<T> Default for PointMatrix<T> {
     fn default() -> Self { 
         Self { point: Point::default(), data: vec![] } 
     }
 }
-
 impl<T> From<Vec<Vec<T>>> for PointMatrix<T> {
     fn from(matrix: Vec<Vec<T>>) -> Self {
         Self { point: Point::default(), data: matrix }
     }
 }
-
 impl PointMatrix<char> {
     pub fn get_weighted_x(&self) -> usize {
         if let Some(vec) = self.data.get(self.point.y.head) {
@@ -503,7 +484,6 @@ impl PointMatrix<char> {
         } else {0}
     }
 }
-
 impl<T> PointMatrix<T> {
     pub fn editor(mut self) -> Self {
         self.point = self.point.editor(&self.data); self

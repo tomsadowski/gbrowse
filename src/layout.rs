@@ -7,7 +7,6 @@ use crate::{
 };
 
 
-
 pub trait BuildView<T> where T: View {
     fn build(self, _: &Rect) -> T;
 }

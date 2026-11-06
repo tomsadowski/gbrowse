@@ -3,7 +3,6 @@
 use crate::util;
 
 
-
 #[derive(Debug, Clone)]
 pub enum Status {
     InputExpected,
@@ -29,7 +28,6 @@ pub enum Status {
     ExpiredCertRejected,     
     Unknown(u8),
 }
-
 impl TryFrom<&str> for Status {
     type Error = String;
     fn try_from(s: &str) -> Result<Self, Self::Error> {
@@ -61,13 +59,11 @@ impl TryFrom<&str> for Status {
     }
 }
 
-
 #[derive(Debug, Clone)]
 pub struct StatusText {
     pub tag: Status, 
     pub text: String,
 }
-
 impl TryFrom<&str> for StatusText {
     type Error = String;
 
@@ -79,7 +75,6 @@ impl TryFrom<&str> for StatusText {
         Ok(Self {tag, text: msg.into()})
     }
 }
-
 
 #[derive(Clone, PartialEq, Debug)]
 pub enum GemTag {
@@ -93,19 +88,16 @@ pub enum GemTag {
     Quote,
 } 
 
-
 #[derive(Clone, PartialEq, Debug)]
 pub struct GemText {
     pub tag: GemTag,
     pub string: String,
 }
-
 impl std::fmt::Display for GemText {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         self.string.fmt(f)
     }
 }
-
 impl GemText {
     pub fn preformat(string: String) -> Self {
         Self {tag: GemTag::PreFormat, string}

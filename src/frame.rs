@@ -16,7 +16,6 @@ use std::collections::HashMap;
 use std::fmt::Debug;
 
 
-
 #[derive(Copy, Debug, Clone, Default)]
 pub struct MarginParams {
     pub north: u16,
@@ -24,7 +23,6 @@ pub struct MarginParams {
     pub east: u16,
     pub west: u16,
 }
-
 impl MarginParams {
     pub fn symmetric(m: u16) -> Self {
         Self {
@@ -52,7 +50,6 @@ impl MarginParams {
     }
 }
 
-
 #[derive(Copy, Debug, Clone)]
 pub struct BorderParams {
     pub style: Style,
@@ -65,7 +62,6 @@ pub struct BorderParams {
     pub open: char,
     pub close: char,
 }
-
 impl Default for BorderParams {
     fn default() -> Self {
         Self {
@@ -81,7 +77,6 @@ impl Default for BorderParams {
         }
     }
 }
-
 impl BorderParams {
     pub fn get_from_inner(&self, rect: &Rect) -> Rect {
         rect.shift_x(1).shift_y(1)
@@ -92,7 +87,6 @@ impl BorderParams {
     }
 }
 
-
 #[derive(Copy, Debug, Default, Clone)]
 pub struct FrameParams {
     pub text_margin: MarginParams,
@@ -102,7 +96,6 @@ pub struct FrameParams {
     pub banner: Style,
     pub footer: Style,
 }
-
 impl FrameParams {
     pub fn init() -> Self {
         Self::default() 
@@ -164,7 +157,6 @@ impl FrameParams {
     }
 }
 
-
 #[derive(Copy, Debug, Default, Clone)]
 pub struct Frame {
     pub params: FrameParams,
@@ -173,15 +165,14 @@ pub struct Frame {
     pub outer_rect: Rect,
     pub inner_rect: Rect,
 }
-
 impl Frame {
     pub fn get_debug_hashmap(&self) -> HashMap<&'static str, Box<dyn Debug>> {
-        HashMap::from([ 
-            ("border", Box::new(format!("{:?}", self.border_rect)) as Box<dyn Debug>),
-            ("outer", Box::new(format!("{:?}", self.outer_rect)) as Box<dyn Debug>),
-            ("inner", Box::new(format!("{:?}", self.inner_rect)) as Box<dyn Debug>),
-            ("display_height", Box::new(self.get_display_height()) as Box<dyn Debug>),
-        ])
+        let mut map = HashMap::new(); 
+        map.insert("border", Box::new(format!("{:?}", self.border_rect)) as Box<dyn Debug>);
+        map.insert("outer", Box::new(format!("{:?}", self.outer_rect)) as Box<dyn Debug>);
+        map.insert("inner", Box::new(format!("{:?}", self.inner_rect)) as Box<dyn Debug>);
+        map.insert("display_height", Box::new(self.get_display_height()) as Box<dyn Debug>);
+        map
     }
 
     pub fn draw_footer(&self, text: &str, w: &mut impl std::io::Write) -> std::io::Result<()> {
@@ -331,7 +322,6 @@ impl Frame {
         Ok(())
     }
 }
-
 impl View for Frame {
     fn get_display_height(&self) -> u16 {
         self.screen.h

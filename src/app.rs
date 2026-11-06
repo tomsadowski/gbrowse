@@ -23,7 +23,6 @@ use crate::{
 };
 
 
-
 #[derive(Debug)]
 pub enum Task {
     Default, 
@@ -57,7 +56,6 @@ pub struct App {
     pub clear:       bool,
     pub quit:        bool,
 } 
-
 impl App {
     pub fn init(path: String, w: u16, h: u16) -> Self {
         let config_str = std::fs::read_to_string(path).unwrap_or_default();
@@ -195,7 +193,7 @@ impl App {
                 _ => {
                     self.view.tab(
                         &url, 
-                        PageParams::init()
+                        PageParams::new()
                             .style(&self.config.style.general)
                             .text_styles(
                                 gemini::parse_doc(&content)

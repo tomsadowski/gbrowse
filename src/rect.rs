@@ -3,7 +3,6 @@
 
 #[derive(Clone, Copy, Debug, Default)]
 pub struct Dim(pub u16, pub u16);
-
 impl Dim {
     pub fn w(&self) -> u16 { self.0 }
     pub fn h(&self) -> u16 { self.1 }
@@ -11,7 +10,6 @@ impl Dim {
 
 #[derive(Clone, Copy, Debug, Default)]
 pub struct Pos(pub u16, pub u16);
-
 impl Pos {
     pub fn x(&self) -> u16 { self.0 }
     pub fn y(&self) -> u16 { self.1 }
@@ -25,25 +23,21 @@ pub struct Rect {
     pub w: u16,
     pub h: u16,
 }
-
 impl From<Dim> for Rect {
     fn from(d: Dim) -> Self {
         Self { x: 0, y: 0, w: d.w(), h: d.h() }
     }
 }
-
 impl From<Pos> for Rect {
     fn from(p: Pos) -> Self {
         Self { x: p.x(), y: p.y(), w: 0, h: 0 }
     }
 }
-
 impl Rect {
     pub fn with_dim(mut self, dim: Dim) -> Self {
         self.w = dim.w(); 
         self.h = dim.h(); self
     }
-
     pub fn with_pos(mut self, pos: Pos) -> Self {
         self.x = pos.x(); 
         self.y = pos.y(); self
@@ -108,7 +102,6 @@ impl Rect {
         std::ops::Range { start: self.y, end: self.y_end() }
     }
 }
-
 impl crate::View for Rect {
     fn draw(&self, w: &mut dyn std::io::Write) -> std::io::Result<()> {
         use crossterm::{QueueableCommand, cursor, style};
