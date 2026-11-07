@@ -12,7 +12,7 @@ pub enum ValueErr {
     InvalidTomlType(toml::Value),
     InvalidParse(String),
     Message(String),
-    TableErr(Box<Vec<AssignErr>>)
+    TableErr(Vec<AssignErr>)
 }
 impl std::fmt::Display for ValueErr {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
@@ -111,7 +111,7 @@ where   T: UserAssign<C, Field = F> + Default,
                 match user_table.update_from_table(table, ctx) {
                     Err(e) => errors.push(AssignErr::ValueErr(
                         "self".into(), 
-                        ValueErr::TableErr(Box::new(e))
+                        ValueErr::TableErr(e)
                     )),
                     _ => {}
                 }
@@ -263,7 +263,7 @@ impl UserConfig {
         self.style = style;
         return style_result.map_err(
             |e| AssignErr::value_err(
-                UserConfigField::Style, ValueErr::TableErr(Box::new(e))
+                UserConfigField::Style, ValueErr::TableErr(e)
             )
         )
     }
@@ -273,7 +273,7 @@ impl UserConfig {
         self.style = style;
         return style_result.map_err(
             |e| AssignErr::value_err(
-                UserConfigField::Style, ValueErr::TableErr(Box::new(e))
+                UserConfigField::Style, ValueErr::TableErr(e)
             )
         )
     }
@@ -289,7 +289,7 @@ impl UserConfig {
         self.keys = keys;
         return keys_result.map_err(
             |e| AssignErr::value_err(
-                UserConfigField::Keys, ValueErr::TableErr(Box::new(e))
+                UserConfigField::Keys, ValueErr::TableErr(e)
             )
         )
     }
@@ -299,7 +299,7 @@ impl UserConfig {
         self.keys = keys;
         return style_result.map_err(
             |e| AssignErr::value_err(
-                UserConfigField::Keys, ValueErr::TableErr(Box::new(e))
+                UserConfigField::Keys, ValueErr::TableErr(e)
             )
         )
     }

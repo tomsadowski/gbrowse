@@ -65,7 +65,7 @@ impl App {
             &Rect::from(Dim(w, h)), 
             &config.style.get_frame_params()
         );
-        let config_result = config_result.map_err(|e| ValueErr::TableErr(Box::new(e)));
+        let config_result = config_result.map_err(|e| ValueErr::TableErr(e));
         let mut app = Self {
             guide:       "".into(),
             request:     None,

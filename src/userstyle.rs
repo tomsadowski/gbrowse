@@ -323,7 +323,7 @@ impl UserAssign<()> for StyleConfig {
                     BorderField::Dialog => self.dialog_border = string,
                 }
                 result.map_err(|e| AssignErr::value_err(
-                    field, ValueErr::TableErr(Box::new(e)))
+                    field, ValueErr::TableErr(e))
                 )
             }
             (StyleConfigField::Text(text), Value::Table(value)) => {
@@ -345,7 +345,7 @@ impl UserAssign<()> for StyleConfig {
                     StyleTextField::List          => self.list = text_params,
                 }
                 result.map_err(|e| AssignErr::value_err(
-                    field, ValueErr::TableErr(Box::new(e))
+                    field, ValueErr::TableErr(e)
                 ))
             }
             (StyleConfigField::Margin(margin), Value::Table(value)) => {
@@ -357,7 +357,7 @@ impl UserAssign<()> for StyleConfig {
                     StyleMarginField::DialogScreen => self.dialog_screen_margin = value,
                 }
                 result.map_err(|e| AssignErr::value_err(
-                    field, ValueErr::TableErr(Box::new(e))
+                    field, ValueErr::TableErr(e)
                 ))
             }
             (field, value) => Err(AssignErr::value_err(
