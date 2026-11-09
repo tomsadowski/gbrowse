@@ -208,12 +208,30 @@ impl<T: std::fmt::Display> Page<T> {
 
     pub fn get_debug_hashmap(&self) -> HashMap<&'static str, Box<dyn Debug>> {
         HashMap::from([ 
-            ("max", Box::new(format!("{:?}", self.max)) as Box<dyn Debug>),
-            ("max_height", Box::new(self.get_max_height()) as Box<dyn Debug>),
-            ("display_height", Box::new(self.get_display_height()) as Box<dyn Debug>),
-            ("cursor_pos", Box::new(format!("{:?}", self.point_view.pos())) as Box<dyn Debug>),
-            ("cursor_x", Box::new(format!("{:?}", self.point_view.get_x_view())) as Box<dyn Debug>),
-            ("cursor_y", Box::new(format!("{:?}", self.point_view.get_y_view())) as Box<dyn Debug>),
+            ("max", Box::new(
+                    format!("{:?}", self.max)
+                ) as Box<dyn Debug>
+            ),
+            ("max_height", Box::new(
+                    self.get_max_height()
+                ) as Box<dyn Debug>
+            ),
+            ("display_height", Box::new(
+                    self.get_display_height()
+                ) as Box<dyn Debug>
+            ),
+            ("cursor_pos", Box::new(
+                    format!("{:?}", self.point_view.pos())
+                ) as Box<dyn Debug>
+            ),
+            ("cursor_x", Box::new(
+                    format!("{:?}", self.point_view.get_x_view())
+                ) as Box<dyn Debug>
+            ),
+            ("cursor_y", Box::new(
+                    format!("{:?}", self.point_view.get_y_view())
+                ) as Box<dyn Debug>
+            ),
         ])
     }
 

@@ -25,11 +25,11 @@ pub enum DialogType {
 }
 
 pub struct DialogParams<'a> {
-    params: &'a UserConfig, 
-    frame: FrameParams,
+    params:      &'a UserConfig, 
+    frame:       FrameParams,
     dialog_type: DialogType,
-    prompt: Option<PageParams<String>>,
-    body: Option<PageParams<String>>,
+    prompt:      Option<PageParams<String>>,
+    body:        Option<PageParams<String>>,
 }
 impl<'a> From<&'a UserConfig> for DialogParams<'a> {
     fn from(params: &'a UserConfig) -> Self {
@@ -146,10 +146,10 @@ impl<'a> BuildView<Dialog> for DialogParams<'a> {
 }
 
 pub struct Dialog {
-    pub frame: Frame,
-    pub dlg_type: DialogType,
-    pub prompt: Option<Page<String>>,
-    pub body: Option<Page<String>>,
+    pub frame:      Frame,
+    pub dlg_type:   DialogType,
+    pub prompt:     Option<Page<String>>,
+    pub body:       Option<Page<String>>,
 }
 impl View for Dialog {
     fn get_max_height(&self) -> u16 {

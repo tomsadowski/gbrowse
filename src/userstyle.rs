@@ -85,9 +85,9 @@ impl std::str::FromStr for StyleConfigField {
             "error"                 => Ok(Self::Text(StyleTextField::Error)),
             "quote"                 => Ok(Self::Text(StyleTextField::Quote)),
             "list"                  => Ok(Self::Text(StyleTextField::List)),
-            string => Err(format!("
-                Style table does not contain field {string}
-            ")),
+            string => Err(format!(
+                "Style table does not contain field {string}"
+            )),
         }
     }
 }
@@ -144,9 +144,9 @@ impl std::str::FromStr for MarginParamsField {
             "south" | "s"   => Ok(Self::South),
             "east" | "e"    => Ok(Self::East),
             "west" | "w"    => Ok(Self::West),
-            string => Err(format!("
-                Margin table does not contain field {string}
-            ")),
+            string => Err(format!(
+                "Margin table does not contain field {string}"
+            )),
         }
     }
 }
@@ -221,9 +221,9 @@ impl std::str::FromStr for StyleField {
             "bg"        => Ok(Self::Color(ColorField::Bg)),
             "bold"      => Ok(Self::Attribute(AttributeField::Bold)),
             "underline" => Ok(Self::Attribute(AttributeField::Underline)),
-            string => Err(format!("
-                Style table does not contain field {string}
-            ")),
+            string => Err(format!(
+                "Style table does not contain field {string}"
+            )),
         }
     }
 }
@@ -414,9 +414,9 @@ pub fn parse_color(value: &toml::Value, palette: &Map<String, Value>) -> ValueRe
             else if let Some('#') = string.chars().next() {
                 parse_hex_color(&string[1..]).map_err(|e| ValueErr::InvalidParse(e))
             } else {
-                return Err(ValueErr::InvalidParse(format!("
-                    `{string}` is not in the palette table, nor is it a hex value.
-                ")))
+                return Err(ValueErr::InvalidParse(format!(
+                    "`{string}` is not in the palette table, nor is it a hex value."
+                )))
             }
         }
         value => return Err(ValueErr::InvalidTomlType((*value).clone()))

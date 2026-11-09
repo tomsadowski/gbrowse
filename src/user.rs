@@ -16,11 +16,21 @@ pub enum ValueErr {
 }
 impl std::fmt::Display for ValueErr {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        for e in self.inner_display().iter() {
+            let _ = write!(f, "\n{e}");
+        }
+        Ok(())
+    }
+}
+impl ValueErr {
+    pub fn inner_display(&self) -> Vec<String> {
         match self {
-            Self::InvalidTomlType(t) => write!(f, "{t:?} is not a valid TOML type"),
-            Self::InvalidParse(s) => write!(f, "Failed to parse value. {s}"),
-            Self::Message(msg) => write!(f, "{msg}"),
-            Self::TableErr(msg) => write!(f, ""),
+            Self::InvalidTomlType(t) => vec![format!("'{t} is not a valid TOML type'")],
+            Self::InvalidParse(s) => vec![format!("'Failed to parse value. {s}'")],
+            Self::Message(msg) => vec![format!("'{msg}'")],
+            Self::TableErr(v) => {
+                v.iter().flat_map(|v| v.inner_display()).collect()
+            },
         }
     }
 }
@@ -29,25 +39,29 @@ impl std::fmt::Display for ValueErr {
 pub enum AssignErr {
     KeyErr(String),
     ValueErr(String, ValueErr),
-}
-impl std::fmt::Display for AssignErr {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        match self {
-            Self::KeyErr(s) => write!(f, "{s}"), 
-            Self::ValueErr(field, value_err) => match value_err {
-                ValueErr::InvalidTomlType(_)  => write!(f, "{field}: '{value_err}'\n"),
-                ValueErr::InvalidParse(_) => write!(f, "{field}: '{value_err}'\n"),
-                // Use arrow with spaces on either side because 
-                // this field contains a subfield
-                ValueErr::Message(e) => write!(f, "{field} > {e}"),
-                ValueErr::TableErr(e) => write!(f, "{field} > "),
-            }
-        }
-    }
+    InnerErr(ValueErr),
 }
 impl AssignErr {
     pub fn value_err<F: std::fmt::Display>(field: F, value: ValueErr) -> Self {
         Self::ValueErr(field.to_string(), value)
+    }
+    pub fn inner_display(&self) -> Vec<String> {
+        match self {
+            Self::KeyErr(s) => vec![format!("{s}")],
+            Self::InnerErr(v) => v.inner_display(),
+            Self::ValueErr(s, v) => 
+                v.inner_display().iter()
+                    .map(|v| format!("{s} > {v}")).collect(),
+            
+        }
+    }
+}
+impl std::fmt::Display for AssignErr {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        for e in self.inner_display().iter() {
+            let _ = write!(f, "\n{e}");
+        }
+        Ok(())
     }
 }
 
@@ -109,8 +123,7 @@ where   T: UserAssign<C, Field = F> + Default,
             Ok(mut table) => {
                 user_table.load_context(&mut table);
                 match user_table.update_from_table(table, ctx) {
-                    Err(e) => errors.push(AssignErr::ValueErr(
-                        "self".into(), 
+                    Err(e) => errors.push(AssignErr::InnerErr(
                         ValueErr::TableErr(e)
                     )),
                     _ => {}
@@ -316,9 +329,9 @@ impl UserConfig {
                 .truncate(true)
                 .open(&self.save_file) 
             {
-                Err(e) => Err(format!("
-                    could not create save file: {e}
-                ")),
+                Err(e) => Err(format!(
+                    "could not create save file: {e}"
+                )),
                 Ok(mut f) => {
                     use std::io::Write;
                     for url in self.urls.iter() {
