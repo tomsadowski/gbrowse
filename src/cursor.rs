@@ -38,12 +38,8 @@ impl Cursor {
     pub fn move_wrapped<T>(&mut self, vec: &Vec<T>, delta: isize) {
         let remainder = self.move_head(vec, delta);
         if remainder != 0 {
-            self.move_head(vec, 
-                vec.len() as isize * remainder.signum() * -1
-            );
-            self.move_wrapped(vec, 
-                (remainder.saturating_abs() - 1) * remainder.signum()
-            )
+            self.move_head(vec, vec.len() as isize * remainder.signum() * -1);
+            self.move_wrapped(vec, (remainder.saturating_abs() - 1) * remainder.signum())
         }
     }
 

@@ -98,18 +98,15 @@ pub use crate::gemini::{
 fn main() -> std::io::Result<()> {
     use crossterm::{QueueableCommand, terminal, event, cursor};
     use std::io::Write;
-
     let log_file = std::fs::OpenOptions::new()
         .create(true)
         .append(true)
         .open("debug.log")
         .expect("Failed to open debug.log");
-
     env_logger::Builder::from_default_env()
         .target(env_logger::Target::Pipe(Box::new(log_file)))
         .format_timestamp_millis()
         .init();
-
     // initialize app
     let mut app = {
         let args = std::env::args().collect::<Vec<String>>();
@@ -121,18 +118,14 @@ fn main() -> std::io::Result<()> {
         app::App::init(init, w, h)
     };
     let mut stdout = std::io::stdout();
-
     // register all keystrokes 
     terminal::enable_raw_mode()?;
-
     // handle line wrapping manually
     stdout
         .queue(terminal::EnterAlternateScreen)?
         .queue(terminal::DisableLineWrap)?;
-
     // initial display
     app.draw(&mut stdout)?;
-
     // break on control-c
     while !app.quit {
         if app.join_request() {

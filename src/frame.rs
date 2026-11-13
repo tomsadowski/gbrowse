@@ -179,9 +179,7 @@ impl Frame {
         if let Some(border) = self.params.border {
             let mut x = self.outer_rect.x_end().saturating_sub(1);
             let y = self.border_rect.y_end().saturating_sub(1);
-
             w.queue(MoveTo(x, y))?.queue(&border.style)?;
-
             for _ in self.inner_rect.x_end()..x {
                 w.queue(Print(border.x))?.queue(cursor::MoveLeft(2))?;
                 x -= 1;
@@ -224,15 +222,11 @@ impl Frame {
         Ok(())
     }
 
-    pub fn draw_banner(&self, text: &str, w: &mut impl std::io::Write) 
-        -> std::io::Result<()> 
-    {
+    pub fn draw_banner(&self, text: &str, w: &mut impl std::io::Write) -> std::io::Result<()> {
         if let Some(border) = self.params.border {
             let mut x = self.outer_rect.x();
             let y = self.border_rect.y();
-
             w.queue(MoveTo(x, y))?.queue(&border.style)?;
-
             for _ in x..self.inner_rect.x() {
                 w.queue(Print(border.x))?;
                 x += 1;
@@ -266,9 +260,7 @@ impl Frame {
         Ok(())
     }
 
-    pub fn draw_east(&self, w: &mut dyn std::io::Write) 
-        -> std::io::Result<()> 
-    {
+    pub fn draw_east(&self, w: &mut dyn std::io::Write) -> std::io::Result<()> {
         // border
         if let Some(border) = self.params.border {
             let Pos(nex, ney) = self.border_rect.northeast();

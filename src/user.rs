@@ -266,18 +266,14 @@ impl UserAssign<()> for UserConfig {
 }
 impl UserConfig {
     pub fn set_style_file(&mut self, filename: &str) -> AssignResult {
-        let string = &std::fs::read_to_string(
-            util::get_styles_file_path(&filename)
-        )
+        let string = &std::fs::read_to_string(util::get_styles_file_path(&filename))
             .map_err(|e| AssignErr::value_err(
                 UserConfigField::Style, ValueErr::Message(e.to_string())
             ))?;
         let (style, style_result) = StyleConfig::from_str(string, &());
         self.style = style;
         return style_result.map_err(
-            |e| AssignErr::value_err(
-                UserConfigField::Style, ValueErr::TableErr(e)
-            )
+            |e| AssignErr::value_err(UserConfigField::Style, ValueErr::TableErr(e))
         )
     }
 
@@ -285,25 +281,19 @@ impl UserConfig {
         let (style, style_result) = StyleConfig::from_table(table, &());
         self.style = style;
         return style_result.map_err(
-            |e| AssignErr::value_err(
-                UserConfigField::Style, ValueErr::TableErr(e)
-            )
+            |e| AssignErr::value_err(UserConfigField::Style, ValueErr::TableErr(e))
         )
     }
 
     pub fn set_keys_file(&mut self, filename: &str) -> AssignResult {
-        let string = &std::fs::read_to_string(
-            util::get_keys_file_path(&filename)
-        )
+        let string = &std::fs::read_to_string(util::get_keys_file_path(&filename))
             .map_err(|e| AssignErr::value_err(
                 UserConfigField::Keys, ValueErr::Message(e.to_string())
             ))?;
         let (keys, keys_result) = KeyConfig::from_str(string, &());
         self.keys = keys;
         return keys_result.map_err(
-            |e| AssignErr::value_err(
-                UserConfigField::Keys, ValueErr::TableErr(e)
-            )
+            |e| AssignErr::value_err(UserConfigField::Keys, ValueErr::TableErr(e))
         )
     }
 
@@ -311,9 +301,7 @@ impl UserConfig {
         let (keys, style_result) = KeyConfig::from_table(table, &());
         self.keys = keys;
         return style_result.map_err(
-            |e| AssignErr::value_err(
-                UserConfigField::Keys, ValueErr::TableErr(e)
-            )
+            |e| AssignErr::value_err(UserConfigField::Keys, ValueErr::TableErr(e))
         )
     }
 
@@ -329,9 +317,7 @@ impl UserConfig {
                 .truncate(true)
                 .open(&self.save_file) 
             {
-                Err(e) => Err(format!(
-                    "could not create save file: {e}"
-                )),
+                Err(e) => Err(format!("could not create save file: {e}")),
                 Ok(mut f) => {
                     use std::io::Write;
                     for url in self.urls.iter() {

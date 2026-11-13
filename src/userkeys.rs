@@ -83,9 +83,9 @@ impl UserAssign<()> for KeyConfig {
                         .chars()
                         .next()
                         .map(KeyCode::Char)
-                        .ok_or(ValueErr::InvalidParse("
-                            could not parse keycode from string
-                        ".into())),
+                        .ok_or(ValueErr::InvalidParse(
+                            "could not parse keycode from string".into()
+                        )),
                 }
             } else {
                 Err(ValueErr::InvalidTomlType(value))
@@ -154,9 +154,7 @@ impl KeyConfig {
         }
     }
 
-    pub fn get_dlg_action(&self, dlg_type: &DialogType, kc: &KeyCode) 
-        -> Option<Action> 
-    {
+    pub fn get_dlg_action(&self, dlg_type: &DialogType, kc: &KeyCode) -> Option<Action> {
         match dlg_type {
             DialogType::Ack    => self.get_ack_dlg_action(kc),
             DialogType::Ask    => self.get_ask_dlg_action(kc),

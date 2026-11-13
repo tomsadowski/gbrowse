@@ -9,6 +9,7 @@ use crate::{
     BuildView,
     PointMatrix,
     View,
+    util,
 };
 use std::collections::HashMap;
 use std::fmt::Debug;
@@ -35,7 +36,7 @@ impl TextParams {
         } else if self.wrap {
             string
                 .lines()
-                .flat_map(|line| crate::util::get_wrapped_text(line, width))
+                .flat_map(|line| util::get_wrapped_text(line, width))
                 .collect()
         } else {
             string
@@ -208,22 +209,10 @@ impl<T: std::fmt::Display> Page<T> {
 
     pub fn get_debug_hashmap(&self) -> HashMap<&'static str, Box<dyn Debug>> {
         HashMap::from([ 
-            ("max", Box::new(
-                    format!("{:?}", self.max)
-                ) as Box<dyn Debug>
-            ),
-            ("max_height", Box::new(
-                    self.get_max_height()
-                ) as Box<dyn Debug>
-            ),
-            ("display_height", Box::new(
-                    self.get_display_height()
-                ) as Box<dyn Debug>
-            ),
-            ("cursor_pos", Box::new(
-                    format!("{:?}", self.point_view.pos())
-                ) as Box<dyn Debug>
-            ),
+            ("max", Box::new(format!("{:?}", self.max)) as Box<dyn Debug>),
+            ("max_height", Box::new(self.get_max_height()) as Box<dyn Debug>),
+            ("display_height", Box::new(self.get_display_height()) as Box<dyn Debug>),
+            ("cursor_pos", Box::new(format!("{:?}", self.point_view.pos())) as Box<dyn Debug>),
             ("cursor_x", Box::new(
                     format!("{:?}", self.point_view.get_x_view())
                 ) as Box<dyn Debug>
@@ -286,13 +275,11 @@ impl<T: std::fmt::Display> View for Page<T> {
 
     fn draw(&self, w: &mut dyn std::io::Write) -> std::io::Result<()> {
         use crossterm::{QueueableCommand, cursor, style};
-
         let Pos(mut x, mut y) = self.point_view.pos();
         w
             .queue(cursor::MoveTo(x, y))?
             .queue(style::SetAttribute(style::Attribute::Reset))?
             .queue(&self.style)?;
-
         for (index, line) in self.get_view(self.point_view.get_y_view()) {
             w.queue(
                 self.styles
@@ -307,7 +294,6 @@ impl<T: std::fmt::Display> View for Page<T> {
             w
                 .queue(style::SetAttribute(style::Attribute::Reset))?
                 .queue(&self.style)?;
-
             for _ in x..Rect::from(&self.point_view).x_end() {
                 w.queue(style::Print(' '))?;
             }
