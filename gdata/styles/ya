@@ -5,11 +5,11 @@ palette = {
   darkblue = "#2a2c32",
   darkgrey = "#707688",
   grey     = "#bcbcc8",
-  red      = "#c08272",
-  yellow   = "#baa79c",
-  cyan     = "#84aaa0",
+  red      = "#cc6c68",
+  yellow   = "#c0a798",
+  green    = "#98a870",
+  cyan     = "#70a898",
   darkcyan = "#b0a8d0",
-  magenta  = "#a892a8",
 }
 border = {
   fg      = "darkgrey", 
@@ -28,8 +28,8 @@ dialog_body    = {fg = "yellow", bg = "black"}
 banner         = {fg = "grey", bg = "darkblue"}
 footer         = {fg = "grey", bg = "darkblue"}
 general        = {fg = "yellow", bg = "black"}
-list           = {fg = "magenta"}
-preformat      = {fg = "magenta", wrap = false}
+list           = {fg = "green"}
+preformat      = {fg = "green", wrap = false}
 quote          = {fg = "grey"}
 link           = {fg = "cyan"}
 h1             = {fg = "red", underline = true}
