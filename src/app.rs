@@ -87,19 +87,16 @@ impl App {
             (Err(url_parse_err_str), Ok(_)) => {
                 app.edit_dlg(
                     Task::Init(app.config.init_url.clone()), 
-                    &format!("
-                        {url_parse_err_str}. Enter revised URL:
-                    "), 
+                    &format!("{url_parse_err_str}. Enter revised URL:"), 
                     &app.config.init_url.clone(),
                 );
             }
             (Err(url_parse_err_str), Err(config_err)) => {
                 app.edit_dlg(
                     Task::Init(app.config.init_url.clone()), 
-                    &format!("
-                        Config Error:\n{config_err},
-                        {url_parse_err_str}. Enter revised URL:
-                    "), 
+                    &format!(
+                        "Config Error:\n{config_err}, {url_parse_err_str}. Enter revised URL:"
+                    ), 
                     &app.config.init_url.clone(),
                 );
             }
@@ -110,9 +107,7 @@ impl App {
     pub fn push_style(&mut self) {
         self.view.update_frame_params(&self.config.style.get_frame_params());
         for tab in self.view.tabs.data.iter_mut() {
-            tab.page.restyle(
-                |text| self.config.style.get_tab_text_params(text)
-            );
+            tab.page.restyle(|text| self.config.style.get_tab_text_params(text));
             tab.page.style = self.config.style.general.style;
         }
         self.view.push_frame();
@@ -127,46 +122,27 @@ impl App {
     }
 
     fn flash(&mut self, prompt: &str) {
-        self.view.flash(
-            DialogParams::from(&self.config)
-                .prompt(&prompt)
-        );
+        self.view.flash(DialogParams::from(&self.config).prompt(&prompt));
     }
 
     fn ack_dlg(&mut self, prompt: &str) {
         self.focus = Focus::Dlg(Task::Default);
-        self.view.dialog(
-            DialogParams::from(&self.config)
-                .prompt(&prompt)
-                .ack()
-        );
+        self.view.dialog(DialogParams::from(&self.config).prompt(&prompt).ack());
     }
 
     fn ask_dlg(&mut self, task: Task, prompt: &str) {
         self.focus = Focus::Dlg(task);
-        self.view.dialog(
-            DialogParams::from(&self.config)
-                .prompt(&prompt)
-                .ask()
-        );
+        self.view.dialog(DialogParams::from(&self.config).prompt(&prompt).ask());
     }
 
     fn edit_dlg(&mut self, task: Task, prompt: &str, text: &str) {
         self.focus = Focus::Dlg(task);
-        self.view.dialog(
-            DialogParams::from(&self.config)
-                .prompt(&prompt)
-                .edit(text)
-        );
+        self.view.dialog(DialogParams::from(&self.config).prompt(&prompt).edit(text));
     }
 
     fn select_dlg(&mut self, task: Task, prompt: &str, options: Vec<String>) {
         self.focus = Focus::Dlg(task);
-        self.view.dialog(
-            DialogParams::from(&self.config)
-                .prompt(&prompt)
-                .select(options)
-        );
+        self.view.dialog(DialogParams::from(&self.config).prompt(&prompt).select(options));
     }
 
     fn join_gemdoc(&mut self, url: url::Url, response: String, content: String) {
@@ -179,12 +155,8 @@ impl App {
                 Status::RedirectTemporary | 
                 Status::RedirectPermanent => {
                     match url::Url::parse(&text) {
-                        Err(e) => self.ack_dlg(
-                            &format!("Redirects to invalid URL. {e}")
-                        ),
-                        Ok(url) => self.ask_dlg(
-                            Task::Go(url.clone()), &text
-                        ),
+                        Err(e) => self.ack_dlg(&format!("Redirects to invalid URL. {e}")),
+                        Ok(url) => self.ask_dlg(Task::Go(url.clone()), &text),
                     }
                 }
                 Status::CertRequiredClient | 
@@ -267,9 +239,7 @@ impl App {
         match (&mut self.request, url.scheme()) {
             (Some(request), _) => {
                 let url = request.url.to_string();
-                self.ack_dlg(&format!("
-                    still processing request for {url}
-                "));
+                self.ack_dlg(&format!("still processing request for {url}"));
             }
             (None, "gemini") => {
                 self.request = Some(Request::new(&url, self.config.timeout));
@@ -312,7 +282,6 @@ impl App {
     pub fn update(&mut self, message: &Msg) {
         self.clear = false;
         self.view.reset_draw_state();
-
         if let Msg::Quit = message {
             self.quit = true;
         } else 
@@ -360,15 +329,9 @@ impl App {
                     "Choose: ",
                     util::MENU.iter().map(|s| s.to_string()).collect(),
                 ),
-                Action::NewTab => self.edit_dlg(
-                    Task::NewTab, "enter path: ", "",
-                ),
-                Action::DelTab => self.ask_dlg(
-                    Task::DelTab, "Delete current tab?",
-                ),
-                action => {
-                    action.update(&mut tab.page);
-                }
+                Action::NewTab => self.edit_dlg(Task::NewTab, "enter path: ", ""),
+                Action::DelTab => self.ask_dlg(Task::DelTab, "Delete current tab?"),
+                action => action.update(&mut tab.page),
             }
         } else 
         if let Msg::Action(action) = message
@@ -385,11 +348,8 @@ impl App {
                 }
                 (Task::ChangeKeys, Action::Select, DialogType::Select) => {
                     match self.config.set_keys_file(&body.get_param_string()) {
-                        Err(fs_err) => {
-                            self.ack_dlg(&format!("
-                                Could not update config:\n{fs_err}
-                            "))
-                        }
+                        Err(fs_err) => 
+                            self.ack_dlg(&format!("Could not update config:\n{fs_err}")),
                         Ok(_) => {
                             self.focus_tabs();
                             self.push_style();
@@ -398,9 +358,7 @@ impl App {
                 }
                 (Task::ChangeStyle, Action::Select, DialogType::Select) => {
                     match self.config.set_style_file(&body.get_param_string()) {
-                        Err(e) => {
-                            self.ack_dlg(&e.to_string());
-                        }
+                        Err(e) => self.ack_dlg(&e.to_string()),
                         Ok(_) => {
                             self.focus_tabs();
                             self.push_style();
@@ -410,9 +368,7 @@ impl App {
                 (Task::Menu, Action::Select, DialogType::Select) => {
                     match util::MENU[body.get_index()] {
                         util::MANUAL => {
-                            self.ack_dlg("
-                                Manual not yet written, but I will get to it.
-                            ".into());
+                            self.ack_dlg("Manual pending.".into());
                         }
                         util::CHANGE_KEYS => match util::get_entries(util::KEYS_PATH) {
                             Ok(entry) => self.select_dlg(
@@ -424,9 +380,7 @@ impl App {
                         }
                         util::CHANGE_STYLE => match util::get_entries(util::STYLES_PATH) {
                             Ok(entry) => self.select_dlg(
-                                Task::ChangeStyle, 
-                                "Choose style", 
-                                entry
+                                Task::ChangeStyle, "Choose style", entry
                             ),
                             Err(e) => self.ack_dlg(&e),
                         }
@@ -470,15 +424,9 @@ impl App {
                     );
                 }
                 (Task::Reply(url), Action::Enter, _) => {
-                    let text = body
-                        .get_string()
-                        .unwrap()
-                        .trim()
-                        .replace(" ", "%20");
+                    let text = body.get_string().unwrap().trim().replace(" ", "%20");
                     match url.clone().join(&format!("?{text}")) {
-                        Err(e) => {
-                            self.ack_dlg(&format!("Invalid URL. {e}"));
-                        }
+                        Err(e) => self.ack_dlg(&format!("Invalid URL. {e}")),
                         Ok(url) => {
                             self.focus_tabs();
                             self.spawn_request(&url);
@@ -487,9 +435,7 @@ impl App {
                 }
                 (Task::NewTab, Action::Enter, _) => {
                     match url::Url::parse(&body.get_string().unwrap()) {
-                        Err(e) => {
-                            self.ack_dlg(&format!("Invalid URL: {e}"));
-                        }
+                        Err(e) => self.ack_dlg(&format!("Invalid URL: {e}")),
                         Ok(url) => {
                             self.focus_tabs();
                             self.spawn_request(&url);
@@ -534,9 +480,7 @@ impl App {
     }
 
     pub fn get_update(&self, event: crossterm::event::Event) -> Option<Msg> {
-        use crossterm::event::{
-            Event, KeyEvent, KeyEventKind, KeyModifiers, KeyCode,
-        };
+        use crossterm::event::{Event, KeyEvent, KeyEventKind, KeyModifiers, KeyCode};
         match event {
             Event::Resize(w, h) => {
                 Some(Msg::Resize(w, h))
@@ -547,17 +491,13 @@ impl App {
             }) => {
                 Some(Msg::Quit)
             }
-            Event::Key(KeyEvent {
-                code, kind: KeyEventKind::Press, ..
-            }) => 
+            Event::Key(KeyEvent { code, kind: KeyEventKind::Press, .. }) => 
                 if let Focus::Tab = &self.focus {
                     self.config.keys
-                        .get_tab_action(&code)
-                        .map(Msg::Action)
+                        .get_tab_action(&code).map(Msg::Action)
                 } else if let Some(dlg) = &self.view.dialog {
                     self.config.keys
-                        .get_dlg_action(&dlg.dlg_type, &code)
-                        .map(Msg::Action)
+                        .get_dlg_action(&dlg.dlg_type, &code).map(Msg::Action)
                 }
                 else {None}
             _ => None,
@@ -566,17 +506,14 @@ impl App {
 
     pub fn draw(&self, w: &mut impl std::io::Write) -> std::io::Result<()> {
         use crossterm::{QueueableCommand, cursor, terminal};
-
         w.queue(cursor::Hide)?;
         if self.clear {
             w.queue(terminal::Clear(terminal::ClearType::All))?;
         }
-
         self.view.draw(w)?;
         let banner_text = self.view.tabs.get_banner_text();
         self.view.frame.draw_banner(&banner_text, w)?;
         self.view.frame.draw_footer(&self.guide, w)?;
-
         if let Focus::Tab = self.focus
         && let Some(page) = self.view.tabs.get().map(|t| &t.page) {
             page.point_view.draw(w)?;

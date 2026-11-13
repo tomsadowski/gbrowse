@@ -1,10 +1,6 @@
 // src/layout.rs
 
-use crate::{
-    Rect, 
-    Page, 
-    Dialog,
-};
+use crate::{Rect, Page, Dialog};
 
 
 pub trait BuildView<T> where T: View {
@@ -27,14 +23,9 @@ impl<T> View for Vec<T> {
 pub fn fill(rect: &Rect, view: &dyn View, w: &mut dyn std::io::Write) 
     -> std::io::Result<()> 
 {
-    rect
-        .shift_north(
-            view
-                .get_display_height()
-                .min(rect.h())
-                .saturating_sub(1) as i16 * -1
-        )
-        .draw(w)
+    rect.shift_north(
+        view.get_display_height().min(rect.h()).saturating_sub(1) as i16 * -1
+    ).draw(w)
 }
 
 pub fn get_display_bounds(rect: &Rect, views: &Vec<&dyn View>) -> Vec<Rect> {

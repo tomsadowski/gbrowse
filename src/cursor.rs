@@ -91,11 +91,7 @@ impl Cursor {
     pub fn insert_unique_with<T>(
         &mut self, vec: &mut Vec<T>, is_equal: impl Fn(&T) -> bool, unit: T
     ) -> bool {
-        if let Some((idx, _)) = vec
-            .iter_mut()
-            .enumerate()
-            .find(|(_, u)| is_equal(u))
-        {
+        if let Some((idx, _)) = vec.iter_mut().enumerate().find(|(_, u)| is_equal(u)) {
             self.head = idx;
             false
         } else if vec.len() == 0 {

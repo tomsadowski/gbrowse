@@ -6,9 +6,9 @@
 #![allow(unused_variables)]
 //#![allow(unused_must_use)]
 
-mod user;
-mod userkeys;
-mod userstyle;
+mod cfg;
+mod cfgkeys;
+mod cfgstyle;
 mod cursor;
 mod view;
 mod dlg;
@@ -23,75 +23,36 @@ mod action;
 mod layout;
 mod util;
 
-pub use crate::dlg::{
-    DialogParams,
-    DialogType,
-    Dialog,
-};
-pub use crate::userkeys::{
-    KeyConfig,
-};
-pub use crate::userstyle::{
-    StyleConfig,
-};
-pub use crate::network::{
-    Request,
-};
-pub use crate::action::{
-    Action,
-};
-pub use crate::view::{
-    AppView,
-    Tab, 
-    TabText,
-};
-pub use crate::color::{
-    Style, 
-};
-pub use crate::page::{
-    TextParams, 
-    Page,
-    PageParams,
-};
-pub use crate::frame::{
-    Frame,
-    FrameParams,
-    BorderParams, 
-    MarginParams, 
-};
-pub use crate::user::{
-    UserConfig,
-    UserAssign,
-    UserTable,
-    AssignResult,
-    AssignErr,
-    ValueResult,
-    ValueErr,
-};
-pub use crate::cursor::{
-    Cursor, 
-    PointMatrix,
-    CursorVec,
-    Point,
-    PointView,
-    CursorView,
-};
-pub use crate::layout::{
-    BuildView,
-    View,
-    resize_views,
-    fill,
-};
-pub use crate::rect::{
-    Pos, 
-    Dim,
-    Rect, 
-};
-pub use crate::gemini::{
-    GemTag, 
-    GemText, 
-    Status, 
-    StatusText,
+pub use crate::{
+    cfgkeys::{KeyConfig},
+    cfgstyle::{StyleConfig},
+    network::{Request},
+    action::{Action},
+    color::{Style},
+    dlg::{DialogParams, DialogType, Dialog},
+    view::{AppView, Tab, TabText},
+    page::{TextParams, Page, PageParams},
+    layout::{BuildView, View, resize_views, fill},
+    rect::{Pos, Dim, Rect},
+    frame::{Frame, FrameParams, BorderParams, MarginParams},
+    gemini::{GemTag, GemText, Status, StatusText},
+    cursor::{
+        Cursor, 
+        PointMatrix,
+        CursorVec,
+        Point,
+        PointView,
+        CursorView,
+    },
+    cfg::{
+        UserConfig,
+        UserAssign,
+        UserTable,
+        AssignResult,
+        AssignErr,
+        ValueResult,
+        ValueErr,
+    },
 };
 
 

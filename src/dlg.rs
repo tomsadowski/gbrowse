@@ -55,11 +55,7 @@ impl<'a> DialogParams<'a> {
 
     pub fn ack(mut self) -> Self {
         if let Some(prompt) = self.prompt {
-            self.prompt = Some(
-                prompt
-                    .style(&self.params.style.dialog_body)
-                    .max(None)
-            );
+            self.prompt = Some(prompt.style(&self.params.style.dialog_body).max(None));
         }
         self.body = Some(
             PageParams::new()
@@ -76,11 +72,7 @@ impl<'a> DialogParams<'a> {
             "{} yes {} no", self.params.keys.yes, self.params.keys.no
         );
         if let Some(prompt) = self.prompt {
-            self.prompt = Some(
-                prompt
-                    .style(&self.params.style.dialog_body)
-                    .max(None)
-            );
+            self.prompt = Some(prompt.style(&self.params.style.dialog_body).max(None));
         }
         self.body = Some(
             PageParams::new()
@@ -131,11 +123,9 @@ impl<'a> BuildView<Dialog> for DialogParams<'a> {
             rect = rect.shift_north((vheight as i16) * -1);
             views.push(v);
         }
-
         let mut inner = frame.inner_rect.clone();
         inner.h = views.iter().map(|v| v.get_display_height()).sum();
         let frame = self.frame.build_from_inner(&inner);
-
         Dialog {
             frame, 
             dlg_type: self.dialog_type.clone(), 
@@ -179,7 +169,6 @@ impl View for Dialog {
             &frame.inner_rect, 
             &mut self.get_view_list_mut()
         );
-
         let mut inner_rect = frame.inner_rect.clone();
         inner_rect.h = 
             self.prompt.as_ref().map(|p| p.get_display_height()).unwrap_or(0)

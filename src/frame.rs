@@ -1,12 +1,6 @@
 // src/frame.rs
 
-use crate::{
-    Rect, 
-    Pos,
-    Style,
-    util,
-    View,
-};
+use crate::{Rect, Pos, Style, util, View};
 use crossterm::{
     QueueableCommand, 
     cursor::{self, MoveTo}, 

@@ -225,19 +225,12 @@ impl<T: std::fmt::Display> Page<T> {
     }
 
     pub fn get_param_string(&self) -> String {
-        self.source
-            .get(self.get_index())
-            .map(|s| s.to_string())
-            .unwrap_or("".to_string())
+        self.source.get(self.get_index()).map(|s| s.to_string()).unwrap_or_default()
     }
 
     pub fn rebuild(&mut self, rect: &Rect) {
         let linear_head = self.matrix.get_linear();
-        let (indexes, matrix) = print(
-            rect.w().into(), 
-            &self.styles, 
-            &self.source
-        );
+        let (indexes, matrix) = print(rect.w().into(), &self.styles, &self.source);
         let matrix = if self.edit {
             PointMatrix::from(matrix).editor()
         } else {
@@ -260,9 +253,7 @@ impl<T: std::fmt::Display> View for Page<T> {
     }
 
     fn get_max_height(&self) -> u16 {
-        self.matrix.data
-            .get_max_height()
-            .min(self.max.unwrap_or(u16::MAX))
+        self.matrix.data.get_max_height().min(self.max.unwrap_or(u16::MAX))
     }
 
     fn resize(&mut self, rect: &Rect) {
@@ -281,12 +272,7 @@ impl<T: std::fmt::Display> View for Page<T> {
             .queue(style::SetAttribute(style::Attribute::Reset))?
             .queue(&self.style)?;
         for (index, line) in self.get_view(self.point_view.get_y_view()) {
-            w.queue(
-                self.styles
-                    .get(*index)
-                    .map(|t| Style::from(t))
-                    .unwrap_or_default()
-            )?;
+            w.queue(self.styles.get(*index).map(|t| Style::from(t)).unwrap_or_default())?;
             for (u, c) in self.point_view.get_x_view().get_weighted_view(line) {
                 w.queue(style::Print(c))?;
                 x += u;

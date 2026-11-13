@@ -1,10 +1,6 @@
 // src/user.rs
 
-use crate::{
-    KeyConfig,
-    StyleConfig,
-    util,
-};
+use crate::{KeyConfig, StyleConfig, util};
 
 
 #[derive(Debug)]
@@ -28,9 +24,7 @@ impl ValueErr {
             Self::InvalidTomlType(t) => vec![format!("'{t} is not a valid TOML type'")],
             Self::InvalidParse(s) => vec![format!("'Failed to parse value. {s}'")],
             Self::Message(msg) => vec![format!("'{msg}'")],
-            Self::TableErr(v) => {
-                v.iter().flat_map(|v| v.inner_display()).collect()
-            },
+            Self::TableErr(v) => v.iter().flat_map(|v| v.inner_display()).collect(),
         }
     }
 }
@@ -91,13 +85,10 @@ impl<T, F, C> UserTable<C> for T
 where   T: UserAssign<C, Field = F> + Default,
         F: std::str::FromStr<Err = String>
 {
-    fn from_table(mut table: toml::Table, context: &C) 
-        -> (Self, Result<(), Vec<AssignErr>>)
-    {
+    fn from_table(mut table: toml::Table, context: &C) -> (Self, Result<(), Vec<AssignErr>>) {
         let mut user_table = Self::default();
         user_table.load_context(&mut table);
         let mut errors = vec![];
-
         for (key, value) in table.into_iter() {
             match F::from_str(&key) {
                 Err(e)    => errors.push(AssignErr::KeyErr(e)),
@@ -117,15 +108,12 @@ where   T: UserAssign<C, Field = F> + Default,
     fn from_str(s: &str, ctx: &C) -> (Self, Result<(), Vec<AssignErr>>) {  
         let mut user_table = Self::default();
         let mut errors = vec![];
-
         match s.parse::<toml::Table>() {
             Err(e) => errors.push(AssignErr::KeyErr(e.to_string())),
             Ok(mut table) => {
                 user_table.load_context(&mut table);
                 match user_table.update_from_table(table, ctx) {
-                    Err(e) => errors.push(AssignErr::InnerErr(
-                        ValueErr::TableErr(e)
-                    )),
+                    Err(e) => errors.push(AssignErr::InnerErr(ValueErr::TableErr(e))),
                     _ => {}
                 }
             }
@@ -142,7 +130,6 @@ where   T: UserAssign<C, Field = F> + Default,
     {
         self.load_context(&mut table);
         let mut errors = vec![];
-
         for (key, value) in table.into_iter() {
             match F::from_str(&key) {
                 Err(e)    => errors.push(AssignErr::KeyErr(e)),
@@ -205,9 +192,7 @@ pub struct UserConfig {
 } 
 impl Default for UserConfig {
     fn default() -> Self {
-        let urls: Vec<String> = 
-            match std::fs::read_to_string(&util::SAVE_FILE) 
-        {
+        let urls: Vec<String> = match std::fs::read_to_string(&util::SAVE_FILE) {
             Ok(s)  => s.lines().map(|s| String::from(s)).collect(),
             Err(_) => vec![],
         };

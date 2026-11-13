@@ -69,8 +69,7 @@ impl TryFrom<&str> for StatusText {
 
     fn try_from(item: &str) -> Result<Self, Self::Error> {
         let line = item.trim();
-        let (code_str, msg) = 
-            util::split_whitespace_once(line).unwrap_or((line, line));
+        let (code_str, msg) = util::split_whitespace_once(line).unwrap_or((line, line));
         let tag = Status::try_from(code_str)?;
         Ok(Self {tag, text: msg.into()})
     }
@@ -106,28 +105,19 @@ impl GemText {
     pub fn parse_line(line: &str) -> (GemTag, String) {
         if let Some(("```", _)) = line.split_at_checked(3) {
             (GemTag::PreFormat, "".into())
-
         } else if let Some(("###", t)) = line.split_at_checked(3) {
             (GemTag::HeadingThree, t.into())
-
         } else if let Some(("##", t)) = line.split_at_checked(2) {
             (GemTag::HeadingTwo, t.trim().into())
-
         } else if let Some(("#", t)) = line.split_at_checked(1) {
             (GemTag::HeadingOne, t.trim().into())
-
         } else if let Some((">", t)) = line.split_at_checked(1) {
             (GemTag::Quote, t.trim().into())
-
         } else if let Some(("*", t)) = line.split_at_checked(1) {
             (GemTag::ListItem, t.into())
-
         } else if let Some(("=>", t)) = line.split_at_checked(2) {
-            let (u, t) = util::split_whitespace_once(
-                t.trim()).unwrap_or((t, t)
-            );
+            let (u, t) = util::split_whitespace_once(t.trim()).unwrap_or((t, t));
             (GemTag::Link(u.into()), t.trim().into())
-
         } else {
             (GemTag::Text, line.trim().into())
         }
@@ -139,12 +129,9 @@ pub fn parse_doc(text_str: &str) -> Vec<GemText> {
     let mut preformat = false;
     for line in text_str.lines() {
         match (&mut preformat, GemText::parse_line(line)) {
-            (_, (GemTag::PreFormat, _)) => 
-                preformat = !preformat,
-            (true, (_, string)) => 
-                vec.push(GemText::preformat(string)),
-            (false, (tag, string)) => 
-                vec.push(GemText {tag, string}),
+            (_, (GemTag::PreFormat, _)) => preformat = !preformat,
+            (true, (_, string))         => vec.push(GemText::preformat(string)),
+            (false, (tag, string))      => vec.push(GemText {tag, string}),
         }
     }
     vec
