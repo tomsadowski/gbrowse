@@ -1,5 +1,7 @@
 // src/util.rs
 
+use unicode_width::UnicodeWidthStr;
+use unicode_segmentation::UnicodeSegmentation;
 
 // square
 pub const NW_SQR: char = '\u{250C}';
@@ -97,29 +99,29 @@ pub fn get_entries(path: &str) -> Result<Vec<String>, String> {
     Ok(vec)
 }
 
-pub fn get_wrapped_text(input: &str, width: usize) -> Vec<Vec<char>> {
-    use unicode_width::UnicodeWidthChar;
-    let input: Vec<_> = input.chars().collect();
-    let mut output: Vec<_> = vec![];
+pub fn get_wrapped_text(input: &str, width: usize) -> Vec<Vec<String>> {
+    let input: Vec<_> = UnicodeSegmentation::graphemes(input, true).collect();
+    let mut output: Vec<Vec<String>> = vec![];
     let mut start = 0;
     while start < input.len() {
         let mut accum_width  = 0;
         let mut text: Vec<_> = vec![];
-        let mut chars = input[start..].iter();
-        while let Some(c) = chars.next() && accum_width < width {
-            accum_width += &c.width().unwrap_or(0);
-            text.push(c.clone());
+        let mut graphemes = input[start..].iter();
+        while let Some(g) = graphemes.next() && accum_width < width {
+            accum_width += &g.width();
+            text.push(*g);
         }
-        let line: Vec<_> = {
+        let line: Vec<String> = {
             let s: Vec<_> = text
                 .iter()
                 .rev()
-                .skip_while(|c| !c.is_whitespace())
+                .skip_while(|s| s.chars().all(|c| !c.is_whitespace()))
+                .map(|s| s.to_string())
                 .collect();
             if text.len() < width || s.len() == 0 {
-                text
+                text.iter().map(|s| s.to_string()).collect()
             } else {
-                s.into_iter().rev().copied().collect()
+                s.into_iter().rev().collect()
             }
         };
         start += line.len();

@@ -13,6 +13,8 @@ use crate::{
 };
 use std::collections::HashMap;
 use std::fmt::Debug;
+use unicode_width::UnicodeWidthStr;
+use unicode_segmentation::UnicodeSegmentation;
 
 
 #[derive(Copy, Clone, Debug)]
@@ -30,7 +32,7 @@ impl Default for TextParams {
 }
 impl TextParams {
     // split at spaces within width and split at lines
-    pub fn get_matrix(&self, string: &str, width: usize) -> Vec<Vec<char>> {
+    pub fn get_matrix(&self, string: &str, width: usize) -> Vec<Vec<String>> {
         if string.len() == 0 {
             vec![vec![]]
         } else if self.wrap {
@@ -41,7 +43,9 @@ impl TextParams {
         } else {
             string
                 .lines()
-                .map(|line| line.chars().collect())
+                .map(|line| UnicodeSegmentation::graphemes(line, true)
+                    .map(|s| s.to_string()).collect()
+                )
                 .collect()
         }
     }
@@ -49,7 +53,7 @@ impl TextParams {
 
 pub fn print(
     width: usize, styles: &[TextParams], source: &[impl std::fmt::Display]
-) -> (Vec<usize>, Vec<Vec<char>>) {
+) -> (Vec<usize>, Vec<Vec<String>>) {
     styles
         .iter()
         .zip(source.iter())
@@ -144,7 +148,7 @@ pub struct Page<T: std::fmt::Display> {
     pub point_view: PointView,
     pub styles: Vec<TextParams>,
     pub source: Vec<T>,
-    pub matrix: PointMatrix<char>, 
+    pub matrix: PointMatrix<String>, 
     pub indexes: Vec<usize>,
 }
 impl<T: std::fmt::Display> Page<T> {
@@ -160,7 +164,7 @@ impl<T: std::fmt::Display> Page<T> {
 
     pub fn get_string(&self) -> Option<String> {
         self.matrix.data.get(self.matrix.point.y.head)
-            .map(|c| c.iter().collect())
+            .map(|c| c.join(""))
     }
 
     pub fn delete(&mut self) {
@@ -174,7 +178,7 @@ impl<T: std::fmt::Display> Page<T> {
     }
 
     pub fn insert(&mut self, ch: char) {
-        self.matrix.insert(ch);
+        self.matrix.insert(String::from(ch));
         self.point_view.update(&self.matrix);
     }
 
@@ -198,7 +202,7 @@ impl<T: std::fmt::Display> Page<T> {
         self.point_view.update(&self.matrix);
     }
 
-    pub fn get_view(&self, axis: CursorView) -> Vec<(&usize, &Vec<char>)> {
+    pub fn get_view(&self, axis: CursorView) -> Vec<(&usize, &Vec<String>)> {
         self.indexes
             .iter()
             .zip(self.matrix.data.iter())
