@@ -1,15 +1,16 @@
 # ya
 
 palette = {
-  black    = "#202022",
-  darkblue = "#2a2c32",
-  darkgrey = "#707688",
-  grey     = "#bcbcc8",
-  red      = "#cc6c68",
-  yellow   = "#c0a798",
-  green    = "#98a870",
-  cyan     = "#70a898",
-  darkcyan = "#b0a8d0",
+  black       = "#202022",
+  bg_shadow   = "#26262a",
+  bg_emphasis = "#2a2c32",
+  darkgrey    = "#727688",
+  grey        = "#bcbcc8",
+  red         = "#cc6c68",
+  yellow      = "#c0a798",
+  green       = "#98a870",
+  cyan        = "#70a898",
+  darkcyan    = "#b0a8d0",
 }
 border = {
   fg      = "darkgrey", 
@@ -19,15 +20,15 @@ border = {
 }
 dialog_border = {
   fg      = "grey",
-  bg      = "black",
+  bg      = "bg_shadow",
   corner  = "round",
   bracket = "space"
 }
-dialog_heading = {fg = "red", bg = "black"}
-dialog_body    = {fg = "yellow", bg = "black"}
-banner         = {fg = "grey", bg = "darkblue"}
-footer         = {fg = "grey", bg = "darkblue"}
-general        = {fg = "yellow", bg = "black"}
+dialog_heading = {fg = "red",     bg = "bg_shadow"}
+dialog_body    = {fg = "yellow",  bg = "bg_shadow"}
+banner         = {fg = "grey",    bg = "bg_emphasis"}
+footer         = {fg = "grey",    bg = "bg_emphasis"}
+general        = {fg = "yellow",  bg = "black"}
 list           = {fg = "green"}
 preformat      = {fg = "green", wrap = false}
 quote          = {fg = "grey"}
@@ -36,6 +37,5 @@ h1             = {fg = "red", underline = true}
 h2             = {fg = "red"}
 h3             = {fg = "yellow", underline = true}
 text           = {wrap = true}
-
-screen_margin        = {n = 1, s = 1, e = 20, w = 20}
-text_margin          = {n = 1, s = 1, e = 1, w = 1}
+screen_margin  = {n = 1, s = 1, e = 20, w = 20}
+text_margin    = {n = 1, s = 1, e = 1, w = 1}
