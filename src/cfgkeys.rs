@@ -1,4 +1,4 @@
-// src/userkeys.rs
+// src/cfgkeys.rs
 
 use crate::{
     UserAssign,
@@ -25,6 +25,7 @@ pub struct KeyConfig {
     pub cycle_left:  KeyCode,
     pub cycle_right: KeyCode,
     pub select:      KeyCode,
+    pub unicode:     KeyCode,
     pub menu:        KeyCode,
     pub load_url:    KeyCode,
     pub save_url:    KeyCode,
@@ -53,6 +54,7 @@ impl Default for KeyConfig {
             cycle_left:  KeyCode::Char(','),
             cycle_right: KeyCode::Char('.'),
             select:      KeyCode::Enter,
+            unicode:     KeyCode::Char('z'),
             yes:         KeyCode::Char('y'), 
             no:          KeyCode::Char('n'),
             cancel:      KeyCode::Esc,
@@ -105,6 +107,7 @@ impl UserAssign<()> for KeyConfig {
             Action::DelTab     => self.delete_tab  = value,
             Action::NewTab     => self.new_tab     = value,
             Action::Select     => self.select      = value,
+            Action::Unicode    => self.unicode     = value,
             Action::Yes        => self.yes         = value,
             Action::No         => self.no          = value,
             Action::Cancel     => self.cancel      = value,
@@ -135,6 +138,7 @@ impl KeyConfig {
         } else if &self.left        == kc {Some(Action::MoveLeft)
         } else if &self.right       == kc {Some(Action::MoveRight)
         } else if &self.select      == kc {Some(Action::Select)
+        } else if &self.unicode     == kc {Some(Action::Unicode)
         } else if &self.top         == kc {Some(Action::Top)
         } else if &self.bottom      == kc {Some(Action::Bottom)
         } else if &self.pgup        == kc {Some(Action::PageUp)  

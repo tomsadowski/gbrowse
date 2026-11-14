@@ -26,6 +26,7 @@ pub enum Action {
     PageUp,
     PageDown,
     Select, 
+    Unicode,
     // dialog
     Ack, 
     Yes, 
@@ -49,6 +50,7 @@ impl std::str::FromStr for Action {
             "delete_tab"  => Ok(Self::DelTab),
             "new_tab"     => Ok(Self::NewTab),
             "select"      => Ok(Self::Select),
+            "unicode"     => Ok(Self::Unicode),
             "ack"         => Ok(Self::Ack),
             "yes"         => Ok(Self::Yes),
             "no"          => Ok(Self::No),

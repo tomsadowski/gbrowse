@@ -313,6 +313,10 @@ impl App {
                         _ => self.ack_dlg(&format!("You've selected nothing")),
                     }
                 }
+                Action::Unicode => {
+                    let msg = tab.page.get_unicode_meta();
+                    self.ack_dlg(&msg);
+                }
                 Action::CycleLeft => {
                     self.view.tabs.move_wrapped(-1);
                     self.view.reset_frame();

@@ -1,4 +1,4 @@
-// src/user.rs
+// src/cfg.rs
 
 use crate::{KeyConfig, StyleConfig, util};
 

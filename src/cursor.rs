@@ -3,6 +3,8 @@
 use crate::{Rect, Pos, Dim};
 use unicode_width::UnicodeWidthStr;
 use unicode_segmentation::UnicodeSegmentation;
+use unicode_properties::{UnicodeGeneralCategory, UnicodeEmoji, GeneralCategory, EmojiStatus};
+use unicode_width::UnicodeWidthChar;
 
 
 #[derive(Clone, Copy, Debug, Default)]
@@ -416,38 +418,28 @@ impl<T> CursorVec<T> {
     pub fn move_head(&mut self, idelta: isize) -> isize {
         self.cursor.move_head(&self.data, idelta)
     }
-
     pub fn move_wrapped(&mut self, idelta: isize) {
         self.cursor.move_wrapped(&self.data, idelta)
     }
-
     pub fn get(&self) -> Option<&T> {
         self.data.get(self.cursor.head)
     }
-
     pub fn get_mut(&mut self) -> Option<&mut T> {
         self.data.get_mut(self.cursor.head)
     }
-
     pub fn remove(&mut self) -> bool {
         self.cursor.remove(&mut self.data)
     }
-
     pub fn delete(&mut self) -> bool {
         self.cursor.delete(&mut self.data)
     }
-
     pub fn backspace(&mut self) -> bool {
         self.cursor.backspace(&mut self.data)
     }
-
     pub fn insert(&mut self, t: T) {
         self.cursor.insert(&mut self.data, t)
     }
-
-    pub fn insert_unique_with(
-        &mut self, is_equal: impl Fn(&T) -> bool, unit: T
-    ) -> bool {
+    pub fn insert_unique_with(&mut self, is_equal: impl Fn(&T) -> bool, unit: T) -> bool {
         self.cursor.insert_unique_with(&mut self.data, is_equal, unit)
     }
 }
@@ -480,47 +472,39 @@ impl<T> PointMatrix<T> {
     pub fn editor(mut self) -> Self {
         self.point = self.point.editor(&self.data); self
     }
-
+    pub fn get(&self) -> Option<&T> {
+        self.data.get(self.point.y.head).and_then(|vec| vec.get(self.point.x.head))
+    }
     pub fn get_linear(&self) -> usize {
         self.point.get_linear(&self.data)
     }
-
     pub fn set_linear(&mut self, idx: usize) {
         self.point.set_linear(&self.data, idx)
     }
-
     pub fn move_y(&mut self, idelta: isize) -> bool {
         self.point.move_y(&self.data, idelta)
     }
-
     pub fn move_x(&mut self, idelta: isize) -> isize {
         self.point.move_x(&self.data, idelta); 0
     }
-
     pub fn delete(&mut self) -> bool {
         self.point.delete(&mut self.data)
     }
-
     pub fn backspace(&mut self) -> bool {
         self.point.backspace(&mut self.data)
     }
-
     pub fn insert(&mut self, t: T) -> bool {
         self.point.insert(&mut self.data, t)
     }
-
     pub fn move_left(&mut self, delta: usize) -> bool {
         self.point.move_left(&self.data, delta)
     }
-
     pub fn move_right(&mut self, delta: usize) -> bool {
         self.point.move_right(&self.data, delta)
     }
-
     pub fn move_down(&mut self, delta: usize) -> bool {
         self.point.move_down(&self.data, delta)
     }
-
     pub fn move_up(&mut self, delta: usize) -> bool {
         self.point.move_up(&self.data, delta)
     }

@@ -6,6 +6,7 @@ move_left   = "e"
 move_right  = "n"
 
 select      = "w"
+unicode     = "z"
 delete_tab  = "v"
 new_tab     = "p"
 

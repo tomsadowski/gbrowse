@@ -15,6 +15,8 @@ use std::collections::HashMap;
 use std::fmt::Debug;
 use unicode_width::UnicodeWidthStr;
 use unicode_segmentation::UnicodeSegmentation;
+use unicode_properties::{UnicodeGeneralCategory, UnicodeEmoji, GeneralCategory, EmojiStatus};
+use unicode_width::UnicodeWidthChar;
 
 
 #[derive(Copy, Clone, Debug)]
@@ -163,8 +165,7 @@ impl<T: std::fmt::Display> Page<T> {
     }
 
     pub fn get_string(&self) -> Option<String> {
-        self.matrix.data.get(self.matrix.point.y.head)
-            .map(|c| c.join(""))
+        self.matrix.data.get(self.matrix.point.y.head).map(|c| c.join(""))
     }
 
     pub fn delete(&mut self) {
@@ -226,6 +227,19 @@ impl<T: std::fmt::Display> Page<T> {
                 ) as Box<dyn Debug>
             ),
         ])
+    }
+
+    pub fn get_unicode_meta(&self) -> String {
+        if let Some(string) = self.matrix.get() {
+            let chars: Vec<_> = string
+                .chars().map(|c| c.general_category())
+                .zip(string.chars().map(|c| c.width()))
+                .collect();
+            let width = string.width();
+            format!("chars: {chars:?}\n\nstring width: {width}")
+        } else {
+            format!("empty")
+        }
     }
 
     pub fn get_param_string(&self) -> String {
