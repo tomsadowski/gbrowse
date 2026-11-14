@@ -63,18 +63,10 @@ impl std::str::FromStr for Action {
 impl Action {
     pub fn update<T: std::fmt::Display>(&self, page: &mut crate::Page<T>) {
         match self {
-            Action::PageDown => {
-                page.move_down(page.point_view.get_height() as usize);
-            }
-            Action::PageUp => {
-                page.move_up(page.point_view.get_height() as usize);
-            }
-            Action::Bottom => {
-                page.move_down(page.matrix.data.len());
-            }
-            Action::Top => {
-                page.move_up(page.matrix.data.len());
-            }
+            Action::PageDown  => {page.move_down(page.point_view.get_height() as usize);}
+            Action::PageUp    => {page.move_up(page.point_view.get_height() as usize);}
+            Action::Bottom    => {page.move_down(page.matrix.data.len());}
+            Action::Top       => {page.move_up(page.matrix.data.len());}
             Action::MoveDown  => {page.move_down(1);}
             Action::MoveUp    => {page.move_up(1);}
             Action::MoveLeft  => {page.move_left(1);}

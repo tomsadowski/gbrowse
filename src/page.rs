@@ -214,17 +214,19 @@ impl<T: std::fmt::Display> Page<T> {
 
     pub fn get_debug_hashmap(&self) -> HashMap<&'static str, Box<dyn Debug>> {
         HashMap::from([ 
-            ("max", Box::new(format!("{:?}", self.max)) as Box<dyn Debug>),
-            ("max_height", Box::new(self.get_max_height()) as Box<dyn Debug>),
-            ("display_height", Box::new(self.get_display_height()) as Box<dyn Debug>),
-            ("cursor_pos", Box::new(format!("{:?}", self.point_view.pos())) as Box<dyn Debug>),
-            ("cursor_x", Box::new(
-                    format!("{:?}", self.point_view.get_x_view())
-                ) as Box<dyn Debug>
+            ("max", 
+             Box::new(format!("{:?}", self.max)) as Box<dyn Debug>),
+            ("max_height", 
+             Box::new(self.get_max_height()) as Box<dyn Debug>),
+            ("display_height", 
+             Box::new(self.get_display_height()) as Box<dyn Debug>),
+            ("cursor_pos", 
+             Box::new(format!("{:?}", self.point_view.pos())) as Box<dyn Debug>),
+            ("cursor_x", 
+             Box::new(format!("{:?}", self.point_view.get_x_view())) as Box<dyn Debug>
             ),
-            ("cursor_y", Box::new(
-                    format!("{:?}", self.point_view.get_y_view())
-                ) as Box<dyn Debug>
+            ("cursor_y", 
+             Box::new(format!("{:?}", self.point_view.get_y_view())) as Box<dyn Debug>
             ),
         ])
     }
@@ -232,8 +234,13 @@ impl<T: std::fmt::Display> Page<T> {
     pub fn get_unicode_meta(&self) -> String {
         if let Some(string) = self.matrix.get() {
             let chars: Vec<_> = string
-                .chars().map(|c| c.general_category())
-                .zip(string.chars().map(|c| c.width()))
+                .chars()
+                .map(|c| format!(
+                    "{{width: {:?}, category: {:?}, emoji status: {:?}}}", 
+                    c.width(), 
+                    c.general_category(), 
+                    c.emoji_status()
+                ))
                 .collect();
             let width = string.width();
             format!("chars: {chars:?}\n\nstring width: {width}")
@@ -291,8 +298,10 @@ impl<T: std::fmt::Display> View for Page<T> {
             .queue(&self.style)?;
         for (index, line) in self.get_view(self.point_view.get_y_view()) {
             w.queue(self.styles.get(*index).map(|t| Style::from(t)).unwrap_or_default())?;
-            for (u, c) in self.point_view.get_x_view().get_weighted_view(line) {
-                w.queue(style::Print(c))?;
+            for (u, string) in self.point_view.get_x_view().get_weighted_view(line) {
+                for c in string.chars() {
+                    w.queue(style::Print(c))?;
+                }
                 x += u;
             }
             w
