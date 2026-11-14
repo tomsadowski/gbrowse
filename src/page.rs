@@ -233,17 +233,17 @@ impl<T: std::fmt::Display> Page<T> {
 
     pub fn get_unicode_meta(&self) -> String {
         if let Some(string) = self.matrix.get() {
-            let chars: Vec<_> = string
-                .chars()
-                .map(|c| format!(
-                    "{{width: {:?}, category: {:?}, emoji status: {:?}}}", 
+            let mut s = String::new();
+            s.push_str(&format!("string width: {}\nchars:", string.width()));
+            for c in string.chars() {
+                s.push_str(&format!(
+                    "\n  width: {:?}, category: {:?}, emoji: {:?}", 
                     c.width(), 
                     c.general_category(), 
                     c.emoji_status()
-                ))
-                .collect();
-            let width = string.width();
-            format!("chars: {chars:?}\n\nstring width: {width}")
+                ));
+            }
+            s
         } else {
             format!("empty")
         }
