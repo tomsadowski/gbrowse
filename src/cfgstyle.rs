@@ -77,7 +77,7 @@ impl std::str::FromStr for StyleConfigField {
             "dialog_body"           => Ok(Self::Text(StyleTextField::DialogBody)),
             "dialog_heading"        => Ok(Self::Text(StyleTextField::DialogHeading)),
             "text"                  => Ok(Self::Text(StyleTextField::Text)),
-            "heading3"| "h3"        => Ok(Self::Text(StyleTextField::Heading3)),
+            "heading3" | "h3"       => Ok(Self::Text(StyleTextField::Heading3)),
             "heading2" | "h2"       => Ok(Self::Text(StyleTextField::Heading2)),
             "heading1" | "h1"       => Ok(Self::Text(StyleTextField::Heading1)),
             "preformat"             => Ok(Self::Text(StyleTextField::Preformat)),
