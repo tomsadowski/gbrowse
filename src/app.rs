@@ -165,18 +165,20 @@ impl App {
                     self.ack_dlg(&text);
                 }
                 _ => {
-                    self.view.tab(
-                        &url, 
-                        PageParams::new()
-                            .style(&self.config.style.general)
-                            .text_styles(
-                                gemini::parse_doc(&content)
-                                    .into_iter()
-                                    .map(TabText::Gemini)
-                                    .collect(),
-                                |g| self.config.style.get_tab_text_params(g)
-                            )
-                    );
+                    if let Some(util::GEMINI_MIME) = util::parse_mimetype(&text) {
+                        self.view.tab(
+                            &url, 
+                            PageParams::new()
+                                .style(&self.config.style.general)
+                                .text_styles(
+                                    gemini::parse_doc(&content)
+                                        .into_iter().map(TabText::Gemini).collect(),
+                                    |g| self.config.style.get_tab_text_params(g),
+                                )
+                        );
+                    } else {
+                        self.ack_dlg(&text);
+                    }
                 }
             }
             Err(e) => {

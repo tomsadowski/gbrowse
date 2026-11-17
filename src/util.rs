@@ -55,7 +55,12 @@ pub const SAVE_FILE: &str = "gdata/urls";
 pub const INIT_FILE: &str = "gdata/init";
 pub const STYLES_PATH: &str = "gdata/styles";
 pub const KEYS_PATH: &str = "gdata/keys";
+pub const GEMINI_MIME: &str = "text/gemini";
 
+
+pub fn parse_mimetype(text_str: &str) -> Option<&str> {
+    text_str.split(";").next()
+}
 
 pub fn get_init_file(f: &str) -> String {
     format!("{DATA_PATH}/{f}")
@@ -70,9 +75,7 @@ pub fn get_styles_file_path(f: &str) -> String {
 }
 
 pub fn split_whitespace_once(line: &str) -> Option<(&str, &str)> {
-    line
-        .find('\u{0009}')
-        .or(line.find(' '))
+    line.find('\u{0009}').or(line.find(' '))
         .map(|i| (line[..i].trim(), line[i..].trim()))
 }
 

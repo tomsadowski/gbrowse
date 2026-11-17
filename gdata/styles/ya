@@ -15,13 +15,13 @@ palette = {
 border = {
   fg      = "darkgrey", 
   bg      = "black", 
-  corner  = "round", 
+  corner  = "square", 
   bracket = "space"
 }
 dialog_border = {
   fg      = "grey",
   bg      = "bg_shadow",
-  corner  = "round",
+  corner  = "square",
   bracket = "space"
 }
 dialog_heading = {fg = "red",     bg = "bg_shadow"}
